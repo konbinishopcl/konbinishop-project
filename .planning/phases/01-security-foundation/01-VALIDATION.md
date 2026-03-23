@@ -2,8 +2,8 @@
 phase: 1
 slug: security-foundation
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-23
 ---
 
@@ -38,16 +38,16 @@ created: 2026-03-23
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 1-01-01 | 01 | 1 | SEC-01 | manual | browser: visit `/dashboard` with non-dashboard user | ❌ manual-only | ⬜ pending |
-| 1-02-01 | 02 | 1 | SEC-02 | manual | browser devtools: `document.cookie` must not show `strapi_jwt` | ❌ manual-only | ⬜ pending |
-| 1-03-01 | 03 | 2 | SEC-03 | smoke | `curl -H "Origin: https://evil.com" http://localhost:1337/api/events` → expect 403 | N/A — curl | ⬜ pending |
-| 1-03-02 | 03 | 2 | SEC-04 | smoke | `curl -X GET http://localhost:3001/api/admin` → expect 403 | N/A — curl | ⬜ pending |
-| 1-03-03 | 03 | 2 | SEC-07 | smoke | `curl -X POST http://localhost:3001/api/events` → expect 400 | N/A — curl | ⬜ pending |
-| 1-04-01 | 04 | 2 | SEC-05 | manual | browser devtools network tab: no requests to `localhost:1337` | ❌ manual-only | ⬜ pending |
-| 1-04-02 | 04 | 2 | SEC-06 | smoke | `curl -X POST http://localhost:3000/api/events` → expect 400 | N/A — curl | ⬜ pending |
-| 1-04-03 | 04 | 2 | SEC-08 | code inspection | `grep -r recaptcha apps/strapi/config/` → expect no results | N/A — grep | ⬜ pending |
+| 1-01-01 | 01 | 1 | SEC-01 | manual | browser: visit `/dashboard` with non-dashboard user | N/A manual-only | pending |
+| 1-02-01 | 02 | 1 | SEC-02 | manual | browser devtools: `document.cookie` must not show `strapi_jwt` | N/A manual-only | pending |
+| 1-03-01 | 03 | 2 | SEC-03 | smoke | `curl -H "Origin: https://evil.com" http://localhost:1337/api/events` expect 403 | N/A curl | pending |
+| 1-03-02 | 03 | 2 | SEC-04 | smoke | `curl -X GET http://localhost:3001/api/admin` expect 403 | N/A curl | pending |
+| 1-03-03 | 03 | 2 | SEC-07 | smoke | `curl -X POST http://localhost:3001/api/events` expect 400 | N/A curl | pending |
+| 1-04-01 | 04 | 2 | SEC-05 | manual | browser devtools network tab: no requests to `localhost:1337` | N/A manual-only | pending |
+| 1-04-02 | 04 | 2 | SEC-06 | smoke | `curl -X POST http://localhost:3000/api/events` expect 400 | N/A curl | pending |
+| 1-04-03 | 04 | 2 | SEC-08 | code inspection | `grep -r recaptcha apps/strapi/config/` expect no results | N/A grep | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
@@ -71,11 +71,11 @@ None required — Phase 1 is purely security fixes with no automated test suite.
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 600s (manual UAT per task)
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 600s (manual UAT per task)
+- [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending

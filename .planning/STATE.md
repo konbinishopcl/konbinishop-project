@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-23T04:41:04.934Z"
+last_updated: "2026-03-23T04:47:06.254Z"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 **Milestone:** v1 — Payments, Emails, Organizer Panel, Search
 **Active Phase:** Phase 1 — Security Foundation (in progress)
 **Overall Progress:** [███░░░░░░░] 33%
-**Last session:** 2026-03-23T04:41:04.933Z
+**Last session:** 2026-03-23T04:47:06.252Z
 
 ## Phase Summary
 
@@ -45,6 +45,8 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 - [Phase 01-security-foundation]: Use role.type === 'dashboard' (not role.name) as canonical check field — consistent across all 4 guard points
 - [Phase 01-security-foundation]: useUserStore.getState() in hasDashboardRole to avoid stale closure pitfall in useEffect
 - [Phase 01-security-foundation]: Strapi CORS restricted from wildcard to DASHBOARD_URL+WEBSITE_URL with localhost fallbacks
+- [Phase 01-03]: StrapiAuth.logout/clearToken made async; callers in layout.tsx remain fire-and-forget (safe since redirect via window.location.href)
+- [Phase 01-03]: recaptchaToken optional on all StrapiAPI mutating methods; dev bypass when GOOGLE_RECAPTCHA_SECRET_KEY unset
 
 ## Next Action
 

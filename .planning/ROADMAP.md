@@ -9,7 +9,7 @@
 
 | Phase | Name | Goal | Requirements |
 |-------|------|------|--------------|
-| 1 | 2/3 | In Progress|  |
+| 1 | 3/3 | Complete   | 2026-03-23 |
 | 2 | Payment Schema + Email Infrastructure | Schema de estados de pago, idempotencia, e infraestructura de emails MJML | PAY-01..03, EMAIL-01..06 |
 | 3 | Transbank/Flow Integration | Primera pasarela funcional end-to-end con el flujo completo de pago | PAY-04..05, PAY-08, PAY-10..11 |
 | 4 | Mercado Pago + Stripe + Dashboard Updates | Pasarelas restantes, seleccion de gateway, actualizar dashboard | PAY-06..07, PAY-09, PAY-12..13 |
@@ -24,12 +24,12 @@
 
 **Why first:** Los pagos amplifican el blast radius de cualquier brecha de seguridad. CORS wildcard + JWT cookie sin flags + role enforcement deshabilitado + Strapi URL expuesta son bloqueantes para produccion con dinero real.
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 01-01-PLAN.md -- Role enforcement + Strapi CORS restriction (SEC-01, SEC-03)
 - [x] 01-02-PLAN.md -- Website Nuxt proxy + reCAPTCHA (SEC-05, SEC-06, SEC-08)
-- [ ] 01-03-PLAN.md -- JWT HttpOnly cookie + dashboard proxy hardening (SEC-02, SEC-04, SEC-07)
+- [x] 01-03-PLAN.md -- JWT HttpOnly cookie + dashboard proxy hardening (SEC-02, SEC-04, SEC-07)
 
 **UAT:**
 - Un usuario Strapi sin rol `dashboard` no puede acceder a ninguna ruta protegida del dashboard

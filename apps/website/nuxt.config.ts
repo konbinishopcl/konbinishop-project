@@ -12,8 +12,13 @@ export default defineNuxtConfig({
     devUsername: process.env.DEV_USERNAME || 'konbinishop',
     devPassword: process.env.DEV_PASSWORD || 'konbinishopdev',
 
+    // Claves del servidor para el proxy
+    recaptchaSecretKey: process.env.RECAPTCHA_SECRET_KEY || '',
+    strapiUrl: process.env.API_URL || 'http://localhost:1337',
+
     public: {
       apiUrl: process.env.API_URL || 'http://localhost:1337',
+      recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY || '',
       blockSearchEngines: process.env.BLOCK_SEARCH_ENGINES === 'true',
       devMode: process.env.DEV_MODE === 'true',
       gtmId: process.env.GTM_ID || 'GTM-XXXXXXXX',
@@ -38,7 +43,7 @@ export default defineNuxtConfig({
     '@pinia-plugin-persistedstate/nuxt',
     '@nuxt/image',
     '@nuxtjs/seo',
-    '@sentry/nuxt/module',
+    // '@sentry/nuxt/module',
   ],
 
   image: {
@@ -63,7 +68,7 @@ export default defineNuxtConfig({
   },
 
   strapi: {
-    url: process.env.API_URL || 'http://localhost:1337',
+    url: process.env.BASE_URL || 'http://localhost:3000',
     prefix: '/api',
     version: 'v4',
     cookie: {
@@ -135,14 +140,13 @@ export default defineNuxtConfig({
     },
   },
 
-  sentry: {
-    sourceMapsUploadOptions: {
-      org: 'konbinishopcl',
-      project: 'konbini-listing',
-    },
-
-    autoInjectServerSentry: 'top-level-import',
-  },
+  // sentry: {
+  //   sourceMapsUploadOptions: {
+  //     org: 'konbinishopcl',
+  //     project: 'konbini-listing',
+  //   },
+  //   autoInjectServerSentry: 'top-level-import',
+  // },
 
   sourcemap: {
     client: 'hidden',

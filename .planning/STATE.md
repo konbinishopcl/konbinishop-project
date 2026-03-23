@@ -17,7 +17,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 1 | Security Foundation | ○ Pending | 0/3 |
+| 1 | Security Foundation | ○ Pending | 0/4 |
 | 2 | Payment Schema + Email Infrastructure | ○ Pending | 0/3 |
 | 3 | Transbank/Flow Integration | ○ Pending | 0/4 |
 | 4 | Mercado Pago + Stripe + Dashboard Updates | ○ Pending | 0/4 |

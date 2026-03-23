@@ -11,6 +11,10 @@
 - [ ] **SEC-02**: Cookie JWT del dashboard tiene flags `HttpOnly` y `Secure` (no accesible desde JavaScript)
 - [ ] **SEC-03**: Strapi CORS restringido a dominios conocidos (no wildcard `origin: ['*']`)
 - [ ] **SEC-04**: Proxy API del dashboard tiene allowlist de rutas permitidas (no pass-through irrestricto)
+- [ ] **SEC-05**: Website tiene proxy Nuxt server-side (`server/api/[...].ts`) que oculta la URL de Strapi — el browser nunca llama directo a Strapi
+- [ ] **SEC-06**: Proxy del website valida token reCAPTCHA v3 en POST/PUT/DELETE (`x-recaptcha-token` header) antes de forwardear a Strapi
+- [ ] **SEC-07**: Proxy del dashboard (Next.js) valida token reCAPTCHA v3 en POST/PUT/DELETE antes de forwardear a Strapi
+- [ ] **SEC-08**: Strapi no valida reCAPTCHA — la validación es responsabilidad exclusiva de los proxies del website y dashboard
 
 ### Payments
 
@@ -95,6 +99,10 @@
 | SEC-02 | Phase 1 | Pending |
 | SEC-03 | Phase 1 | Pending |
 | SEC-04 | Phase 1 | Pending |
+| SEC-05 | Phase 1 | Pending |
+| SEC-06 | Phase 1 | Pending |
+| SEC-07 | Phase 1 | Pending |
+| SEC-08 | Phase 1 | Pending |
 | PAY-01 | Phase 2 | Pending |
 | PAY-02 | Phase 2 | Pending |
 | PAY-03 | Phase 2 | Pending |
@@ -127,7 +135,7 @@
 | SRCH-05 | Phase 6 | Pending |
 
 **Coverage:**
-- v1 requirements: 31 total
+- v1 requirements: 35 total
 - Mapped to phases: 31
 - Unmapped: 0 ✓
 

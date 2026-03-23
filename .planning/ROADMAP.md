@@ -9,7 +9,7 @@
 
 | Phase | Name | Goal | Requirements |
 |-------|------|------|--------------|
-| 1 | Security Foundation | Arreglar las 4 vulnerabilidades críticas antes de cualquier trabajo de pagos | SEC-01..04 |
+| 1 | Security Foundation | Arreglar vulnerabilidades críticas + proxy API + reCAPTCHA antes de cualquier trabajo de pagos | SEC-01..08 |
 | 2 | Payment Schema + Email Infrastructure | Schema de estados de pago, idempotencia, e infraestructura de emails MJML | PAY-01..03, EMAIL-01..06 |
 | 3 | Transbank/Flow Integration | Primera pasarela funcional end-to-end con el flujo completo de pago | PAY-04..05, PAY-08, PAY-10..11 |
 | 4 | Mercado Pago + Stripe + Dashboard Updates | Pasarelas restantes, selección de gateway, actualizar dashboard | PAY-06..07, PAY-09, PAY-12..13 |
@@ -20,21 +20,25 @@
 
 ## Phase 1: Security Foundation
 
-**Goal:** Eliminar las 4 vulnerabilidades de seguridad críticas identificadas en CONCERNS.md que son prerequisitos bloqueantes para lanzar pagos.
+**Goal:** Eliminar las vulnerabilidades de seguridad críticas e implementar la capa de proxy + reCAPTCHA que oculta Strapi del browser — prerequisitos bloqueantes para lanzar pagos.
 
-**Why first:** Los pagos amplifican el blast radius de cualquier brecha de seguridad. CORS wildcard + JWT cookie sin flags + role enforcement deshabilitado son bloqueantes para producción con dinero real.
+**Why first:** Los pagos amplifican el blast radius de cualquier brecha de seguridad. CORS wildcard + JWT cookie sin flags + role enforcement deshabilitado + Strapi URL expuesta son bloqueantes para producción con dinero real.
 
 ### Plans
 
 1. **Restore dashboard role enforcement** — Re-habilitar `role.type === 'dashboard'` en `useUserStore`, `hasDashboardRole`, layout guard, y middleware. Remover el blocklist hardcodeado por username.
 2. **Fix JWT cookie security** — Mover el set de cookie del dashboard a una API route de Next.js server-side con flags `HttpOnly; Secure; SameSite=Strict`.
-3. **Restrict Strapi CORS + API proxy** — Cambiar `origin: ['*']` a los dominios del dashboard y website. Agregar allowlist de rutas al proxy catch-all del dashboard.
+3. **Restrict Strapi CORS + dashboard proxy allowlist** — Cambiar `origin: ['*']` a los dominios del dashboard y website. Agregar allowlist de rutas al proxy catch-all del dashboard. Agregar validación de reCAPTCHA v3 (POST/PUT/DELETE) al proxy del dashboard.
+4. **Website Nuxt proxy + reCAPTCHA** — Crear `apps/website/server/api/[...].ts` catch-all que proxee a Strapi (mismo patrón que waldo-project). Crear `server/utils/recaptcha.ts`. Validar `x-recaptcha-token` en POST/PUT/DELETE. Configurar `@nuxtjs/strapi` para apuntar al servidor Nuxt en lugar de Strapi directo. Quitar validación de reCAPTCHA de Strapi.
 
 **UAT:**
 - Un usuario Strapi sin rol `dashboard` no puede acceder a ninguna ruta protegida del dashboard
 - La cookie `strapi_jwt` no es accesible desde `document.cookie` en el browser del dashboard
 - Strapi rechaza requests de orígenes no permitidos con 403
 - El proxy del dashboard rechaza rutas no allowlisteadas
+- El browser del website nunca hace requests directos a `localhost:1337` — todo va a través del servidor Nuxt
+- Un POST sin `x-recaptcha-token` válido en el website o dashboard retorna 400
+- Strapi ya no valida reCAPTCHA por su cuenta
 
 ---
 

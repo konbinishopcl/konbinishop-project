@@ -7,53 +7,49 @@ export class StrapiAPI {
   // Helper function to make requests to the proxy
   private static async makeRequest(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit & { recaptchaToken?: string } = {}
   ) {
-    // Get token from cookie
-    let token: string | null = null;
-
-    if (typeof window !== 'undefined') {
-      // Client-side: use document.cookie
-      const cookieName =
-        process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt';
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie =>
-        cookie.trim().startsWith(`${cookieName}=`)
-      );
-      token = tokenCookie ? tokenCookie.split('=')[1] : null;
-    } else {
-      // Server-side: use next/headers cookies
-      try {
-        const { cookies } = await import('next/headers');
-        const cookieStore = await cookies();
-        const tokenCookie = cookieStore.get(
-          process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt'
-        );
-        token = tokenCookie ? tokenCookie.value : null;
-      } catch {
-        // If we can't access cookies on server-side, continue without token
-      }
-    }
+    const { recaptchaToken, ...fetchOptions } = options;
 
     // Construir headers - manejar FormData vs JSON
     const headers: Record<string, string> = {};
 
     // Solo agregar Content-Type si no es FormData
-    if (!(options.body instanceof FormData)) {
+    if (!(fetchOptions.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
 
     // Agregar headers del cliente
-    if (options.headers) {
-      Object.entries(options.headers).forEach(([key, value]) => {
+    if (fetchOptions.headers) {
+      Object.entries(fetchOptions.headers).forEach(([key, value]) => {
         if (typeof value === 'string') {
           headers[key] = value;
         }
       });
     }
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    // Server-side: read cookie from next/headers to add Authorization
+    if (typeof window === 'undefined') {
+      try {
+        const { cookies } = await import('next/headers');
+        const cookieStore = await cookies();
+        const tokenCookie = cookieStore.get(
+          process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt'
+        );
+        if (tokenCookie) {
+          headers['Authorization'] = `Bearer ${tokenCookie.value}`;
+        }
+      } catch {
+        // If we can't access cookies on server-side, continue without token
+      }
+    }
+    // Client-side: do NOT set Authorization header.
+    // The browser sends the HttpOnly cookie automatically.
+    // The proxy at /api/[...path] reads the cookie and injects Authorization.
+
+    // Add reCAPTCHA token if provided
+    if (recaptchaToken) {
+      headers['x-recaptcha-token'] = recaptchaToken;
     }
 
     // Construir URL - absoluta en servidor, relativa en cliente
@@ -64,7 +60,8 @@ export class StrapiAPI {
 
     const response = await fetch(url, {
       headers,
-      ...options,
+      credentials: 'include', // ensures HttpOnly cookie is sent with request
+      ...fetchOptions,
     });
 
     if (!response.ok) {

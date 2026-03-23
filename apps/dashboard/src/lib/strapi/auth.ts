@@ -1,5 +1,3 @@
-import { StrapiAPI } from './api';
-
 // Types for authentication
 export interface LoginCredentials {
   identifier: string; // email or username
@@ -40,107 +38,71 @@ export interface LoginResponse {
 // Authentication functions
 export class StrapiAuth {
   /**
-   * Get token from cookie
+   * Get token from cookie.
+   * JWT is stored in an HttpOnly cookie -- not readable from JavaScript.
+   * The API proxy reads the cookie server-side and injects Authorization.
    */
   static getToken(): string | null {
-    if (typeof window === 'undefined') return null;
-
-    const cookieName =
-      process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt';
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie =>
-      cookie.trim().startsWith(`${cookieName}=`)
-    );
-
-    return tokenCookie ? tokenCookie.split('=')[1] : null;
+    // JWT is stored in an HttpOnly cookie -- not readable from JavaScript.
+    // The API proxy reads the cookie server-side and injects Authorization.
+    return null;
   }
 
   /**
-   * Clear token cookie
+   * Clear token cookie by calling the server-side logout route.
    */
-  static clearToken(): void {
+  static async clearToken(): Promise<void> {
     if (typeof window === 'undefined') return;
-
-    const cookieName =
-      process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt';
-    document.cookie = `${cookieName}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    await fetch('/api/auth/logout', { method: 'POST' });
   }
 
   /**
-   * Login user with email/username and password
+   * Login user with email/username and password via server-side route.
+   * The JWT is set as an HttpOnly cookie server-side -- not returned to client.
    */
   static async login(credentials: LoginCredentials): Promise<LoginResponse> {
     try {
-      // Use the authentication method that sends data directly
-      const response = await StrapiAPI.authenticate('auth/local', credentials);
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
 
-      // Validate user has dashboard role
-      if (!response.user.role || response.user.role.type !== 'dashboard') {
-        throw new Error(
-          'Acceso denegado. Solo usuarios con rol "Dashboard" pueden acceder al sistema.'
-        );
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || 'Login failed');
       }
 
-      // Create token cookie
-      if (typeof window !== 'undefined') {
-        const cookieName =
-          process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt';
-        document.cookie = `${cookieName}=${response.jwt}; path=/; max-age=${60 * 60 * 24 * 7}`;
-      }
-
-      // Get complete user data using getMe
-      // const userData = await StrapiAPI.getMe();
-
-      // Return the complete user data instead of just the login response
+      // JWT is now in an HttpOnly cookie -- not returned to client
       return {
-        jwt: response.jwt,
-        user: response.user,
+        jwt: '', // JWT is HttpOnly, not accessible from JS
+        user: data.user,
       };
     } catch (error: unknown) {
-      // If it's our custom role validation error, throw it as is
-      if (
-        error instanceof Error &&
-        error.message &&
-        error.message.includes('rol "Dashboard"')
-      ) {
+      if (error instanceof Error) {
         throw error;
-      }
-      // Otherwise, throw the original Strapi error
-      if (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response
-      ) {
-        const responseData = error.response.data as Record<string, unknown>;
-        if (
-          responseData.error &&
-          typeof responseData.error === 'object' &&
-          'message' in responseData.error
-        ) {
-          throw new Error(responseData.error.message as string);
-        }
       }
       throw new Error('Login failed');
     }
   }
 
   /**
-   * Logout user
+   * Logout user -- calls server route to delete HttpOnly cookie, then redirects.
    */
-  static logout(): void {
-    this.clearToken();
+  static async logout(): Promise<void> {
+    await this.clearToken();
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
     }
   }
 
   static async validateUserRole(): Promise<LoginResponse['user']> {
+    const { StrapiAPI } = await import('./api');
     const userData = await StrapiAPI.getMe();
 
     if (!userData.role || userData.role.type !== 'dashboard') {
-      this.clearToken();
+      await this.clearToken();
       throw new Error(
         'Acceso denegado. Solo usuarios con rol "Dashboard" pueden acceder al sistema.'
       );

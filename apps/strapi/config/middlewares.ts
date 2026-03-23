@@ -6,7 +6,10 @@ export default [
     name: 'strapi::cors',
     config: {
       enabled: true,
-      origin: ['*'],
+      origin: [
+        process.env.DASHBOARD_URL || 'http://localhost:3001',
+        process.env.WEBSITE_URL || 'http://localhost:3000',
+      ],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
@@ -18,6 +21,6 @@ export default [
   'strapi::session',
   'strapi::favicon',
   'strapi::public',
-  // 'global::auth-error-logger',
-  // 'global::auth-response',
+  'global::auth-error-logger',
+  'global::auth-response',
 ];

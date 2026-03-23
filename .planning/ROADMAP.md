@@ -9,7 +9,7 @@
 
 | Phase | Name | Goal | Requirements |
 |-------|------|------|--------------|
-| 1 | 3/3 | Complete   | 2026-03-23 |
+| 1 | 3/3 | Complete    | 2026-03-23 |
 | 2 | Payment Schema + Email Infrastructure | Schema de estados de pago, idempotencia, e infraestructura de emails MJML | PAY-01..03, EMAIL-01..06 |
 | 3 | Transbank/Flow Integration | Primera pasarela funcional end-to-end con el flujo completo de pago | PAY-04..05, PAY-08, PAY-10..11 |
 | 4 | Mercado Pago + Stripe + Dashboard Updates | Pasarelas restantes, seleccion de gateway, actualizar dashboard | PAY-06..07, PAY-09, PAY-12..13 |

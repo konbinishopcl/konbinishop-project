@@ -58,7 +58,7 @@ export const useHeroStore = defineStore(
         console.error('Error fetching heroes:', err)
         error.value = err instanceof Error ? err.message : 'Error al obtener los heroes'
         heroes.value = []
-        throw err
+        return { data: [] }
       } finally {
         loading.value = false
       }

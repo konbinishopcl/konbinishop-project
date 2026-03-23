@@ -14847,7 +14847,7 @@ pinia-plugin-persistedstate@>=3.2.1:
   dependencies:
     defu "^6.1.4"
 
-pinia@^2.3.0:
+pinia@2.3.1, pinia@^2.3.0:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/pinia/-/pinia-2.3.1.tgz#54c476675b72f5abcfafa24a7582531ea8c23d94"
   integrity sha512-khUlZSwt9xXCaTbbxFYBKDc/bWAGWJjOgvxETwkTN7KRm66EeT1ZdZj6i2ceh9sP2Pzqsbc704r2yngBrxBVug==

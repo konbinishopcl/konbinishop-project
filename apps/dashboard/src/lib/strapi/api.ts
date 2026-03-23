@@ -100,10 +100,11 @@ export class StrapiAPI {
   }
 
   // Generic content methods
-  static async createContent(endpoint: string, data: Record<string, unknown>) {
+  static async createContent(endpoint: string, data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest(endpoint, {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -111,11 +112,13 @@ export class StrapiAPI {
   static async updateContent(
     endpoint: string,
     documentId: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
+    recaptchaToken?: string
   ) {
     const response = await this.makeRequest(`${endpoint}/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -135,11 +138,13 @@ export class StrapiAPI {
           currentPassword: string;
           newPassword: string;
           newPasswordConfirmation: string;
-        }
+        },
+    recaptchaToken?: string
   ) {
     const response = await this.makeRequest(endpoint, {
       method: 'POST',
       body: JSON.stringify(credentials),
+      recaptchaToken,
     });
     return response;
   }
@@ -153,10 +158,11 @@ export class StrapiAPI {
     return response;
   }
 
-  static async updateMe(data: Record<string, unknown>) {
+  static async updateMe(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('users/me?populate=*', {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -183,18 +189,20 @@ export class StrapiAPI {
     }
   }
 
-  static async createUser(data: Record<string, unknown>) {
+  static async createUser(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('users', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
-  static async updateUser(documentId: string, data: Record<string, unknown>) {
+  static async updateUser(documentId: string, data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest(`users/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -234,21 +242,24 @@ export class StrapiAPI {
     }
   }
 
-  static async createArticle(data: Record<string, unknown>) {
+  static async createArticle(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('articles', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
   static async updateArticle(
     documentId: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
+    recaptchaToken?: string
   ) {
     const response = await this.makeRequest(`articles/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -299,19 +310,21 @@ export class StrapiAPI {
     }
   }
 
-  static async createEvent(data: Record<string, unknown>) {
+  static async createEvent(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('events', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
-  static async updateEvent(documentId: string, data: Record<string, unknown>) {
+  static async updateEvent(documentId: string, data: Record<string, unknown>, recaptchaToken?: string) {
     try {
       const response = await this.makeRequest(`events/${documentId}`, {
         method: 'PUT',
         body: JSON.stringify({ data }),
+        recaptchaToken,
       });
       return response;
     } catch (error) {
@@ -365,18 +378,20 @@ export class StrapiAPI {
     }
   }
 
-  static async createHero(data: Record<string, unknown>) {
+  static async createHero(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('heroes', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
-  static async updateHero(documentId: string, data: Record<string, unknown>) {
+  static async updateHero(documentId: string, data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest(`heroes/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -425,18 +440,20 @@ export class StrapiAPI {
     }
   }
 
-  static async createSpot(data: Record<string, unknown>) {
+  static async createSpot(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('spots', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
-  static async updateSpot(documentId: string, data: Record<string, unknown>) {
+  static async updateSpot(documentId: string, data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest(`spots/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -487,21 +504,24 @@ export class StrapiAPI {
     }
   }
 
-  static async createCategory(data: Record<string, unknown>) {
+  static async createCategory(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('categories', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
   static async updateCategory(
     documentId: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
+    recaptchaToken?: string
   ) {
     const response = await this.makeRequest(`categories/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -550,18 +570,20 @@ export class StrapiAPI {
     }
   }
 
-  static async createTag(data: Record<string, unknown>) {
+  static async createTag(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('tags', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
-  static async updateTag(documentId: string, data: Record<string, unknown>) {
+  static async updateTag(documentId: string, data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest(`tags/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -612,18 +634,20 @@ export class StrapiAPI {
     }
   }
 
-  static async createRegion(data: Record<string, unknown>) {
+  static async createRegion(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('regions', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
-  static async updateRegion(documentId: string, data: Record<string, unknown>) {
+  static async updateRegion(documentId: string, data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest(`regions/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -675,21 +699,24 @@ export class StrapiAPI {
     }
   }
 
-  static async createCommune(data: Record<string, unknown>) {
+  static async createCommune(data: Record<string, unknown>, recaptchaToken?: string) {
     const response = await this.makeRequest('communes', {
       method: 'POST',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
 
   static async updateCommune(
     documentId: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
+    recaptchaToken?: string
   ) {
     const response = await this.makeRequest(`communes/${documentId}`, {
       method: 'PUT',
       body: JSON.stringify({ data }),
+      recaptchaToken,
     });
     return response;
   }
@@ -698,21 +725,23 @@ export class StrapiAPI {
   // MEDIA/UPLOAD METHODS
   // ========================================
 
-  static async uploadFile(file: File) {
+  static async uploadFile(file: File, recaptchaToken?: string) {
     const formData = new FormData();
     formData.append('files', file);
 
     const response = await this.makeRequest('upload', {
       method: 'POST',
       body: formData,
+      recaptchaToken,
     });
     return response;
   }
 
-  static async deleteFile(fileId: number) {
+  static async deleteFile(fileId: number, recaptchaToken?: string) {
     try {
       const response = await this.makeRequest(`upload/files/${fileId}`, {
         method: 'DELETE',
+        recaptchaToken,
       });
       return response;
     } catch (error) {

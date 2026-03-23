@@ -1,5 +1,6 @@
 'use client';
 
+import { useRecaptcha } from '@/lib/hooks/useRecaptcha';
 import { useSlugify } from '@/lib/hooks/useSlugify';
 import { StrapiAPI } from '@/lib/strapi/api';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -175,6 +176,7 @@ export default function EventForm({
   event,
   isEditing = false,
 }: EventFormProps) {
+  const { verifyRecaptcha } = useRecaptcha();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<SelectOption[]>([]);
   const [selectedUser, setSelectedUser] = useState<SelectOption | null>(null);
@@ -437,6 +439,9 @@ export default function EventForm({
     try {
       setIsSubmitting(true);
 
+      // Get reCAPTCHA token for submission
+      const recaptchaToken = await verifyRecaptcha('submit_event');
+
       // Transformar formato de tiempo de HH:mm a HH:mm:ss.SSS antes de enviar
       const transformedDates = data.dates?.map(date => ({
         ...date,
@@ -479,10 +484,10 @@ export default function EventForm({
       };
 
       if (isEditing && event) {
-        await StrapiAPI.updateEvent(event.documentId.toString(), eventData);
+        await StrapiAPI.updateEvent(event.documentId.toString(), eventData, recaptchaToken);
         router.push(`/dashboard/events/${event.documentId}`);
       } else {
-        const response = await StrapiAPI.createEvent(eventData);
+        const response = await StrapiAPI.createEvent(eventData, recaptchaToken);
 
         // Verificar diferentes estructuras de respuesta
         const documentId =

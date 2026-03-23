@@ -46,26 +46,9 @@ export const useUserStore = create<UserState>()(
       isAuthenticated: false,
 
       setUser: (user: User) => {
-        // Validate that user has dashboard role before setting
-        // if (user.role && user.role.name === 'Dashboard') {
-        //   // Clear any existing user data first to ensure clean state
-        //   if (typeof window !== 'undefined') {
-        //     localStorage.removeItem('user-storage');
-        //   }
-
-        //   set({
-        //     user,
-        //     isAuthenticated: true,
-        //   });
-        // } else {
-        //   throw new Error('Usuario no tiene permisos de dashboard');
-        // }
-
-        // Allow any user to login
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('user-storage');
+        if (!user.role || user.role.type !== 'dashboard') {
+          throw new Error('Usuario no tiene permisos de dashboard');
         }
-
         set({
           user,
           isAuthenticated: true,
@@ -84,8 +67,7 @@ export const useUserStore = create<UserState>()(
       },
 
       hasDashboardRole: () => {
-        // return user?.role?.name === 'Dashboard';
-        return true; // Allow any user to access dashboard
+        return useUserStore.getState().user?.role?.type === 'dashboard';
       },
     }),
     {

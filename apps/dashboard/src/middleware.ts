@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
     try {
       // Get user info from token to validate role
       const userResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_STRAPI_URL}/api/users/me`,
+        `${process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'}/api/users/me?populate=role`,
         {
           headers: {
             Authorization: `Bearer ${token.value}`,
@@ -44,17 +44,16 @@ export async function middleware(request: NextRequest) {
       );
 
       if (userResponse.ok) {
-        // Check if user has dashboard role
-        // if (!user.role || user.role.name !== 'Dashboard') {
-        //   // Clear invalid token and redirect to login
-        //   const response = NextResponse.redirect(
-        //     new URL('/login', request.url)
-        //   );
-        //   response.cookies.delete(
-        //       process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt'
-        //   );
-        //   return response;
-        // }
+        const user = await userResponse.json();
+        if (!user.role || user.role.type !== 'dashboard') {
+          const response = NextResponse.redirect(
+            new URL('/login', request.url)
+          );
+          response.cookies.delete(
+            process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt'
+          );
+          return response;
+        }
       } else {
         // Token is invalid, clear it and redirect to login
         const response = NextResponse.redirect(new URL('/login', request.url));

@@ -75,11 +75,11 @@ export class StrapiAuth {
       const response = await StrapiAPI.authenticate('auth/local', credentials);
 
       // Validate user has dashboard role
-      // if (!response.user.role || response.user.role.name !== 'Dashboard') {
-      //   throw new Error(
-      //     'Acceso denegado. Solo usuarios con rol "Dashboard" pueden acceder al sistema.'
-      //   );
-      // }
+      if (!response.user.role || response.user.role.type !== 'dashboard') {
+        throw new Error(
+          'Acceso denegado. Solo usuarios con rol "Dashboard" pueden acceder al sistema.'
+        );
+      }
 
       // Create token cookie
       if (typeof window !== 'undefined') {
@@ -98,13 +98,13 @@ export class StrapiAuth {
       };
     } catch (error: unknown) {
       // If it's our custom role validation error, throw it as is
-      // if (
-      //   error instanceof Error &&
-      //   error.message &&
-      //   error.message.includes('rol "Dashboard"')
-      // ) {
-      //   throw error;
-      // }
+      if (
+        error instanceof Error &&
+        error.message &&
+        error.message.includes('rol "Dashboard"')
+      ) {
+        throw error;
+      }
       // Otherwise, throw the original Strapi error
       if (
         error instanceof Error &&

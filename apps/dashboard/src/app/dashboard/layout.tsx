@@ -4,6 +4,7 @@ import { useSwal } from '@/lib/hooks/useSwal';
 import { useUserStore } from '@/lib/stores';
 import { StrapiAuth } from '@/lib/strapi';
 import {
+  AlertTriangle,
   Building,
   CalendarDays,
   ChevronDown,
@@ -40,25 +41,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Validate user role on component mount
   useEffect(() => {
-    // Force logout if user is "Prueba Test" (incorrect user)
-    if (user && (user.firstname === 'Prueba' || user.username === 'jokukapi')) {
-      console.log('Usuario incorrecto detectado, forzando logout...');
+    if (user && !hasDashboardRole()) {
+      // User doesn't have dashboard role, clear and redirect
       clearUser();
       StrapiAuth.logout();
       router.push('/login');
-      return;
+    } else {
+      setIsValidating(false);
     }
-
-    // if (user && !hasDashboardRole()) {
-    //   // User doesn't have dashboard role, clear and redirect
-    //   clearUser();
-    //   StrapiAuth.logout();
-    //   router.push('/login');
-    // } else {
-    //   setIsValidating(false);
-    // }
-
-    setIsValidating(false);
   }, [user, hasDashboardRole, clearUser, router]);
 
   // Close dropdown when clicking outside
@@ -110,32 +100,32 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   // Show access denied if user doesn't have dashboard role
-  // if (!user || !hasDashboardRole()) {
-  //   return (
-  //     <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
-  //       <div className='text-center max-w-md mx-auto p-6'>
-  //         <AlertTriangle className='mx-auto h-12 w-12 text-red-500 mb-4' />
-  //         <h3 className='text-lg font-medium text-gray-900 mb-2'>
-  //           Acceso Denegado
-  //         </h3>
-  //         <p className='text-gray-600 mb-4'>
-  //           No tienes permisos para acceder al dashboard. Solo usuarios con rol
-  //           &quot;Dashboard&quot; pueden acceder al sistema.
-  //         </p>
-  //         <button
-  //             onClick={() => {
-  //               clearUser();
-  //               StrapiAuth.logout();
-  //               router.push('/login');
-  //             }}
-  //             className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'
-  //         >
-  //           Volver al Login
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (!user || !hasDashboardRole()) {
+    return (
+      <div className='min-h-screen bg-gray-50 flex items-center justify-center'>
+        <div className='text-center max-w-md mx-auto p-6'>
+          <AlertTriangle className='mx-auto h-12 w-12 text-red-500 mb-4' />
+          <h3 className='text-lg font-medium text-gray-900 mb-2'>
+            Acceso Denegado
+          </h3>
+          <p className='text-gray-600 mb-4'>
+            No tienes permisos para acceder al dashboard. Solo usuarios con rol
+            &quot;Dashboard&quot; pueden acceder al sistema.
+          </p>
+          <button
+              onClick={() => {
+                clearUser();
+                StrapiAuth.logout();
+                router.push('/login');
+              }}
+              className='bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors'
+          >
+            Volver al Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const menuItems = [
     { icon: Home, label: 'Inicio', href: '/dashboard' },

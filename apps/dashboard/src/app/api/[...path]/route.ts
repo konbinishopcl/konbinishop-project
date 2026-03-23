@@ -1,9 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { validateRecaptchaToken } from '@/lib/recaptcha';
 
 // URL base de Strapi
 const STRAPI_BASE_URL =
   process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
 const STRAPI_VERSION = 'api';
+
+// Allowlist of Strapi API path prefixes accessible via this proxy (SEC-04)
+const ALLOWED_PREFIXES = [
+  'events',
+  'articles',
+  'heroes',
+  'spots',
+  'categories',
+  'tags',
+  'regions',
+  'communes',
+  'users',
+  'stats',
+  'upload',
+  'auth/local',
+];
+
+function isAllowedPath(path: string): boolean {
+  return ALLOWED_PREFIXES.some(prefix => path.startsWith(prefix));
+}
+
+function getJwtFromCookie(request: NextRequest): string | null {
+  const cookieName = process.env.NEXT_PUBLIC_STRAPI_TOKEN_COOKIE || 'strapi_jwt';
+  return request.cookies.get(cookieName)?.value ?? null;
+}
 
 export async function GET(
   request: NextRequest,
@@ -12,19 +38,24 @@ export async function GET(
   try {
     const { path: pathArray } = await params;
     const path = pathArray.join('/');
+
+    // 1. Path allowlist check
+    if (!isAllowedPath(path)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const url = new URL(request.url);
     const queryString = url.searchParams.toString();
 
     // Construir la URL completa hacia Strapi
     const strapiUrl = `${STRAPI_BASE_URL}/${STRAPI_VERSION}/${path}${queryString ? `?${queryString}` : ''}`;
 
-    // Obtener headers del cliente
+    // 2. Cookie-to-header injection (HttpOnly JWT)
     const clientHeaders: Record<string, string> = {};
-    request.headers.forEach((value, key) => {
-      if (key === 'authorization' || key === 'Authorization') {
-        clientHeaders['Authorization'] = value;
-      }
-    });
+    const jwt = getJwtFromCookie(request);
+    if (jwt) {
+      clientHeaders['Authorization'] = `Bearer ${jwt}`;
+    }
 
     // Hacer la request hacia Strapi
     const response = await fetch(strapiUrl, {
@@ -55,6 +86,29 @@ export async function POST(
     const { path: pathArray } = await params;
     const path = pathArray.join('/');
 
+    // 1. Path allowlist check
+    if (!isAllowedPath(path)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // 2. Cookie-to-header injection (HttpOnly JWT)
+    const clientHeaders: Record<string, string> = {};
+    const jwt = getJwtFromCookie(request);
+    if (jwt) {
+      clientHeaders['Authorization'] = `Bearer ${jwt}`;
+    }
+
+    // 3. reCAPTCHA validation
+    const recaptchaToken = request.headers.get('x-recaptcha-token');
+    try {
+      await validateRecaptchaToken(recaptchaToken, request.method);
+    } catch {
+      return NextResponse.json(
+        { error: 'reCAPTCHA verification failed' },
+        { status: 400 }
+      );
+    }
+
     // Detectar si es FormData o JSON
     const contentType = request.headers.get('content-type') || '';
     let body: FormData | Record<string, unknown>;
@@ -69,14 +123,6 @@ export async function POST(
 
     // Construir la URL completa hacia Strapi
     const strapiUrl = `${STRAPI_BASE_URL}/${STRAPI_VERSION}/${path}`;
-
-    // Obtener headers del cliente
-    const clientHeaders: Record<string, string> = {};
-    request.headers.forEach((value, key) => {
-      if (key === 'authorization' || key === 'Authorization') {
-        clientHeaders['Authorization'] = value;
-      }
-    });
 
     // Construir headers para Strapi
     const strapiHeaders: Record<string, string> = {};
@@ -113,18 +159,34 @@ export async function PUT(
   try {
     const { path: pathArray } = await params;
     const path = pathArray.join('/');
+
+    // 1. Path allowlist check
+    if (!isAllowedPath(path)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // 2. Cookie-to-header injection (HttpOnly JWT)
+    const clientHeaders: Record<string, string> = {};
+    const jwt = getJwtFromCookie(request);
+    if (jwt) {
+      clientHeaders['Authorization'] = `Bearer ${jwt}`;
+    }
+
+    // 3. reCAPTCHA validation
+    const recaptchaToken = request.headers.get('x-recaptcha-token');
+    try {
+      await validateRecaptchaToken(recaptchaToken, request.method);
+    } catch {
+      return NextResponse.json(
+        { error: 'reCAPTCHA verification failed' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
 
     // Construir la URL completa hacia Strapi
     const strapiUrl = `${STRAPI_BASE_URL}/${STRAPI_VERSION}/${path}`;
-
-    // Obtener headers del cliente
-    const clientHeaders: Record<string, string> = {};
-    request.headers.forEach((value, key) => {
-      if (key === 'authorization' || key === 'Authorization') {
-        clientHeaders['Authorization'] = value;
-      }
-    });
 
     // Hacer la request hacia Strapi
     const response = await fetch(strapiUrl, {
@@ -156,16 +218,31 @@ export async function DELETE(
     const { path: pathArray } = await params;
     const path = pathArray.join('/');
 
+    // 1. Path allowlist check
+    if (!isAllowedPath(path)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // 2. Cookie-to-header injection (HttpOnly JWT)
+    const clientHeaders: Record<string, string> = {};
+    const jwt = getJwtFromCookie(request);
+    if (jwt) {
+      clientHeaders['Authorization'] = `Bearer ${jwt}`;
+    }
+
+    // 3. reCAPTCHA validation
+    const recaptchaToken = request.headers.get('x-recaptcha-token');
+    try {
+      await validateRecaptchaToken(recaptchaToken, request.method);
+    } catch {
+      return NextResponse.json(
+        { error: 'reCAPTCHA verification failed' },
+        { status: 400 }
+      );
+    }
+
     // Construir la URL completa hacia Strapi
     const strapiUrl = `${STRAPI_BASE_URL}/${STRAPI_VERSION}/${path}`;
-
-    // Obtener headers del cliente
-    const clientHeaders: Record<string, string> = {};
-    request.headers.forEach((value, key) => {
-      if (key === 'authorization' || key === 'Authorization') {
-        clientHeaders['Authorization'] = value;
-      }
-    });
 
     // Hacer la request hacia Strapi
     const response = await fetch(strapiUrl, {

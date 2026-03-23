@@ -26,7 +26,7 @@ Organizadores pueden publicar eventos pagando por cada publicación, que queda v
 - [ ] Sistema de emails transaccionales con MJML + Mailgun (mismo stack que waldo-project, con colores de marca Konbini); notificaciones: pago confirmado, evento aprobado/rechazado, etc.
 - [ ] Búsqueda de eventos funcional en el sitio web público (SearchDefault.vue actualmente es un stub vacío)
 - [ ] Panel del organizador — el organizador puede ver y gestionar sus propios eventos desde su cuenta
-- [ ] Seguridad y deuda técnica — restaurar role enforcement (dashboard), corregir JWT cookie flags, restringir CORS en Strapi, migrar entityService deprecated
+- ✓ Seguridad — restaurar role enforcement (dashboard), JWT HttpOnly cookie, restringir CORS en Strapi, proxy + reCAPTCHA que oculta Strapi del browser — Validated in Phase 1: Security Foundation
 
 ### Out of Scope
 
@@ -38,7 +38,7 @@ Organizadores pueden publicar eventos pagando por cada publicación, que queda v
 ## Context
 
 - **Stack:** Turbo monorepo — Strapi 5 (backend/CMS), Next.js 15 (dashboard admin), Nuxt 4 (website público)
-- **Auth:** JWT vía Strapi Users & Permissions plugin; cookie `strapi_jwt`; el dashboard tiene role enforcement comentado (cualquier usuario Strapi puede entrar — bug de seguridad activo)
+- **Auth:** JWT vía Strapi Users & Permissions plugin; cookie `strapi_jwt` con flags HttpOnly+Secure+SameSite=Strict (Phase 1); role enforcement restaurado; CORS restringido; proxies de dashboard y website ocultan Strapi del browser
 - **Email reference:** `../waldo-project` usa MJML + Mailgun via plugin de Strapi; templates en `apps/strapi/src/services/mjml/templates/`; adaptar mismo patrón con colores Konbini
 - **Pagos:** Sin implementación actual. El modelo es pago único por evento, precio único. Flujo: el organizador llena el formulario → paga → el evento queda en estado pendiente de moderación
 - **Deuda técnica conocida:** `populate=*` y `pageSize=1000` en todos los queries del dashboard; `entityService.count()` deprecado en Strapi v5; ETag roto en media proxy; debug component expuesto; settings page stub vacío

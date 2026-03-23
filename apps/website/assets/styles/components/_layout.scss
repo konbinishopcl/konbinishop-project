@@ -1,0 +1,140 @@
+@use '../base/variables' as *;
+
+.layout {
+  &--default {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 100vh;
+  }
+
+  &--create {
+    &__bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      opacity: 0.2;
+
+      img {
+        position: relative;
+        z-index: 1;
+      }
+
+      &::after,
+      &::before {
+        display: block;
+        content: '';
+        position: absolute;
+        z-index: 2;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      &::after {
+        background: linear-gradient(to left, #070707, transparent);
+      }
+
+      &::before {
+        background: linear-gradient(to top, #070707, transparent);
+      }
+    }
+
+    &__content {
+      position: relative;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100vh;
+      padding-top: 98px;
+    }
+  }
+
+  &--auth {
+    min-height: 100vh;
+    overflow: hidden;
+
+    &__wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+
+      &__introduction {
+        width: 50%;
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
+        overflow: hidden;
+
+        &__bg {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0.2;
+          position: absolute;
+          z-index: 1;
+          top: 0;
+          left: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        &__logo {
+          position: relative;
+          z-index: 2;
+          display: inline-flex;
+
+          img {
+            float: left;
+          }
+        }
+      }
+
+      &__content {
+        width: 50%;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        flex-shrink: 0;
+        background: #000;
+        position: relative;
+        z-index: 3;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        &__header {
+          padding: 40px 30px 20px;
+        }
+
+        &__body {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px 30px;
+        }
+
+        &__bottom {
+          padding: 30px;
+          text-align: right;
+
+          p {
+            margin: 0;
+            color: $gray-300;
+            font-size: 12px;
+          }
+        }
+      }
+    }
+  }
+}

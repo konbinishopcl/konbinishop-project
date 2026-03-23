@@ -1,0 +1,22 @@
+@use '../base/variables' as *;
+
+.headroom {
+  position: fixed;
+  width: 100%;
+  z-index: 10;
+  top: 0;
+  left: 0;
+
+  transition:
+    transform 0.3s ease-in-out,
+    backdrop-filter 0.3s ease-in-out;
+
+  &--scrolled {
+    backdrop-filter: blur(3px);
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  &--hidden {
+    transform: translateY(-100%);
+  }
+}

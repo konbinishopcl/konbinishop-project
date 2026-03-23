@@ -1,0 +1,148 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events",
+  "info": {
+    "singularName": "event",
+    "pluralName": "events",
+    "displayName": "Event"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "maxLength": 100,
+      "required": true
+    },
+    "company": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": true
+    },
+    "about": {
+      "type": "text"
+    },
+    "categories": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::category.category",
+      "mappedBy": "events"
+    },
+    "region": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::region.region",
+      "inversedBy": "events"
+    },
+    "commune": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::commune.commune",
+      "inversedBy": "events"
+    },
+    "expiration_date": {
+      "type": "date"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "events"
+    },
+    "prices": {
+      "type": "component",
+      "component": "event.prices",
+      "repeatable": true
+    },
+    "dates": {
+      "type": "component",
+      "component": "event.dates",
+      "repeatable": true
+    },
+    "address": {
+      "type": "string",
+      "required": true
+    },
+    "address_number": {
+      "type": "string",
+      "required": true
+    },
+    "ticket_url": {
+      "type": "string"
+    },
+    "socialLinks": {
+      "type": "component",
+      "component": "event.rrss",
+      "repeatable": true
+    },
+    "banner": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "poster": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "gallery": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "videos": {
+      "type": "component",
+      "component": "event.videos",
+      "repeatable": true
+    },
+    "is_approved": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "approved_by": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::users-permissions.user",
+      "mappedBy": "approved"
+    },
+    "is_rejected": {
+      "type": "boolean",
+      "required": true,
+      "default": false
+    },
+    "rejected_by": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "rejected"
+    },
+    "rejected_reazon": {
+      "type": "string"
+    },
+    "articles": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::article.article",
+      "mappedBy": "events"
+    }
+  }
+}

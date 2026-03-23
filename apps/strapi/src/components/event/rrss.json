@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_event_rrsses",
+  "info": {
+    "displayName": "rrss",
+    "icon": "link"
+  },
+  "options": {},
+  "attributes": {
+    "link": {
+      "type": "string"
+    }
+  }
+}

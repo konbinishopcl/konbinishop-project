@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+- You can not use import { useStrapi } from "@nuxtjs/strapi";
+- Do not add classes or css unless I explicitly ask for it, and never add css inside a vue component.
+- All interfaces are declared in the @types folder.
+- Whenever persist is used in Pinia, it must always be validated using import.meta.client to make sure it's only run on the client side, especially when using localStorage.

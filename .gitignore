@@ -1,0 +1,7 @@
+node_modules
+.turbo
+
+# env files
+.env
+.env.*
+!.env.example

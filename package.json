@@ -1,0 +1,25 @@
+{
+  "name": "konbini-project",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Konbini monorepo",
+  "packageManager": "yarn@1.22.22",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "start": "turbo run start --parallel",
+    "lint": "turbo run lint"
+  },
+  "workspaces": {
+    "packages": [
+      "apps/*"
+    ],
+    "nohoist": [
+      "**/@sentry/**",
+      "**/@sentry"
+    ]
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}

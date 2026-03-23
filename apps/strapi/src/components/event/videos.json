@@ -1,0 +1,13 @@
+{
+  "collectionName": "components_event_videos",
+  "info": {
+    "displayName": "videos",
+    "icon": "play"
+  },
+  "options": {},
+  "attributes": {
+    "link": {
+      "type": "string"
+    }
+  }
+}

@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-23T04:40:52.140Z"
+last_updated: "2026-03-23T04:41:04.934Z"
 progress:
   total_phases: 6
   completed_phases: 0
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 **Milestone:** v1 — Payments, Emails, Organizer Panel, Search
 **Active Phase:** Phase 1 — Security Foundation (in progress)
 **Overall Progress:** [███░░░░░░░] 33%
-**Last session:** 2026-03-23 — Completed 01-security-foundation 01-02-PLAN.md
+**Last session:** 2026-03-23T04:41:04.933Z
 
 ## Phase Summary
 
@@ -42,6 +42,9 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 
 - **01-02:** reCAPTCHA enforced at Nuxt proxy layer not in Strapi; dev bypass via empty RECAPTCHA_SECRET_KEY prevents breaking existing forms
 - **01-02:** strapi.url points to localhost:3000 proxy loopback; no OAuth routes in konbini proxy
+- [Phase 01-security-foundation]: Use role.type === 'dashboard' (not role.name) as canonical check field — consistent across all 4 guard points
+- [Phase 01-security-foundation]: useUserStore.getState() in hasDashboardRole to avoid stale closure pitfall in useEffect
+- [Phase 01-security-foundation]: Strapi CORS restricted from wildcard to DASHBOARD_URL+WEBSITE_URL with localhost fallbacks
 
 ## Next Action
 

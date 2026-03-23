@@ -7,9 +7,9 @@
 
 ### Security
 
-- [ ] **SEC-01**: Dashboard restringe acceso solo a usuarios con rol `dashboard` (role enforcement restaurado)
+- [x] **SEC-01**: Dashboard restringe acceso solo a usuarios con rol `dashboard` (role enforcement restaurado)
 - [ ] **SEC-02**: Cookie JWT del dashboard tiene flags `HttpOnly` y `Secure` (no accesible desde JavaScript)
-- [ ] **SEC-03**: Strapi CORS restringido a dominios conocidos (no wildcard `origin: ['*']`)
+- [x] **SEC-03**: Strapi CORS restringido a dominios conocidos (no wildcard `origin: ['*']`)
 - [ ] **SEC-04**: Proxy API del dashboard tiene allowlist de rutas permitidas (no pass-through irrestricto)
 - [x] **SEC-05**: Website tiene proxy Nuxt server-side (`server/api/[...].ts`) que oculta la URL de Strapi — el browser nunca llama directo a Strapi
 - [x] **SEC-06**: Proxy del website valida token reCAPTCHA v3 en POST/PUT/DELETE (`x-recaptcha-token` header) antes de forwardear a Strapi
@@ -95,9 +95,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
 | SEC-02 | Phase 1 | Pending |
-| SEC-03 | Phase 1 | Pending |
+| SEC-03 | Phase 1 | Complete |
 | SEC-04 | Phase 1 | Pending |
 | SEC-05 | Phase 1 | Complete |
 | SEC-06 | Phase 1 | Complete |

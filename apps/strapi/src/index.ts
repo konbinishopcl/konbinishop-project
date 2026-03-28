@@ -26,8 +26,8 @@ export default {
    * run jobs, or perform some special logic.
    */
   async bootstrap({ strapi }) {
-    // Verificar si los seeders están habilitados
     const runSeeders = process.env.APP_RUN_SEEDERS === "true";
+    const runCleanup = process.env.APP_CLEANUP_SEEDERS === "true";
 
     if (!runSeeders) {
       console.log("⏭️ Seeders deshabilitados (APP_RUN_SEEDERS=false)");
@@ -37,9 +37,10 @@ export default {
     console.log("🌱 Ejecutando seeders...");
 
     try {
-      // Ejecutar cleanup primero para limpiar datos existentes
-      await cleanup({ strapi });
-      console.log("🧹 Cleanup completado exitosamente");
+      if (runCleanup) {
+        await cleanup({ strapi });
+        console.log("🧹 Cleanup completado exitosamente");
+      }
 
       // Ejecutar seeders en orden
       await populateRegions(strapi);

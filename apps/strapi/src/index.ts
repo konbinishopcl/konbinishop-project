@@ -3,6 +3,7 @@
 import populateCategories from "../seeders/categories";
 import populateRegions from "../seeders/regions";
 import populateTags from "../seeders/tags";
+import populateEvents from "../seeders/events";
 import populateArticles from "../seeders/articles";
 import populateHeroes from "../seeders/heroes";
 import populateSpots from "../seeders/spots";
@@ -49,6 +50,9 @@ export default {
 
       await populateTags(strapi);
       console.log("🏷️ Tags poblados exitosamente");
+
+      await populateEvents(strapi);
+      console.log("Events seeded successfully");
 
       await populateArticles(strapi);
       console.log("Articles seeded successfully");

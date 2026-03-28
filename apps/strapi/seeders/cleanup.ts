@@ -7,7 +7,13 @@ export default async ({ strapi }) => {
   try {
     // Eliminar primero las entidades que dependen de otras (orden correcto)
 
-    // 1. Eliminar todos los artículos (pueden referenciar tags/events)
+    // 1. Eliminar todos los eventos
+    const deletedEvents = await strapi.db.query('api::event.event').deleteMany({
+      where: {}
+    });
+    console.log(`🗑️  Eliminados ${deletedEvents.count} eventos`);
+
+    // 2. Eliminar todos los artículos (pueden referenciar tags/events)
     const deletedArticles = await strapi.db.query('api::article.article').deleteMany({
       where: {}
     });
@@ -50,7 +56,7 @@ export default async ({ strapi }) => {
     console.log(`🗑️  Eliminadas ${deletedRegions.count} regiones`);
 
     console.log("✅ Limpieza completada exitosamente");
-    console.log(`📊 Total de entradas eliminadas: ${deletedArticles.count + deletedHeroes.count + deletedSpots.count + deletedCommunes.count + deletedCategories.count + deletedTags.count + deletedRegions.count}`);
+    console.log(`📊 Total de entradas eliminadas: ${deletedEvents.count + deletedArticles.count + deletedHeroes.count + deletedSpots.count + deletedCommunes.count + deletedCategories.count + deletedTags.count + deletedRegions.count}`);
 
   } catch (error) {
     console.error("❌ Error durante la limpieza:", error);

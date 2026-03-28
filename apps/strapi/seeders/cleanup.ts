@@ -7,32 +7,50 @@ export default async ({ strapi }) => {
   try {
     // Eliminar primero las entidades que dependen de otras (orden correcto)
 
-    // 1. Eliminar todas las comunas (dependen de regiones)
+    // 1. Eliminar todos los artículos (pueden referenciar tags/events)
+    const deletedArticles = await strapi.db.query('api::article.article').deleteMany({
+      where: {}
+    });
+    console.log(`🗑️  Eliminados ${deletedArticles.count} artículos`);
+
+    // 2. Eliminar todos los heroes (pueden referenciar regiones/comunas/categorías)
+    const deletedHeroes = await strapi.db.query('api::hero.hero').deleteMany({
+      where: {}
+    });
+    console.log(`🗑️  Eliminados ${deletedHeroes.count} heroes`);
+
+    // 3. Eliminar todos los spots
+    const deletedSpots = await strapi.db.query('api::spot.spot').deleteMany({
+      where: {}
+    });
+    console.log(`🗑️  Eliminados ${deletedSpots.count} spots`);
+
+    // 4. Eliminar todas las comunas (dependen de regiones)
     const deletedCommunes = await strapi.db.query('api::commune.commune').deleteMany({
       where: {}
     });
     console.log(`🗑️  Eliminadas ${deletedCommunes.count} comunas`);
 
-    // 2. Eliminar todas las categorías
+    // 5. Eliminar todas las categorías
     const deletedCategories = await strapi.db.query('api::category.category').deleteMany({
       where: {}
     });
     console.log(`🗑️  Eliminadas ${deletedCategories.count} categorías`);
 
-    // 3. Eliminar todos los tags
+    // 6. Eliminar todos los tags
     const deletedTags = await strapi.db.query('api::tag.tag').deleteMany({
       where: {}
     });
     console.log(`🗑️  Eliminados ${deletedTags.count} tags`);
 
-    // 4. Eliminar todas las regiones (después de comunas)
+    // 7. Eliminar todas las regiones (después de comunas)
     const deletedRegions = await strapi.db.query('api::region.region').deleteMany({
       where: {}
     });
     console.log(`🗑️  Eliminadas ${deletedRegions.count} regiones`);
 
     console.log("✅ Limpieza completada exitosamente");
-    console.log(`📊 Total de entradas eliminadas: ${deletedCategories.count + deletedRegions.count + deletedTags.count + deletedCommunes.count}`);
+    console.log(`📊 Total de entradas eliminadas: ${deletedArticles.count + deletedHeroes.count + deletedSpots.count + deletedCommunes.count + deletedCategories.count + deletedTags.count + deletedRegions.count}`);
 
   } catch (error) {
     console.error("❌ Error durante la limpieza:", error);

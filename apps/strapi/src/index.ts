@@ -3,6 +3,9 @@
 import populateCategories from "../seeders/categories";
 import populateRegions from "../seeders/regions";
 import populateTags from "../seeders/tags";
+import populateArticles from "../seeders/articles";
+import populateHeroes from "../seeders/heroes";
+import populateSpots from "../seeders/spots";
 import cleanup from "../seeders/cleanup";
 
 export default {
@@ -46,6 +49,15 @@ export default {
 
       await populateTags(strapi);
       console.log("🏷️ Tags poblados exitosamente");
+
+      await populateArticles(strapi);
+      console.log("Articles seeded successfully");
+
+      await populateHeroes(strapi);
+      console.log("Heroes seeded successfully");
+
+      await populateSpots(strapi);
+      console.log("Spots seeded successfully");
 
       console.log("🎉 Todos los seeders completados exitosamente");
     } catch (error) {

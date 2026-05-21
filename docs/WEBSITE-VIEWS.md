@@ -256,7 +256,7 @@ Historial de órdenes y transacciones. **Pendiente de implementar.**
 
 ## Vistas pendientes (no existen aún)
 
-### `/u/[slug]` — Perfil público de organizador
+### `/@[slug]` — Perfil público de organizador
 Solo visible si el organizador tiene al menos un evento aprobado.
 
 - Banner de perfil
@@ -283,7 +283,7 @@ Contenido del artículo, tags y eventos relacionados. Pendiente de implementar.
 4. `/carrito` — revisa ítems, elige días y paga
 5. Administrador aprueba — el contenido aparece en el sitio
 6. `/cuenta` — edita su perfil público
-7. `/u/:slug` — su perfil público es visible cuando tiene al menos un evento aprobado
+7. `/@[slug]` — su perfil público es visible cuando tiene al menos un evento aprobado
 
 También puede crear avisos y heroes de forma independiente desde `/cuenta`, sin necesidad de crear un evento primero.
 
@@ -325,9 +325,9 @@ También puede crear avisos y heroes de forma independiente desde `/cuenta`, sin
 
 ## Routing y convención de URLs
 
-- `[category]` es un segmento dinámico. Las rutas estáticas del proyecto tienen precedencia en Next.js App Router: `/busqueda`, `/login`, `/registro`, `/cuenta`, `/crear`, `/carrito`, `/dashboard`, `/u`.
+- `[category]` es un segmento dinámico. Las rutas estáticas del proyecto tienen precedencia en Next.js App Router: `/busqueda`, `/login`, `/registro`, `/cuenta`, `/crear`, `/carrito`, `/dashboard`.
 - Los eventos usan `slug` único generado desde el título.
-- Los perfiles públicos usan `slug` generado desde el nombre del usuario.
+- Los perfiles públicos usan la convención `/@[slug]` (con arroba). El `@` actúa como disambiguador: si la URL empieza con `@` es un perfil de organizador, si no es una ruta predefinida o categoría, 404. En Next.js se implementa con middleware que reescribe `/@[slug]` → `/profile/[slug]` internamente, manteniendo la URL bonita en el browser.
 
 ### URLs externas — Spots y Heroes
 
@@ -453,7 +453,7 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 | `/registro` | Implementado |
 | `/recuperar-contrasena` | Pendiente |
 | `/reset-password/:token` | Pendiente |
-| `/u/[slug]` | Pendiente |
+| `/@[slug]` | Pendiente |
 | `/articulos` | Pendiente |
 | `/articulos/[slug]` | Pendiente |
 | `/dashboard` | Parcial (datos mock/hardcodeados) |

@@ -1,0 +1,198 @@
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { OrderStatus, PublicationStatus } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import type { JwtUser } from '../auth/current-user.decorator';
+import { GatewayFactory } from './gateway.factory';
+import { GatewayType } from './dto/checkout.dto';
+import { OrderItemType } from '../orders/dto/add-item.dto';
+
+@Injectable()
+export class PaymentsService {
+  private readonly logger = new Logger(PaymentsService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+    private readonly gatewayFactory: GatewayFactory,
+  ) {}
+
+  /**
+   * Inicia el pago de una orden DRAFT.
+   * Valida cuota, llama a la pasarela y transiciona la orden a PENDING_PAYMENT.
+   * Devuelve la URL de redirección al frontend.
+   */
+  async initiate(orderId: number, gateway: GatewayType, user: JwtUser) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: { items: { include: { spot: true, hero: true, event: true } } },
+    });
+
+    if (!order) throw new NotFoundException('Orden no encontrada');
+    if (order.userId !== user.sub) throw new ForbiddenException('No tienes acceso a esta orden');
+    if (order.status !== OrderStatus.DRAFT) {
+      throw new BadRequestException('Solo se pueden pagar órdenes en estado DRAFT');
+    }
+    if (!order.items.length) {
+      throw new UnprocessableEntityException('El carrito está vacío');
+    }
+
+    // Validar cuota en el momento del pago
+    const hasSpot = order.items.some((i) => i.type === OrderItemType.SPOT);
+    const hasHero = order.items.some((i) => i.type === OrderItemType.HERO);
+    if (hasSpot) await this.assertSpotQuota();
+    if (hasHero) await this.assertHeroQuota();
+
+    const apiBase = this.config.get<string>('API_BASE_URL', 'http://localhost:3333');
+    const returnUrl = `${apiBase}/api/payments/${gateway.toLowerCase()}/callback`;
+
+    const pg = this.gatewayFactory.get(gateway);
+    const result = await pg.initiate({ orderId, amount: order.total, returnUrl });
+
+    await this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        status: OrderStatus.PENDING_PAYMENT,
+        gateway: gateway,
+        externalId: result.externalId,
+      },
+    });
+
+    this.logger.log(`Order ${orderId} → PENDING_PAYMENT via ${gateway}`);
+    return { redirectUrl: result.redirectUrl, externalId: result.externalId };
+  }
+
+  /**
+   * Callback de Transbank — confirma el pago y activa los ítems de la orden.
+   * Devuelve la URL del frontend a la que se debe redirigir el navegador.
+   */
+  async handleTransbankCallback(tokenWs?: string, tbkToken?: string): Promise<string> {
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+
+    // tbkToken presente = transacción abortada por el usuario
+    if (!tokenWs) {
+      this.logger.warn('Transbank callback without token_ws (aborted)');
+      return `${frontendUrl}/checkout/failed?reason=aborted`;
+    }
+
+    const order = await this.prisma.order.findFirst({
+      where: { externalId: tokenWs, status: OrderStatus.PENDING_PAYMENT },
+      include: {
+        items: {
+          include: { event: true, spot: true, hero: true },
+        },
+      },
+    });
+
+    if (!order) {
+      this.logger.error(`No order found for Transbank token: ${tokenWs}`);
+      return `${frontendUrl}/checkout/failed?reason=not_found`;
+    }
+
+    const pg = this.gatewayFactory.get(GatewayType.TRANSBANK);
+    const confirmation = await pg.confirm(tokenWs);
+
+    if (!confirmation.success) {
+      await this.prisma.order.update({
+        where: { id: order.id },
+        data: { status: OrderStatus.FAILED },
+      });
+      this.logger.warn(`Order ${order.id} payment failed — code ${confirmation.responseCode}`);
+      return `${frontendUrl}/checkout/failed?orderId=${order.id}&code=${confirmation.responseCode}`;
+    }
+
+    // Pago exitoso → activar ítems
+    await this.activateOrderItems(order);
+    await this.prisma.order.update({
+      where: { id: order.id },
+      data: { status: OrderStatus.PAID },
+    });
+
+    this.logger.log(`Order ${order.id} → PAID`);
+    return `${frontendUrl}/checkout/success?orderId=${order.id}`;
+  }
+
+  // ── Activación de ítems al confirmar el pago ──
+
+  private async activateOrderItems(order: {
+    id: number;
+    items: Array<{
+      type: string;
+      days: number;
+      subtotal: number;
+      eventId: number | null;
+      spotId: number | null;
+      heroId: number | null;
+    }>;
+  }) {
+    const expirationDate = (days: number) => {
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() + days);
+      return d;
+    };
+
+    const updates = order.items.map((item) => {
+      if (item.type === OrderItemType.EVENT && item.eventId) {
+        return this.prisma.event.update({
+          where: { id: item.eventId },
+          data: {
+            status: PublicationStatus.PENDING_MODERATION,
+            expirationDate: expirationDate(item.days),
+          },
+        });
+      }
+      if (item.type === OrderItemType.SPOT && item.spotId) {
+        return this.prisma.spot.update({
+          where: { id: item.spotId },
+          data: {
+            status: PublicationStatus.PENDING_MODERATION,
+            days: item.days,
+            amount: item.subtotal,
+            expirationDate: expirationDate(item.days),
+          },
+        });
+      }
+      if (item.type === OrderItemType.HERO && item.heroId) {
+        return this.prisma.hero.update({
+          where: { id: item.heroId },
+          data: {
+            status: PublicationStatus.PENDING_MODERATION,
+            days: item.days,
+            amount: item.subtotal,
+            expirationDate: expirationDate(item.days),
+          },
+        });
+      }
+      return Promise.resolve();
+    });
+
+    await Promise.all(updates);
+  }
+
+  private async assertSpotQuota() {
+    const maxActive = Number(this.config.get('SPOT_MAX_ACTIVE')) || 10;
+    const active = await this.prisma.spot.count({
+      where: { status: PublicationStatus.APPROVED, expirationDate: { gte: new Date() } },
+    });
+    if (active >= maxActive) {
+      throw new UnprocessableEntityException('No hay cupos disponibles para spots en este momento');
+    }
+  }
+
+  private async assertHeroQuota() {
+    const maxActive = Number(this.config.get('HERO_MAX_ACTIVE')) || 5;
+    const active = await this.prisma.hero.count({
+      where: { status: PublicationStatus.APPROVED, expirationDate: { gte: new Date() } },
+    });
+    if (active >= maxActive) {
+      throw new UnprocessableEntityException('No hay cupos disponibles para heroes en este momento');
+    }
+  }
+}

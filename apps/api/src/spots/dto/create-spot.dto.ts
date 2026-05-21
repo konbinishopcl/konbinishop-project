@@ -18,14 +18,8 @@ export class CreateSpotDto {
   @IsEnum(SpotLinkType)
   linkType: SpotLinkType;
 
-  // A URL, a phone number or an email, depending on linkType.
   @ApiProperty({ example: 'https://tienda.ejemplo.com', minLength: 3, description: 'URL, teléfono o email según linkType' })
   @IsString()
   @MinLength(3)
   linkValue: string;
-
-  @ApiPropertyOptional({ example: '2025-12-31', description: 'Fecha de expiración ISO (YYYY-MM-DD)' })
-  @IsOptional()
-  @IsString()
-  expirationDate?: string;
 }

@@ -10,6 +10,9 @@ import { CatalogModule } from './catalog/catalog.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { SpotsModule } from './spots/spots.module';
 import { HeroesModule } from './heroes/heroes.module';
+import { ArticlesModule } from './articles/articles.module';
+import { OrdersModule } from './orders/orders.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { HeroesModule } from './heroes/heroes.module';
     UploadsModule,
     SpotsModule,
     HeroesModule,
+    ArticlesModule,
+    OrdersModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -10,7 +10,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiOperation,
   ApiTags,
@@ -44,7 +43,7 @@ export class HeroesController {
   @Get('mine')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "List the current user's heroes" })
+  @ApiOperation({ summary: "List the current user's heroes (any status)" })
   findMine(@CurrentUser() user: JwtUser) {
     return this.heroes.findMine(user);
   }
@@ -52,10 +51,7 @@ export class HeroesController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Create a hero (any authenticated user, subject to quota and max days)',
-  })
-  @ApiBadRequestResponse({ description: 'days exceeds HERO_MAX_DAYS' })
+  @ApiOperation({ summary: 'Create a hero in DRAFT — add to an order to pay and publish' })
   create(@Body() dto: CreateHeroDto, @CurrentUser() user: JwtUser) {
     return this.heroes.create(dto, user);
   }

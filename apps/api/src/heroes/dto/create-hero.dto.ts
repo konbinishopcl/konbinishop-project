@@ -4,9 +4,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  Max,
   MaxLength,
-  Min,
   MinLength,
 } from 'class-validator';
 import { SpotLinkType } from '@prisma/client';
@@ -63,11 +61,4 @@ export class CreateHeroDto {
   @IsOptional()
   @IsInt()
   categoryId?: number;
-
-  // Days the placement runs; total price = days * HERO_PRICE_PER_DAY.
-  @ApiProperty({ example: 7, minimum: 1, maximum: 365, description: 'Días de duración del placement' })
-  @IsInt()
-  @Min(1)
-  @Max(365)
-  days: number;
 }

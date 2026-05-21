@@ -33,10 +33,18 @@ export class SpotsController {
     return this.spots.findActive();
   }
 
+  @Get('quota')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Spot quota and per-day price' })
+  quota() {
+    return this.spots.quota();
+  }
+
   @Get('mine')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "List the current user's spots" })
+  @ApiOperation({ summary: "List the current user's spots (any status)" })
   findMine(@CurrentUser() user: JwtUser) {
     return this.spots.findMine(user);
   }
@@ -44,10 +52,7 @@ export class SpotsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Create a spot (any authenticated user, subject to max days)',
-  })
-  @ApiBadRequestResponse({ description: 'expirationDate exceeds SPOT_MAX_DAYS' })
+  @ApiOperation({ summary: 'Create a spot in DRAFT — add to an order to pay and publish' })
   create(@Body() dto: CreateSpotDto, @CurrentUser() user: JwtUser) {
     return this.spots.create(dto, user);
   }
@@ -56,7 +61,6 @@ export class SpotsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a spot (owner or admin)' })
-  @ApiBadRequestResponse({ description: 'expirationDate exceeds SPOT_MAX_DAYS' })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSpotDto,
@@ -69,6 +73,7 @@ export class SpotsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete a spot (owner or admin)' })
+  @ApiBadRequestResponse({ description: 'Spot not found or access denied' })
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
     return this.spots.remove(id, user);
   }

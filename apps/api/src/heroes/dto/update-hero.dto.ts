@@ -2,8 +2,8 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { SpotLinkType } from '@prisma/client';
 
-// Only the content fields are editable. Duration (days), amount and
-// expiration are set at creation and not changed through this DTO.
+// Only the content fields are editable. Days, amount and expiration are
+// set at payment confirmation and not changed through this DTO.
 export class UpdateHeroDto {
   @ApiPropertyOptional({ example: 'Festival de Verano', maxLength: 120 })
   @IsOptional()

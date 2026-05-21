@@ -2,6 +2,9 @@ dist
 node_modules
 .env
 *.log
+services/**/*.js
+services/**/*.js.map
+services/**/*.d.ts
 
 # Uploaded/seed images — deployed out of band (rsync), not tracked in git
 uploads/*

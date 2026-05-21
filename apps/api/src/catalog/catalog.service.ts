@@ -1,112 +1,160 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateArticleDto } from './dto/create-article.dto';
-import { UpdateArticleDto } from './dto/update-article.dto';
+import { CreateRegionDto } from './dto/create-region.dto';
+import { UpdateRegionDto } from './dto/update-region.dto';
+import { CreateCommuneDto } from './dto/create-commune.dto';
+import { UpdateCommuneDto } from './dto/update-commune.dto';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
+import { CreateTagDto } from './dto/create-tag.dto';
+import { UpdateTagDto } from './dto/update-tag.dto';
 
-/** Lectura de taxonomías y contenido de referencia (regiones, comunas, etc.). */
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
+
+  // ── Regions ──
 
   regions() {
     return this.prisma.region.findMany({ orderBy: { name: 'asc' } });
   }
 
+  async findRegion(id: number) {
+    const region = await this.prisma.region.findUnique({ where: { id }, include: { communes: true } });
+    if (!region) throw new NotFoundException('Región no encontrada');
+    return region;
+  }
+
+  async createRegion(dto: CreateRegionDto) {
+    await this.assertUnique('region', dto.slug);
+    return this.prisma.region.create({ data: { name: dto.name, slug: dto.slug } });
+  }
+
+  async updateRegion(id: number, dto: UpdateRegionDto) {
+    await this.findRegion(id);
+    if (dto.slug) await this.assertUnique('region', dto.slug, id);
+    return this.prisma.region.update({ where: { id }, data: dto });
+  }
+
+  async removeRegion(id: number) {
+    await this.findRegion(id);
+    await this.prisma.region.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  // ── Communes ──
+
   communes(regionSlug?: string) {
     return this.prisma.commune.findMany({
       where: regionSlug ? { region: { slug: regionSlug } } : undefined,
+      include: { region: true },
       orderBy: { name: 'asc' },
     });
   }
+
+  async findCommune(id: number) {
+    const commune = await this.prisma.commune.findUnique({ where: { id }, include: { region: true } });
+    if (!commune) throw new NotFoundException('Comuna no encontrada');
+    return commune;
+  }
+
+  async createCommune(dto: CreateCommuneDto) {
+    await this.assertUnique('commune', dto.slug);
+    return this.prisma.commune.create({
+      data: {
+        name: dto.name,
+        slug: dto.slug,
+        region: dto.regionId ? { connect: { id: dto.regionId } } : undefined,
+      },
+      include: { region: true },
+    });
+  }
+
+  async updateCommune(id: number, dto: UpdateCommuneDto) {
+    await this.findCommune(id);
+    if (dto.slug) await this.assertUnique('commune', dto.slug, id);
+    const { regionId, ...rest } = dto;
+    return this.prisma.commune.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(regionId !== undefined && { region: { connect: { id: regionId } } }),
+      },
+      include: { region: true },
+    });
+  }
+
+  async removeCommune(id: number) {
+    await this.findCommune(id);
+    await this.prisma.commune.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  // ── Categories ──
 
   categories() {
     return this.prisma.category.findMany({ orderBy: { name: 'asc' } });
   }
 
+  async findCategory(id: number) {
+    const category = await this.prisma.category.findUnique({ where: { id } });
+    if (!category) throw new NotFoundException('Categoría no encontrada');
+    return category;
+  }
+
+  async createCategory(dto: CreateCategoryDto) {
+    await this.assertUnique('category', dto.slug);
+    return this.prisma.category.create({ data: dto });
+  }
+
+  async updateCategory(id: number, dto: UpdateCategoryDto) {
+    await this.findCategory(id);
+    if (dto.slug) await this.assertUnique('category', dto.slug, id);
+    return this.prisma.category.update({ where: { id }, data: dto });
+  }
+
+  async removeCategory(id: number) {
+    await this.findCategory(id);
+    await this.prisma.category.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  // ── Tags ──
+
   tags() {
     return this.prisma.tag.findMany({ orderBy: { name: 'asc' } });
   }
 
-  articles() {
-    return this.prisma.article.findMany({
-      include: { tags: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findTag(id: number) {
+    const tag = await this.prisma.tag.findUnique({ where: { id } });
+    if (!tag) throw new NotFoundException('Tag no encontrado');
+    return tag;
   }
 
-  async articleBySlug(slug: string) {
-    const article = await this.prisma.article.findUnique({
-      where: { slug },
-      include: { tags: true },
-    });
-    if (!article) throw new NotFoundException('Artículo no encontrado');
-    return article;
+  async createTag(dto: CreateTagDto) {
+    await this.assertUnique('tag', dto.slug);
+    return this.prisma.tag.create({ data: dto });
   }
 
-  // ── Administración de artículos (ADMIN+) ──
-
-  async createArticle(dto: CreateArticleDto) {
-    const slug = dto.slug ?? slugify(dto.title);
-    const existing = await this.prisma.article.findUnique({ where: { slug } });
-    if (existing) throw new ConflictException(`Ya existe un artículo con el slug "${slug}"`);
-
-    return this.prisma.article.create({
-      data: {
-        title: dto.title,
-        slug,
-        excerpt: dto.excerpt,
-        content: dto.content,
-        image: dto.image,
-        tags: dto.tagIds?.length ? { connect: dto.tagIds.map((id) => ({ id })) } : undefined,
-      },
-      include: { tags: true },
-    });
+  async updateTag(id: number, dto: UpdateTagDto) {
+    await this.findTag(id);
+    if (dto.slug) await this.assertUnique('tag', dto.slug, id);
+    return this.prisma.tag.update({ where: { id }, data: dto });
   }
 
-  async updateArticle(id: number, dto: UpdateArticleDto) {
-    await this.findArticleById(id);
+  async removeTag(id: number) {
+    await this.findTag(id);
+    await this.prisma.tag.delete({ where: { id } });
+    return { deleted: true };
+  }
 
-    if (dto.slug) {
-      const conflict = await this.prisma.article.findFirst({
-        where: { slug: dto.slug, NOT: { id } },
-      });
-      if (conflict) throw new ConflictException(`Ya existe un artículo con el slug "${dto.slug}"`);
+  // ── Helper ──
+
+  private async assertUnique(model: 'region' | 'commune' | 'category' | 'tag', slug: string, excludeId?: number) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const existing = await (this.prisma[model] as any).findUnique({ where: { slug } });
+    if (existing && existing.id !== excludeId) {
+      throw new ConflictException(`Ya existe un registro con el slug "${slug}"`);
     }
-
-    return this.prisma.article.update({
-      where: { id },
-      data: {
-        ...(dto.title !== undefined && { title: dto.title }),
-        ...(dto.slug !== undefined && { slug: dto.slug }),
-        ...(dto.excerpt !== undefined && { excerpt: dto.excerpt }),
-        ...(dto.content !== undefined && { content: dto.content }),
-        ...(dto.image !== undefined && { image: dto.image }),
-        ...(dto.tagIds !== undefined && {
-          tags: { set: dto.tagIds.map((tagId) => ({ id: tagId })) },
-        }),
-      },
-      include: { tags: true },
-    });
   }
-
-  async removeArticle(id: number) {
-    await this.findArticleById(id);
-    return this.prisma.article.delete({ where: { id } });
-  }
-
-  private async findArticleById(id: number) {
-    const article = await this.prisma.article.findUnique({ where: { id } });
-    if (!article) throw new NotFoundException('Artículo no encontrado');
-    return article;
-  }
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
 }

@@ -30,7 +30,11 @@ export class UpdateArticleDto {
   @IsString()
   image?: string;
 
-  @ApiPropertyOptional({ type: [Number], example: [1, 4], description: 'IDs de tags a asociar (reemplaza los actuales)' })
+  @ApiPropertyOptional({
+    type: [Number],
+    example: [1, 4],
+    description: 'IDs de tags a asociar (reemplaza los actuales)',
+  })
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })

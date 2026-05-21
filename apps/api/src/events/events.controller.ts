@@ -17,6 +17,7 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { QueryEventsDto } from './dto/query-events.dto';
 import { RejectEventDto } from './dto/reject-event.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
@@ -26,22 +27,17 @@ import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
 export class EventsController {
   constructor(private readonly events: EventsService) {}
 
-  // ── Lectura pública ──
+  // ── Lectura ──
 
   @Get()
-  @ApiOperation({ summary: 'Listar eventos aprobados (público, paginado)' })
-  findAll(@Query() query: QueryEventsDto) {
-    return this.events.findPublic(query);
-  }
-
-  // Rutas estáticas declaradas antes de :slug para que no las capture el param.
-  @Get('admin')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Listar todos los eventos, cualquier estado (ADMIN+)' })
-  findForAdmin(@Query() query: QueryEventsDto) {
-    return this.events.findForAdmin(query);
+  @ApiOperation({
+    summary:
+      'Listar eventos. Público: solo APPROVED y activos. Admin/SuperAdmin: todos los estados.',
+  })
+  findAll(@Query() query: QueryEventsDto, @CurrentUser() user: JwtUser | null) {
+    return this.events.findAll(query, user);
   }
 
   @Get('mine')

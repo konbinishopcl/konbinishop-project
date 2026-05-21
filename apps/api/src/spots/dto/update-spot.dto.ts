@@ -2,8 +2,6 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { SpotLinkType } from '@prisma/client';
 
-// Same fields as CreateSpotDto but all optional. Written by hand to avoid
-// adding the @nestjs/mapped-types dependency.
 export class UpdateSpotDto {
   @ApiPropertyOptional({ example: 'Konbini Store', maxLength: 120 })
   @IsOptional()
@@ -27,9 +25,4 @@ export class UpdateSpotDto {
   @IsString()
   @MinLength(3)
   linkValue?: string;
-
-  @ApiPropertyOptional({ example: '2025-12-31', description: 'Fecha de expiración ISO (YYYY-MM-DD)' })
-  @IsOptional()
-  @IsString()
-  expirationDate?: string;
 }

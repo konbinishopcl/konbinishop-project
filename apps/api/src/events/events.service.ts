@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -38,30 +38,43 @@ const EVENT_INCLUDE_ADMIN = {
 export class EventsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ─────────────────────── Lectura pública ───────────────────────
+  // ─────────────────────── Lectura ───────────────────────
 
-  async findPublic(query: QueryEventsDto) {
+  /**
+   * Listado paginado de eventos.
+   * - Admin/SuperAdmin: todos los estados, pageSize máx 100, incluye owner.
+   * - Público: solo APPROVED y no expirados, pageSize máx 50.
+   */
+  async findAll(query: QueryEventsDto, user?: JwtUser | null) {
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
     const page = query.page ?? 1;
-    const pageSize = Math.min(query.pageSize ?? 12, 50);
+    const pageSize = Math.min(query.pageSize ?? (isAdmin ? 20 : 12), isAdmin ? 100 : 50);
+
+    const textFilter: Prisma.EventWhereInput = query.q
+      ? {
+          OR: [
+            { title: { contains: query.q, mode: 'insensitive' } },
+            { description: { contains: query.q, mode: 'insensitive' } },
+          ],
+        }
+      : {};
+
     const where: Prisma.EventWhereInput = {
-      isApproved: true,
-      isRejected: false,
+      ...(!isAdmin && {
+        status: PublicationStatus.APPROVED,
+        OR: [{ expirationDate: null }, { expirationDate: { gte: new Date() } }],
+      }),
       ...(query.category ? { categories: { some: { slug: query.category } } } : {}),
       ...(query.region ? { region: { slug: query.region } } : {}),
-      ...(query.q
-        ? {
-            OR: [
-              { title: { contains: query.q, mode: 'insensitive' } },
-              { description: { contains: query.q, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
+      ...textFilter,
     };
+
+    const include = isAdmin ? EVENT_INCLUDE_ADMIN : EVENT_INCLUDE;
 
     const [items, total] = await this.prisma.$transaction([
       this.prisma.event.findMany({
         where,
-        include: EVENT_INCLUDE,
+        include,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
@@ -77,7 +90,10 @@ export class EventsService {
       where: { slug },
       include: EVENT_INCLUDE,
     });
-    if (!event || !event.isApproved || event.isRejected) {
+    if (!event || event.status !== PublicationStatus.APPROVED) {
+      throw new NotFoundException('Evento no encontrado');
+    }
+    if (event.expirationDate && event.expirationDate < new Date()) {
       throw new NotFoundException('Evento no encontrado');
     }
     return event;
@@ -94,22 +110,6 @@ export class EventsService {
     });
   }
 
-  /** Todos los eventos, paginados — para el panel de moderación. */
-  async findForAdmin(query: QueryEventsDto) {
-    const page = query.page ?? 1;
-    const pageSize = Math.min(query.pageSize ?? 20, 100);
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.event.findMany({
-        include: EVENT_INCLUDE_ADMIN,
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      this.prisma.event.count(),
-    ]);
-    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
-  }
-
   // ─────────────────────── Creación ───────────────────────
 
   async create(dto: CreateEventDto, user: JwtUser) {
@@ -121,15 +121,13 @@ export class EventsService {
         slug,
         description: dto.description,
         about: dto.about,
-        expirationDate: dto.expirationDate ? new Date(dto.expirationDate) : null,
         address: dto.address,
         addressNumber: dto.addressNumber,
         ticketUrl: dto.ticketUrl,
         banner: dto.banner,
         poster: dto.poster,
         gallery: dto.gallery ?? [],
-        isApproved: false,
-        isRejected: false,
+        status: PublicationStatus.DRAFT,
         owner: { connect: { id: user.sub } },
         region: dto.regionId ? { connect: { id: dto.regionId } } : undefined,
         commune: dto.communeId ? { connect: { id: dto.communeId } } : undefined,
@@ -189,7 +187,6 @@ export class EventsService {
     if (dto.categoryIds !== undefined) {
       data.categories = { set: dto.categoryIds.map((cid) => ({ id: cid })) };
     }
-    // Los componentes repetibles se reemplazan por completo cuando vienen en el dto.
     if (dto.prices !== undefined) {
       data.prices = {
         deleteMany: {},
@@ -225,7 +222,7 @@ export class EventsService {
   async remove(id: number, user: JwtUser) {
     const event = await this.ensure(id);
     this.assertCanManage(event, user);
-    await this.prisma.event.delete({ where: { id } }); // los componentes caen por cascade
+    await this.prisma.event.delete({ where: { id } });
     return { deleted: true };
   }
 
@@ -236,8 +233,7 @@ export class EventsService {
     return this.prisma.event.update({
       where: { id },
       data: {
-        isApproved: true,
-        isRejected: false,
+        status: PublicationStatus.APPROVED,
         rejectedReason: null,
         approvedBy: { connect: { id: user.sub } },
         rejectedBy: { disconnect: true },
@@ -251,8 +247,7 @@ export class EventsService {
     return this.prisma.event.update({
       where: { id },
       data: {
-        isApproved: false,
-        isRejected: true,
+        status: PublicationStatus.REJECTED,
         rejectedReason: reason,
         rejectedBy: { connect: { id: user.sub } },
       },

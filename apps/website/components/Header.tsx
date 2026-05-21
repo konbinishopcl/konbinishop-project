@@ -70,11 +70,11 @@ export function Header() {
                     <div className="em">{user.email}</div>
                   </div>
                   {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
-                    <button onClick={() => { router.push("/admin"); setMenu(false); }}>🛠 Panel de administración</button>
+                    <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>🛠 Panel de administración</button>
                   )}
                   <button onClick={() => { setProfileOpen(true); setMenu(false); }}>👤 Editar perfil</button>
-                  <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>📋 Mis publicaciones</button>
-                  <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>🎫 Mis entradas</button>
+                  <button onClick={() => { router.push("/cuenta"); setMenu(false); }}>📋 Mis publicaciones</button>
+                  <button onClick={() => { router.push("/cuenta"); setMenu(false); }}>🎫 Mis entradas</button>
                   <button onClick={() => setMenu(false)}>⚙️ Configuración</button>
                   <button
                     className="danger"

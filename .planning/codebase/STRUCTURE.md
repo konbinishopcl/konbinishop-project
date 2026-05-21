@@ -32,13 +32,13 @@ konbini-project/
 │       │   │   ├── categoria/[cat]/      # Listado por categoría
 │       │   │   ├── evento/[id]/          # Detalle de evento
 │       │   │   ├── crear/                # Formulario de creación de evento (multi-paso)
-│       │   │   ├── dashboard/            # Panel del organizador
+│       │   │   ├── cuenta/               # Panel del usuario / organizador
 │       │   │   └── checkout/[id]/        # ⚠ Error de diseño — a eliminar (no se venden entradas)
 │       │   ├── login/            # Login (2 pasos)
 │       │   ├── registro/         # Registro (2 pasos)
-│       │   └── admin/            # Panel admin (layout con AdminGuard + admin.css)
-│       │       ├── page.tsx              # Redirige a /admin/dashboard
-│       │       ├── dashboard/  events/  users/
+│       │   └── dashboard/        # Panel admin (layout con AdminGuard + admin.css)
+│       │       ├── page.tsx              # Resumen del panel (índice de /dashboard)
+│       │       ├── events/  users/
 │       │       └── payments/ categories/ reports/ logs/ settings/ help/   # placeholders
 │       ├── components/           # Componentes públicos (PascalCase)
 │       │   └── admin/            # Componentes del panel admin
@@ -63,9 +63,11 @@ Hoy existen `auth` y `users`; `events` y las taxonomías están pendientes (ROAD
 **`apps/api/prisma/`** — `schema.prisma` (fuente de verdad del modelo de datos) y `seed.ts`.
 
 **`apps/website/app/(site)/`** — rutas del sitio público; comparten el layout del grupo.
+Incluye `cuenta/`, el panel del usuario normal / organizador.
 
-**`apps/website/app/admin/`** — panel de administración en la misma app; layout protegido
-por `AdminGuard`; estilos en `admin.css` con scope bajo `.admin`.
+**`apps/website/app/dashboard/`** — panel de administración (ruta `/dashboard`, para ADMIN y
+SUPER_ADMIN); layout protegido por `AdminGuard`; estilos en `admin.css` con scope bajo
+`.admin`. `page.tsx` es el resumen/índice del panel.
 
 **`apps/website/components/`** — componentes reutilizables; los del panel viven en
 `components/admin/`.
@@ -83,7 +85,7 @@ Ver `CONVENTIONS.md`.
   registrar el módulo en `app.module.ts`
 - **Cambio de modelo de datos:** editar `apps/api/prisma/schema.prisma` y crear una migración
 - **Nueva ruta pública:** `apps/website/app/(site)/<ruta>/page.tsx`
-- **Nueva vista de admin:** `apps/website/app/admin/<ruta>/page.tsx`
+- **Nueva vista de admin:** `apps/website/app/dashboard/<ruta>/page.tsx`
 - **Nuevo componente:** `apps/website/components/` (público) o `components/admin/` (panel)
 - **Llamada nueva a la API:** agregar método a `apps/website/lib/api.ts`
 

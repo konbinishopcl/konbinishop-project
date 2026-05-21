@@ -59,7 +59,7 @@ export function AdminSidebar() {
         ) : (
           <Link
             key={it.id}
-            href={`/admin/${it.id}`}
+            href={it.id === "dashboard" ? "/dashboard" : `/dashboard/${it.id}`}
             className={`sb-link ${active === it.id ? "on" : ""}`}
           >
             {it.ic} <span>{it.label}</span>

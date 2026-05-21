@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { MailgunService } from '../../services/mailgun/mailgun.service';
+import { MailgunService } from './mailgun.service';
 import {
   welcomeTemplate,
   passwordResetTemplate,
   eventApprovedTemplate,
   eventRejectedTemplate,
   paymentConfirmedTemplate,
-} from './templates';
+} from '../../utils/templates/mail.templates';
 
 @Injectable()
 export class MailService {

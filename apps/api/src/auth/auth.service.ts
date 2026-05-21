@@ -10,7 +10,7 @@ import { compare, hash } from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { MailService } from '../mail/mail.service';
+import { MailService } from '../../services/mailgun/mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 

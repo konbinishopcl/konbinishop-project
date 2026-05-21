@@ -18,7 +18,7 @@ import { RedisModule } from './redis/redis.module';
 import { HttpCacheInterceptor } from './cache/http-cache.interceptor';
 import { ProfilesModule } from './profiles/profiles.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
-import { MailModule } from './mail/mail.module';
+import { MailgunModule } from '../services/mailgun/mailgun.module';
 
 @Module({
   imports: [
@@ -37,7 +37,7 @@ import { MailModule } from './mail/mail.module';
     PaymentsModule,
     ProfilesModule,
     NewsletterModule,
-    MailModule,
+    MailgunModule,
   ],
   controllers: [AppController],
   providers: [

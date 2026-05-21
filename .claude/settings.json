@@ -24,9 +24,16 @@
       "Bash(ssh -vT git@github.com)",
       "Bash(wsl -d Ubuntu -- bash -lc 'ls -la ~/.ssh 2>&1; echo \"--- wsl agent ---\"; ssh-add -l 2>&1; echo \"--- wsl test ---\"; ssh -T git@github.com 2>&1')",
       "Bash(wsl -d Ubuntu -u gab -- bash -lc 'whoami; ls -la ~/.ssh 2>&1; echo \"--- gab test ---\"; ssh -T git@github.com 2>&1; echo \"--- repo remote ---\"; cd /home/gab/Code/konbini-project && git remote -v && git config --get core.sshCommand')",
-      "Bash(wsl -d Ubuntu -- whoami)",
-      "Bash(wsl -d Ubuntu -- bash -lc 'ssh -T git@github.com 2>&1 | tail -1')",
-      "Bash(wsl -d Ubuntu -u gab -- bash -lc 'ssh -T git@github.com 2>&1 | tail -1')"
+      "Bash(grep -n \"placehold\\\\|hero\\\\|Hero\" \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\\\\prisma\\\\seed.ts\")",
+      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/api/prisma/**)",
+      "Bash(ls -la \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\\\\uploads\" | head -40)",
+      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/api/**)",
+      "Bash(cd \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\\\\uploads\" && \\\\ *)",
+      "Bash(cd \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\" && cat src/heroes/heroes.service.ts && echo \"===SPOTS SERVICE===\" && cat src/spots/spots.service.ts)",
+      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/**)",
+      "Bash(cd \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\" && echo \"===.env===\" && grep -nE \"SPOT_|HERO_\" .env && echo \"===.env.example===\" && grep -nE \"SPOT_|HERO_\" .env.example && echo \"===create-spot.dto===\" && cat src/spots/dto/create-spot.dto.ts)",
+      "Bash(sed -n '8,14p' .env)",
+      "Bash(cd \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\" && cat src/spots/spots.module.ts && echo \"===APP MODULE ConfigModule===\" && grep -n \"ConfigModule\" src/app.module.ts)"
     ]
   }
 }

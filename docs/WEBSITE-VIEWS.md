@@ -20,6 +20,59 @@
 
 ---
 
+## Mapa de rutas
+
+```text
+/ (home)
+
+├── /busqueda
+
+├── /[category]
+│   └── /[category]/[slug]
+
+├── /articulos
+│   └── /articulos/[slug]
+
+├── /@[slug]
+
+├── /login
+├── /registro
+├── /recuperar-contrasena
+├── /reset-password/:token
+
+├── /cuenta
+│   ├── Mis publicaciones
+│   ├── Mis avisos
+│   │   └── Formulario aviso
+│   └── Mis heroes
+│       └── Formulario hero
+
+├── /crear
+│   ├── Paso 1
+│   ├── Paso 2
+│   ├── Paso 3
+│   └── Upsell post-evento
+│       ├── Formulario aviso
+│       └── Formulario hero
+
+├── /carrito
+│   ├── /checkout/success
+│   └── /checkout/failed
+
+└── /dashboard
+    ├── /dashboard/events
+    ├── /dashboard/users
+    ├── /dashboard/regions
+    ├── /dashboard/communes
+    ├── /dashboard/categories
+    ├── /dashboard/tags
+    ├── /dashboard/spots
+    ├── /dashboard/heroes
+    └── /dashboard/payments
+```
+
+---
+
 ## Vistas públicas
 
 ### Home `/`

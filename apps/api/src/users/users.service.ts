@@ -27,6 +27,19 @@ export class UsersService {
     return this.prisma.user.findMany({ select: USER_SELECT, orderBy: { id: 'asc' } });
   }
 
+  findRecent() {
+    return this.prisma.user.findMany({
+      select: {
+        id: true,
+        firstname: true,
+        lastname: true,
+        profile: { select: { avatar: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    });
+  }
+
   async create(dto: CreateUserDto) {
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (exists) throw new ConflictException('El email ya está registrado');

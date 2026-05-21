@@ -17,15 +17,20 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
-// Gestión de usuarios: listar = ADMIN+, mutaciones = solo SUPER_ADMIN.
 @ApiTags('users')
-@ApiBearerAuth()
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly users: UsersService) {}
 
+  @Get('recent')
+  @ApiOperation({ summary: 'Últimos 10 usuarios registrados — solo nombre y avatar (público)' })
+  findRecent() {
+    return this.users.findRecent();
+  }
+
   @Get()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiOperation({ summary: 'Listar usuarios (ADMIN o SUPER_ADMIN)' })
   findAll() {
@@ -33,6 +38,8 @@ export class UsersController {
   }
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @ApiOperation({ summary: 'Crear un usuario (SUPER_ADMIN)' })
   create(@Body() dto: CreateUserDto) {
@@ -40,6 +47,8 @@ export class UsersController {
   }
 
   @Patch(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @ApiOperation({ summary: 'Editar un usuario (SUPER_ADMIN)' })
   update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
@@ -47,6 +56,8 @@ export class UsersController {
   }
 
   @Patch(':id/ban')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @ApiOperation({ summary: 'Banear o desbanear un usuario (SUPER_ADMIN)' })
   ban(@Param('id', ParseIntPipe) id: number, @Body('blocked') blocked?: boolean) {
@@ -54,6 +65,8 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @ApiOperation({ summary: 'Eliminar un usuario (SUPER_ADMIN)' })
   remove(@Param('id', ParseIntPipe) id: number) {

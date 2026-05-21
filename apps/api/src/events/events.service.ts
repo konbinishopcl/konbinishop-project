@@ -4,7 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
-import { QueryEventsDto } from './dto/query-events.dto';
+import { QueryEventsDto, SortBy } from './dto/query-events.dto';
 
 /** Genera un slug url-safe: minúsculas, sin acentos, separado por guiones. */
 function slugify(text: string): string {
@@ -72,11 +72,16 @@ export class EventsService {
 
     const include = isAdmin ? EVENT_INCLUDE_ADMIN : EVENT_INCLUDE;
 
+    const orderBy: Prisma.EventOrderByWithRelationInput =
+      query.sortBy === SortBy.LIKES
+        ? { likes: { _count: 'desc' } }
+        : { createdAt: 'desc' };
+
     const [items, total] = await this.prisma.$transaction([
       this.prisma.event.findMany({
         where,
         include,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

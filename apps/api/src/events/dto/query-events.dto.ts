@@ -1,6 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+
+export enum SortBy {
+  LIKES = 'likes',
+}
 
 // Filtros y paginación del listado público de eventos.
 export class QueryEventsDto {
@@ -32,4 +36,9 @@ export class QueryEventsDto {
   @IsOptional()
   @IsString()
   region?: string;
+
+  @ApiPropertyOptional({ enum: SortBy, description: 'Ordenar por: "likes" = más likeados primero' })
+  @IsOptional()
+  @IsEnum(SortBy)
+  sortBy?: SortBy;
 }

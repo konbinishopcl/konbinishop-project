@@ -17,6 +17,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { RedisModule } from './redis/redis.module';
 import { HttpCacheInterceptor } from './cache/http-cache.interceptor';
 import { ProfilesModule } from './profiles/profiles.module';
+import { NewsletterModule } from './newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ProfilesModule } from './profiles/profiles.module';
     OrdersModule,
     PaymentsModule,
     ProfilesModule,
+    NewsletterModule,
   ],
   controllers: [AppController],
   providers: [

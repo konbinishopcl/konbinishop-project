@@ -60,10 +60,11 @@ Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al meno
 - **Sin heroes:** la sección no se renderiza (no empty state visible)
 - **Sin categorías con eventos:** no se renderiza ningún rail
 
-**Pendiente de API:**
-- `sortBy=likes` en `GET /events`
-- `GET /users/recent` (público, devuelve últimos 10 usuarios con perfil)
-- `POST /newsletter/subscribe`
+**APIs implementadas:**
+
+- `GET /events?pageSize=12&sortBy=likes` — devuelve los 12 más likeados
+- `GET /users/recent` — público, devuelve últimos 10 usuarios: `{ id, firstname, lastname, profile: { avatar } }`
+- `POST /newsletter/subscribe` — `{ email }`, sin auth requerida
 
 ---
 

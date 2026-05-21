@@ -371,6 +371,14 @@ model Profile {
   updatedAt DateTime @updatedAt
 }
 
+// ─────────────────────────── Newsletter ──────────────────────────
+
+model Subscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
 // ───────────────────────────── Likes ─────────────────────────────
 
 model Like {

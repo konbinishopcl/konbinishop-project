@@ -5,6 +5,7 @@
  * Ejecutar: yarn prisma:seed
  */
 import { PrismaClient } from '@prisma/client';
+import { hash } from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -166,7 +167,7 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.tag.deleteMany();
   await prisma.region.deleteMany();
-  await prisma.profile.deleteMany();
+  await prisma.user.deleteMany();
 
   // ── Regiones + comunas (las 16 regiones de Chile) ──
   const seenCommuneSlug = new Set<string>();
@@ -310,25 +311,38 @@ async function main() {
     ],
   });
 
-  // ── Perfiles (datos extra; el usuario vive en Neon Auth) ──
-  await prisma.profile.create({
+  // ── Usuarios (sistema local; un usuario por cada rol) ──
+  const passwordHash = await hash('konbini123', 10);
+  await prisma.user.create({
     data: {
-      userId: 'neon-auth-user-organizer-001',
-      rut: '12.345.678-9',
-      isCompany: false,
-      firstname: 'Camila',
-      lastname: 'Rojas',
-      role: 'organizer',
+      email: 'superadmin@konbini.cl',
+      passwordHash,
+      firstname: 'Super',
+      lastname: 'Admin',
+      role: 'SUPER_ADMIN',
+      confirmed: true,
     },
   });
-  await prisma.profile.create({
+  const admin = await prisma.user.create({
     data: {
-      userId: 'neon-auth-user-admin-001',
-      rut: '76.543.210-K',
-      isCompany: true,
+      email: 'admin@konbini.cl',
+      passwordHash,
       firstname: 'Equipo',
       lastname: 'Konbini',
-      role: 'admin',
+      role: 'ADMIN',
+      confirmed: true,
+    },
+  });
+  const organizer = await prisma.user.create({
+    data: {
+      email: 'organizador@konbini.cl',
+      passwordHash,
+      firstname: 'Camila',
+      lastname: 'Rojas',
+      rut: '12.345.678-9',
+      isCompany: false,
+      role: 'AUTHENTICATED',
+      confirmed: true,
     },
   });
 
@@ -349,8 +363,8 @@ async function main() {
       gallery: ['https://placehold.co/800x600/png', 'https://placehold.co/800x600/png'],
       isApproved: true,
       isRejected: false,
-      userId: 'neon-auth-user-organizer-001',
-      approvedById: 'neon-auth-user-admin-001',
+      userId: organizer.id,
+      approvedById: admin.id,
       regionId: region('region-metropolitana-de-santiago').id,
       communeId: commune('santiago').id,
       categories: { connect: [{ id: musica.id }] },
@@ -383,8 +397,8 @@ async function main() {
       gallery: [],
       isApproved: true,
       isRejected: false,
-      userId: 'neon-auth-user-organizer-001',
-      approvedById: 'neon-auth-user-admin-001',
+      userId: organizer.id,
+      approvedById: admin.id,
       regionId: region('region-del-biobio').id,
       communeId: commune('concepcion').id,
       categories: { connect: [{ id: animeManga.id }, { id: videojuegos.id }] },
@@ -410,7 +424,7 @@ async function main() {
       gallery: [],
       isApproved: false,
       isRejected: false,
-      userId: 'neon-auth-user-organizer-001',
+      userId: organizer.id,
       regionId: region('region-metropolitana-de-santiago').id,
       communeId: commune('providencia').id,
       categories: { connect: [{ id: gastronomia.id }] },
@@ -429,7 +443,7 @@ async function main() {
     heroes: await prisma.hero.count(),
     spots: await prisma.spot.count(),
     events: await prisma.event.count(),
-    profiles: await prisma.profile.count(),
+    users: await prisma.user.count(),
   };
   console.log('✅ Seed completo:', counts);
 }

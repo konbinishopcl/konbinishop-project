@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 **Milestone:** v1 — Payments, Emails, Organizer Panel, Search
 **Active Phase:** Phase 1 — Security Foundation (in progress)
 **Overall Progress:** [███░░░░░░░] 33%
-**Last session:** 2026-05-20 - Completed quick task 260520-q4m: Exportar Strapi a schema.prisma del nuevo API NestJS + seeders (Neon Auth)
+**Last session:** 2026-05-20 - Completed quick task 260520-r3t: Sistema de usuarios local con 3 roles (reemplaza Neon Auth + Neon)
 
 ## Phase Summary
 
@@ -54,6 +54,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 |---|-------------|------|--------|-----------|
 | 260327-x7o | Crear seeders para article, hero y spot en Strapi | 2026-03-28 | 3bd7606 | [260327-x7o-revisa-en-private-project-como-se-crean-](./quick/260327-x7o-revisa-en-private-project-como-se-crean-/) |
 | 260520-q4m | Exportar content types de Strapi a schema.prisma del nuevo API NestJS + seeders (auth vía Neon Auth) | 2026-05-20 | uncommitted | [260520-q4m-exportar-strapi-a-prisma-neon-auth](./quick/260520-q4m-exportar-strapi-a-prisma-neon-auth/) |
+| 260520-r3t | Sistema de usuarios local con 3 roles (SUPER_ADMIN/ADMIN/AUTHENTICATED) — reemplaza Neon Auth y Neon por PostgreSQL local | 2026-05-20 | uncommitted | [260520-r3t-sistema-usuarios-local-3-roles](./quick/260520-r3t-sistema-usuarios-local-3-roles/) |
 
 ## Next Action
 

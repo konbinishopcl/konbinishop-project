@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "Role" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'AUTHENTICATED');
+
 -- CreateTable
 CREATE TABLE "Region" (
     "id" SERIAL NOT NULL,
@@ -112,9 +115,9 @@ CREATE TABLE "Event" (
     "isApproved" BOOLEAN NOT NULL DEFAULT false,
     "isRejected" BOOLEAN NOT NULL DEFAULT false,
     "rejectedReason" TEXT,
-    "userId" TEXT,
-    "approvedById" TEXT,
-    "rejectedById" TEXT,
+    "userId" INTEGER,
+    "approvedById" INTEGER,
+    "rejectedById" INTEGER,
     "regionId" INTEGER,
     "communeId" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -163,17 +166,21 @@ CREATE TABLE "EventVideo" (
 );
 
 -- CreateTable
-CREATE TABLE "Profile" (
-    "userId" TEXT NOT NULL,
-    "rut" TEXT,
-    "isCompany" BOOLEAN,
+CREATE TABLE "User" (
+    "id" SERIAL NOT NULL,
+    "email" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
     "firstname" TEXT,
     "lastname" TEXT,
-    "role" TEXT,
+    "rut" TEXT,
+    "isCompany" BOOLEAN NOT NULL DEFAULT false,
+    "role" "Role" NOT NULL DEFAULT 'AUTHENTICATED',
+    "confirmed" BOOLEAN NOT NULL DEFAULT false,
+    "blocked" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Profile_pkey" PRIMARY KEY ("userId")
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -257,6 +264,12 @@ CREATE INDEX "Event_communeId_idx" ON "Event"("communeId");
 CREATE INDEX "Event_userId_idx" ON "Event"("userId");
 
 -- CreateIndex
+CREATE INDEX "Event_approvedById_idx" ON "Event"("approvedById");
+
+-- CreateIndex
+CREATE INDEX "Event_rejectedById_idx" ON "Event"("rejectedById");
+
+-- CreateIndex
 CREATE INDEX "EventPrice_eventId_idx" ON "EventPrice"("eventId");
 
 -- CreateIndex
@@ -267,6 +280,9 @@ CREATE INDEX "EventSocialLink_eventId_idx" ON "EventSocialLink"("eventId");
 
 -- CreateIndex
 CREATE INDEX "EventVideo_eventId_idx" ON "EventVideo"("eventId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE INDEX "_CategoryToEvent_B_index" ON "_CategoryToEvent"("B");
@@ -288,6 +304,15 @@ ALTER TABLE "Hero" ADD CONSTRAINT "Hero_regionId_fkey" FOREIGN KEY ("regionId") 
 
 -- AddForeignKey
 ALTER TABLE "Hero" ADD CONSTRAINT "Hero_communeId_fkey" FOREIGN KEY ("communeId") REFERENCES "Commune"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Event" ADD CONSTRAINT "Event_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Event" ADD CONSTRAINT "Event_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Event" ADD CONSTRAINT "Event_rejectedById_fkey" FOREIGN KEY ("rejectedById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Event" ADD CONSTRAINT "Event_regionId_fkey" FOREIGN KEY ("regionId") REFERENCES "Region"("id") ON DELETE SET NULL ON UPDATE CASCADE;

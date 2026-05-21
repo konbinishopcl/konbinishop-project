@@ -7,9 +7,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL") // Neon: conexión pooled (-pooler)
-  directUrl = env("DIRECT_URL")   // Neon: conexión directa, para migraciones
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ─────────────────────────── Geografía ───────────────────────────
@@ -134,10 +133,13 @@ model Event {
   isRejected     Boolean @default(false)
   rejectedReason String? // corregido desde el typo de Strapi "rejected_reazon"
 
-  // Usuarios — ids de Neon Auth (sin FK; Neon Auth es el source of truth)
-  userId       String?
-  approvedById String? // corregido: Strapi lo modelaba como oneToMany
-  rejectedById String?
+  // Usuario organizador + moderadores (sistema de usuarios local)
+  owner        User?   @relation("EventOwner", fields: [userId], references: [id])
+  userId       Int?
+  approvedBy   User?   @relation("EventApprover", fields: [approvedById], references: [id])
+  approvedById Int? // corregido: Strapi lo modelaba como oneToMany
+  rejectedBy   User?   @relation("EventRejecter", fields: [rejectedById], references: [id])
+  rejectedById Int?
 
   // Relaciones
   region     Region?    @relation(fields: [regionId], references: [id])
@@ -159,6 +161,8 @@ model Event {
   @@index([regionId])
   @@index([communeId])
   @@index([userId])
+  @@index([approvedById])
+  @@index([rejectedById])
 }
 
 // ───────────────────── Componentes de Event ──────────────────────
@@ -202,17 +206,31 @@ model EventVideo {
   @@index([eventId])
 }
 
-// ──────────────────────────── Perfil ─────────────────────────────
-// Campos extra del usuario que Neon Auth (neon_auth.users_sync) no cubre.
-// PK = id del usuario en Neon Auth.
+// ──────────────────────────── Usuarios ───────────────────────────
+// Sistema de usuarios local (reemplaza a Neon Auth).
 
-model Profile {
-  userId    String   @id
-  rut       String?
-  isCompany Boolean?
-  firstname String?
-  lastname  String?
-  role      String?
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  AUTHENTICATED
+}
+
+model User {
+  id           Int     @id @default(autoincrement())
+  email        String  @unique
+  passwordHash String
+  firstname    String?
+  lastname     String?
+  rut          String?
+  isCompany    Boolean @default(false)
+  role         Role    @default(AUTHENTICATED)
+  confirmed    Boolean @default(false)
+  blocked      Boolean @default(false)
+
+  events         Event[] @relation("EventOwner")
+  approvedEvents Event[] @relation("EventApprover")
+  rejectedEvents Event[] @relation("EventRejecter")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

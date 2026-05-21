@@ -27,11 +27,15 @@ export type Pub = {
   reason: string | null;
 };
 
+export type Role = "SUPER_ADMIN" | "ADMIN" | "AUTHENTICATED";
+
 export type User = {
+  id?: number;
   name: string;
   email: string;
   phone: string;
   initials: string;
+  role: Role;
 };
 
 export const CATEGORIES: Category[] = [
@@ -91,4 +95,5 @@ export const MOCK_USER: User = {
   email: "edgardo.toro@gmail.com",
   phone: "+56 9 9771 7724",
   initials: "ET",
+  role: "SUPER_ADMIN",
 };

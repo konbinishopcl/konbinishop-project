@@ -30,26 +30,60 @@ export function useTheme() {
   return ctx;
 }
 
-/* ───────────────── user ───────────────── */
-const UserCtx = createContext<{ user: User | null; setUser: (u: User | null) => void } | null>(null);
+/* ───────────────── user / auth ───────────────── */
+type UserCtxValue = {
+  user: User | null;
+  token: string | null;
+  /** Listo cuando ya se leyó el estado persistido (evita parpadeo en los guards). */
+  ready: boolean;
+  setAuth: (user: User, token: string) => void;
+  setUser: (user: User | null) => void;
+  logout: () => void;
+};
+
+const UserCtx = createContext<UserCtxValue | null>(null);
 
 function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem("kb-user");
-      if (raw && raw !== "null") setUser(JSON.parse(raw));
+      const u = localStorage.getItem("kb-user");
+      const t = localStorage.getItem("kb-token");
+      if (u && u !== "null") setUserState(JSON.parse(u));
+      if (t) setToken(t);
     } catch {
       /* ignore */
     }
+    setReady(true);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("kb-user", JSON.stringify(user));
-  }, [user]);
+  const setAuth = (nextUser: User, nextToken: string) => {
+    setUserState(nextUser);
+    setToken(nextToken);
+    localStorage.setItem("kb-user", JSON.stringify(nextUser));
+    localStorage.setItem("kb-token", nextToken);
+  };
 
-  return <UserCtx.Provider value={{ user, setUser }}>{children}</UserCtx.Provider>;
+  const setUser = (nextUser: User | null) => {
+    setUserState(nextUser);
+    localStorage.setItem("kb-user", JSON.stringify(nextUser));
+  };
+
+  const logout = () => {
+    setUserState(null);
+    setToken(null);
+    localStorage.removeItem("kb-user");
+    localStorage.removeItem("kb-token");
+  };
+
+  return (
+    <UserCtx.Provider value={{ user, token, ready, setAuth, setUser, logout }}>
+      {children}
+    </UserCtx.Provider>
+  );
 }
 
 export function useUser() {

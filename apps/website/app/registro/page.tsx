@@ -9,11 +9,11 @@ import { useTheme, useUser } from "@/components/providers";
 import { api, toUser } from "@/lib/api";
 
 const TILES = [
-  "pa-1", "pa-2", "pa-3", "pa-4", "pa-5", "pa-6", "pa-7", "pa-8",
-  "pa-9", "pa-10", "pa-11", "pa-12", "pa-1", "pa-2", "pa-3", "pa-4",
+  "pa-12", "pa-11", "pa-10", "pa-9", "pa-8", "pa-7", "pa-6", "pa-5",
+  "pa-4", "pa-3", "pa-2", "pa-1", "pa-12", "pa-11", "pa-10", "pa-9",
 ];
 
-export default function LoginPage() {
+export default function RegistroPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const { setAuth } = useUser();
@@ -21,10 +21,13 @@ export default function LoginPage() {
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Paso 1 → 2: primero sólo el email; al continuar aparece la contraseña.
+  // Paso 1 → 2: como es copia del login, sólo se muestra el email aquí.
   const goStep2 = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -38,13 +41,25 @@ export default function LoginPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (password.length < 6) {
+      setError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+    if (!firstname.trim() || !lastname.trim()) {
+      setError("Completa tu nombre y apellido");
+      return;
+    }
     setLoading(true);
     try {
-      const { token, user } = await api.login({ email, password });
+      const { token, user } = await api.register({ email, password, firstname, lastname });
       setAuth(toUser(user), token);
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
+      setError(err instanceof Error ? err.message : "No se pudo crear la cuenta");
     } finally {
       setLoading(false);
     }
@@ -70,7 +85,7 @@ export default function LoginPage() {
             Konbini
           </div>
           <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>
-            El supermercado del entretenimiento geek en LATAM.
+            Crea tu cuenta y suma a la comunidad geek de LATAM.
           </div>
         </div>
       </div>
@@ -84,24 +99,24 @@ export default function LoginPage() {
             {theme === "dark" ? Ic.sun : Ic.moon}
           </button>
         </div>
-        <div className="eyebrow">INGRESAR · ログイン</div>
+        <div className="eyebrow">CREAR CUENTA · 新規登録 · PASO {step} / 2</div>
         <h2 style={{ marginTop: 12 }}>
-          Todo lo que amas,
-          <br />
-          en un solo lugar<span style={{ color: "var(--accent)" }}>.</span>
+          Únete a Konbini<span style={{ color: "var(--accent)" }}>.</span>
         </h2>
         <p className="lead">
-          Ingresa para comprar entradas, guardar eventos y publicar los tuyos.
+          {step === 1
+            ? "Empecemos con tu email."
+            : "Ya casi — define tu contraseña y completa tus datos."}
         </p>
 
         {step === 1 && (
           <>
-            {/* Login con RRSS — la conexión se implementa más adelante. */}
+            {/* Registro con RRSS — la conexión se implementa más adelante. */}
             <button className="social-btn" type="button">{Ic.google} Continuar con Google</button>
             <button className="social-btn" type="button">{Ic.insta} Continuar con Instagram</button>
             <button className="social-btn" type="button">{Ic.apple} Continuar con Apple</button>
 
-            <div className="login-sep">o continúa con tu email</div>
+            <div className="login-sep">o regístrate con tu email</div>
 
             <form onSubmit={goStep2}>
               <div className="field">
@@ -130,22 +145,55 @@ export default function LoginPage() {
               <label>Email</label>
               <input type="email" value={email} disabled />
             </div>
+            <div className="grid-2">
+              <div className="field">
+                <label>Nombre</label>
+                <input
+                  type="text"
+                  placeholder="Camila"
+                  value={firstname}
+                  onChange={(e) => setFirstname(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label>Apellido</label>
+                <input
+                  type="text"
+                  placeholder="Rojas"
+                  value={lastname}
+                  onChange={(e) => setLastname(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
             <div className="field">
               <label>Contraseña</label>
               <input
                 type="password"
-                placeholder="••••••••"
+                placeholder="Mínimo 6 caracteres"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoFocus
                 required
               />
             </div>
+            <div className="field">
+              <label>Confirmar contraseña</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+              />
+            </div>
+
             {error && (
               <div style={{ color: "var(--err)", fontSize: 13, margin: "2px 0 14px" }}>{error}</div>
             )}
+
             <button type="submit" className="btn dark lg block" disabled={loading}>
-              {loading ? "Ingresando…" : <>Ingresar {Ic.arrow}</>}
+              {loading ? "Creando cuenta…" : <>Crear cuenta {Ic.arrow}</>}
             </button>
             <button
               type="button"
@@ -162,14 +210,7 @@ export default function LoginPage() {
         )}
 
         <p className="legal">
-          ¿No tienes cuenta?{" "}
-          <Link href="/registro" style={{ color: "var(--ink-2)", textDecoration: "underline" }}>
-            Crear cuenta
-          </Link>
-        </p>
-        <p className="legal">
-          Al continuar aceptas nuestros <a>Términos</a> y <a>Política de privacidad</a>. Tus datos
-          están protegidos bajo Ley 19.628 de Chile.
+          ¿Ya tienes cuenta? <Link href="/login" style={{ color: "var(--ink-2)", textDecoration: "underline" }}>Ingresar</Link>
         </p>
       </div>
     </div>

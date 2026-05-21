@@ -11,7 +11,7 @@ import { CATEGORIES } from "@/lib/data";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
-  const { user, setUser } = useUser();
+  const { user, logout } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const [menu, setMenu] = useState(false);
@@ -69,13 +69,16 @@ export function Header() {
                     <div className="nm">{user.name}</div>
                     <div className="em">{user.email}</div>
                   </div>
+                  {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
+                    <button onClick={() => { router.push("/admin"); setMenu(false); }}>🛠 Panel de administración</button>
+                  )}
                   <button onClick={() => { setProfileOpen(true); setMenu(false); }}>👤 Editar perfil</button>
                   <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>📋 Mis publicaciones</button>
                   <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>🎫 Mis entradas</button>
                   <button onClick={() => setMenu(false)}>⚙️ Configuración</button>
                   <button
                     className="danger"
-                    onClick={() => { setUser(null); setMenu(false); router.push("/"); }}
+                    onClick={() => { logout(); setMenu(false); router.push("/"); }}
                   >
                     ↩  Cerrar sesión
                   </button>

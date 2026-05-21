@@ -99,7 +99,6 @@ Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al meno
 
 - Solo eventos con `status: APPROVED` son accesibles públicamente
 - `ticketUrl` es externo — el botón redirige fuera del sitio
-- Si el evento tiene múltiples categorías, la URL usa la categoría principal (primera del array)
 
 ---
 

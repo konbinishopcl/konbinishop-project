@@ -1,552 +1,467 @@
 # Vistas del Website — Konbini
 
-**Stack:** Next.js 15 + React 19 + TypeScript. Sin UI library — CSS custom con variables.  
-**Rendering:** Server Components para data fetching, Client Components solo para interactividad.  
-**Auth:** JWT en localStorage via React Context (`UserCtx`). Guards por `useUser()` + `ready` flag.  
-**API Base:** `NEXT_PUBLIC_API_URL` (default `http://localhost:3333/api`)
+> **Cómo usar este documento**
+> - **Parte 1 — Diseño:** qué ve el usuario, secciones, estados y flujos. Sin código ni APIs. Úsala para diseño y UI.
+> - **Parte 2 — Desarrollo:** stack, endpoints, guards, estado de implementación. Úsala para desarrollo.
 
 ---
 
-## Roles de usuario
+# PARTE 1 — DISEÑO
 
-| Rol | Puede acceder a |
+## Acceso por tipo de usuario
+
+| Usuario | Puede ver |
 |---|---|
-| Anónimo | Todo el sitio público |
-| `AUTHENTICATED` | `/cuenta`, `/crear`, y el sitio público |
-| `ADMIN` / `SUPER_ADMIN` | Todo lo anterior + `/dashboard` |
+| Visitante | Todo el sitio público |
+| Registrado | Lo anterior + `/cuenta`, `/crear`, `/carrito` |
+| Admin / Super Admin | Lo anterior + `/dashboard` |
 
-> `/cuenta` es para **todos** los usuarios autenticados, incluyendo admins y super admins. Es donde cualquier usuario edita su perfil, ve sus publicaciones y gestiona su cuenta personal.
+> `/cuenta` es para **todos** los usuarios registrados, incluyendo admins. Es donde cualquier usuario gestiona su perfil personal.
 
 ---
 
 ## Vistas públicas
 
-### `/` — Home
-**Server component.** Fetcha eventos, categorías, heroes, usuarios recientes y estadísticas en paralelo.
+### Home `/`
 
-#### Secciones (en orden de arriba a abajo)
+Página principal. Carga en el servidor. Secciones de arriba a abajo:
 
-**1. Hero carousel**
-Slides de heroes aprobados. Imagen full-width, título, subtítulo acento, descripción corta, fecha, lugar, botón CTA. Si no hay heroes: no se muestra.
+**1. Carousel de heroes**
+Slides a pantalla completa. Cada slide tiene imagen de fondo, título, subtítulo en color de acento, descripción corta, fecha, lugar y botón CTA.
+- Si no hay heroes activos: la sección no aparece.
 
-**2. Destacados — Top 12 más likeados**
-Grid de 6 columnas × 2 filas (12 eventos). Sin botón "Ver todos".
-- Ordenados por `_count.likes` descendente
-- Si hay menos de 12 eventos: muestra los que haya
-- Si no hay ninguno: **empty state** — mensaje + ilustración + CTA a `/crear`
-- API: `GET /events?pageSize=12&sortBy=likes`
-- Nota: requiere agregar `sortBy=likes` al query DTO de la API (`QueryEventsDto`) y al `orderBy` del servicio
+**2. Destacados — Top 12**
+Grilla de 6 columnas × 2 filas con los 12 eventos más likeados. Sin botón "Ver todos".
+- Si hay menos de 12: muestra los que haya.
+- Si no hay ninguno: ilustración + mensaje "Aún no hay eventos publicados" + botón "Publicar el primero".
 
-**3. Últimos en unirse — Social proof**
-Franja horizontal con avatares de los últimos N usuarios registrados (con foto o iniciales), contador total de organizadores, y frase tipo "Únete a +500 organizadores que ya publican en Konbini".
-- API: `GET /users/recent` (endpoint público a crear — devuelve solo `id`, `firstname`, `lastname`, `avatar` del profile)
-- Si no hay usuarios: no se muestra
+**3. Últimos en unirse**
+Franja horizontal con avatares (foto o iniciales) de los últimos organizadores registrados, un contador total y texto tipo "Únete a +500 organizadores que ya publican en Konbini".
+- Si no hay usuarios: la sección no aparece.
 
 **4. Newsletter**
-Sección con frase vendedora, campo de email y botón de suscripción.
-- API: `POST /newsletter/subscribe` con `{ email }` (endpoint a crear, modelo `Subscriber` en Prisma)
-- Estado: idle → loading → success ("¡Listo! Te avisamos de los mejores eventos") → error
-- No requiere estar logueado
+Sección con titular vendedor, campo de email y botón de suscripción.
+- Estados: esperando → cargando → éxito ("¡Listo! Te avisamos de los mejores eventos") → error.
+- No requiere cuenta.
 
 **5. Rails por categoría**
-Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al menos un evento en esa categoría.
-- Si una categoría no tiene eventos aprobados: se omite silenciosamente (no empty state por categoría)
-- El link "Ver todos" apunta a `/[category]` (ej. `/musica`)
+Una sección horizontal por cada categoría que tenga al menos un evento. Cada rail muestra hasta 6 event cards en formato landscape y un botón "Ver todos" que lleva a la página de esa categoría.
+- Categorías sin eventos se omiten silenciosamente.
 
-> **No modificar:** Esta sección ya está implementada y funciona correctamente. El botón "Ver todos" de cada rail está presente e intencional.
-
-#### Empty states
-- **Sin eventos destacados:** ilustración + "Aún no hay eventos publicados" + botón "Publicar el primero" → `/crear`
-- **Sin heroes:** la sección no se renderiza (no empty state visible)
-- **Sin categorías con eventos:** no se renderiza ningún rail
-
-**APIs implementadas:**
-
-- `GET /events?pageSize=12&sortBy=likes` — devuelve los 12 más likeados
-- `GET /users/recent` — público, devuelve últimos 10 usuarios: `{ id, firstname, lastname, profile: { avatar } }`
-- `POST /subscribers` — `{ email }`, sin auth requerida
+> **No modificar:** Los rails por categoría ya están implementados y funcionan correctamente.
 
 ---
 
 ### `/[category]` — Eventos por categoría
 
-**Server component.** Fetcha categorías y eventos filtrados por slug de categoría. Ejemplo: `demo.com/musica`.
+Ejemplo: `konbini.cl/musica`
 
-> Las rutas estáticas del sitio (`/busqueda`, `/login`, `/registro`, `/cuenta`, `/crear`, `/carrito`, `/dashboard`, `/u`) tienen precedencia sobre este segmento dinámico en Next.js App Router.
+Muestra el nombre de la categoría, el número de resultados y una grilla de event cards.
 
-**Renderiza:** Nombre de categoría, contador de resultados, grilla de EventCards.
-
-**Pendiente:** Los chips de filtro (Hoy, Esta semana, etc.) y la barra de filtros (fecha, región, orden) son visuales — sin funcionalidad.
+Tiene chips de filtro (Hoy, Esta semana, etc.) y barra de filtros (fecha, región, orden) que son **visuales — aún sin funcionalidad**.
 
 ---
 
 ### `/[category]/[slug]` — Detalle de evento
 
-**Server component.** Fetcha el evento por slug. `notFound()` si no existe o no está aprobado. Ejemplo: `demo.com/musica/concierto-de-jazz`.
+Ejemplo: `konbini.cl/musica/concierto-de-jazz`
 
-**Renderiza:**
+Solo visible para eventos publicados y vigentes. Si no existe: 404.
 
-- Imagen de fondo (banner o poster) con overlay
-- Categoría, empresa organizadora, título, fecha y lugar
-- Descripción y "about"
-- Galería (máx 5 imágenes)
-- Links a categorías del evento
-- Panel lateral con entradas (precios o "Liberado"), botón de compra externo si hay `ticketUrl`
-- Fechas y horarios, dirección y ubicación
-- Links sociales y videos
+**Contenido principal:**
+- Imagen de fondo (banner o poster) con overlay oscuro
+- Badge de categoría
+- Empresa organizadora
+- Título del evento
+- Fecha y lugar
+- Descripción completa
+- Sección "about"
+- Galería de imágenes (máx 5)
+- Links sociales
+- Videos (mostrados como links, sin embed)
 
-**Reglas:**
-
-- Solo eventos con `status: APPROVED` son accesibles públicamente
-- `ticketUrl` es externo — el botón redirige fuera del sitio
+**Panel lateral:**
+- Lista de precios o badge "Entrada liberada"
+- Botón de compra si hay URL de tickets (redirige a sitio externo)
+- Fechas y horarios
+- Dirección y ubicación
 
 ---
 
 ### `/busqueda` — Búsqueda
-**Server component** fetcha resultados iniciales desde `searchParams` para SSR.  
-**SearchView (client)** maneja refetch al cambiar filtros, sincroniza con la URL.
 
-**Filtros disponibles:** texto libre (`q`), categoría, región.  
-URL compartible: `/busqueda?q=anime&category=convenciones&region=...`
+Barra de búsqueda por texto libre, selector de categoría y selector de región. Los resultados se actualizan al cambiar los filtros. La URL refleja los filtros activos y es compartible.
 
 ---
 
-## Vistas autenticadas (`AUTHENTICATED` +)
+## Vistas autenticadas
 
 ### `/cuenta` — Mi cuenta
-**Client component.** Redirige a `/login` si no hay sesión.
 
-**Estado actual implementado:**
-- Sidebar con avatar (iniciales), nombre, email
-- Botón "Editar perfil" → abre `ProfileModal` (edita nombre, email, teléfono — **solo en contexto local, no persiste en API**)
-- Nav: Mis publicaciones, Crear evento, Cerrar sesión
-- Tabs: Todos / En revisión / Publicados / Rechazados
-- Lista de eventos propios con estado, motivo de rechazo (si aplica), precio y link a la publicación
+Requiere sesión. Tiene dos zonas:
 
-**Pendiente / Por implementar:**
-- **Editar perfil** → debe llamar a `PUT /profiles/me` con los campos del modelo `Profile` (displayName, bio, avatar, banner, slug, website, instagram, tiktok, facebook, x, youtube, twitch, linkedin)
-- **Subir avatar/banner** → `POST /uploads` + guardar URL en el perfil
-- **Ver mi perfil público** → link a `/u/:slug` (vista de perfil público, aún no existe en el website)
+**Sidebar:**
+- Avatar (foto de perfil o iniciales)
+- Nombre y email
+- Botón "Editar perfil" — abre modal con: nombre para mostrar, bio, avatar, banner, sitio web y redes sociales (Instagram, TikTok, Facebook, X, YouTube, Twitch, LinkedIn)
+- Link al perfil público (solo visible si tiene al menos un evento aprobado)
+- Botón "Cerrar sesión"
 
-#### Tab: Mis avisos
+**Área principal — tabs:**
 
-Lista los spots del usuario (`GET /spots/mine`). Muestra estado, fechas de vigencia y link al aviso.
-
-- Botón "Crear aviso" → abre el formulario de aviso (mismo formulario que el upsell). El usuario puede crear un aviso de forma independiente, sin necesidad de haber creado un evento antes.
-- Puede editar (`PATCH /spots/:id`) o eliminar (`DELETE /spots/:id`) avisos propios en `DRAFT` o `REJECTED`.
-
-#### Tab: Mis heroes
-
-Lista los heroes del usuario (`GET /heroes/mine`). Muestra estado, imagen, título y fechas de vigencia.
-
-- Botón "Crear hero" → abre el formulario de hero (mismo formulario que el upsell). El usuario puede crear un hero de forma independiente.
-- Puede editar (`PATCH /heroes/:id`) o eliminar (`DELETE /heroes/:id`) heroes propios en `DRAFT` o `REJECTED`.
-
-> Esta vista aplica igual para usuarios `ADMIN` y `SUPER_ADMIN`. El admin también edita su perfil aquí.
+- **Mis publicaciones** — lista de eventos propios con tabs Todos / En revisión / Publicados / Rechazados. Cada evento muestra estado, motivo de rechazo si aplica, precio y link a la publicación.
+- **Mis avisos** — lista de avisos propios con estado y fechas de vigencia. Botón "Crear aviso" para abrir el formulario. Puede editar o eliminar avisos en borrador o rechazados.
+- **Mis heroes** — lista de heroes propios con estado, imagen y título. Botón "Crear hero" para abrir el formulario. Puede editar o eliminar heroes en borrador o rechazados.
 
 ---
 
 ### `/crear` — Crear evento
-**Client component.** Redirige a `/login` si no hay sesión. Wizard de 3 pasos.
 
-**Paso 1:** Título, empresa, categoría, descripción, "about", tipo de entrada (gratis / precios)  
-**Paso 2:** Fechas/horarios, región → comuna, dirección, URL de tickets, links de RRSS  
-**Paso 3:** Banner, poster, galería (máx 10), videos, confirmación antes de enviar
+Requiere sesión. Wizard de 3 pasos.
 
-#### Selección de región y comuna (Paso 2)
+**Paso 1:** Título, empresa organizadora, categoría, descripción, sección "about", tipo de entrada (gratis o con precios — nombre y valor por tipo de entrada).
 
-El selector de ubicación sigue este flujo en cascada:
+**Paso 2:** Fechas y horarios (múltiples), región → comuna (selector en cascada), dirección, URL de tickets, links de redes sociales.
 
-1. Al cargar el paso 2: llamar `GET /regions` para poblar el dropdown de región.
-2. Al elegir una región: llamar `GET /communes?region=<slug>` (filtra por slug de la región seleccionada) para poblar el dropdown de comuna.
-3. El `POST /events` final envía `regionId` y `communeId` como IDs enteros.
-
-> El filtro de comunas usa el slug de la región (`?region=<slug>`), no el ID.
-
-**Flujo:** `POST /events` → queda en `DRAFT` → para publicarse debe pasar por pago y moderación (carrito → checkout → Transbank).
-
-**Pendiente:**
-
-- Videos se recolectan pero la vista de detalle solo los muestra como links — no hay embed
+**Paso 3:** Banner, poster, galería de fotos (máx 10), videos, confirmación antes de enviar.
 
 ---
 
-### Upsell post-wizard de evento
+### Upsell post-evento
 
-Tras crear exitosamente el evento (respuesta 201 del `POST /events`), el website muestra una pantalla intermedia de upsell antes de redirigir al carrito.
+Pantalla intermedia que aparece después de crear un evento exitosamente, antes de ir al carrito.
 
-**Lógica:**
+Muestra tarjetas con precio por día y cupos disponibles para:
+- **Aviso** — si hay cupo disponible
+- **Hero** — si hay cupo disponible
 
-1. Llamar `GET /spots/quota` y `GET /heroes/quota` en paralelo.
-2. Si `available > 0` en spots: mostrar card con precio por día (`pricePerDay`), cupo disponible y CTA para crear un aviso.
-3. Si `available > 0` en heroes: mostrar card con precio por día, cupo disponible y CTA para crear un hero.
-4. Si ninguno tiene cupo disponible: omitir la pantalla y redirigir directo al carrito.
-5. El usuario puede omitir el upsell con "Continuar sin publicitar" → va al carrito.
-
-> La pantalla es informativa: no realiza ninguna acción hasta que el usuario elige crear un aviso o un hero. Si lo hace, se muestra el formulario correspondiente (inline o modal), se crea el recurso en DRAFT (`POST /spots` o `POST /heroes`) y luego se agrega el ítem al carrito.
+El usuario puede elegir uno, ambos o ninguno ("Continuar sin publicitar").
+Si no hay cupo en ninguno, esta pantalla se omite y se va directo al carrito.
 
 ---
 
-### Formulario de crear aviso
+### Formulario de aviso
 
-Formulario inline o modal. Se usa en dos contextos:
-
-1. **Upsell post-evento** — al elegir "Crear aviso" después de crear un evento.
-2. **Desde `/cuenta` → Tab "Mis avisos"** — el usuario crea un aviso de forma independiente.
-
-No es una página separada.
+Modal o sección inline. Aparece en dos contextos: desde el upsell post-evento y desde el tab "Mis avisos" en `/cuenta`.
 
 **Campos:**
+- Título (requerido)
+- Imagen (opcional)
+- Tipo de enlace: URL / Teléfono / Email (requerido)
+- Valor del enlace: la URL, teléfono o email según el tipo elegido (requerido)
 
-| Campo | Tipo | Requerido | Notas |
-| --- | --- | --- | --- |
-| `title` | texto | Sí | 2–120 caracteres |
-| `image` | upload | No | `POST /uploads` → URL |
-| `linkType` | enum | Sí | `URL`, `PHONE` o `EMAIL` |
-| `linkValue` | texto | Sí | URL, teléfono o email según `linkType` |
-
-**API:** `POST /spots` → devuelve el spot en `DRAFT`.
-
-**Pendiente:** La API no tiene targeting geográfico todavía. En una versión futura el formulario debería incluir selección de regiones y/o comunas donde el aviso se mostrará.
+**Pendiente:** En versión futura debería incluir selección de regiones y/o comunas donde se mostrará el aviso.
 
 ---
 
-### Formulario de crear hero (desde upsell)
+### Formulario de hero
 
-Formulario inline o modal que aparece al elegir "Crear hero" en el upsell. No es una página separada.
+Modal o sección inline. Aparece en dos contextos: desde el upsell post-evento y desde el tab "Mis heroes" en `/cuenta`.
 
 **Campos:**
-
-| Campo | Tipo | Requerido | Notas |
-| --- | --- | --- | --- |
-| `title` | texto | Sí | 2–120 caracteres |
-| `titleAccent` | texto | No | Parte resaltada del título (ej. año o palabra clave) |
-| `lead` | texto | No | Descripción corta, máx 240 caracteres |
-| `image` | upload | Sí | `POST /uploads` → URL. Se muestra como imagen de fondo full-width |
-| `date` | fecha | No | Fecha del evento asociado (formato ISO) |
-| `place` | texto | No | Lugar del evento, máx 120 caracteres |
-| `link` | URL | No | Destino al hacer clic en el hero |
-| `categoryId` | select | No | Categoría asociada (`GET /categories`) |
-
-**API:** `POST /heroes` → devuelve el hero en `DRAFT`.
+- Título (requerido)
+- Subtítulo acento — parte del título en color de acento (opcional)
+- Descripción corta (opcional)
+- Imagen de fondo a pantalla completa (requerida)
+- Fecha a mostrar (opcional)
+- Lugar a mostrar (opcional)
+- URL de destino al hacer clic (opcional)
+- Categoría asociada (opcional)
 
 ---
 
 ### `/carrito` — Carrito de compras
 
-**Client component.** Requiere sesión (redirige a `/login` si no hay JWT).
+Requiere sesión.
 
-`GET /orders/draft` obtiene o crea el carrito en estado `DRAFT` del usuario autenticado. El carrito puede tener hasta un ítem por tipo (`EVENT`, `SPOT`, `HERO`).
+Muestra los ítems seleccionados: evento, aviso y/o hero. Cada ítem tiene nombre, selector de días de publicación, precio por día y subtotal. El total se calcula automáticamente.
 
-#### Ítems del carrito
+**Estado del carrito:**
+- **Borrador** — el usuario puede agregar, modificar o eliminar ítems y elegir los días.
+- **En proceso de pago** — bloqueado mientras se procesa el pago externo.
+- **Pagado** — los ítems quedan en revisión del administrador.
+- **Fallido** — se muestra pantalla de error con opción de reintentar.
 
-| Tipo | Fuente | Precio unitario |
-| --- | --- | --- |
-| `EVENT` | `eventId` del evento en DRAFT | `pricePerDay` más alto de sus categorías (CLP) |
-| `SPOT` | `spotId` del aviso en DRAFT | `SPOT_PRICE_PER_DAY` (default CLP $8.000) |
-| `HERO` | `heroId` del hero en DRAFT | `HERO_PRICE_PER_DAY` (default CLP $15.000) |
+Botón "Pagar" inicia el proceso de pago con Transbank y redirige al sitio de WebPay.
 
-- `subtotal = days × unitPrice` por ítem. El precio unitario se congela al agregar.
-- `total` de la orden = suma de subtotales de todos los ítems.
-
-#### Acciones
-
-- **Agregar o reemplazar ítem:** `PUT /orders/:id/items` — campos `{ type, days, eventId|spotId|heroId }`. Si ya existe un ítem del mismo tipo, lo reemplaza.
-- **Cambiar días:** mismo endpoint que agregar — reemplaza el ítem existente con los nuevos días.
-- **Eliminar ítem:** `DELETE /orders/:id/items/:type` — elimina el ítem del tipo indicado (`EVENT`, `SPOT` o `HERO`).
-- **Pagar:** botón "Pagar" → llama a `POST /payments/:orderId/checkout` con `{ gateway: "TRANSBANK" }` → obtiene `{ redirectUrl, externalId }` → redirige al usuario a `redirectUrl` (Transbank WebPay Plus).
-
-#### Reglas de negocio
-
-- Solo se pueden agregar ítems en estado `DRAFT` (evento, spot o hero propios del usuario).
-- El cupo de spots y heroes se valida al agregar al carrito y nuevamente al iniciar el pago (doble check).
-- Máximo de días por tipo: `EVENT` → 60 días, `SPOT` → 30 días, `HERO` → 30 días.
-
-#### Estados de la orden
-
-| Estado | Significado |
-| --- | --- |
-| `DRAFT` | Editable — el usuario puede agregar, modificar o eliminar ítems |
-| `PENDING_PAYMENT` | En proceso de pago — no se puede editar |
-| `PAID` | Pago confirmado — ítems pasan a `PENDING_MODERATION` |
-| `FAILED` | Pago rechazado — se muestra `/checkout/failed` |
+**Días máximos por ítem:** Evento 60 días, Aviso 30 días, Hero 30 días.
 
 ---
 
-### Pasarelas de pago
+### `/checkout/success`
 
-El sistema soporta múltiples pasarelas a través del enum `GatewayType` y `GatewayFactory`. Agregar una pasarela nueva (Flow, MercadoPago, etc.) no requiere cambiar el endpoint de checkout.
+Pantalla de confirmación de pago exitoso. Informa al usuario que sus ítems están en revisión y serán aprobados por un administrador. CTA al home o a `/cuenta`.
 
-**Pasarela activa:** Transbank WebPay Plus (modo producción o integración según `TRANSBANK_ENV`).
+### `/checkout/failed`
 
-#### Flujo de pago con Transbank
-
-1. Frontend llama a `POST /payments/:orderId/checkout` con `{ gateway: "TRANSBANK" }`.
-2. La API inicia la transacción en Transbank y devuelve `{ redirectUrl, externalId }`.
-3. La orden pasa a `PENDING_PAYMENT`.
-4. El frontend redirige al navegador a `redirectUrl` (WebPay Plus).
-5. Transbank llama de vuelta a `POST /api/payments/transbank/callback` (server-side) con:
-   - `token_ws` (éxito) o `TBK_TOKEN` (abortado por el usuario).
-6. La API confirma con Transbank y redirige al frontend:
-
-| Resultado | Redirect |
-| --- | --- |
-| Éxito | `/checkout/success?orderId=X` — ítems pasan a `PENDING_MODERATION` |
-| Abortado por usuario | `/checkout/failed?reason=aborted` |
-| Pago rechazado | `/checkout/failed?orderId=X&code=Y` |
-
-> El callback también acepta `GET /api/payments/transbank/callback` para el flujo de timeout de Transbank.
-
-#### Vistas resultantes
-
-- **`/checkout/success`** (`?orderId=X`): confirmación de pago exitoso. Informar que los ítems están en revisión (`PENDING_MODERATION`) y serán aprobados por un administrador.
-- **`/checkout/failed`** (`?reason=...` o `?orderId=X&code=Y`): pago fallido o abortado. Mostrar el motivo y ofrecer reintentar.
+Pantalla de pago fallido o abortado. Muestra el motivo si está disponible. Botón para reintentar el pago.
 
 ---
 
-## Auth pages (sin header/footer)
+## Auth — Sin header ni footer
 
 ### `/login`
-Wizard 2 pasos: email → contraseña.  
-Botones de social login (Google, Instagram, Apple) son visuales — **sin funcionalidad**.  
-Al autenticarse: guarda token + user en localStorage, redirige a `/`.
-
-> **Nota:** El login es solo email + contraseña. No existe validación por código OTP, SMS ni 2FA actualmente. Los botones de social login son puramente visuales.
+Wizard de 2 pasos: primero pide email, luego contraseña. Tiene botones de acceso con Google, Instagram y Apple (visuales — sin funcionalidad). Al autenticarse redirige al home.
 
 ### `/registro`
-Wizard 2 pasos: email → nombre + apellido + contraseña + confirmación.  
-Al registrarse: también crea el `Profile` del usuario automáticamente (en la API).  
-Mismos botones sociales sin funcionalidad.
+Wizard de 2 pasos: primero pide email, luego nombre, apellido, contraseña y confirmación. Mismos botones sociales sin funcionalidad.
 
 ### `/recuperar-contrasena`
-
-Formulario con un campo email. Sin header/footer.
-
-**Flujo:**
-
-1. El usuario ingresa su email y envía el formulario.
-2. El website llama a `POST /auth/forgot-password` con `{ email }`.
-3. La API siempre responde 200 — nunca revela si el email existe.
-4. El website muestra mensaje genérico: "Si el email está registrado, recibirás un enlace de recuperación."
-5. El email enviado al usuario incluye un enlace a `/reset-password/:token` con el token de recuperación.
-
-> El token es un hash SHA-256 almacenado en `User.resetToken` con expiración en `User.resetTokenExpiry`. La API rechaza tokens expirados.
+Formulario con un solo campo de email. Al enviar muestra mensaje genérico: "Si el email está registrado, recibirás un enlace de recuperación." No confirma ni niega si el email existe.
 
 ### `/reset-password/:token`
-
-Formulario con campos "Nueva contraseña" y "Confirmar contraseña". Sin header/footer.
-
-**Flujo:**
-
-1. El token viene en la URL como parámetro de ruta (`:token`).
-2. Al enviar: llama a `POST /auth/reset-password` con `{ token, password }`.
-3. **Éxito:** muestra confirmación y redirige a `/login`.
-4. **Error (token inválido o expirado):** muestra mensaje de error con link a `/recuperar-contrasena`.
+Formulario con "Nueva contraseña" y "Confirmar contraseña".
+- Éxito: confirmación + redirige a `/login`.
+- Token inválido o expirado: mensaje de error + link a `/recuperar-contrasena`.
 
 ---
 
-## Dashboard — Solo `ADMIN` y `SUPER_ADMIN`
-
-Protegido por `AdminGuard` (client component). Redirige a `/login` si no es admin.
+## Dashboard — Solo administradores
 
 ### `/dashboard` — Panel principal
-**Client component.** Fetcha `GET /events` con token (devuelve todos los estados).
-
-**Implementado:**
-- 4 KPI cards (ingresos, tickets vendidos, eventos publicados, pendientes de revisión)
-- Cola de revisión: últimos 5 eventos en `PENDING_MODERATION` con botones de aprobar/rechazar
-- Gráfico de actividad (datos mock)
-- Feed de actividad reciente (datos **hardcodeados** — no conectado a API)
-- Desglose por categoría (datos **hardcodeados**)
-
-**Pendiente:**
-- KPI de ingresos y tickets conectado a datos reales (`GET /orders` o similar)
-- Feed de actividad real
-- Gráfico de eventos por categoría real
-- Botones "Exportar reporte" y "Nuevo evento" sin handler
-
----
+- 4 KPI cards: ingresos, tickets vendidos, eventos publicados, pendientes de revisión.
+- Cola de revisión: últimos 5 eventos esperando aprobación, con botones de aprobar o rechazar.
+- Gráfico de actividad.
+- Feed de actividad reciente.
+- Desglose de eventos por categoría.
 
 ### `/dashboard/events` — Moderación de eventos
-**Implementado completamente.**
+Tabla de todos los eventos con búsqueda por texto y filtro por estado. Acciones por evento: aprobar, rechazar (con campo de motivo) y ver la publicación. Paginación.
 
-- Tabla de todos los eventos con búsqueda por texto y filtro por estado
-- Acciones: Aprobar (`PATCH /events/:id/approve`), Rechazar con motivo (`PATCH /events/:id/reject`), Ver publicación (link externo si está aprobado)
-- Paginación visual en la tabla
-
----
-
-### `/dashboard/users` — Gestión de usuarios
-Solo accesible para `SUPER_ADMIN`. Si el rol es `ADMIN`, muestra "Acceso restringido".  
-**No implementado** — PlaceholderView.
-
-**Por implementar:**
-- Listar usuarios (`GET /users` — endpoint a crear en la API)
-- Bloquear/desbloquear usuario
-- Cambiar rol
-
----
+### `/dashboard/users` — Usuarios
+Solo Super Admin. Tabla de usuarios con opciones de bloquear/desbloquear y cambiar rol. **Pendiente de implementar.**
 
 ### `/dashboard/regions` — Regiones
-
-**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
-
-**Por implementar:**
-
-- `GET /regions` — lista todas las regiones.
-- `POST /regions` — crea una región (campos: `name`, `slug`).
-- `PATCH /regions/:id` — edita una región.
-- `DELETE /regions/:id` — elimina una región.
-
----
+CRUD de regiones (nombre y slug). **Pendiente de implementar.**
 
 ### `/dashboard/communes` — Comunas
-
-**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
-
-**Por implementar:**
-
-- `GET /communes` — lista comunas (filtrable con `?region=<slug>`).
-- `POST /communes` — crea una comuna (campos: `name`, `slug`, `regionId` requerido).
-- `PATCH /communes/:id` — edita una comuna.
-- `DELETE /communes/:id` — elimina una comuna.
-
----
+CRUD de comunas (nombre, slug, región asociada). **Pendiente de implementar.**
 
 ### `/dashboard/categories` — Categorías
-**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
-
-**Por implementar:**
-
-- `GET /categories` — lista todas las categorías.
-- `POST /categories` — crea una categoría (campos: `name`, `slug`, `description`, `pricePerDay`).
-- `PATCH /categories/:id` — edita una categoría.
-- `DELETE /categories/:id` — elimina una categoría.
-
-**Regla clave:** el campo `pricePerDay` (Int, default CLP $1.000) define el precio de publicación de un evento en esa categoría. Si el evento pertenece a múltiples categorías, se usa el precio más alto.
-
----
+CRUD de categorías (nombre, slug, descripción, precio de publicación por día). El precio define cuánto paga el organizador al publicar un evento en esa categoría. **Pendiente de implementar.**
 
 ### `/dashboard/tags` — Tags
-
-**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
-
-**Por implementar:**
-
-- `GET /tags` — lista todos los tags.
-- `POST /tags` — crea un tag (campos: `name`, `slug`).
-- `PATCH /tags/:id` — edita un tag.
-- `DELETE /tags/:id` — elimina un tag.
-
-> Los tags se asocian a artículos, no directamente a eventos.
-
----
+CRUD de tags. Los tags se asocian a artículos, no a eventos. **Pendiente de implementar.**
 
 ### `/dashboard/spots` — Avisos
-
-**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
-
-**Por implementar:**
-
-- `GET /spots` — lista todos los spots (cualquier estado).
-- Aprobar spot (`PATCH /spots/:id/approve`) → pasa a `APPROVED` y empieza a correr la expiración.
-- Rechazar spot con motivo.
-- `DELETE /spots/:id` — eliminar un spot.
-
----
+Moderación de avisos: lista con estado, aprobar, rechazar, eliminar. **Pendiente de implementar.**
 
 ### `/dashboard/heroes` — Heroes
-
-**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
-
-**Por implementar:**
-
-- `GET /heroes` — lista todos los heroes (cualquier estado).
-- Aprobar hero (`PATCH /heroes/:id/approve`) → pasa a `APPROVED` y aparece en el carrusel de la home.
-- Rechazar hero con motivo.
-- `DELETE /heroes/:id` — eliminar un hero.
-
----
+Moderación de heroes: lista con estado, imagen y título, aprobar, rechazar, eliminar. **Pendiente de implementar.**
 
 ### `/dashboard/payments` — Pagos
-**No implementado** — PlaceholderView.
-
-**Por implementar:** Historial de órdenes, estado de pagos, detalles de transacciones Transbank.
-
----
-
-### `/dashboard/settings`, `/dashboard/reports`, `/dashboard/logs`, `/dashboard/help`
-**No implementados** — PlaceholderView.
+Historial de órdenes y transacciones. **Pendiente de implementar.**
 
 ---
 
 ## Vistas pendientes (no existen aún)
 
 ### `/u/[slug]` — Perfil público de organizador
-Página pública que muestra el perfil de un usuario con al menos un evento aprobado.
+Solo visible si el organizador tiene al menos un evento aprobado.
 
-**Debe renderizar:**
-- Banner del perfil (`profile.banner`)
-- Avatar (`profile.avatar`)
-- Nombre público (`profile.displayName` o firstname + lastname)
-- Bio (`profile.bio`)
-- Website y redes sociales (instagram, tiktok, facebook, x, youtube, twitch, linkedin)
-- Grilla de eventos aprobados y activos del usuario
-
-**Regla de visibilidad:** `GET /profiles/:slug` devuelve 404 si el usuario no tiene ningún evento aprobado — el perfil no existe públicamente hasta ese momento.
-
-**Datos desde API:** `GET /profiles/:slug`
-
----
+- Banner de perfil
+- Avatar
+- Nombre público
+- Bio
+- Sitio web y redes sociales (Instagram, TikTok, Facebook, X, YouTube, Twitch, LinkedIn)
+- Grilla de eventos aprobados y vigentes
 
 ### `/articulos` — Listado de artículos
-**Por implementar.** `GET /articles`
+Pendiente de implementar.
 
 ### `/articulos/[slug]` — Detalle de artículo
-**Por implementar.** `GET /articles/:slug`. Incluye contenido, tags, y eventos relacionados.
+Contenido del artículo, tags y eventos relacionados. Pendiente de implementar.
 
 ---
+
+## Flujos de usuario
+
+### Organizador
+1. `/registro` — crea cuenta
+2. `/crear` — publica su evento
+3. Upsell — opcionalmente crea un aviso y/o hero
+4. `/carrito` — revisa ítems, elige días y paga
+5. Administrador aprueba — el contenido aparece en el sitio
+6. `/cuenta` — edita su perfil público
+7. `/u/:slug` — su perfil público es visible cuando tiene al menos un evento aprobado
+
+También puede crear avisos y heroes de forma independiente desde `/cuenta`, sin necesidad de crear un evento primero.
+
+### Visitante
+1. Home — descubre eventos en el carousel, la grilla de destacados o los rails
+2. `/[category]` o `/busqueda` — filtra y explora
+3. `/[category]/[slug]` — ve el detalle, fechas, precios y link de tickets
+
+### Administrador
+1. `/dashboard` — revisa la cola de moderación
+2. `/dashboard/events` — aprueba o rechaza eventos con motivo
+3. `/cuenta` — edita su propio perfil (igual que cualquier usuario)
+
+---
+
+---
+
+# PARTE 2 — DESARROLLO
+
+## Stack y configuración
+
+- **Framework:** Next.js 15 + React 19 + TypeScript
+- **Estilos:** CSS custom con variables, sin UI library
+- **Rendering:** Server Components para data fetching, Client Components solo para interactividad
+- **Auth:** JWT en localStorage via React Context (`UserCtx`). Guards client-side con `useUser()` + flag `ready`.
+- **API Base:** `NEXT_PUBLIC_API_URL` (default `http://localhost:3333/api`)
+
+## Roles y guards
+
+| Rol | Acceso |
+|---|---|
+| Anónimo | Sitio público |
+| `AUTHENTICATED` | Lo anterior + `/cuenta`, `/crear`, `/carrito` |
+| `ADMIN` / `SUPER_ADMIN` | Lo anterior + `/dashboard` |
+
+- `/cuenta` protegida con redirect a `/login` si no hay JWT.
+- `/dashboard` protegida por `AdminGuard` (client component) — redirige si el rol no es admin.
+- `/dashboard/users` solo accesible para `SUPER_ADMIN`.
+
+## Routing y convención de URLs
+
+- `[category]` es un segmento dinámico. Las rutas estáticas del proyecto tienen precedencia en Next.js App Router: `/busqueda`, `/login`, `/registro`, `/cuenta`, `/crear`, `/carrito`, `/dashboard`, `/u`.
+- Los eventos usan `slug` único generado desde el título.
+- Los perfiles públicos usan `slug` generado desde el nombre del usuario.
+
+## APIs por sección
+
+### Home
+- `GET /events?pageSize=12&sortBy=likes` — top 12 más likeados
+- `GET /categories` — para los rails
+- `GET /events?category=<slug>&pageSize=6` — eventos por rail
+- `GET /heroes` — heroes aprobados para el carousel
+- `GET /users/recent` — últimos 10 usuarios: `{ id, firstname, lastname, profile: { avatar } }`
+- `POST /subscribers` — suscripción al newsletter con `{ email }`
+
+### Categoría y detalle
+- `GET /categories` — lista de categorías
+- `GET /events?category=<slug>` — eventos por categoría
+- `GET /events/:slug` — detalle de evento por slug (solo `APPROVED` y no expirados)
+
+### Búsqueda
+- `GET /events?q=&category=&region=` — búsqueda con filtros
+
+### Cuenta
+- `GET /auth/me` — datos del usuario autenticado
+- `GET /events/mine` — eventos propios
+- `PUT /profiles/me` — actualizar perfil (displayName, bio, avatar, banner, slug, website, redes)
+- `POST /uploads` — subir imagen, devuelve `{ url, filename }`
+- `GET /spots/mine` — avisos propios
+- `GET /heroes/mine` — heroes propios
+- `PATCH /spots/:id` / `DELETE /spots/:id` — editar/eliminar aviso propio
+- `PATCH /heroes/:id` / `DELETE /heroes/:id` — editar/eliminar hero propio
+
+### Crear evento
+- `GET /regions` — lista de regiones
+- `GET /communes?region=<slug>` — comunas de una región
+- `GET /categories` — categorías disponibles
+- `POST /uploads` — subir imágenes
+- `POST /events` — crea evento en `DRAFT`
+
+### Upsell post-evento
+- `GET /spots/quota` — `{ max, active, available, pricePerDay, maxDays }`
+- `GET /heroes/quota` — `{ max, active, available, pricePerDay, maxDays }`
+- `POST /spots` — crea aviso en `DRAFT`
+- `POST /heroes` — crea hero en `DRAFT`
+
+### Carrito
+- `GET /orders/draft` — obtiene o crea la orden en `DRAFT` del usuario
+- `PUT /orders/:id/items` — agrega o reemplaza ítem `{ type, days, eventId|spotId|heroId }`
+- `DELETE /orders/:id/items/:type` — elimina ítem por tipo (`EVENT`, `SPOT`, `HERO`)
+- `POST /payments/:orderId/checkout` — inicia pago `{ gateway: "TRANSBANK" }` → `{ redirectUrl, externalId }`
+
+### Pasarela de pago — Transbank
+El backend redirige al frontend tras el callback de Transbank:
+- Éxito → `/checkout/success?orderId=X`
+- Abortado → `/checkout/failed?reason=aborted`
+- Rechazado → `/checkout/failed?orderId=X&code=Y`
+
+El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transbank WebPay Plus está activo. Agregar Flow, MercadoPago u otra pasarela no requiere cambiar el endpoint de checkout.
+
+### Auth
+- `POST /auth/login` — `{ email, password }` → `{ token, user }`
+- `POST /auth/register` — `{ email, password, firstname, lastname }` → `{ token, user }`. Crea el `Profile` del usuario automáticamente.
+- `POST /auth/forgot-password` — `{ email }`. Siempre responde 200, nunca revela si el email existe. El token SHA-256 se registra en el log del servidor (v2: envío por email).
+- `POST /auth/reset-password` — `{ token, password }`. Token expira en 1 hora.
+
+### Dashboard
+- `GET /events` (con JWT admin) — todos los eventos, todos los estados
+- `PATCH /events/:id/approve` — aprueba evento
+- `PATCH /events/:id/reject` — rechaza con `{ reason }`
+- `GET /users` (ADMIN+) — lista de usuarios
+- `PATCH /users/:id/ban` — bloquear/desbloquear
+- `GET /regions` / `POST /regions` / `PATCH /regions/:id` / `DELETE /regions/:id`
+- `GET /communes` / `POST /communes` / `PATCH /communes/:id` / `DELETE /communes/:id`
+- `GET /categories` / `POST /categories` / `PATCH /categories/:id` / `DELETE /categories/:id`
+- `GET /tags` / `POST /tags` / `PATCH /tags/:id` / `DELETE /tags/:id`
+- `GET /spots` / `PATCH /spots/:id/approve` / `DELETE /spots/:id`
+- `GET /heroes` / `PATCH /heroes/:id/approve` / `DELETE /heroes/:id`
+- `GET /subscribers` (ADMIN+) — lista de suscriptores al newsletter
+- `DELETE /subscribers/:id` — eliminar suscriptor
+
+### Perfil público
+- `GET /profiles/:slug` — devuelve 404 si el usuario no tiene eventos aprobados
+
+### Artículos
+- `GET /articles` — listado
+- `GET /articles/:slug` — detalle con tags y eventos relacionados
+
+## Estado de implementación
+
+| Vista | Estado |
+|---|---|
+| Home — carousel heroes | Implementado |
+| Home — rails por categoría | Implementado |
+| Home — destacados top 12 | Pendiente (frontend) |
+| Home — últimos en unirse | Pendiente (frontend) |
+| Home — newsletter | Pendiente (frontend) |
+| `/[category]` | Implementado (filtros visuales sin función) |
+| `/[category]/[slug]` | Implementado |
+| `/busqueda` | Implementado (SSR + client refetch) |
+| `/cuenta` — perfil (persistencia API) | Pendiente |
+| `/cuenta` — tabs spots/heroes | Pendiente |
+| `/crear` | Implementado (sin flujo de pago) |
+| Upsell post-evento | Pendiente |
+| Formulario de aviso | Pendiente |
+| Formulario de hero | Pendiente |
+| `/carrito` | Pendiente |
+| `/checkout/success` | Pendiente |
+| `/checkout/failed` | Pendiente |
+| `/login` | Implementado |
+| `/registro` | Implementado |
+| `/recuperar-contrasena` | Pendiente |
+| `/reset-password/:token` | Pendiente |
+| `/u/[slug]` | Pendiente |
+| `/articulos` | Pendiente |
+| `/articulos/[slug]` | Pendiente |
+| `/dashboard` | Parcial (datos mock/hardcodeados) |
+| `/dashboard/events` | Implementado |
+| `/dashboard/users` | Pendiente |
+| `/dashboard/regions` | Pendiente |
+| `/dashboard/communes` | Pendiente |
+| `/dashboard/categories` | Pendiente |
+| `/dashboard/tags` | Pendiente |
+| `/dashboard/spots` | Pendiente |
+| `/dashboard/heroes` | Pendiente |
+| `/dashboard/payments` | Pendiente |
 
 ## Componentes clave
 
 | Componente | Propósito | Estado |
 |---|---|---|
-| `Header` | Nav con categorías, menú de usuario | Completo. Links "Mis tickets" y "Configuración" en dropdown redirigen a `/cuenta` (stubs) |
+| `Header` | Nav con categorías y menú de usuario | Completo. "Mis tickets" y "Configuración" redirigen a `/cuenta` (stubs) |
 | `Footer` | Links del sitio | Visual. Todos los `href` apuntan a `#` |
-| `HeroBlock` | Carousel de heroes en la home | Completo |
-| `Rail` | Sección horizontal de event cards | Completo. "Ver todos" sin href |
-| `EventCard` | Card de evento (link a detalle) | Completo |
-| `ProfileModal` | Modal para editar nombre/email/teléfono | **Solo actualiza contexto local — no llama a la API** |
+| `HeroBlock` | Carousel de heroes | Completo |
+| `Rail` | Sección horizontal de event cards | Completo |
+| `EventCard` | Card de evento | Completo |
+| `ProfileModal` | Editar perfil | Solo actualiza contexto local — no llama a la API |
 
----
+## Cache
 
-## Flujos de usuario completos
-
-### Flujo organizador
-1. `/registro` → crea cuenta + perfil vacío (automático en API)
-2. `/crear` → crea evento en `DRAFT`
-3. Upsell post-wizard → ofrece agregar spot/hero si hay cupo
-4. `/carrito` → agrega ítems, elige días, revisa total → paga con Transbank
-5. Transbank confirma → ítems pasan a `PENDING_MODERATION`
-6. Admin aprueba → ítems pasan a `APPROVED` y aparecen en el sitio
-7. Con al menos 1 evento aprobado → `/u/:slug` se vuelve accesible
-8. `/cuenta` → editar perfil público (displayName, bio, avatar, banner, redes)
-
-### Flujo visitante
-1. Home → descubre eventos en el hero o en los rails
-2. `/[category]` o `/busqueda` → filtra
-3. `/[category]/[slug]` → detalle, fechas, precios, link de tickets
-
-### Flujo admin
-1. Accede a `/dashboard` → ve cola de moderación
-2. `/dashboard/events` → aprueba o rechaza eventos con motivo
-3. `/cuenta` → edita su propio perfil (igual que cualquier usuario)
-
----
-
-## Notas para implementación futura
-
-- **ProfileModal** debe reemplazarse por un formulario que llame a `PUT /profiles/me` con todos los campos del perfil
-- **Subida de imágenes** en `/cuenta` usa el mismo endpoint que el wizard de eventos: `POST /uploads` devuelve `{ url, filename }`
-- **Spots y heroes** tienen endpoints `/mine` y CRUD propio — `/cuenta` debería mostrarlos con tabs separados
-- **Cache:** Los GET públicos están cacheados en Redis con TTL de 1 día. Al hacer POST/PATCH/DELETE la colección se invalida automáticamente
+Los `GET` públicos están cacheados en Redis con TTL de 1 día. Al hacer `POST`, `PATCH` o `DELETE` sobre una colección, el cache de esa colección se invalida automáticamente. Las peticiones con header `Authorization` no se cachean (el admin puede ver estados distintos al público).

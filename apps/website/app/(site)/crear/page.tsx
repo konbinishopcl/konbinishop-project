@@ -1,8 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
+import { useUser } from "@/components/providers";
+import {
+  api,
+  imageUrl,
+  type ApiCategory,
+  type ApiCommune,
+  type ApiRegion,
+  type CreateEventInput,
+} from "@/lib/api";
 
 type Price = { name: string; amount: string };
 type DateRow = { date: string; start: string; end: string };
@@ -10,53 +21,186 @@ type DateRow = { date: string; start: string; end: string };
 type FormData = {
   title: string;
   company: string;
-  category: string;
+  categoryId: string;
   desc: string;
   about: string;
   free: boolean;
   prices: Price[];
   dates: DateRow[];
-  venue: string;
+  regionId: string;
+  communeId: string;
   address: string;
+  addressNumber: string;
   web: string;
   socials: string[];
   videos: string[];
+  banner: string;
+  poster: string;
+  gallery: string[];
 };
 
 type Update = <K extends keyof FormData>(k: K, v: FormData[K]) => void;
 
+const EMPTY: FormData = {
+  title: "",
+  company: "",
+  categoryId: "",
+  desc: "",
+  about: "",
+  free: false,
+  prices: [{ name: "Entrada General", amount: "" }],
+  dates: [{ date: "", start: "", end: "" }],
+  regionId: "",
+  communeId: "",
+  address: "",
+  addressNumber: "",
+  web: "",
+  socials: [""],
+  videos: [""],
+  banner: "",
+  poster: "",
+  gallery: [],
+};
+
 export default function FormPage() {
+  const router = useRouter();
+  const { user, token, ready } = useUser();
+
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<FormData>({
-    title: "",
-    company: "",
-    category: "",
-    desc: "",
-    about: "",
-    free: false,
-    prices: [{ name: "Entrada General", amount: "" }],
-    dates: [{ date: "", start: "", end: "" }],
-    venue: "",
-    address: "",
-    web: "",
-    socials: [""],
-    videos: [""],
-  });
+  const [data, setData] = useState<FormData>(EMPTY);
+  const [categories, setCategories] = useState<ApiCategory[]>([]);
+  const [regions, setRegions] = useState<ApiRegion[]>([]);
+  const [communes, setCommunes] = useState<ApiCommune[]>([]);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+
   const update: Update = (k, v) => setData((d) => ({ ...d, [k]: v }));
+
+  // Sin sesión → al login.
+  useEffect(() => {
+    if (ready && !user) router.replace("/login");
+  }, [ready, user, router]);
+
+  // Catálogos.
+  useEffect(() => {
+    api.categories().then(setCategories).catch(() => {});
+    api.regions().then(setRegions).catch(() => {});
+  }, []);
+
+  // Comunas según la región elegida.
+  useEffect(() => {
+    const region = regions.find((r) => String(r.id) === data.regionId);
+    if (!region) {
+      setCommunes([]);
+      return;
+    }
+    api.communes(region.slug).then(setCommunes).catch(() => setCommunes([]));
+  }, [data.regionId, regions]);
+
+  if (!ready || !user || !token) {
+    return (
+      <main
+        style={{
+          minHeight: "60vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--ink-3)",
+          fontFamily: "var(--font-mono)",
+          fontSize: 13,
+        }}
+      >
+        {ready ? "Redirigiendo al inicio de sesión…" : "Verificando acceso…"}
+      </main>
+    );
+  }
+
+  if (done) {
+    return (
+      <main className="container">
+        <div className="form-shell" style={{ textAlign: "center", padding: "64px 32px" }}>
+          <div className="step-num">EVENTO ENVIADO</div>
+          <h1 className="step-title" style={{ marginTop: 12 }}>
+            Tu evento fue enviado a revisión.
+          </h1>
+          <p className="step-lead" style={{ margin: "0 auto" }}>
+            Un administrador lo revisará antes de publicarlo. Te avisaremos cuando esté
+            aprobado.
+          </p>
+          <div className="row" style={{ gap: 12, justifyContent: "center", marginTop: 24 }}>
+            <Link className="btn ghost" href="/">
+              Volver al inicio
+            </Link>
+            <Link className="btn primary" href="/cuenta">
+              Ver mis eventos {Ic.arrow}
+            </Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  const submit = async () => {
+    setError("");
+    if (
+      !data.title.trim() ||
+      data.desc.trim().length < 10 ||
+      !data.address.trim() ||
+      !data.addressNumber.trim()
+    ) {
+      setError("Completa el título, la descripción (mín. 10 caracteres), la dirección y el número.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const web = data.web.trim().replace(/^https?:\/\//, "");
+      const payload: CreateEventInput = {
+        title: data.title.trim(),
+        company: data.company.trim() || undefined,
+        description: data.desc.trim(),
+        about: data.about.trim() || undefined,
+        address: data.address.trim(),
+        addressNumber: data.addressNumber.trim(),
+        ticketUrl: web ? `https://${web}` : undefined,
+        banner: data.banner || undefined,
+        poster: data.poster || undefined,
+        gallery: data.gallery.length ? data.gallery : undefined,
+        regionId: data.regionId ? Number(data.regionId) : undefined,
+        communeId: data.communeId ? Number(data.communeId) : undefined,
+        categoryIds: data.categoryId ? [Number(data.categoryId)] : undefined,
+        prices: data.free
+          ? []
+          : data.prices
+              .filter((p) => p.name.trim())
+              .map((p) => ({ name: p.name.trim(), price: Number(p.amount) || 0 })),
+        dates: data.dates
+          .filter((d) => d.date)
+          .map((d) => ({
+            date: d.date,
+            startTime: d.start || undefined,
+            endTime: d.end || undefined,
+          })),
+        socialLinks: data.socials.filter((s) => s.trim()).map((s) => ({ link: s.trim() })),
+        videos: data.videos.filter((v) => v.trim()).map((v) => ({ link: v.trim() })),
+      };
+      await api.createEvent(payload, token);
+      setDone(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo publicar el evento");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <main>
       <div style={{ background: "var(--bg-2)", borderBottom: "1px solid var(--line)", padding: "18px 0" }}>
         <div className="container row" style={{ justifyContent: "space-between" }}>
           <BrandMark size={28} />
-          <div className="row" style={{ gap: 10 }}>
-            <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>
-              PASO {step} DE 3
-            </span>
-            <button className="btn ghost">
-              <span style={{ marginRight: 6 }}>?</span> Ayuda
-            </button>
-          </div>
+          <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>
+            PASO {step} DE 3
+          </span>
         </div>
       </div>
 
@@ -69,30 +213,37 @@ export default function FormPage() {
           </div>
 
           <div className="step-num">PASO {step} / 03</div>
-          {step === 1 && <Step1 data={data} update={update} />}
-          {step === 2 && <Step2 data={data} update={update} />}
-          {step === 3 && <Step3 data={data} update={update} />}
+          {step === 1 && <Step1 data={data} update={update} categories={categories} userName={user.name} />}
+          {step === 2 && (
+            <Step2 data={data} update={update} regions={regions} communes={communes} />
+          )}
+          {step === 3 && <Step3 data={data} update={update} token={token} />}
+
+          {error && (
+            <div style={{ color: "var(--err)", fontSize: 13, margin: "18px 0 0" }}>{error}</div>
+          )}
 
           <div className="form-foot">
             <button
               className="btn ghost"
-              onClick={() => (step > 1 ? setStep(step - 1) : null)}
+              onClick={() => step > 1 && setStep(step - 1)}
               disabled={step === 1}
               style={{ opacity: step === 1 ? 0.3 : 1 }}
             >
               {Ic.chevL} Volver
             </button>
-            <div className="row" style={{ gap: 14 }}>
-              <button className="btn ghost">Guardar borrador</button>
-              <button
-                className="btn primary"
-                onClick={() =>
-                  step < 3 ? setStep(step + 1) : alert("¡Publicación enviada a revisión!")
-                }
-              >
-                {step === 3 ? "Publicar evento" : "Continuar"} {Ic.arrow}
-              </button>
-            </div>
+            <button
+              className="btn primary"
+              disabled={submitting}
+              onClick={() => (step < 3 ? setStep(step + 1) : submit())}
+            >
+              {step === 3
+                ? submitting
+                  ? "Publicando…"
+                  : "Publicar evento"
+                : "Continuar"}{" "}
+              {Ic.arrow}
+            </button>
           </div>
         </div>
       </div>
@@ -100,18 +251,27 @@ export default function FormPage() {
   );
 }
 
-function Step1({ data, update }: { data: FormData; update: Update }) {
-  const cats = ["Cine", "Conciertos", "Convenciones", "Streamings", "Ferias", "Anime · TV", "Gaming", "Cosplay"];
+function Step1({
+  data,
+  update,
+  categories,
+  userName,
+}: {
+  data: FormData;
+  update: Update;
+  categories: ApiCategory[];
+  userName: string;
+}) {
+  const firstName = userName.split(" ")[0] || userName;
   return (
     <div>
       <h1 className="step-title">
-        Hola, Gabriel.
+        Hola, {firstName}.
         <br />
         Cuéntanos sobre tu evento.
       </h1>
       <p className="step-lead">
-        Esta información se mostrará en tu publicación. Podrás editarla en cualquier momento antes de
-        publicar.
+        Esta información se mostrará en tu publicación. Podrás editarla antes de que se apruebe.
       </p>
 
       <fieldset>
@@ -122,7 +282,7 @@ function Step1({ data, update }: { data: FormData; update: Update }) {
           <label>Título del evento</label>
           <input
             type="text"
-            placeholder="Ej: Concierto Anime Symphonic Orchestra 2025"
+            placeholder="Ej: Konbini Live Fest 2026"
             value={data.title}
             onChange={(e) => update("title", e.target.value)}
           />
@@ -133,18 +293,18 @@ function Step1({ data, update }: { data: FormData; update: Update }) {
             <label>Empresa / Productor</label>
             <input
               type="text"
-              placeholder="Ej: Cinépolis, Productora 8U"
+              placeholder="Ej: Konbini Producciones"
               value={data.company}
               onChange={(e) => update("company", e.target.value)}
             />
           </div>
           <div className="field">
             <label>Categoría</label>
-            <select value={data.category} onChange={(e) => update("category", e.target.value)}>
+            <select value={data.categoryId} onChange={(e) => update("categoryId", e.target.value)}>
               <option value="">Selecciona una categoría</option>
-              {cats.map((c) => (
-                <option key={c} value={c}>
-                  {c}
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name ?? c.slug}
                 </option>
               ))}
             </select>
@@ -157,14 +317,14 @@ function Step1({ data, update }: { data: FormData; update: Update }) {
             value={data.desc}
             onChange={(e) => update("desc", e.target.value)}
           />
-          <div className="help">Aparece en las tarjetas de búsqueda. 280 caracteres máx.</div>
+          <div className="help">Aparece en las tarjetas de búsqueda. Mínimo 10 caracteres.</div>
         </div>
         <div className="field">
           <label>
             Acerca de <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(opcional)</span>
           </label>
           <textarea
-            placeholder="Cuenta lo que los asistentes pueden esperar: artistas invitados, actividades, proyecciones especiales…"
+            placeholder="Cuenta lo que los asistentes pueden esperar: artistas invitados, actividades…"
             value={data.about}
             onChange={(e) => update("about", e.target.value)}
             style={{ minHeight: 140 }}
@@ -174,14 +334,14 @@ function Step1({ data, update }: { data: FormData; update: Update }) {
 
       <fieldset>
         <div className="field-set-title">
-          <span className="n">1.2</span> Precio del evento
+          <span className="n">1.2</span> Valores de entrada
         </div>
         <div className="ck-row" onClick={() => update("free", !data.free)} style={{ marginBottom: 16 }}>
           <div className={`ck ${data.free ? "on" : ""}`}>{data.free && Ic.check}</div>
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Evento gratuito</div>
             <div style={{ color: "var(--ink-3)", fontSize: 12 }}>
-              Marca esta opción si no se cobra entrada.
+              Marca esta opción si la entrada es liberada.
             </div>
           </div>
         </div>
@@ -194,7 +354,7 @@ function Step1({ data, update }: { data: FormData; update: Update }) {
                   <label>Nombre de tarifa</label>
                   <input
                     type="text"
-                    placeholder="Ej: Entrada General, VIP, Estudiante"
+                    placeholder="Ej: Entrada General, VIP"
                     value={p.name}
                     onChange={(e) =>
                       update(
@@ -243,8 +403,7 @@ function Step1({ data, update }: { data: FormData; update: Update }) {
               {Ic.plus} Agregar otra tarifa
             </button>
             <div className="help" style={{ marginTop: 12 }}>
-              El pago se procesa a través de nuestra pasarela.{" "}
-              <strong>No solicitamos datos de tarjeta directamente.</strong>
+              Los valores son informativos. La compra de entradas se realiza fuera de Konbini.
             </div>
           </div>
         )}
@@ -253,12 +412,22 @@ function Step1({ data, update }: { data: FormData; update: Update }) {
   );
 }
 
-function Step2({ data, update }: { data: FormData; update: Update }) {
+function Step2({
+  data,
+  update,
+  regions,
+  communes,
+}: {
+  data: FormData;
+  update: Update;
+  regions: ApiRegion[];
+  communes: ApiCommune[];
+}) {
   return (
     <div>
       <h1 className="step-title">Horarios, ubicación y links.</h1>
       <p className="step-lead">
-        Indica dónde y cuándo ocurre el evento, y dónde podemos enviar a tus asistentes para más
+        Indica dónde y cuándo ocurre el evento, y dónde enviar a los asistentes para más
         información.
       </p>
 
@@ -271,8 +440,7 @@ function Step2({ data, update }: { data: FormData; update: Update }) {
             <div className="field" style={{ margin: 0 }}>
               <label>Fecha {i === 0 ? "" : `(día ${i + 1})`}</label>
               <input
-                type="text"
-                placeholder="DD / MM / AAAA"
+                type="date"
                 value={d.date}
                 onChange={(e) =>
                   update(
@@ -285,8 +453,7 @@ function Step2({ data, update }: { data: FormData; update: Update }) {
             <div className="field" style={{ margin: 0 }}>
               <label>Hora inicio</label>
               <input
-                type="text"
-                placeholder="20:00"
+                type="time"
                 value={d.start}
                 onChange={(e) =>
                   update(
@@ -299,8 +466,7 @@ function Step2({ data, update }: { data: FormData; update: Update }) {
             <div className="field" style={{ margin: 0 }}>
               <label>Hora término</label>
               <input
-                type="text"
-                placeholder="23:00"
+                type="time"
                 value={d.end}
                 onChange={(e) =>
                   update(
@@ -324,24 +490,61 @@ function Step2({ data, update }: { data: FormData; update: Update }) {
         <div className="field-set-title">
           <span className="n">2.2</span> Ubicación
         </div>
-        <div className="field">
-          <label>Lugar / Venue</label>
-          <input
-            type="text"
-            placeholder="Ej: Teatro Cariola, Movistar Arena, Online"
-            value={data.venue}
-            onChange={(e) => update("venue", e.target.value)}
-          />
+        <div className="grid-2">
+          <div className="field">
+            <label>Región</label>
+            <select
+              value={data.regionId}
+              onChange={(e) => {
+                update("regionId", e.target.value);
+                update("communeId", "");
+              }}
+            >
+              <option value="">Selecciona una región</option>
+              {regions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label>Comuna</label>
+            <select
+              value={data.communeId}
+              onChange={(e) => update("communeId", e.target.value)}
+              disabled={!data.regionId}
+            >
+              <option value="">
+                {data.regionId ? "Selecciona una comuna" : "Elige una región primero"}
+              </option>
+              {communes.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="field">
-          <label>Dirección completa</label>
-          <input
-            type="text"
-            placeholder="Calle, número, comuna, región"
-            value={data.address}
-            onChange={(e) => update("address", e.target.value)}
-          />
-          <div className="help">Si tu evento es online, escribe &quot;Evento virtual&quot;.</div>
+        <div className="grid-2">
+          <div className="field">
+            <label>Dirección</label>
+            <input
+              type="text"
+              placeholder="Ej: Av. Matta"
+              value={data.address}
+              onChange={(e) => update("address", e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label>Número</label>
+            <input
+              type="text"
+              placeholder="Ej: 890"
+              value={data.addressNumber}
+              onChange={(e) => update("addressNumber", e.target.value)}
+            />
+          </div>
         </div>
       </fieldset>
 
@@ -350,18 +553,19 @@ function Step2({ data, update }: { data: FormData; update: Update }) {
           <span className="n">2.3</span> Enlaces importantes
         </div>
         <div className="field">
-          <label>Sitio web / Ticketera</label>
+          <label>Sitio de venta de entradas / Ticketera</label>
           <div className="input-prefix">
             <span>https://</span>
             <input
               type="text"
-              placeholder="ticketmaster.com/tu-evento"
+              placeholder="ticketera.cl/tu-evento"
               value={data.web}
               onChange={(e) => update("web", e.target.value)}
             />
           </div>
           <div className="help">
-            Si tienes una ticketera externa, los compradores serán dirigidos ahí.
+            La compra de entradas ocurre fuera de Konbini: los asistentes serán dirigidos a este
+            enlace.
           </div>
         </div>
         <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>
@@ -401,12 +605,110 @@ function Step2({ data, update }: { data: FormData; update: Update }) {
   );
 }
 
-function Step3({ data, update }: { data: FormData; update: Update }) {
+function ImageUploader({
+  label,
+  value,
+  onChange,
+  token,
+  tall,
+}: {
+  label: string;
+  value: string;
+  onChange: (url: string) => void;
+  token: string;
+  tall?: boolean;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setErr("");
+    setBusy(true);
+    try {
+      const { url } = await api.uploadImage(file, token);
+      onChange(url);
+    } catch (ex) {
+      setErr(ex instanceof Error ? ex.message : "No se pudo subir la imagen");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div>
+      <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>
+        {label}
+      </label>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: "none" }}
+        onChange={onFile}
+      />
+      {value ? (
+        <div
+          className={`upload-box ${tall ? "tall" : ""}`}
+          style={{ padding: 0, overflow: "hidden", position: "relative" }}
+        >
+          <img
+            src={imageUrl(value)}
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => onChange("")}
+            style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.6)", color: "white" }}
+          >
+            {Ic.close}
+          </button>
+        </div>
+      ) : (
+        <div className={`upload-box ${tall ? "tall" : ""}`} onClick={() => ref.current?.click()}>
+          <div className="ic">{Ic.upl}</div>
+          <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>
+            {busy ? "Subiendo…" : "Subir imagen"}
+          </div>
+          <small>JPG / PNG / WebP · máx 5MB</small>
+        </div>
+      )}
+      {err && <div style={{ color: "var(--err)", fontSize: 12, marginTop: 6 }}>{err}</div>}
+    </div>
+  );
+}
+
+function Step3({ data, update, token }: { data: FormData; update: Update; token: string }) {
+  const galRef = useRef<HTMLInputElement>(null);
+  const [galBusy, setGalBusy] = useState(false);
+  const [galErr, setGalErr] = useState("");
+
+  const onGalleryFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setGalErr("");
+    setGalBusy(true);
+    try {
+      const { url } = await api.uploadImage(file, token);
+      update("gallery", [...data.gallery, url]);
+    } catch (ex) {
+      setGalErr(ex instanceof Error ? ex.message : "No se pudo subir la imagen");
+    } finally {
+      setGalBusy(false);
+    }
+  };
+
   return (
     <div>
       <h1 className="step-title">Imágenes y video.</h1>
       <p className="step-lead">
-        Una buena imagen es decisiva. Usa el banner para destacar y el poster para listados
+        Una buena imagen es decisiva. El banner destaca el evento; el poster va en los listados
         verticales.
       </p>
 
@@ -415,28 +717,19 @@ function Step3({ data, update }: { data: FormData; update: Update }) {
           <span className="n">3.1</span> Imágenes principales
         </div>
         <div className="upload-grid">
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>
-              Banner (horizontal · 16:9)
-            </label>
-            <div className="upload-box">
-              <div className="ic">{Ic.upl}</div>
-              <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube una imagen horizontal</div>
-              <small>JPG / PNG · máx 5MB · sin texto sobreimpreso</small>
-            </div>
-          </div>
-          <div>
-            <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>
-              Poster (vertical · 2:3)
-            </label>
-            <div className="upload-box tall">
-              <div className="ic">{Ic.upl}</div>
-              <div style={{ fontWeight: 500, color: "var(--ink-2)", fontSize: 13 }}>
-                Poster oficial
-              </div>
-              <small>JPG / PNG · 1200×1800</small>
-            </div>
-          </div>
+          <ImageUploader
+            label="Banner (horizontal · 16:9)"
+            value={data.banner}
+            onChange={(u) => update("banner", u)}
+            token={token}
+          />
+          <ImageUploader
+            label="Poster (vertical · 2:3)"
+            value={data.poster}
+            onChange={(u) => update("poster", u)}
+            token={token}
+            tall
+          />
         </div>
       </fieldset>
 
@@ -444,16 +737,49 @@ function Step3({ data, update }: { data: FormData; update: Update }) {
         <div className="field-set-title">
           <span className="n">3.2</span> Galería
         </div>
+        <input
+          ref={galRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: "none" }}
+          onChange={onGalleryFile}
+        />
         <div className="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-          {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <div key={i} className="upload-box" style={{ aspectRatio: "1/1", padding: 14 }}>
-              <div className="ic" style={{ width: 28, height: 28 }}>{Ic.plus}</div>
-              <small style={{ fontSize: 10 }}>Imagen {i + 1}</small>
+          {data.gallery.map((g, i) => (
+            <div
+              key={i}
+              className="upload-box"
+              style={{ aspectRatio: "1/1", padding: 0, overflow: "hidden", position: "relative" }}
+            >
+              <img
+                src={imageUrl(g)}
+                alt=""
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => update("gallery", data.gallery.filter((_, j) => j !== i))}
+                style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,.6)", color: "white" }}
+              >
+                {Ic.close}
+              </button>
             </div>
           ))}
+          {data.gallery.length < 10 && (
+            <div
+              className="upload-box"
+              style={{ aspectRatio: "1/1", padding: 14 }}
+              onClick={() => galRef.current?.click()}
+            >
+              <div className="ic" style={{ width: 28, height: 28 }}>{Ic.plus}</div>
+              <small style={{ fontSize: 10 }}>{galBusy ? "Subiendo…" : "Agregar"}</small>
+            </div>
+          )}
         </div>
+        {galErr && <div style={{ color: "var(--err)", fontSize: 12, marginTop: 8 }}>{galErr}</div>}
         <div className="help" style={{ marginTop: 10 }}>
-          Hasta 10 imágenes. Aparecerán en la sección &quot;Galería&quot; del evento.
+          Hasta 10 imágenes. Aparecen en la sección &quot;Galería&quot; del evento.
         </div>
       </fieldset>
 
@@ -521,8 +847,8 @@ function Step3({ data, update }: { data: FormData; update: Update }) {
         <div>
           <div style={{ fontWeight: 600, marginBottom: 4 }}>Revisión antes de publicar</div>
           <div style={{ color: "var(--ink-2)", fontSize: 13, lineHeight: 1.55 }}>
-            Tu publicación pasará por una revisión rápida (24–48 hrs) antes de aparecer en Konbini.
-            Te notificaremos por correo cuando esté lista.
+            Tu publicación pasará por una revisión antes de aparecer en Konbini. Te
+            notificaremos cuando esté lista.
           </div>
         </div>
       </div>

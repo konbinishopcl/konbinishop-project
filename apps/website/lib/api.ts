@@ -87,6 +87,7 @@ export type ApiEvent = {
   gallery: string[];
   isApproved: boolean;
   isRejected: boolean;
+  rejectedReason: string | null;
   region: ApiRegion | null;
   commune: ApiCommune | null;
   categories: ApiCategory[];
@@ -112,6 +113,28 @@ export type EventsQuery = {
   region?: string;
 };
 
+// Payload para crear un evento (POST /events).
+export type CreateEventInput = {
+  title: string;
+  company?: string;
+  description: string;
+  about?: string;
+  expirationDate?: string;
+  address: string;
+  addressNumber: string;
+  ticketUrl?: string;
+  banner?: string;
+  poster?: string;
+  gallery?: string[];
+  regionId?: number;
+  communeId?: number;
+  categoryIds?: number[];
+  prices?: { name: string; price?: number }[];
+  dates?: { date?: string; startTime?: string; endTime?: string }[];
+  socialLinks?: { link: string }[];
+  videos?: { link: string }[];
+};
+
 function qs(query: Record<string, string | number | undefined>): string {
   const parts = Object.entries(query)
     .filter(([, v]) => v !== undefined && v !== "")
@@ -130,6 +153,31 @@ export const api = {
   // Contenido
   events: (query: EventsQuery = {}) => request<ApiEventList>(`/events${qs(query)}`),
   event: (slug: string) => request<ApiEvent>(`/events/${slug}`),
+  createEvent: (body: CreateEventInput, token: string) =>
+    request<ApiEvent>("/events", { method: "POST", body: JSON.stringify(body) }, token),
+  myEvents: (token: string) => request<ApiEvent[]>("/events/mine", {}, token),
+
+  // Subida de imagen (multipart) — el navegador fija el Content-Type con su boundary.
+  uploadImage: async (file: File, token: string): Promise<{ url: string; filename: string }> => {
+    const form = new FormData();
+    form.append("file", file);
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/upload`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+    } catch {
+      throw new Error("No se pudo conectar con el servidor. ¿Está corriendo la API?");
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const m = (data as { message?: string | string[] }).message;
+      throw new Error(Array.isArray(m) ? m.join(" · ") : m || "No se pudo subir la imagen");
+    }
+    return data as { url: string; filename: string };
+  },
   categories: () => request<ApiCategory[]>("/categories"),
   regions: () => request<ApiRegion[]>("/regions"),
   communes: (region?: string) =>

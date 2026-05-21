@@ -1,6 +1,9 @@
 node_modules
 .turbo
 
+# Windows alternate data stream artifacts
+*Zone.Identifier*
+
 # env files
 .env
 .env.*

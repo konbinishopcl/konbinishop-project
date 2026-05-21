@@ -59,7 +59,7 @@ export class HttpCacheInterceptor implements NestInterceptor {
     // GET público: cache por URL completa con query string.
     const key = `http:${collection}:${req.path}${req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''}`;
 
-    return from(this.redis.get(key)).pipe(
+    return from(this.redis.get(key).catch(() => null)).pipe(
       switchMap((cached) => {
         if (cached) {
           res.setHeader('X-Cache', 'HIT');

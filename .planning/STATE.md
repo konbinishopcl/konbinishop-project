@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1
 milestone_name: "Publicación gratuita de eventos"
 status: in_progress
-last_updated: "2026-05-21T03:00:00.000Z"
+last_updated: "2026-05-21T04:30:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 4
+  total_plans: 11
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 3 — Publicación de eventos
+**Current focus:** Phase 4 — Moderación y panel admin
 
 ## Current Status
 
 **Milestone:** v1 — Publicación gratuita de eventos
-**Active Phase:** Phase 3 — Publicación de eventos (pendiente — por planear)
-**Overall Progress:** [████░░░] Phases 0, 1 y 2 completas
-**Last session:** 2026-05-21 — Phase 2 cerrada (plan 02-04: quitar checkout + hero real)
+**Active Phase:** Phase 4 — Moderación y panel admin (pendiente — por planear)
+**Overall Progress:** [█████░░] Phases 0–3 completas
+**Last session:** 2026-05-21 — Phase 3 cerrada (plan 03-03: panel del organizador /cuenta)
 
 ## Phase Summary
 
@@ -35,7 +35,7 @@ administrador quedan visibles al público.
 | 0 | Re-alineación GSD | ✅ Complete | 1/1 |
 | 1 | API de contenido (eventos + taxonomías) | ✅ Complete | 3/3 |
 | 2 | Sitio público con datos reales | ✅ Complete | 4/4 |
-| 3 | Publicación de eventos | ○ Pending | 0/? |
+| 3 | Publicación de eventos | ✅ Complete | 3/3 |
 | 4 | Moderación y panel admin | ○ Pending | 0/? |
 | 5 | Búsqueda | ○ Pending | 0/? |
 | 6 | Hardening para producción | ○ Pending | 0/? |
@@ -71,8 +71,9 @@ administrador quedan visibles al público.
 
 ## Next Action
 
-Planear **Phase 3 — Publicación de eventos**: el organizador crea eventos desde `/crear`
-(formulario conectado a `POST /events`), sube imágenes, y ve sus eventos en `/cuenta`.
+Planear **Phase 4 — Moderación y panel admin**: `/dashboard/events` lista y modera eventos
+(aprobar/rechazar contra la API), `/dashboard/users` gestiona usuarios, y se limpian las
+vistas admin obsoletas (pagos).
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

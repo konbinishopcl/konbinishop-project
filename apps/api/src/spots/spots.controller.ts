@@ -9,7 +9,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { SpotsService } from './spots.service';
 import { CreateSpotDto } from './dto/create-spot.dto';
 import { UpdateSpotDto } from './dto/update-spot.dto';
@@ -39,7 +44,10 @@ export class SpotsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a spot (any authenticated user)' })
+  @ApiOperation({
+    summary: 'Create a spot (any authenticated user, subject to max days)',
+  })
+  @ApiBadRequestResponse({ description: 'expirationDate exceeds SPOT_MAX_DAYS' })
   create(@Body() dto: CreateSpotDto, @CurrentUser() user: JwtUser) {
     return this.spots.create(dto, user);
   }
@@ -48,6 +56,7 @@ export class SpotsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a spot (owner or admin)' })
+  @ApiBadRequestResponse({ description: 'expirationDate exceeds SPOT_MAX_DAYS' })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateSpotDto,

@@ -25,14 +25,6 @@ export class CatalogService {
     return this.prisma.tag.findMany({ orderBy: { name: 'asc' } });
   }
 
-  /** Solo banners vigentes (no expirados). */
-  heroes() {
-    return this.prisma.hero.findMany({
-      where: { expirationDate: { gte: new Date() } },
-      orderBy: { date: 'asc' },
-    });
-  }
-
   articles() {
     return this.prisma.article.findMany({
       include: { tags: true },

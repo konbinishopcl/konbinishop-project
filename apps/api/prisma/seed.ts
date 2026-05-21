@@ -262,46 +262,6 @@ async function main() {
     },
   });
 
-  // ── Heroes (banners destacados) ──
-  await prisma.hero.create({
-    data: {
-      title: 'Festival de Primavera 2026',
-      slug: 'festival-de-primavera-2026',
-      date: new Date('2026-09-21'),
-      address: "Av. Bernardo O'Higgins",
-      addressNumber: '1234',
-      venue: "Parque O'Higgins",
-      link: 'https://konbini.cl/eventos/festival-primavera-2026',
-      desktopImage: 'https://placehold.co/1920x600/png',
-      tabletImage: 'https://placehold.co/1024x500/png',
-      mobileImage: 'https://placehold.co/768x800/png',
-      thumbnail: 'https://placehold.co/400x400/png',
-      expirationDate: new Date('2026-09-22'),
-      regionId: region('region-metropolitana-de-santiago').id,
-      communeId: commune('santiago').id,
-      categories: { connect: [{ id: musica.id }] },
-    },
-  });
-  await prisma.hero.create({
-    data: {
-      title: 'Expo Otaku Viña 2026',
-      slug: 'expo-otaku-vina-2026',
-      date: new Date('2026-10-12'),
-      address: 'Av. San Martín',
-      addressNumber: '567',
-      venue: 'Centro de Convenciones Viña',
-      link: 'https://konbini.cl/eventos/expo-otaku-vina-2026',
-      desktopImage: 'https://placehold.co/1920x600/png',
-      tabletImage: 'https://placehold.co/1024x500/png',
-      mobileImage: 'https://placehold.co/768x800/png',
-      thumbnail: 'https://placehold.co/400x400/png',
-      expirationDate: new Date('2026-10-13'),
-      regionId: region('valparaiso').id,
-      communeId: commune('vina-del-mar').id,
-      categories: { connect: [{ id: animeManga.id }, { id: videojuegos.id }] },
-    },
-  });
-
   // ── Usuarios (sistema local; un usuario por cada rol) ──
   const passwordHash = await hash('konbini123', 10);
   await prisma.user.create({
@@ -361,6 +321,42 @@ async function main() {
         linkType: 'EMAIL',
         linkValue: 'ventas@example.cl',
         userId: organizer.id,
+      },
+    ],
+  });
+
+  // ── Heroes: paid placements shown in the home hero carousel ──
+  await prisma.hero.createMany({
+    data: [
+      {
+        title: 'Festival de',
+        titleAccent: 'Primavera 2026',
+        lead: 'Dos días de música en vivo en el corazón de Santiago.',
+        image: '/uploads/hero-1.jpg',
+        date: new Date('2026-09-21'),
+        place: "Parque O'Higgins, Santiago",
+        linkType: 'URL',
+        linkValue: 'https://example.cl/festival-de-primavera',
+        categoryId: musica.id,
+        userId: organizer.id,
+        days: 30,
+        amount: 30 * 15000,
+        expirationDate: new Date('2026-09-22'),
+      },
+      {
+        title: 'Expo Otaku',
+        titleAccent: 'Viña 2026',
+        lead: 'La convención otaku más grande de la región.',
+        image: '/uploads/hero-2.jpg',
+        date: new Date('2026-10-12'),
+        place: 'Centro de Convenciones, Viña del Mar',
+        linkType: 'URL',
+        linkValue: 'https://example.cl/expo-otaku-vina',
+        categoryId: animeManga.id,
+        userId: organizer.id,
+        days: 30,
+        amount: 30 * 15000,
+        expirationDate: new Date('2026-10-13'),
       },
     ],
   });

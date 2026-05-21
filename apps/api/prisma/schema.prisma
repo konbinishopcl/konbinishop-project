@@ -19,7 +19,6 @@ model Region {
   slug      String    @unique
   communes  Commune[]
   events    Event[]
-  heroes    Hero[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 }
@@ -31,7 +30,6 @@ model Commune {
   region    Region?  @relation(fields: [regionId], references: [id])
   regionId  Int?
   events    Event[]
-  heroes    Hero[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -75,30 +73,37 @@ model Article {
   updatedAt DateTime @updatedAt
 }
 
+// A paid placement shown in the home hero carousel. Works like a Spot
+// (per-day pricing, global quota) but renders in the home hero instead of
+// the ad grid. Created by any authenticated user; active right away.
 model Hero {
-  id             Int        @id @default(autoincrement())
-  title          String
-  slug           String?    @unique
-  date           DateTime   @db.Date
-  address        String
-  addressNumber  String
-  venue          String
-  link           String?
-  desktopImage   String // URL
-  tabletImage    String // URL
-  mobileImage    String // URL
-  thumbnail      String // URL
-  expirationDate DateTime   @db.Date
-  region         Region?    @relation(fields: [regionId], references: [id])
-  regionId       Int?
-  commune        Commune?   @relation(fields: [communeId], references: [id])
-  communeId      Int?
-  categories     Category[]
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  id          Int          @id @default(autoincrement())
+  title       String // first headline line (white in the design)
+  titleAccent String? // second headline line (accent/orange in the design)
+  lead        String? // short description shown under the title
+  image       String // URL
+  date      DateTime?    @db.Date // optional date label shown in the hero
+  place     String? // optional place label shown in the hero
+  linkType  SpotLinkType // CTA link — same kinds as a Spot
+  linkValue String
 
-  @@index([regionId])
-  @@index([communeId])
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId Int?
+
+  // Owner — any authenticated user can create a hero.
+  owner  User @relation("HeroOwner", fields: [userId], references: [id])
+  userId Int
+
+  // Billing: charged per day. amount = days * HERO_PRICE_PER_DAY (env).
+  days           Int
+  amount         Int
+  expirationDate DateTime @db.Date
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([categoryId])
 }
 
 // A paid ad shown among the event cards. No detail view: it is an image and/or a
@@ -251,6 +256,7 @@ model User {
   approvedEvents Event[] @relation("EventApprover")
   rejectedEvents Event[] @relation("EventRejecter")
   spots          Spot[]  @relation("SpotOwner")
+  heroes         Hero[]  @relation("HeroOwner")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

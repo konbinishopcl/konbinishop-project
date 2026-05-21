@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1
 milestone_name: "Publicación gratuita de eventos"
 status: in_progress
-last_updated: "2026-05-21T07:30:00.000Z"
+last_updated: "2026-05-21T08:00:00.000Z"
 progress:
   total_phases: 7
   completed_phases: 5
@@ -74,6 +74,7 @@ administrador quedan visibles al público.
 | 260521-d8k | Documentar la API con Swagger/OpenAPI (UI en /docs) | 2026-05-21 | [dir](./quick/260521-d8k-documentar-api-con-swagger/) |
 | 260521-r4p | Endpoints de recuperación de contraseña (forgot/reset) | 2026-05-21 | [dir](./quick/260521-r4p-recuperar-contrasena/) |
 | 260521-s7v | Feature de avisos (Spots): CRUD en la API | 2026-05-21 | [dir](./quick/260521-s7v-spots-avisos-crud/) |
+| 260521-h3o | Heroes como placement pagado: rework + CRUD + cobro por día + cupo | 2026-05-21 | [dir](./quick/260521-h3o-rework-heroes-pagados/) |
 
 ## Next Action
 

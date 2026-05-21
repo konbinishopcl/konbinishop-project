@@ -33,12 +33,6 @@ export class CatalogController {
     return this.catalog.tags();
   }
 
-  @Get('heroes')
-  @ApiOperation({ summary: 'Listar banners destacados vigentes' })
-  heroes() {
-    return this.catalog.heroes();
-  }
-
   @Get('articles')
   @ApiOperation({ summary: 'Listar artículos' })
   articles() {

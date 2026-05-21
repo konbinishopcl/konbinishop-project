@@ -34,6 +34,13 @@ export function imageUrl(path?: string | null): string {
   return `${API_ORIGIN}${path}`;
 }
 
+/** Builds the href for a hero/spot link, depending on its link type. */
+export function linkHref(type: "URL" | "PHONE" | "EMAIL", value: string): string {
+  if (type === "PHONE") return `tel:${value}`;
+  if (type === "EMAIL") return `mailto:${value}`;
+  return value;
+}
+
 // ───────────────────────────── Auth ─────────────────────────────
 
 export type ApiUser = {
@@ -109,6 +116,23 @@ export type ApiEventList = {
   page: number;
   pageSize: number;
   totalPages: number;
+};
+
+// A paid placement shown in the home hero carousel.
+export type ApiHero = {
+  id: number;
+  title: string;
+  titleAccent: string | null;
+  lead: string | null;
+  image: string;
+  date: string | null;
+  place: string | null;
+  linkType: "URL" | "PHONE" | "EMAIL";
+  linkValue: string;
+  category: ApiCategory | null;
+  days: number;
+  amount: number;
+  expirationDate: string;
 };
 
 export type EventsQuery = {
@@ -198,6 +222,7 @@ export const api = {
   regions: () => request<ApiRegion[]>("/regions"),
   communes: (region?: string) =>
     request<ApiCommune[]>(`/communes${region ? `?region=${encodeURIComponent(region)}` : ""}`),
+  heroes: () => request<ApiHero[]>("/heroes"),
 };
 
 // ───────────────────────────── Mappers ──────────────────────────
@@ -232,12 +257,17 @@ const MESES = [
   "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
 ];
 
+/** Formats an ISO date as "8 ABR 2026". */
+function formatDateLabel(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getUTCDate()} ${MESES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 /** Formatea la primera fecha del evento como "8 ABR 2026". */
 function formatEventDate(dates: ApiEventDate[]): string {
   const raw = dates.find((d) => d.date)?.date;
   if (!raw) return "Fecha por confirmar";
-  const d = new Date(raw);
-  return `${d.getUTCDate()} ${MESES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  return formatDateLabel(raw);
 }
 
 function minPrice(prices: ApiEventPrice[]): number {
@@ -260,25 +290,28 @@ export function toEventItem(e: ApiEvent): EventItem {
   };
 }
 
-export type HeroEvent = {
-  slug: string;
+// Shape consumed by the HeroBlock — one slide of the home hero carousel.
+export type HeroSlide = {
   title: string;
+  titleAccent: string;
+  lead: string;
   category: string;
   date: string;
   place: string;
-  lead: string;
   image: string;
+  href: string;
 };
 
-/** Mapea un evento de la API al shape que consume el HeroBlock. */
-export function toHeroEvent(e: ApiEvent): HeroEvent {
+/** Maps an API hero to the shape the HeroBlock renders. */
+export function toHeroSlide(h: ApiHero): HeroSlide {
   return {
-    slug: e.slug,
-    title: e.title,
-    category: e.categories[0]?.name ?? "Evento",
-    date: formatEventDate(e.dates),
-    place: e.commune?.name ?? e.address,
-    lead: e.description,
-    image: imageUrl(e.poster ?? e.banner),
+    title: h.title,
+    titleAccent: h.titleAccent ?? "",
+    lead: h.lead ?? "",
+    category: h.category?.name ?? "",
+    date: h.date ? formatDateLabel(h.date) : "",
+    place: h.place ?? "",
+    image: imageUrl(h.image),
+    href: linkHref(h.linkType, h.linkValue),
   };
 }

@@ -9,6 +9,7 @@ import { EventsModule } from './events/events.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { SpotsModule } from './spots/spots.module';
+import { HeroesModule } from './heroes/heroes.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { SpotsModule } from './spots/spots.module';
     CatalogModule,
     UploadsModule,
     SpotsModule,
+    HeroesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

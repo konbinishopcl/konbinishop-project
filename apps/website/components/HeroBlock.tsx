@@ -1,16 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { Ic } from "./icons";
-import type { HeroEvent } from "@/lib/api";
+import type { HeroSlide } from "@/lib/api";
 
-export function HeroBlock({ events }: { events: HeroEvent[] }) {
+export function HeroBlock({ slides }: { slides: HeroSlide[] }) {
   const [idx, setIdx] = useState(0);
 
-  if (events.length === 0) return null;
-  const n = events.length;
-  const e = events[idx];
+  if (slides.length === 0) return null;
+  const n = slides.length;
+  const s = slides[idx];
 
   return (
     <section className="hero">
@@ -28,31 +27,48 @@ export function HeroBlock({ events }: { events: HeroEvent[] }) {
         <div className="hero-text">
           <div>
             <div className="row" style={{ gap: 10 }}>
-              <span className="pill accent">{e.category}</span>
+              {s.category && <span className="pill accent">{s.category}</span>}
               <span className="eyebrow">FEATURED · 注目</span>
             </div>
-            <h1>{e.title}</h1>
-            <p className="lead">{e.lead}</p>
+            <h1>
+              {s.title}
+              {s.titleAccent && (
+                <>
+                  <br />
+                  <em>{s.titleAccent}</em>
+                </>
+              )}
+            </h1>
+            {s.lead && <p className="lead">{s.lead}</p>}
           </div>
           <div className="hero-bottom">
-            <Link className="btn dark lg" href={`/evento/${e.slug}`}>
-              Ver evento {Ic.arrow}
-            </Link>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: ".15em" }}>
-                FECHA
-              </span>
-              <span style={{ fontWeight: 600 }}>{e.date}</span>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: ".15em" }}>
-                LUGAR
-              </span>
-              <span style={{ fontWeight: 600 }}>{e.place}</span>
-            </div>
+            <a
+              className="btn dark lg"
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Ver más {Ic.arrow}
+            </a>
+            {s.date && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: ".15em" }}>
+                  FECHA
+                </span>
+                <span style={{ fontWeight: 600 }}>{s.date}</span>
+              </div>
+            )}
+            {s.place && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: ".15em" }}>
+                  LUGAR
+                </span>
+                <span style={{ fontWeight: 600 }}>{s.place}</span>
+              </div>
+            )}
             {n > 1 && (
               <div className="hero-dots" style={{ marginLeft: "auto" }}>
-                {events.map((_, i) => (
+                {slides.map((_, i) => (
                   <div
                     key={i}
                     className={`d ${i === idx ? "on" : ""}`}
@@ -64,7 +80,7 @@ export function HeroBlock({ events }: { events: HeroEvent[] }) {
           </div>
         </div>
         <div className="hero-art">
-          {e.image && <img className="hero-art-img" src={e.image} alt={e.title} />}
+          {s.image && <img className="hero-art-img" src={s.image} alt={s.title} />}
         </div>
       </div>
     </section>

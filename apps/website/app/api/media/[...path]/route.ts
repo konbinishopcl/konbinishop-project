@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND_ORIGIN = process.env.API_URL?.replace(/\/api$/, "") || "http://localhost:3333";
+const BACKEND_URL = process.env.API_URL || "http://localhost:3333/api";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   const { path } = await params;
-  const url = `${BACKEND_ORIGIN}/${path.join("/")}`;
+  const url = `${BACKEND_URL}/${path.join("/")}`;
 
   let upstream: Response;
   try {

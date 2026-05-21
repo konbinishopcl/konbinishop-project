@@ -14,8 +14,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  // Imágenes subidas: apps/api/uploads/ servido en /uploads (sin el prefijo /api).
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
+  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/api/uploads' });
 
   // Documentación OpenAPI / Swagger — UI en /docs, JSON en /docs-json.
   const swaggerConfig = new DocumentBuilder()

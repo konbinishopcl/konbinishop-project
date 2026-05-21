@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1
 milestone_name: "Publicación gratuita de eventos"
 status: in_progress
-last_updated: "2026-05-21T04:30:00.000Z"
+last_updated: "2026-05-21T05:30:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 4
-  total_plans: 11
-  completed_plans: 11
+  completed_phases: 5
+  total_plans: 13
+  completed_plans: 13
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 4 — Moderación y panel admin
+**Current focus:** Phase 5 — Búsqueda
 
 ## Current Status
 
 **Milestone:** v1 — Publicación gratuita de eventos
-**Active Phase:** Phase 4 — Moderación y panel admin (pendiente — por planear)
-**Overall Progress:** [█████░░] Phases 0–3 completas
-**Last session:** 2026-05-21 — Phase 3 cerrada (plan 03-03: panel del organizador /cuenta)
+**Active Phase:** Phase 5 — Búsqueda (pendiente — por planear)
+**Overall Progress:** [██████░] Phases 0–4 completas
+**Last session:** 2026-05-21 — Phase 4 cerrada (plan 04-02: dashboard overview con datos reales)
 
 ## Phase Summary
 
@@ -36,12 +36,15 @@ administrador quedan visibles al público.
 | 1 | API de contenido (eventos + taxonomías) | ✅ Complete | 3/3 |
 | 2 | Sitio público con datos reales | ✅ Complete | 4/4 |
 | 3 | Publicación de eventos | ✅ Complete | 3/3 |
-| 4 | Moderación y panel admin | ○ Pending | 0/? |
+| 4 | Moderación y panel admin | ✅ Complete | 2/2 |
 | 5 | Búsqueda | ○ Pending | 0/? |
 | 6 | Hardening para producción | ○ Pending | 0/? |
 
 ## Decisions
 
+- **[04-02]:** `/dashboard/users` se difiere (no hay diseño). El dashboard overview se conecta
+  con alcance "Mínimo": KPIs de eventos + cola de revisión + por-categoría reales; los widgets
+  de pagos (Ingresos, Tickets, RevenueChart, Conversión) y el feed de actividad quedan mock.
 - **[02-01]:** El website mapea los eventos de la API al shape `EventItem` con `toEventItem`
   para no reescribir las cards. Detalle de evento será por `slug`. `HeroBlock` sigue en mock
   hasta conectarlo a `/api/heroes`.
@@ -71,9 +74,8 @@ administrador quedan visibles al público.
 
 ## Next Action
 
-Planear **Phase 4 — Moderación y panel admin**: `/dashboard/events` lista y modera eventos
-(aprobar/rechazar contra la API), `/dashboard/users` gestiona usuarios, y se limpian las
-vistas admin obsoletas (pagos).
+**Phase 5 — Búsqueda**: búsqueda de eventos con filtros (`/busqueda`). Las vistas admin se
+conservan todas; `/dashboard/users` queda diferido hasta que exista un diseño.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

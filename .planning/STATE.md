@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1
 milestone_name: "Publicación gratuita de eventos"
 status: in_progress
-last_updated: "2026-05-21T01:00:00.000Z"
+last_updated: "2026-05-21T03:00:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 3
+  total_plans: 8
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 2 — Sitio público con datos reales
+**Current focus:** Phase 3 — Publicación de eventos
 
 ## Current Status
 
 **Milestone:** v1 — Publicación gratuita de eventos
-**Active Phase:** Phase 2 — Sitio público con datos reales (pendiente — por planear)
-**Overall Progress:** [███░░░░] Phases 0 y 1 completas
-**Last session:** 2026-05-21 — Phase 1 cerrada (plan 01-03: endpoint de subida de imágenes)
+**Active Phase:** Phase 3 — Publicación de eventos (pendiente — por planear)
+**Overall Progress:** [████░░░] Phases 0, 1 y 2 completas
+**Last session:** 2026-05-21 — Phase 2 cerrada (plan 02-04: quitar checkout + hero real)
 
 ## Phase Summary
 
@@ -34,7 +34,7 @@ administrador quedan visibles al público.
 |-------|------|--------|-------|
 | 0 | Re-alineación GSD | ✅ Complete | 1/1 |
 | 1 | API de contenido (eventos + taxonomías) | ✅ Complete | 3/3 |
-| 2 | Sitio público con datos reales | ○ Pending | 0/? |
+| 2 | Sitio público con datos reales | ✅ Complete | 4/4 |
 | 3 | Publicación de eventos | ○ Pending | 0/? |
 | 4 | Moderación y panel admin | ○ Pending | 0/? |
 | 5 | Búsqueda | ○ Pending | 0/? |
@@ -42,6 +42,9 @@ administrador quedan visibles al público.
 
 ## Decisions
 
+- **[02-01]:** El website mapea los eventos de la API al shape `EventItem` con `toEventItem`
+  para no reescribir las cards. Detalle de evento será por `slug`. `HeroBlock` sigue en mock
+  hasta conectarlo a `/api/heroes`.
 - **[01-03]:** Subida de imágenes con `FileInterceptor` en memoria + escritura a disco con
   `fs` — sin importar `multer` ni agregar dependencias. Formatos JPG/PNG/WebP, máx. 5 MB.
 - **[01-02]:** Almacenamiento de imágenes = disco local en `apps/api/uploads/`, servido en
@@ -68,9 +71,8 @@ administrador quedan visibles al público.
 
 ## Next Action
 
-Planear **Phase 2 — Sitio público con datos reales**: conectar home, categorías y detalle de
-evento del website a la API NestJS (reemplazar `lib/data.ts` mock) y quitar el checkout /
-venta de entradas del diseño.
+Planear **Phase 3 — Publicación de eventos**: el organizador crea eventos desde `/crear`
+(formulario conectado a `POST /events`), sube imágenes, y ve sus eventos en `/cuenta`.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

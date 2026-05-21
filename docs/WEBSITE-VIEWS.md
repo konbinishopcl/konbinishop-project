@@ -132,11 +132,109 @@ URL compartible: `/busqueda?q=anime&category=convenciones&region=...`
 **Paso 2:** Fechas/horarios, región → comuna, dirección, URL de tickets, links de RRSS  
 **Paso 3:** Banner, poster, galería (máx 10), videos, confirmación antes de enviar
 
-**Flujo:** `POST /events` → queda en `DRAFT` → para publicarse debe pasar por pago y moderación.
+#### Selección de región y comuna (Paso 2)
+
+El selector de ubicación sigue este flujo en cascada:
+
+1. Al cargar el paso 2: llamar `GET /regions` para poblar el dropdown de región.
+2. Al elegir una región: llamar `GET /communes?region=<slug>` (filtra por slug de la región seleccionada) para poblar el dropdown de comuna.
+3. El `POST /events` final envía `regionId` y `communeId` como IDs enteros.
+
+> El filtro de comunas usa el slug de la región (`?region=<slug>`), no el ID.
+
+**Flujo:** `POST /events` → queda en `DRAFT` → para publicarse debe pasar por pago y moderación (carrito → checkout → Transbank).
 
 **Pendiente:**
-- El evento creado queda en `DRAFT` pero no hay flujo de pago en el website aún
+
 - Videos se recolectan pero la vista de detalle solo los muestra como links — no hay embed
+
+---
+
+### Upsell post-wizard de evento
+
+Tras crear exitosamente el evento (respuesta 201 del `POST /events`), el website muestra una pantalla intermedia de upsell antes de redirigir al carrito.
+
+**Lógica:**
+
+1. Llamar `GET /spots/quota` y `GET /heroes/quota` en paralelo.
+2. Si `available > 0` en spots: mostrar card con precio por día (`pricePerDay`), cupo disponible y CTA para crear un aviso.
+3. Si `available > 0` en heroes: mostrar card con precio por día, cupo disponible y CTA para crear un hero.
+4. Si ninguno tiene cupo disponible: omitir la pantalla y redirigir directo al carrito.
+5. El usuario puede omitir el upsell con "Continuar sin publicitar" → va al carrito.
+
+> La pantalla es informativa: no realiza ninguna acción hasta que el usuario elige crear un aviso o un hero. Si lo hace, primero crea el recurso (`POST /spots` o `POST /heroes`) y luego agrega los ítems al carrito.
+
+---
+
+### `/carrito` — Carrito de compras
+
+**Client component.** Requiere sesión (redirige a `/login` si no hay JWT).
+
+`GET /orders/draft` obtiene o crea el carrito en estado `DRAFT` del usuario autenticado. El carrito puede tener hasta un ítem por tipo (`EVENT`, `SPOT`, `HERO`).
+
+#### Ítems del carrito
+
+| Tipo | Fuente | Precio unitario |
+| --- | --- | --- |
+| `EVENT` | `eventId` del evento en DRAFT | `pricePerDay` más alto de sus categorías (CLP) |
+| `SPOT` | `spotId` del aviso en DRAFT | `SPOT_PRICE_PER_DAY` (default CLP $8.000) |
+| `HERO` | `heroId` del hero en DRAFT | `HERO_PRICE_PER_DAY` (default CLP $15.000) |
+
+- `subtotal = days × unitPrice` por ítem. El precio unitario se congela al agregar.
+- `total` de la orden = suma de subtotales de todos los ítems.
+
+#### Acciones
+
+- **Agregar o reemplazar ítem:** `PUT /orders/:id/items` — campos `{ type, days, eventId|spotId|heroId }`. Si ya existe un ítem del mismo tipo, lo reemplaza.
+- **Cambiar días:** mismo endpoint que agregar — reemplaza el ítem existente con los nuevos días.
+- **Eliminar ítem:** `DELETE /orders/:id/items/:type` — elimina el ítem del tipo indicado (`EVENT`, `SPOT` o `HERO`).
+- **Pagar:** botón "Pagar" → llama a `POST /payments/:orderId/checkout` con `{ gateway: "TRANSBANK" }` → obtiene `{ redirectUrl, externalId }` → redirige al usuario a `redirectUrl` (Transbank WebPay Plus).
+
+#### Reglas de negocio
+
+- Solo se pueden agregar ítems en estado `DRAFT` (evento, spot o hero propios del usuario).
+- El cupo de spots y heroes se valida al agregar al carrito y nuevamente al iniciar el pago (doble check).
+- Máximo de días por tipo: `EVENT` → 60 días, `SPOT` → 30 días, `HERO` → 30 días.
+
+#### Estados de la orden
+
+| Estado | Significado |
+| --- | --- |
+| `DRAFT` | Editable — el usuario puede agregar, modificar o eliminar ítems |
+| `PENDING_PAYMENT` | En proceso de pago — no se puede editar |
+| `PAID` | Pago confirmado — ítems pasan a `PENDING_MODERATION` |
+| `FAILED` | Pago rechazado — se muestra `/checkout/failed` |
+
+---
+
+### Pasarelas de pago
+
+El sistema soporta múltiples pasarelas a través del enum `GatewayType` y `GatewayFactory`. Agregar una pasarela nueva (Flow, MercadoPago, etc.) no requiere cambiar el endpoint de checkout.
+
+**Pasarela activa:** Transbank WebPay Plus (modo producción o integración según `TRANSBANK_ENV`).
+
+#### Flujo de pago con Transbank
+
+1. Frontend llama a `POST /payments/:orderId/checkout` con `{ gateway: "TRANSBANK" }`.
+2. La API inicia la transacción en Transbank y devuelve `{ redirectUrl, externalId }`.
+3. La orden pasa a `PENDING_PAYMENT`.
+4. El frontend redirige al navegador a `redirectUrl` (WebPay Plus).
+5. Transbank llama de vuelta a `POST /api/payments/transbank/callback` (server-side) con:
+   - `token_ws` (éxito) o `TBK_TOKEN` (abortado por el usuario).
+6. La API confirma con Transbank y redirige al frontend:
+
+| Resultado | Redirect |
+| --- | --- |
+| Éxito | `/checkout/success?orderId=X` — ítems pasan a `PENDING_MODERATION` |
+| Abortado por usuario | `/checkout/failed?reason=aborted` |
+| Pago rechazado | `/checkout/failed?orderId=X&code=Y` |
+
+> El callback también acepta `GET /api/payments/transbank/callback` para el flujo de timeout de Transbank.
+
+#### Vistas resultantes
+
+- **`/checkout/success`** (`?orderId=X`): confirmación de pago exitoso. Informar que los ítems están en revisión (`PENDING_MODERATION`) y serán aprobados por un administrador.
+- **`/checkout/failed`** (`?reason=...` o `?orderId=X&code=Y`): pago fallido o abortado. Mostrar el motivo y ofrecer reintentar.
 
 ---
 
@@ -147,10 +245,37 @@ Wizard 2 pasos: email → contraseña.
 Botones de social login (Google, Instagram, Apple) son visuales — **sin funcionalidad**.  
 Al autenticarse: guarda token + user en localStorage, redirige a `/`.
 
+> **Nota:** El login es solo email + contraseña. No existe validación por código OTP, SMS ni 2FA actualmente. Los botones de social login son puramente visuales.
+
 ### `/registro`
 Wizard 2 pasos: email → nombre + apellido + contraseña + confirmación.  
 Al registrarse: también crea el `Profile` del usuario automáticamente (en la API).  
 Mismos botones sociales sin funcionalidad.
+
+### `/recuperar-contrasena`
+
+Formulario con un campo email. Sin header/footer.
+
+**Flujo:**
+
+1. El usuario ingresa su email y envía el formulario.
+2. El website llama a `POST /auth/forgot-password` con `{ email }`.
+3. La API siempre responde 200 — nunca revela si el email existe.
+4. El website muestra mensaje genérico: "Si el email está registrado, recibirás un enlace de recuperación."
+5. El email enviado al usuario incluye un enlace a `/reset-password/:token` con el token de recuperación.
+
+> El token es un hash SHA-256 almacenado en `User.resetToken` con expiración en `User.resetTokenExpiry`. La API rechaza tokens expirados.
+
+### `/reset-password/:token`
+
+Formulario con campos "Nueva contraseña" y "Confirmar contraseña". Sin header/footer.
+
+**Flujo:**
+
+1. El token viene en la URL como parámetro de ruta (`:token`).
+2. Al enviar: llama a `POST /auth/reset-password` con `{ token, password }`.
+3. **Éxito:** muestra confirmación y redirige a `/login`.
+4. **Error (token inválido o expirado):** muestra mensaje de error con link a `/recuperar-contrasena`.
 
 ---
 
@@ -196,12 +321,58 @@ Solo accesible para `SUPER_ADMIN`. Si el rol es `ADMIN`, muestra "Acceso restrin
 
 ---
 
-### `/dashboard/categories` — Categorías
-**No implementado** — PlaceholderView.
+### `/dashboard/regions` — Regiones
+
+**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
 
 **Por implementar:**
-- CRUD de categorías (`GET/POST/PATCH/DELETE /categories`)
-- El campo `pricePerDay` de cada categoría define el precio de publicar un evento en esa categoría
+
+- `GET /regions` — lista todas las regiones.
+- `POST /regions` — crea una región (campos: `name`, `slug`).
+- `PATCH /regions/:id` — edita una región.
+- `DELETE /regions/:id` — elimina una región.
+
+---
+
+### `/dashboard/communes` — Comunas
+
+**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
+
+**Por implementar:**
+
+- `GET /communes` — lista comunas (filtrable con `?region=<slug>`).
+- `POST /communes` — crea una comuna (campos: `name`, `slug`, `regionId` requerido).
+- `PATCH /communes/:id` — edita una comuna.
+- `DELETE /communes/:id` — elimina una comuna.
+
+---
+
+### `/dashboard/categories` — Categorías
+**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
+
+**Por implementar:**
+
+- `GET /categories` — lista todas las categorías.
+- `POST /categories` — crea una categoría (campos: `name`, `slug`, `description`, `pricePerDay`).
+- `PATCH /categories/:id` — edita una categoría.
+- `DELETE /categories/:id` — elimina una categoría.
+
+**Regla clave:** el campo `pricePerDay` (Int, default CLP $1.000) define el precio de publicación de un evento en esa categoría. Si el evento pertenece a múltiples categorías, se usa el precio más alto.
+
+---
+
+### `/dashboard/tags` — Tags
+
+**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
+
+**Por implementar:**
+
+- `GET /tags` — lista todos los tags.
+- `POST /tags` — crea un tag (campos: `name`, `slug`).
+- `PATCH /tags/:id` — edita un tag.
+- `DELETE /tags/:id` — elimina un tag.
+
+> Los tags se asocian a artículos, no directamente a eventos.
 
 ---
 
@@ -261,11 +432,13 @@ Página pública que muestra el perfil de un usuario con al menos un evento apro
 
 ### Flujo organizador
 1. `/registro` → crea cuenta + perfil vacío (automático en API)
-2. `/crear` → crea evento en `DRAFT`
-3. *(pendiente)* Pago → evento pasa a `PENDING_MODERATION`
-4. Admin aprueba → evento pasa a `APPROVED` y aparece en el sitio
-5. Con al menos 1 evento aprobado → `/u/:slug` se vuelve accesible
-6. `/cuenta` → editar perfil público (displayName, bio, avatar, banner, redes)
+2. `/crear` → crea evento en `DRAFT` (opcionalmente también crea spot y/o hero en `DRAFT`)
+3. Upsell post-wizard → ofrece agregar spot/hero si hay cupo
+4. `/carrito` → agrega ítems, elige días, revisa total → paga con Transbank
+5. Transbank confirma → ítems pasan a `PENDING_MODERATION`
+6. Admin aprueba → ítems pasan a `APPROVED` y aparecen en el sitio
+7. Con al menos 1 evento aprobado → `/u/:slug` se vuelve accesible
+8. `/cuenta` → editar perfil público (displayName, bio, avatar, banner, redes)
 
 ### Flujo visitante
 1. Home → descubre eventos en el hero o en los rails
@@ -284,5 +457,4 @@ Página pública que muestra el perfil de un usuario con al menos un evento apro
 - **ProfileModal** debe reemplazarse por un formulario que llame a `PUT /profiles/me` con todos los campos del perfil
 - **Subida de imágenes** en `/cuenta` usa el mismo endpoint que el wizard de eventos: `POST /uploads` devuelve `{ url, filename }`
 - **Spots y heroes** tienen endpoints `/mine` y CRUD propio — `/cuenta` debería mostrarlos con tabs separados
-- **El flujo de pago** (carrito → checkout → Transbank) aún no tiene vista en el website
 - **Cache:** Los GET públicos están cacheados en Redis con TTL de 1 día. Al hacer POST/PATCH/DELETE la colección se invalida automáticamente

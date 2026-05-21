@@ -227,6 +227,10 @@ model User {
   confirmed    Boolean @default(false)
   blocked      Boolean @default(false)
 
+  // Recuperación de contraseña: hash SHA-256 del token + su expiración.
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
   events         Event[] @relation("EventOwner")
   approvedEvents Event[] @relation("EventApprover")
   rejectedEvents Event[] @relation("EventRejecter")

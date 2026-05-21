@@ -10,6 +10,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -20,6 +21,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
 
+@ApiTags('events')
 @Controller('events')
 export class EventsController {
   constructor(private readonly events: EventsService) {}
@@ -27,6 +29,7 @@ export class EventsController {
   // ── Lectura pública ──
 
   @Get()
+  @ApiOperation({ summary: 'Listar eventos aprobados (público, paginado)' })
   findAll(@Query() query: QueryEventsDto) {
     return this.events.findPublic(query);
   }
@@ -35,17 +38,22 @@ export class EventsController {
   @Get('admin')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar todos los eventos, cualquier estado (ADMIN+)' })
   findForAdmin(@Query() query: QueryEventsDto) {
     return this.events.findForAdmin(query);
   }
 
   @Get('mine')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar los eventos del usuario actual' })
   findMine(@CurrentUser() user: JwtUser) {
     return this.events.findMine(user);
   }
 
   @Get(':slug')
+  @ApiOperation({ summary: 'Detalle de un evento aprobado por slug' })
   findOne(@Param('slug') slug: string) {
     return this.events.findBySlug(slug);
   }
@@ -54,12 +62,16 @@ export class EventsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Crear un evento (queda pendiente de moderación)' })
   create(@Body() dto: CreateEventDto, @CurrentUser() user: JwtUser) {
     return this.events.create(dto, user);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Editar un evento (dueño o admin)' })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEventDto,
@@ -70,6 +82,8 @@ export class EventsController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar un evento (dueño o admin)' })
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
     return this.events.remove(id, user);
   }
@@ -79,6 +93,8 @@ export class EventsController {
   @Patch(':id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Aprobar un evento (ADMIN+)' })
   approve(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
     return this.events.approve(id, user);
   }
@@ -86,6 +102,8 @@ export class EventsController {
   @Patch(':id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Rechazar un evento con un motivo (ADMIN+)' })
   reject(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RejectEventDto,

@@ -12,11 +12,10 @@
       "Bash(wsl -e bash -lc 'echo \"=== roles ===\"; sudo -n -u postgres psql -tAc \"SELECT rolname, rolsuper FROM pg_roles ORDER BY 1;\" 2>&1; echo \"=== databases ===\"; sudo -n -u postgres psql -tAc \"SELECT datname FROM pg_database WHERE datistemplate=false ORDER BY 1;\" 2>&1; echo \"=== current user ===\"; whoami')",
       "Bash(wsl -e bash -lc 'sudo -n cat /etc/postgresql/16/main/pg_hba.conf 2>&1 | grep -vE \"^\\\\s*#\" | grep -vE \"^\\\\s*$\"')",
       "Bash(wsl -e *)",
-      "Bash(ls -la \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\")",
-      "Bash(cat \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\.yarnrc\")",
-      "Bash(cat \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\\\\package.json\")",
-      "Bash(cat \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\website\\\\package.json\")",
-      "Bash(pnpm --version)"
+      "Read(///wsl.localhost/Ubuntu/home/gab/**)",
+      "Read(///wsl.localhost/Ubuntu/home/gab/.claude/**)",
+      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/website/**)",
+      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/**)"
     ]
   }
 }

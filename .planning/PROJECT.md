@@ -2,81 +2,101 @@
 
 ## What This Is
 
-Plataforma chilena de publicación de eventos donde organizadores se registran y pagan para publicar sus eventos. Los administradores moderan y gestionan el contenido desde un dashboard interno (Next.js) y Strapi. El público general puede explorar y buscar eventos en el sitio web (Nuxt).
+Plataforma chilena de publicación de eventos de cultura geek/otaku. Los organizadores se
+registran y publican sus eventos **gratis**; un administrador los modera y, una vez aprobados,
+quedan visibles al público en el sitio. El sitio público y el panel de administración son una
+sola app Next.js; los datos los sirve una API NestJS sobre PostgreSQL.
+
+**Konbini NO vende entradas.** La compra de tickets ocurre en una plataforma externa; las
+páginas de evento solo enlazan hacia allá.
 
 ## Core Value
 
-Organizadores pueden publicar eventos pagando por cada publicación, que queda visible al público tras aprobación del administrador.
+Organizadores publican gratis sus eventos; tras la aprobación de un administrador quedan
+visibles al público.
 
 ## Requirements
 
 ### Validated
 
-- ✓ Registro y autenticación de usuarios (organizadores y admins) — existente
-- ✓ Creación de eventos en formulario multi-paso desde el sitio web — existente
-- ✓ Flujo de aprobación de eventos (is_approved, is_rejected, expiration_date) en dashboard — existente
-- ✓ Panel de administración (dashboard Next.js) para gestión de eventos, usuarios, categorías, regiones, comunas, spots, artículos, heroes y tags — existente
-- ✓ Sitio web público (Nuxt) con listado de eventos — existente
-- ✓ Integración con Cloudinary para imágenes y Strapi como CMS headless — existente
-- ✓ Monorepo Turborepo con tres apps: strapi, dashboard, website — existente
+- ✓ API NestJS + Prisma sobre PostgreSQL local — base operativa
+- ✓ Schema de contenido portado desde el Strapi anterior (regiones, comunas, categorías, tags,
+  artículos, heroes, spots, eventos + componentes) — quick 260520-q4m
+- ✓ Sistema de usuarios local con 3 roles (SUPER_ADMIN / ADMIN / AUTHENTICATED) — quick 260520-r3t
+- ✓ Auth full-stack: register/login/me con JWT + bcrypt, guards por rol — quick 260520-w8k
+- ✓ Maqueta del website (Next.js): vistas públicas + panel admin; login y registro conectados
+  a la API
 
 ### Active
 
-- [ ] Integración de pagos por evento — múltiples pasarelas (Mercado Pago, Stripe, Transbank/Webpay); flujo: Crear → Pagar → Moderar
-- [ ] Sistema de emails transaccionales con MJML + Mailgun (mismo stack que waldo-project, con colores de marca Konbini); notificaciones: pago confirmado, evento aprobado/rechazado, etc.
-- [ ] Búsqueda de eventos funcional en el sitio web público (SearchDefault.vue actualmente es un stub vacío)
-- [ ] Panel del organizador — el organizador puede ver y gestionar sus propios eventos desde su cuenta
-- ✓ Seguridad — restaurar role enforcement (dashboard), JWT HttpOnly cookie, restringir CORS en Strapi, proxy + reCAPTCHA que oculta Strapi del browser — Validated in Phase 1: Security Foundation
+- [ ] API de contenido: endpoints de eventos (CRUD + moderación) y lectura pública de taxonomías
+- [ ] Sitio público con datos reales (home, categorías, detalle de evento) — reemplazar la data mock
+- [ ] Flujo de publicación: el organizador crea un evento desde el sitio y queda pendiente de moderación
+- [ ] Moderación y panel admin: aprobar/rechazar eventos, gestión de usuarios
+- [ ] Búsqueda de eventos con filtros
+- [ ] Quitar del diseño el checkout / "Comprar entradas" / "Konbini Pay" — error de diseño:
+  aquí no se venden entradas
 
 ### Out of Scope
 
-- Tickets / venta de entradas a asistentes — el cobro es solo para publicar, no para asistir
-- App móvil — web-first
-- Chat en tiempo real — no es parte del valor core
-- OAuth / login social — email/password es suficiente para v1
+| Feature | Reason |
+|---------|--------|
+| Venta de entradas / tickets a asistentes | Ocurre en una plataforma externa; el sitio solo enlaza vía `ticketUrl` |
+| Cobro al organizador por publicar | Diferido a v2 — en v1 publicar es gratis |
+| Pasarelas de pago (Transbank, Mercado Pago, Stripe) | Dependían del modelo de cobro; fuera de v1 |
+| Emails transaccionales (MJML / Mailgun) | Diferido a v2 |
+| Login social / OAuth | Botones de RRSS presentes en la UI sin conexión; diferido |
+| App móvil | Web-first |
 
 ## Context
 
-- **Stack:** Turbo monorepo — Strapi 5 (backend/CMS), Next.js 15 (dashboard admin), Nuxt 4 (website público)
-- **Auth:** JWT vía Strapi Users & Permissions plugin; cookie `strapi_jwt` con flags HttpOnly+Secure+SameSite=Strict (Phase 1); role enforcement restaurado; CORS restringido; proxies de dashboard y website ocultan Strapi del browser
-- **Email reference:** `../waldo-project` usa MJML + Mailgun via plugin de Strapi; templates en `apps/strapi/src/services/mjml/templates/`; adaptar mismo patrón con colores Konbini
-- **Pagos:** Sin implementación actual. El modelo es pago único por evento, precio único. Flujo: el organizador llena el formulario → paga → el evento queda en estado pendiente de moderación
-- **Deuda técnica conocida:** `populate=*` y `pageSize=1000` en todos los queries del dashboard; `entityService.count()` deprecado en Strapi v5; ETag roto en media proxy; debug component expuesto; settings page stub vacío
-- **Producción:** PM2, MySQL, Cloudinary, Sentry (Strapi activo, dashboard/website deshabilitados)
+- **Stack:** monorepo pnpm (`pnpm@10.11.0`) + Turborepo, con dos apps bajo `apps/`:
+  - `apps/api` — NestJS 11 + Prisma 6 + PostgreSQL 16 (local, en WSL). Puerto 3333, prefijo `/api`.
+  - `apps/website` — Next.js 15 (App Router) + React 19 + TypeScript. Sitio público y panel
+    `/admin` en la misma app. CSS plano (sin Tailwind ni librería de componentes).
+- **Auth:** JWT propio (`@nestjs/jwt` + `bcryptjs`), sin Passport. Token de 7 días guardado en
+  `localStorage` del website. Guards `JwtAuthGuard` + `RolesGuard` + decoradores `@Roles()` /
+  `@CurrentUser()`.
+- **Historia:** el proyecto migró desde un stack Strapi 5 + Nuxt 4 + dashboard Next.js. Se
+  descartaron Strapi, Nuxt, Neon y Neon Auth. El roadmap previo (milestone de pagos) quedó
+  obsoleto y fue reemplazado por este durante la re-alineación de 2026-05-20.
+- **Entorno:** Windows 11 + WSL Ubuntu. El proyecto vive en WSL
+  (`/home/gab/Code/konbini-project`); builds e instalaciones se ejecutan dentro de WSL.
 
 ## Constraints
 
-- **Tech stack:** Mantener Strapi 5 + Next.js 15 + Nuxt 4 — no migrar frameworks
-- **Email:** Usar MJML + Mailgun como waldo-project (misma tecnología, diferente marca)
-- **Pagos:** Soportar múltiples pasarelas desde el inicio (Mercado Pago, Stripe, Transbank/Webpay)
-- **Compatibilidad:** El sistema de pagos debe integrarse con el flujo multi-paso de creación de eventos ya existente en el website
+- **Tech stack:** mantener NestJS + Prisma + Next.js — no migrar frameworks otra vez.
+- **Alcance events-only:** nada de venta de entradas ni checkout en el sitio.
+- **v1 sin pagos:** publicar es gratis; no integrar pasarelas de pago.
+- **Builds en WSL:** instalaciones y compilaciones corren dentro de WSL, no desde Windows.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Pago por evento (no suscripción) | Modelo más simple para v1; organizadores pagan según lo que usan | — Pending |
-| Precio único para todos los eventos | Simplifica implementación y UX inicial | — Pending |
-| MJML + Mailgun para emails | Mismo stack validado en waldo-project; evita reaprender otra tecnología | — Pending |
-| Múltiples pasarelas de pago desde v1 | Cobertura de mercado chileno (Transbank), LatAm (MercadoPago), global (Stripe) | — Pending |
-| Flujo Crear → Pagar → Moderar | El pago confirma intención antes de usar tiempo de moderación | — Pending |
+| Migrar de Strapi/Nuxt al stack NestJS + Prisma + Next.js | Control total del backend y un solo framework de frontend | Validated |
+| Sistema de usuarios local en vez de Neon Auth | Menos dependencias externas; control total de roles | Validated |
+| Sitio público y panel admin en una sola app Next.js | Evita una tercera app; comparten componentes y deploy | Validated |
+| v1 con publicación gratuita | Lanzar el bucle organizador→moderación→público sin la complejidad de pagos | Active |
+| Konbini no vende entradas | La venta ocurre en una plataforma externa; reduce alcance y carga regulatoria | Active |
+| Cobro al organizador diferido a v2 | El modelo de monetización aún no se define | Active |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
-**After each phase transition** (via `/gsd:transition`):
+**After each phase transition:**
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
 4. Decisions to log? → Add to Key Decisions
 5. "What This Is" still accurate? → Update if drifted
 
-**After each milestone** (via `/gsd:complete-milestone`):
+**After each milestone:**
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 after initialization*
+*Last updated: 2026-05-20 — re-alignment after the Strapi→NestJS stack migration*

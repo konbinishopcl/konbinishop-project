@@ -1,144 +1,112 @@
 # Requirements: Konbini
 
-**Defined:** 2026-03-23
-**Core Value:** Organizadores pueden publicar eventos pagando por cada publicación, que queda visible al público tras aprobación del administrador.
+**Defined:** 2026-03-23 · **Re-aligned:** 2026-05-20
+**Core Value:** Organizadores publican gratis sus eventos; tras la aprobación de un
+administrador quedan visibles al público.
 
-## v1 Requirements
+> Re-alineación 2026-05-20: el stack migró de Strapi/Nuxt a NestJS/Next.js y el producto
+> dejó de cobrar (publicar es gratis en v1, sin venta de entradas). Los requisitos previos
+> de Payments / Emails / Organizer Panel / Search del roadmap Strapi quedaron obsoletos.
+> Los requisitos `SEC-*` históricos se archivan: aplicaban al stack Strapi/Nuxt.
 
-### Security
+## v1 Requirements — Milestone "Publicación gratuita de eventos"
 
-- [x] **SEC-01**: Dashboard restringe acceso solo a usuarios con rol `dashboard` (role enforcement restaurado)
-- [x] **SEC-02**: Cookie JWT del dashboard tiene flags `HttpOnly` y `Secure` (no accesible desde JavaScript)
-- [x] **SEC-03**: Strapi CORS restringido a dominios conocidos (no wildcard `origin: ['*']`)
-- [x] **SEC-04**: Proxy API del dashboard tiene allowlist de rutas permitidas (no pass-through irrestricto)
-- [x] **SEC-05**: Website tiene proxy Nuxt server-side (`server/api/[...].ts`) que oculta la URL de Strapi — el browser nunca llama directo a Strapi
-- [x] **SEC-06**: Proxy del website valida token reCAPTCHA v3 en POST/PUT/DELETE (`x-recaptcha-token` header) antes de forwardear a Strapi
-- [x] **SEC-07**: Proxy del dashboard (Next.js) valida token reCAPTCHA v3 en POST/PUT/DELETE antes de forwardear a Strapi
-- [x] **SEC-08**: Strapi no valida reCAPTCHA — la validación es responsabilidad exclusiva de los proxies del website y dashboard
+### Auth (completado en quick tasks previas)
 
-### Payments
+- [x] **AUTH-01**: Endpoints `POST /api/auth/register`, `POST /api/auth/login`,
+  `GET /api/auth/me` con JWT (7d) + bcrypt
+- [x] **AUTH-02**: Tres roles — `SUPER_ADMIN`, `ADMIN`, `AUTHENTICATED` — con `RolesGuard`
+- [x] **AUTH-03**: CRUD de usuarios protegido: lectura ADMIN+, escritura solo SUPER_ADMIN
 
-- [ ] **PAY-01**: Evento tiene campo `payment_status` con estados: `pending_payment`, `payment_processing`, `payment_confirmed`, `payment_failed`, `pending_approval`, `approved`, `rejected`
-- [ ] **PAY-02**: Evento tiene campos `payment_provider`, `payment_provider_id` para trazabilidad
-- [ ] **PAY-03**: Existe colección `payment_transactions` para idempotencia de webhooks (evitar procesamiento duplicado)
-- [ ] **PAY-04**: Endpoint `POST /api/payment/initiate` crea sesión de pago con el proveedor y retorna URL de redirección
-- [ ] **PAY-05**: Integración con Transbank/Flow — redirect, return URL handler, commit transaction
-- [ ] **PAY-06**: Integración con Mercado Pago — checkout, webhook con re-fetch server-side para verificar estado
-- [ ] **PAY-07**: Integración con Stripe — Checkout Session, webhook con verificación de firma (raw body)
-- [ ] **PAY-08**: Cada gateway tiene middleware de verificación de firma antes de procesar el webhook
-- [ ] **PAY-09**: El organizador puede seleccionar pasarela de pago en el resumen del formulario
-- [ ] **PAY-10**: Página `/anunciar/gracias` muestra resultado del pago (confirmado / fallido con opción de reintentar)
-- [ ] **PAY-11**: Eventos en `pending_payment` por más de 30 minutos son marcados automáticamente como `payment_failed` (cleanup job)
-- [ ] **PAY-12**: Dashboard muestra badge de `payment_status` en listado y detalle de eventos
-- [ ] **PAY-13**: Cola de moderación del dashboard filtra por `payment_status: pending_approval` (no solo `is_approved: false`)
+### Content API
 
-### Emails
+- [ ] **API-01**: Endpoints de eventos en NestJS — listado público (solo aprobados), detalle
+  por slug, y CRUD para organizador/admin
+- [ ] **API-02**: Lectura pública de taxonomías — regiones, comunas, categorías, tags,
+  artículos, heroes, spots
+- [ ] **API-03**: Endpoints de moderación — aprobar / rechazar (con motivo) un evento,
+  registrando `approvedBy` / `rejectedBy`
+- [ ] **API-04**: Subida de imágenes de evento (banner, poster, galería) — proveedor de
+  almacenamiento por decidir
 
-- [ ] **EMAIL-01**: Strapi tiene plugin de email configurado con Mailgun y soporte MJML (mismo stack que waldo-project)
-- [ ] **EMAIL-02**: Template `event-payment-confirmed.mjml` — enviado al organizador cuando el pago se confirma
-- [ ] **EMAIL-03**: Template `event-submitted-admin.mjml` — enviado a admins cuando un evento pago queda en revisión
-- [ ] **EMAIL-04**: Template `event-approved.mjml` — enviado al organizador cuando el admin aprueba el evento
-- [ ] **EMAIL-05**: Template `event-rejected.mjml` — enviado al organizador con el motivo del rechazo
-- [ ] **EMAIL-06**: Todos los templates usan colores y branding de Konbini (no Waldo)
+### Public Site
 
-### Organizer Panel
+- [ ] **SITE-01**: Home consume la API real (heroes, eventos destacados, rails por categoría)
+  en vez de `lib/data.ts`
+- [ ] **SITE-02**: `/categoria/[cat]` lista eventos aprobados reales de esa categoría
+- [ ] **SITE-03**: `/evento/[id]` muestra el evento real; el CTA de entradas enlaza a
+  `ticketUrl` (plataforma externa) — sin checkout en el sitio
+- [ ] **SITE-04**: Eliminar el checkout y la UI de venta de entradas del diseño
+  (`/checkout/[id]`, botones "Comprar entradas", "Konbini Pay")
 
-- [ ] **ORG-01**: `/cuenta` redirige a `/cuenta/eventos`
-- [ ] **ORG-02**: `/cuenta/eventos` muestra lista de eventos del organizador con estado legible (Pendiente de pago / En revisión / Publicado / Rechazado / Pago fallido)
-- [ ] **ORG-03**: Organizador puede ver motivo de rechazo directamente desde su panel
-- [ ] **ORG-04**: Organizador puede editar su evento solo si aún no está aprobado (`payment_status: pending_approval`)
-- [ ] **ORG-05**: Organizador puede reintentar pago para eventos con `payment_status: payment_failed`
-- [ ] **ORG-06**: `/cuenta/perfil` permite cambiar nombre, email y contraseña
+### Event Publishing (organizador)
 
-### Search
+- [ ] **PUBL-01**: El formulario `/crear` envía el evento a la API; requiere sesión iniciada
+  (rol `AUTHENTICATED`+)
+- [ ] **PUBL-02**: Un evento recién creado queda en estado pendiente de moderación
+  (`isApproved=false`, `isRejected=false`) y no es visible al público
+- [ ] **PUBL-03**: El organizador puede subir banner, poster y galería del evento
+- [ ] **PUBL-04**: El organizador ve sus eventos y su estado (en revisión / publicado /
+  rechazado con motivo) en `/dashboard`
 
-- [ ] **SRCH-01**: `SearchDefault.vue` navega a `/busqueda?q=` al enviar el formulario
-- [ ] **SRCH-02**: `/busqueda` muestra resultados de eventos con búsqueda por texto en título y descripción (`$containsi`)
-- [ ] **SRCH-03**: `/busqueda` tiene filtros por categoría, región y rango de fechas
-- [ ] **SRCH-04**: Los filtros de búsqueda se reflejan en la URL (shareable links)
-- [ ] **SRCH-05**: `/busqueda` muestra estado vacío cuando no hay resultados
+### Moderation & Admin
 
-## v2 Requirements
-
-### Payments
-
-- **PAY-V2-01**: Renovación / re-publicación — organizador paga para extender un evento ya vencido
-- **PAY-V2-02**: Factura / RUT empresa — recolección de datos de facturación post-aprobación
-
-### Emails
-
-- **EMAIL-V2-01**: Email de recordatorio 7 días antes del vencimiento del evento (`expiration_date`)
-- **EMAIL-V2-02**: Email de bienvenida al registrarse
+- [ ] **MOD-01**: `/admin/events` lista los eventos reales con su estado de moderación
+- [ ] **MOD-02**: Un admin puede aprobar un evento → pasa a visible en el sitio público
+- [ ] **MOD-03**: Un admin puede rechazar un evento indicando un motivo
+- [ ] **MOD-04**: `/admin/users` es una UI funcional de gestión de usuarios (tabla + crear /
+  editar / banear / eliminar), restringida a `SUPER_ADMIN`
+- [ ] **MOD-05**: Retirar o re-perfilar las vistas admin obsoletas del diseño (p. ej.
+  `/admin/payments`) acorde al alcance sin pagos
 
 ### Search
 
-- **SRCH-V2-01**: Auto-complete / type-ahead en la búsqueda
-- **SRCH-V2-02**: Búsqueda por ubicación (geolocalización)
+- [ ] **SRCH-01**: La búsqueda del header navega a `/busqueda?q=` y muestra resultados reales
+- [ ] **SRCH-02**: Búsqueda por texto en título y descripción del evento
+- [ ] **SRCH-03**: Filtros por categoría, región y rango de fechas
+- [ ] **SRCH-04**: Los filtros activos se reflejan en la URL (links compartibles)
+- [ ] **SRCH-05**: Estado vacío cuando no hay resultados
 
-### Notifications
+### Production Hardening
 
-- **NOTF-V2-01**: Notificaciones in-app para el organizador
+- [ ] **HARD-01**: CORS de la API restringido al origen del website (no `origin: true`)
+- [ ] **HARD-02**: `JWT_SECRET` y credenciales gestionados como secretos de entorno (no valores
+  por defecto en código)
+- [ ] **HARD-03**: El website revalida el token contra `/auth/me` al cargar (no confía
+  ciegamente en `localStorage`)
+- [ ] **HARD-04**: Configuración de build y despliegue de ambas apps documentada y verificada
+
+## v2 Requirements (diferido)
+
+- **PAY-V2-01**: Cobro al organizador por publicar un evento (pasarela por definir)
+- **EMAIL-V2-01**: Emails transaccionales — evento enviado, aprobado, rechazado
+- **OAUTH-V2-01**: Login social (Google / Instagram / Apple) — conectar los botones de RRSS
+- **MOBILE-V2-01**: App móvil
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Venta de tickets a asistentes | El cobro es solo para publicar; los asistentes no compran a través de la plataforma |
-| App móvil | Web-first; diferir a post-v1 |
-| Chat en tiempo real | Fuera del valor core |
-| OAuth / login social | Email/password suficiente para v1 |
-| Motor de búsqueda externo (Algolia, Meilisearch) | El filtro `$containsi` de Strapi es suficiente para la escala actual |
-| Autocompletado / type-ahead en búsqueda | Complejidad alta para v1; diferir |
-| Formulario de tarjeta custom (PCI) | Siempre redirigir a la pasarela; nunca manejar datos de tarjeta |
+| Venta de entradas a asistentes | Ocurre en una plataforma externa; el sitio solo enlaza |
+| Pasarelas de pago en v1 | Publicar es gratis en v1; el cobro se difiere a v2 |
+| Emails transaccionales en v1 | Diferido a v2 |
+| OAuth / login social en v1 | Email/password es suficiente para v1 |
+| App móvil | Web-first |
+| Motor de búsqueda externo (Algolia / Meilisearch) | El filtro SQL `ILIKE`/Prisma alcanza para la escala actual |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Complete |
-| SEC-02 | Phase 1 | Complete |
-| SEC-03 | Phase 1 | Complete |
-| SEC-04 | Phase 1 | Complete |
-| SEC-05 | Phase 1 | Complete |
-| SEC-06 | Phase 1 | Complete |
-| SEC-07 | Phase 1 | Complete |
-| SEC-08 | Phase 1 | Complete |
-| PAY-01 | Phase 2 | Pending |
-| PAY-02 | Phase 2 | Pending |
-| PAY-03 | Phase 2 | Pending |
-| EMAIL-01 | Phase 2 | Pending |
-| EMAIL-02 | Phase 2 | Pending |
-| EMAIL-03 | Phase 2 | Pending |
-| EMAIL-04 | Phase 2 | Pending |
-| EMAIL-05 | Phase 2 | Pending |
-| EMAIL-06 | Phase 2 | Pending |
-| PAY-04 | Phase 3 | Pending |
-| PAY-05 | Phase 3 | Pending |
-| PAY-08 | Phase 3 | Pending |
-| PAY-10 | Phase 3 | Pending |
-| PAY-11 | Phase 3 | Pending |
-| PAY-06 | Phase 4 | Pending |
-| PAY-07 | Phase 4 | Pending |
-| PAY-09 | Phase 4 | Pending |
-| PAY-12 | Phase 4 | Pending |
-| PAY-13 | Phase 4 | Pending |
-| ORG-01 | Phase 5 | Pending |
-| ORG-02 | Phase 5 | Pending |
-| ORG-03 | Phase 5 | Pending |
-| ORG-04 | Phase 5 | Pending |
-| ORG-05 | Phase 5 | Pending |
-| ORG-06 | Phase 5 | Pending |
-| SRCH-01 | Phase 6 | Pending |
-| SRCH-02 | Phase 6 | Pending |
-| SRCH-03 | Phase 6 | Pending |
-| SRCH-04 | Phase 6 | Pending |
-| SRCH-05 | Phase 6 | Pending |
+| AUTH-01..03 | (quick 260520-r3t / w8k) | Complete |
+| API-01..04 | Phase 1 | Pending |
+| SITE-01..04 | Phase 2 | Pending |
+| PUBL-01..04 | Phase 3 | Pending |
+| MOD-01..05 | Phase 4 | Pending |
+| SRCH-01..05 | Phase 5 | Pending |
+| HARD-01..04 | Phase 6 | Pending |
 
-**Coverage:**
-- v1 requirements: 35 total
-- Mapped to phases: 31
-- Unmapped: 0 ✓
+**Coverage:** v1 requirements (excluyendo AUTH ya completado): 25 — todos mapeados a fases ✓
 
 ---
-*Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after initial definition*
+*Requirements defined: 2026-03-23 · Re-aligned: 2026-05-20 after the stack migration*

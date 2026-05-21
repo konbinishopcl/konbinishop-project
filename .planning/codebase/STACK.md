@@ -1,138 +1,69 @@
 # Technology Stack
 
-**Analysis Date:** 2026-03-23
+**Analysis Date:** 2026-05-20 (re-aligned after the Strapi→NestJS migration)
 
 ## Languages
 
-**Primary:**
-- TypeScript 5.x - All three apps (dashboard, strapi API, website)
-
-**Secondary:**
-- SCSS/Sass - Styling in website (`apps/website/assets/styles/`)
-- CSS - Global styles in dashboard (`apps/dashboard/src/app/globals.css`)
+- **TypeScript 5.x** — ambas apps (`apps/api`, `apps/website`)
+- **CSS plano** — estilos del website (`globals.css`, `admin.css`); sin Tailwind ni
+  preprocesador
 
 ## Runtime
 
-**Environment:**
-- Node.js >=18.0.0 <=22.x.x (enforced by Strapi's `engines` field)
-
-**Package Manager:**
-- Yarn 1.22.22 (classic) — defined in root and website `package.json`
-- Lockfile: `yarn.lock` present at root and per-app
+- **Node.js** — ejecutado dentro de WSL Ubuntu
+- **PostgreSQL 16** — base de datos local en WSL
 
 ## Monorepo
 
-**Tooling:**
-- Turborepo (latest) — task runner defined in `turbo.json`
-- Yarn workspaces — apps registered under `apps/*`
-- Nohoist rules for `konbini-dashboard/**` and Pinia-related packages
-- Pinia pinned globally to `2.3.1` via root `resolutions`
+- **pnpm** `10.11.0` — gestor de paquetes; workspaces vía `pnpm-workspace.yaml`
+  (`packages: ["apps/*"]`), lockfile `pnpm-lock.yaml`
+- **Turborepo** (`latest`) — task runner; tareas `dev`, `build`, `start`, `lint` en
+  `turbo.json`
+- `pnpm.overrides` fija `pinia` a `2.3.1` — residuo del stack anterior, sin efecto actual
 
-## Frameworks
+## Apps
 
-**Website (`apps/website`):**
-- Nuxt 4.0.3 — SSR-enabled Vue meta-framework (`ssr: true`)
-- Vue (latest) — component framework
-- vue-router (latest) — client-side routing
-- Pinia 2.3.1 — state management (with `@pinia-plugin-persistedstate/nuxt`, storage: localStorage)
+### `apps/api` — `konbini-nest-api`
 
-**Dashboard (`apps/dashboard`):**
-- Next.js 15.4.6 — React meta-framework with Turbopack in dev
-- React 19.1.0 — component framework
-- react-dom 19.1.0
+- **NestJS 11** (`@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`)
+- **Prisma 6** (`@prisma/client` + `prisma`) — ORM sobre PostgreSQL
+- **@nestjs/jwt 11** — emisión/verificación de JWT (sin Passport)
+- **@nestjs/config 4** — variables de entorno (`ConfigModule` global)
+- **bcryptjs 2** — hashing de contraseñas
+- **class-validator / class-transformer** — validación de DTOs vía `ValidationPipe` global
+- Dev: `@nestjs/cli`, `ts-node`, `tsconfig-paths`
+- Puerto **3333**, prefijo global `/api`
 
-**API (`apps/strapi`):**
-- Strapi 5.23.1 — headless CMS
-- React 18 + react-dom + react-router-dom — Strapi admin panel dependencies
+### `apps/website` — `konbini-website`
 
-## Key Dependencies
-
-**Dashboard — Critical:**
-- `zustand` ^5.0.7 — client state management
-- `react-hook-form` ^7.62.0 + `@hookform/resolvers` ^5.2.1 — form handling
-- `zod` ^4.1.1 — schema validation
-- `@tiptap/*` ^3.3.0 — rich text editor (bold, italic, link, lists, alignment, etc.)
-- `shadcn/ui` (new-york style, configured in `components.json`) — UI component system over Tailwind
-- `tailwindcss` ^4 + `tailwind-merge` ^3.3.1 + `class-variance-authority` ^0.7.1 — utility CSS
-- `lucide-react` ^0.539.0 — icon library
-- `sweetalert2` ^11.22.5 — modal/alert dialogs
-- `sharp` ^0.34.3 — server-side image processing (used in media proxy route)
-- `photoswipe` ^5.4.4 — lightbox gallery
-- `react-google-recaptcha-v3` ^1.11.0 — Google reCAPTCHA v3 integration
-- `react-select` ^5.10.2 — enhanced select inputs
-- `react-datepicker` ^8.7.0 + `react-calendar` ^6.0.0 + `react-time-picker` ^8.0.2 — date/time inputs
-
-**Website — Critical:**
-- `@nuxtjs/strapi` ^2.0.0 — Strapi v4 client for Nuxt
-- `@nuxt/image` 1.8.1 — image optimization with ipx provider
-- `@nuxtjs/seo` ^3.1.0 — SEO module (sitemap, robots configured)
-- `pinia` + `@pinia/nuxt` + `@pinia-plugin-persistedstate/nuxt` — state with persistence
-- `vee-validate` ^4.14.7 + `yup` ^1.5.0 — form validation
-- `leaflet` ^1.9.4 — interactive maps
-- `plyr` ^3.8.3 — media/video player
-- `sweetalert2` ^11.14.5 — modal dialogs
-- `sass` ^1.91.0 + `sass-mq` ^7.0.0 — SCSS preprocessing with media query helpers
-- `@fortawesome/vue-fontawesome` ^3.1.2 + icon packs — icon system
-- `@iconify/vue` ^5.0.0 — additional icons
-- `lucide-vue-next` 0.486.0 — additional icons
-- `vue-easy-lightbox` ^1.19.0 — lightbox gallery
-
-**Strapi — Critical:**
-- `@strapi/strapi` 5.23.1 — core CMS
-- `@strapi/plugin-users-permissions` 5.23.1 — JWT auth system
-- `@strapi/plugin-cloud` 5.23.1 — Strapi Cloud support
-- `@strapi/plugin-sentry` ^5.23.1 — error tracking
-- `better-sqlite3` 11.3.0 — default SQLite database (dev)
-- `mysql` 2.18.1 + `mysql2` ^3.12.0 — MySQL support (configurable)
-- `slugify` ^1.6.6 — slug generation
-- `sharp` ^0.34.5 — image processing in uploads
+- **Next.js 15** (App Router, `--turbopack` en dev)
+- **React 19** + **react-dom 19**
+- TypeScript 5; sin librerías de UI ni de estado externas — estado vía React Context
+  (`components/providers.tsx`)
+- Puerto **3000**
 
 ## Build / Dev Tooling
 
-**All apps:**
-- ESLint 9.x — linting (config via `eslint.config.mjs`)
-- Prettier 3.x — formatting (dashboard and website)
-- Husky ^9.1.7 + lint-staged — pre-commit hooks (dashboard and website)
-- TypeScript 5.x — type checking
-
-**Dashboard-specific:**
-- `@tailwindcss/postcss` ^4 + `postcss.config.mjs` — CSS build
-- `tw-animate-css` ^1.3.6 — Tailwind animation utilities
-
-**Website-specific:**
-- `vite-plugin-purgecss` ^0.2.13 (currently commented out) — CSS tree-shaking
-- Vite (via Nuxt) — bundler with SCSS preprocessor config
-
-**Process Manager (production):**
-- PM2 — both website (`ecosystem.config.cjs`, cluster mode) and Strapi (`ecosystem.config.js`, fork mode, max 1G memory)
+- `nest build` (API) → `dist/main.js`; `next build` (website) → `.next/`
+- `tsconfig.build.json` de la API fuerza `rootDir: ./src` y excluye `prisma/` para emitir
+  `dist/main.js` plano
+- Sin ESLint/Prettier configurado por app actualmente; sin Husky
+- Sin framework de tests instalado
 
 ## Configuration
 
-**Environment:**
-- Root `.env` picked up by Turborepo (`globalDependencies: ["**/.env"]`)
-- Per-app `.env` files; examples at:
-  - `apps/strapi/.env.example` — `HOST`, `PORT`, `APP_KEYS`, `JWT_SECRET`, database vars
-  - `apps/website/.env.example` — `API_URL`, `GTM_ID`, `BLOCK_SEARCH_ENGINES`, `NITRO_PORT`
-  - `apps/dashboard/env.example` — `NEXT_PUBLIC_STRAPI_URL`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_CLOUDINARY_BASE_URL`, `NEXT_PUBLIC_GOOGLE_RECAPTCHA_SITE_KEY`
+**Variables de entorno** (archivos `.env`, gitignoreados):
 
-**Build outputs (cached by Turbo):**
-- Nuxt: `.nuxt/`, `.output/`
-- Next.js: `.next/`
-- Strapi: `dist/`
+- `apps/api/.env` — `PORT=3333`, `DATABASE_URL` (PostgreSQL local), `JWT_SECRET`
+- `apps/website` — `NEXT_PUBLIC_API_URL` (default `http://localhost:3333/api`)
 
 ## Platform Requirements
 
-**Development:**
-- Node.js 18–22
-- Yarn 1.22.22
-
-**Production:**
-- PM2 process manager
-- SQLite (default) or MySQL for Strapi
-- Strapi runs on port 1337 by default
-- Nuxt website runs on port 4000 via Nitro (PM2)
-- Next.js dashboard runs on port 3001 in dev
+- **Desarrollo:** Windows 11 + WSL Ubuntu. El proyecto vive en WSL; instalaciones y builds
+  (`pnpm install`, `pnpm build`) se ejecutan **dentro de WSL**, no desde Windows (un
+  `pnpm`/`yarn` lanzado desde la ruta `\\wsl.localhost\...` falla con `EISDIR`).
+- PostgreSQL 16 escuchando en `localhost:5432`.
 
 ---
 
-*Stack analysis: 2026-03-23*
+*Stack analysis: 2026-05-20*

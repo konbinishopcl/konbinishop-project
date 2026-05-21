@@ -1,7 +1,14 @@
 # Roadmap: Konbini — v1
 
-**Created:** 2026-03-23
-**Milestone:** v1 — Payments, Emails, Organizer Panel, Search
+**Created:** 2026-03-23 · **Re-aligned:** 2026-05-20
+**Milestone:** v1 — Publicación gratuita de eventos
+
+> **Re-alineación 2026-05-20.** El roadmap original (Strapi/Nuxt + milestone de pagos:
+> Transbank, Mercado Pago, Stripe, emails MJML) quedó obsoleto: el stack migró a
+> NestJS + Prisma + Next.js y el producto dejó de cobrar (publicar es gratis, sin venta de
+> entradas). Este roadmap lo reemplaza por completo. La antigua "Phase 1 — Security
+> Foundation" aplicaba al stack Strapi/Nuxt y queda archivada en
+> `.planning/phases/_archive-strapi/`.
 
 ---
 
@@ -9,157 +16,195 @@
 
 | Phase | Name | Goal | Requirements |
 |-------|------|------|--------------|
-| 1 | 3/3 | Complete    | 2026-03-23 |
-| 2 | Payment Schema + Email Infrastructure | Schema de estados de pago, idempotencia, e infraestructura de emails MJML | PAY-01..03, EMAIL-01..06 |
-| 3 | Transbank/Flow Integration | Primera pasarela funcional end-to-end con el flujo completo de pago | PAY-04..05, PAY-08, PAY-10..11 |
-| 4 | Mercado Pago + Stripe + Dashboard Updates | Pasarelas restantes, seleccion de gateway, actualizar dashboard | PAY-06..07, PAY-09, PAY-12..13 |
-| 5 | Organizer Panel | Panel de cuenta para que los organizadores gestionen sus eventos | ORG-01..06 |
-| 6 | Search | Busqueda funcional con filtros en el sitio publico | SRCH-01..05 |
+| 0 | Re-alineación GSD | Re-alinear PROJECT, REQUIREMENTS, ROADMAP y docs de codebase al stack y alcance reales | — |
+| 1 | API de contenido | Endpoints NestJS de eventos y taxonomías — la base que alimenta todo el sitio | API-01..04 |
+| 2 | Sitio público con datos reales | Reemplazar la data mock por la API; quitar el checkout/venta de entradas | SITE-01..04 |
+| 3 | Publicación de eventos | El organizador crea y envía eventos desde el sitio | PUBL-01..04 |
+| 4 | Moderación y panel admin | Aprobar/rechazar eventos; gestión de usuarios | MOD-01..05 |
+| 5 | Búsqueda | Búsqueda de eventos con filtros | SRCH-01..05 |
+| 6 | Hardening para producción | CORS, secretos, revalidación de sesión, despliegue | HARD-01..04 |
 
 ---
 
-## Phase 1: Security Foundation
+## Phase 0: Re-alineación GSD
 
-**Goal:** Eliminar las vulnerabilidades de seguridad criticas e implementar la capa de proxy + reCAPTCHA que oculta Strapi del browser -- prerequisitos bloqueantes para lanzar pagos.
+**Goal:** Dejar la documentación de planning (`.planning/`) consistente con la realidad del
+proyecto tras la migración de stack — para que las fases siguientes se planeen sobre datos
+correctos.
 
-**Why first:** Los pagos amplifican el blast radius de cualquier brecha de seguridad. CORS wildcard + JWT cookie sin flags + role enforcement deshabilitado + Strapi URL expuesta son bloqueantes para produccion con dinero real.
+**Why first:** El roadmap previo describía Strapi/Nuxt y un milestone de pagos que ya no
+existen. Planear cualquier fase sobre esa base produce trabajo equivocado.
 
-**Plans:** 3/3 plans complete
+**Status:** ✅ Complete (2026-05-20)
 
-Plans:
-- [x] 01-01-PLAN.md -- Role enforcement + Strapi CORS restriction (SEC-01, SEC-03)
-- [x] 01-02-PLAN.md -- Website Nuxt proxy + reCAPTCHA (SEC-05, SEC-06, SEC-08)
-- [x] 01-03-PLAN.md -- JWT HttpOnly cookie + dashboard proxy hardening (SEC-02, SEC-04, SEC-07)
-
-**UAT:**
-- Un usuario Strapi sin rol `dashboard` no puede acceder a ninguna ruta protegida del dashboard
-- La cookie `strapi_jwt` no es accesible desde `document.cookie` en el browser del dashboard
-- Strapi rechaza requests de origenes no permitidos con 403
-- El proxy del dashboard rechaza rutas no allowlisteadas
-- El browser del website nunca hace requests directos a `localhost:1337` -- todo va a traves del servidor Nuxt
-- Un POST sin `x-recaptcha-token` valido en el website o dashboard retorna 400
-- Strapi ya no valida reCAPTCHA por su cuenta
+**Delivered:**
+- `PROJECT.md`, `REQUIREMENTS.md`, `ROADMAP.md` reescritos
+- `.planning/codebase/*.md` actualizados al stack NestJS + Next.js
+- `STATE.md` re-inicializado; fase Strapi archivada
 
 ---
 
-## Phase 2: Payment Schema + Email Infrastructure
+## Phase 1: API de contenido
 
-**Goal:** Extender el schema de eventos con estados de pago y construir toda la infraestructura de emails MJML antes de integrar las pasarelas.
+**Goal:** La API NestJS expone los eventos y las taxonomías que el sitio necesita: listado
+público de eventos aprobados, detalle por slug, CRUD para organizadores/admin, moderación, y
+lectura de regiones/comunas/categorías/tags/artículos/heroes/spots.
 
-**Why second:** Las pasarelas (Phase 3+) dependen del schema. Los emails se disparan desde los webhooks -- necesitan existir antes. Esto es infraestructura pura, sin UI visible todavia.
+**Why first:** Todo el sitio público y el flujo de publicación dependen de estos endpoints.
+Hoy solo existen los módulos `auth` y `users`; el contenido vive en `lib/data.ts` (mock).
 
-### Plans
-
-1. **Event payment schema extension** -- Agregar `payment_status` (enum 7 estados), `payment_provider`, `payment_provider_id` al `schema.json` del evento. Script de bootstrap para setear `approved` en eventos ya aprobados. Mantener `is_approved`/`is_rejected` en sync.
-2. **Payment transactions collection** -- Crear coleccion `payment_transaction` en Strapi con campos: `gateway_payment_id` (unique), `provider`, `event_documentId`, `status`, `raw_payload`. Esto garantiza idempotencia para webhooks.
-3. **MJML email infrastructure** -- Instalar `@strapi/provider-email-mailgun`, configurar en `plugins.ts`. Copiar el servicio `sendMjmlEmail` de waldo-project. Crear 5 templates MJML con branding Konbini: `event-payment-confirmed.mjml`, `event-submitted-admin.mjml`, `event-approved.mjml`, `event-rejected.mjml`, `reset-password.mjml` (reutilizar).
+**Plans (estimado):**
+1. **Módulo `events`** — controller + service Prisma: `GET /events` (público, solo
+   aprobados, paginado), `GET /events/:slug`, `POST /events`, `PATCH /events/:id`,
+   `DELETE /events/:id`. DTOs con class-validator. Incluye los componentes (prices, dates,
+   socialLinks, videos).
+2. **Endpoints de moderación** — `PATCH /events/:id/approve`, `PATCH /events/:id/reject`
+   (con motivo). Setea `isApproved`/`isRejected`/`rejectedReason` y `approvedBy`/`rejectedBy`.
+   Protegidos con `@Roles('ADMIN','SUPER_ADMIN')`.
+3. **Taxonomías de lectura** — módulos read-only para regiones, comunas, categorías, tags,
+   artículos, heroes, spots.
+4. **Subida de imágenes** — endpoint de upload para banner/poster/galería.
+   *Decisión abierta:* proveedor de almacenamiento (local en disco / Cloudinary / S3).
 
 **UAT:**
-- El schema de eventos tiene `payment_status` con default `pending_payment` sin romper eventos existentes
-- Existe la coleccion `payment_transaction` y puede persistir registros unicos por `gateway_payment_id`
-- El servicio `sendMjmlEmail` puede enviar un email de prueba con el template `event-payment-confirmed.mjml`
-- Los templates renderizan correctamente con colores Konbini
+- `GET /api/events` devuelve solo eventos aprobados, paginados
+- `GET /api/events/:slug` devuelve un evento con sus componentes y relaciones
+- Un organizador autenticado puede crear un evento; queda `isApproved=false`
+- Un admin puede aprobar y rechazar; un `AUTHENTICATED` recibe `403`
+- Las taxonomías responden sin token
 
 ---
 
-## Phase 3: Transbank/Flow Integration
+## Phase 2: Sitio público con datos reales
 
-**Goal:** Primera pasarela de pago completamente funcional end-to-end: el organizador llena el formulario, paga via Transbank/Flow, el evento queda en moderacion y recibe emails.
+**Goal:** Las vistas públicas (home, categoría, detalle de evento) consumen la API real en
+vez de `lib/data.ts`. Se elimina del diseño el flujo de checkout y la venta de entradas.
 
-**Why third:** Flow es la pasarela chilena nativa. Es la que mas probabilidades tiene de ser usada primero. Sirve como referencia para las otras dos.
+**Why second:** Es lo primero que ve el público; valida los endpoints de la Phase 1 contra una
+UI real. El checkout es un error de diseño documentado y debe salir antes de seguir.
 
-### Plans
-
-1. **Strapi payment API module** -- Crear `apps/strapi/src/api/payment/` siguiendo el patron de `stats`: controller, service, routes. Incluye: `POST /api/payment/initiate`, `GET /api/payment/status/:documentId`. Raw body middleware para webhooks. Transicion de estados con guard function.
-2. **Transbank/Flow webhook + return URL** -- Instalar `transbank-nodejs-lib`. Implementar `POST /api/payment/webhook/flow` con middleware de verificacion de firma y deduplicacion via `payment_transaction`. Return URL handler que hace commit de la transaccion.
-3. **Website payment flow** -- Actualizar `CartDefault.vue`: reemplazar redirect directo por `POST /api/payment/initiate -> redirect a Flow`. Actualizar `/anunciar/gracias` para mostrar estado del pago (confirmado / fallido con retry).
-4. **Email triggers** -- Conectar `sendMjmlEmail` al webhook handler: `event-payment-confirmed.mjml` al organizador, `event-submitted-admin.mjml` a admins. Conectar a acciones de aprobacion/rechazo del dashboard: `event-approved.mjml`, `event-rejected.mjml`.
+**Plans (estimado):**
+1. **Capa de datos del website** — extender `lib/api.ts` con `events`, `categories`, etc.;
+   tipos compartidos; helpers de fetch SSR.
+2. **Home + categorías reales** — `(site)/page.tsx` y `(site)/categoria/[cat]/page.tsx`
+   consumen la API; estados de carga y vacío.
+3. **Detalle de evento real** — `(site)/evento/[id]/page.tsx` con datos reales; el CTA de
+   entradas enlaza a `ticketUrl` (plataforma externa).
+4. **Quitar el checkout** — eliminar `(site)/checkout/[id]`, los botones "Comprar entradas" y
+   el componente "Konbini Pay" del diseño.
 
 **UAT:**
-- Organizador completa formulario -> paga con Transbank -> recibe email de confirmacion -> evento aparece en dashboard como `pending_approval`
-- Admin aprueba evento -> organizador recibe email de aprobacion
-- Admin rechaza con motivo -> organizador recibe email con el motivo
-- Webhook duplicado del mismo pago es ignorado sin crear estado inconsistente
+- La home y las categorías muestran eventos reales de la base
+- El detalle de evento enlaza fuera para comprar entradas; no hay checkout en el sitio
+- No queda ninguna ruta ni botón de compra de entradas
+- `lib/data.ts` ya no alimenta las vistas públicas
 
 ---
 
-## Phase 4: Mercado Pago + Stripe + Dashboard Updates
+## Phase 3: Publicación de eventos
 
-**Goal:** Agregar las pasarelas restantes, permitir al organizador elegir, y actualizar el dashboard para reflejar los nuevos estados de pago.
+**Goal:** Un organizador autenticado crea y envía un evento desde `/crear`; el evento queda
+pendiente de moderación y el organizador ve su estado en `/dashboard`.
 
-**Why fourth:** Transbank ya valida la arquitectura de pagos. MP y Stripe comparten la misma infraestructura -- solo agregan nuevos handlers.
+**Why third:** Cierra el lado de oferta del bucle. Depende de la API (Phase 1) y de que el
+sitio público ya esté cableado (Phase 2) para mostrar el evento una vez aprobado.
 
-### Plans
-
-1. **Mercado Pago integration** -- Instalar `mercadopago@2.x`. Implementar `POST /api/payment/webhook/mercadopago` con re-fetch server-side del pago para verificar estado (no confiar en payload). Checkout Preference + redirect flow.
-2. **Stripe integration** -- Instalar `stripe`. Implementar `POST /api/payment/webhook/stripe` con `constructEvent()` usando raw body. Checkout Session + webhook handler.
-3. **Gateway selection UI** -- Agregar seleccion de pasarela en `CartDefault.vue` (radio buttons: Transbank/Flow, Mercado Pago, Stripe). Pasar `provider` al endpoint `/api/payment/initiate`.
-4. **Dashboard payment status** -- Agregar badge de `payment_status` en listado de eventos (`/dashboard/events`). Actualizar filtro de cola de moderacion a `payment_status: pending_approval`. Agregar counts por estado en el stats controller (reemplazar `entityService.count()` por `strapi.documents().count()`).
+**Plans (estimado):**
+1. **Formulario `/crear` conectado** — el formulario multi-paso envía a `POST /events`;
+   requiere sesión; manejo de errores de validación.
+2. **Subida de imágenes en el formulario** — banner, poster y galería usando el endpoint de
+   upload de la Phase 1.
+3. **Panel del organizador** — `(site)/dashboard` lista los eventos del usuario con su estado
+   (en revisión / publicado / rechazado con motivo).
 
 **UAT:**
-- Organizador puede elegir entre Transbank, Mercado Pago y Stripe al pagar
-- Pago con cada pasarela funciona end-to-end con su propio webhook y emails
-- Dashboard muestra `payment_status` en la lista de eventos
-- Cola de moderacion solo muestra eventos con pago confirmado (no `pending_payment`)
+- Un usuario sin sesión es enviado a `/login` al entrar a `/crear`
+- Un evento creado aparece en `/dashboard` como "en revisión" y no en el sitio público
+- El organizador ve el motivo si su evento fue rechazado
 
 ---
 
-## Phase 5: Organizer Panel
+## Phase 4: Moderación y panel admin
 
-**Goal:** Panel de cuenta donde los organizadores pueden ver y gestionar sus eventos publicados.
+**Goal:** Los admins gestionan eventos y usuarios desde `/admin`: aprobar/rechazar eventos
+reales y administrar cuentas.
 
-**Why fifth:** Los pagos ya estan funcionando -- los organizadores necesitan un lugar para ver el estado de sus publicaciones. El auth ya existe (`/cuenta` ruta guardada, `useStrapiUser` disponible).
+**Why fourth:** Cierra el lado de demanda del bucle (moderación → publicación). Depende de los
+endpoints de moderación (Phase 1) y de que existan eventos creados (Phase 3).
 
-### Plans
-
-1. **Account routing + layout** -- `/cuenta` redirige a `/cuenta/eventos`. Layout con navegacion (Mis Eventos / Perfil). Auth guard via middleware existente.
-2. **Events list page (`/cuenta/eventos`)** -- Fetch de eventos del usuario autenticado con `filters[user][id][$eq]=me`. Mostrar status badge legible mapeado desde `payment_status` + `is_approved` + `is_rejected`. Link a evento publicado. Link a detalle/edicion.
-3. **Event detail + edit (`/cuenta/eventos/[slug]`)** -- Vista del evento con todos sus datos. Si `payment_status === 'pending_approval'`: formulario editable (pre-fill desde event data, POST a `/api/events/:documentId`). Si `payment_status === 'payment_failed'`: boton "Reintentar pago" que vuelve al flujo de `POST /api/payment/initiate`. Si aprobado: solo vista.
-4. **Profile page (`/cuenta/perfil`)** -- Formulario con nombre, email, cambio de contrasena via `PUT /api/users/me`.
+**Plans (estimado):**
+1. **`/admin/events` conectado** — listado real con filtros por estado; acciones de aprobar y
+   rechazar (con motivo) contra la API.
+2. **`/admin/users` funcional** — tabla + crear/editar/banear/eliminar; restringido a
+   `SUPER_ADMIN` (la API CRUD ya existe).
+3. **Limpieza de vistas admin obsoletas** — retirar o re-perfilar `/admin/payments` y otras
+   vistas placeholder acorde al alcance sin pagos.
 
 **UAT:**
-- Organizador ve solo sus propios eventos con estados correctos
-- Puede editar un evento en revision y los cambios se guardan
-- Puede reintentar el pago de un evento fallido
-- No puede editar un evento ya aprobado
-- Puede cambiar su contrasena exitosamente
+- Un admin aprueba un evento y este aparece en el sitio público
+- Un admin rechaza con motivo y el organizador lo ve en su panel
+- `/admin/users` permite gestionar cuentas; solo SUPER_ADMIN accede
+- No quedan vistas admin de pagos/venta de entradas
 
 ---
 
-## Phase 6: Search
+## Phase 5: Búsqueda
 
-**Goal:** Busqueda funcional de eventos en el sitio publico con filtros y resultados paginados.
+**Goal:** Búsqueda funcional de eventos en el sitio público con filtros y resultados
+paginados.
 
-**Why last:** Independiente de todos los otros features. El sitio funciona sin ella, pero es un gap UX importante para el publico.
+**Why fifth:** Mejora de UX independiente del bucle principal; el sitio funciona sin ella.
 
-### Plans
-
-1. **SearchDefault.vue + routing** -- Al enviar el formulario navegar a `/busqueda?q=`. Conectar el componente de busqueda del header al router.
-2. **Search results page (`/busqueda`)** -- Leer query params (`q`, `categoria`, `region`, `desde`, `hasta`). Construir query de Strapi con `$containsi` para texto, filtros relacionales para categoria/region, filtro de fecha en componente `dates`. Mostrar resultados con `EventsArchive.vue` reutilizado. Empty state con `EmptyEvents.vue`.
-3. **Filters sidebar (`FiltersSearch.vue`)** -- Dropdowns de categoria y region (fetch desde Strapi). Date range picker para `desde`/`hasta`. Toggle free/paid. Sincronizar estado de filtros con URL via `useRoute`/`useRouter`.
+**Plans (estimado):**
+1. **Endpoint de búsqueda** — `GET /events` acepta `q`, `categoria`, `region`, `desde`,
+   `hasta`; texto vía `ILIKE`/Prisma sobre título y descripción.
+2. **Página `/busqueda`** — lee query params, muestra resultados reutilizando `EventCard`,
+   con estado vacío.
+3. **Filtros y URL** — sidebar de filtros sincronizado con la URL (links compartibles).
 
 **UAT:**
-- Buscar "rock" desde el header navega a `/busqueda?q=rock` con resultados
-- Filtrar por categoria + region + fechas muestra solo eventos que cumplan todos los filtros
-- La URL refleja todos los filtros activos (shareable)
-- Cuando no hay resultados se muestra el empty state
-- Los filtros se resetean correctamente al limpiar la busqueda
+- Buscar desde el header navega a `/busqueda?q=` con resultados
+- Filtrar por categoría + región + fechas acota correctamente
+- La URL refleja todos los filtros activos
+- Sin resultados se muestra el estado vacío
+
+---
+
+## Phase 6: Hardening para producción
+
+**Goal:** Dejar ambas apps listas para un despliegue seguro: CORS acotado, secretos
+gestionados, sesión revalidada y build/deploy verificados.
+
+**Why last:** Endurecer tiene sentido cuando la superficie funcional ya está completa.
+
+**Plans (estimado):**
+1. **Seguridad de la API** — CORS restringido al origen del website; `JWT_SECRET` y
+   credenciales solo desde entorno, sin defaults en código.
+2. **Sesión del website** — revalidar el token contra `/auth/me` al cargar; logout limpio si
+   es inválido.
+3. **Build y despliegue** — verificar `pnpm build` de ambas apps; documentar el proceso de
+   despliegue y las variables de entorno requeridas.
+
+**UAT:**
+- La API rechaza requests de orígenes no permitidos
+- La app no arranca con un `JWT_SECRET` por defecto
+- Un token inválido en `localStorage` produce logout en la primera carga
+- Ambas apps compilan limpio y el despliegue está documentado
 
 ---
 
 ## Dependencies
 
 ```
-Phase 1 (Security) --> Phase 3 (Transbank) -- security is prerequisite for payments
-Phase 2 (Schema)   --> Phase 3 (Transbank) -- schema must exist before payment flow
-Phase 3 (Transbank)--> Phase 4 (MP+Stripe) -- gateway abstraction validated by Phase 3
-Phase 3 (Transbank)--> Phase 5 (Organizer) -- payment_status field needed for panel
-Phase 4 (Dashboard)--> Phase 5 (Organizer) -- payment states need to be complete
-
-Phase 6 (Search) -- Independent, no dependencies
+Phase 0 (Re-alineación) → todo lo demás — planear sobre datos correctos
+Phase 1 (API)           → Phase 2, 3, 4, 5 — los endpoints alimentan todo
+Phase 2 (Sitio público) → Phase 3 — el evento aprobado debe poder mostrarse
+Phase 3 (Publicación)   → Phase 4 — debe haber eventos que moderar
+Phase 5 (Búsqueda)      — depende solo de Phase 1
+Phase 6 (Hardening)     — al final, sobre la superficie completa
 ```
 
 ---
 
-*Roadmap created: 2026-03-23*
-*Based on: PROJECT.md, REQUIREMENTS.md, research/ (STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS.md)*
+*Roadmap creado: 2026-03-23 · Re-alineado: 2026-05-20*
+*Basado en: PROJECT.md, REQUIREMENTS.md y la encuesta de codebase de 2026-05-20*

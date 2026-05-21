@@ -1,109 +1,36 @@
-# Testing Patterns
+# Testing
 
-**Analysis Date:** 2026-03-23
+**Analysis Date:** 2026-05-20 (re-aligned after the Strapi→NestJS migration)
 
-## Test Framework
+## Estado actual
 
-**Runner:** None detected
+**No hay tests automatizados.** Ninguna de las dos apps tiene framework de testing instalado
+ni archivos de test. `apps/api/tsconfig.build.json` excluye un directorio `test/` por
+convención de NestJS, pero ese directorio no existe. No hay scripts de test en ningún
+`package.json`.
 
-No test runner configuration files were found across any of the three apps:
-- No `jest.config.*`
-- No `vitest.config.*`
-- No `playwright.config.*`
-- No `cypress.config.*`
+## Verificación usada hasta ahora
 
-No test files (`*.test.*`, `*.spec.*`) exist in the repository.
+La verificación de las quick tasks ha sido **manual**:
 
-**Assertion Library:** None
+- **API:** pruebas de integración contra la API corriendo + base local — login/register/me y
+  endpoints protegidos devolviendo los códigos esperados (`401` sin token, `403` por rol,
+  `200`/`201` con permiso).
+- **Website:** `pnpm build` exitoso + smoke test de rutas (las páginas responden `200`).
 
-**Run Commands:**
-```bash
-# No test commands exist in any package.json scripts
-# dashboard package.json scripts: dev, build, start, lint, lint:fix, format, format:check, format:fix, prepare
-# website package.json scripts: build, dev, generate, preview, postinstall, format, start, production, lint, lint:fix, prepare
-# strapi package.json scripts: build, console, deploy, dev, develop, start, strapi, upgrade, upgrade:dry
-```
+## Recomendación
 
-## Test File Organization
+Cuando el comportamiento se estabilice, considerar:
+- API: Jest + `supertest` para tests e2e de los endpoints (auth, roles, eventos, moderación)
+- Website: tests de componentes solo si la complejidad lo justifica
 
-**Location:** Not applicable — no test files exist.
+Objetivos de mayor valor para cuando se adopte un framework:
+- Guards y `RolesGuard` de la API (control de acceso por rol)
+- Endpoints de eventos y de moderación (ROADMAP Phase 1)
+- `lib/api.ts` del website (construcción de requests y manejo de errores)
 
-**Naming:** Not applicable.
-
-**Structure:** Not applicable.
-
-## Test Structure
-
-No tests exist in this codebase. The entire test surface is zero coverage.
-
-## Mocking
-
-**Framework:** None
-
-No mocking utilities, fixtures, or test factories have been established.
-
-## Fixtures and Factories
-
-**Test Data:** None
-
-**Location:** No fixtures directory exists.
-
-## Coverage
-
-**Requirements:** None enforced
-
-No coverage configuration or thresholds have been set in any app.
-
-**View Coverage:**
-```bash
-# No coverage commands configured
-```
-
-## Test Types
-
-**Unit Tests:** None
-
-**Integration Tests:** None
-
-**E2E Tests:** None
-
-## Quality Gates in Place (Non-Test)
-
-While there are no tests, the following quality enforcement mechanisms exist:
-
-**Linting:**
-- ESLint runs on pre-commit via Husky + lint-staged in both `apps/dashboard` and `apps/website`
-- Dashboard: `prettier --write` + `eslint --fix` on `*.{js,jsx,ts,tsx,json,md,css,scss}`
-- Website: `eslint --fix` on `*.{js,ts,vue}`
-- Pre-commit hook: `apps/dashboard/.husky/pre-commit` and `apps/website/.husky/pre-commit`
-
-**TypeScript:**
-- Dashboard has `"strict": true` in `apps/dashboard/tsconfig.json`
-- Website inherits Nuxt's TS config via `.nuxt/tsconfig.json`
-- Strapi has TypeScript but no strict mode configured
-
-**Form Validation (Runtime):**
-- Dashboard forms use Zod schemas with `@hookform/resolvers/zod` (`apps/dashboard/src/components/form-event.tsx`)
-- Website forms use vee-validate + yup (`apps/website/package.json`)
-- These validate user input at runtime but are not automated tests
-
-## Recommendations
-
-Adding tests to this codebase would require:
-
-1. **Dashboard (Next.js/React):** Install `vitest` or `jest` with `@testing-library/react`. Place test files as `*.test.tsx` co-located with components in `apps/dashboard/src/components/`.
-
-2. **Website (Nuxt/Vue):** Install `vitest` with `@vue/test-utils`. Place test files co-located with composables in `apps/website/composables/` (e.g., `useEvents.test.ts`).
-
-3. **Strapi (Node.js):** Install `jest` or `vitest`. Focus on custom middleware (`apps/strapi/src/middlewares/`) and any custom controllers.
-
-4. **High-value test targets (no tests today):**
-   - `apps/website/composables/useEvents.ts` — date formatting and sorting logic
-   - `apps/dashboard/src/lib/hooks/useSlugify.ts` — slug generation logic
-   - `apps/dashboard/src/lib/strapi/auth.ts` — auth flow
-   - `apps/dashboard/src/lib/strapi/api.ts` — API request construction
-   - `apps/strapi/src/middlewares/auth-response.ts` — role injection middleware
+No es bloqueante para v1; documentar aquí cuando se adopte un framework.
 
 ---
 
-*Testing analysis: 2026-03-23*
+*Testing analysis: 2026-05-20*

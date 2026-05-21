@@ -53,6 +53,8 @@ Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al meno
 - Si una categoría no tiene eventos aprobados: se omite silenciosamente (no empty state por categoría)
 - El link "Ver todos" apunta a `/categoria/:slug`
 
+> **No modificar:** Esta sección ya está implementada y funciona correctamente. El botón "Ver todos" de cada rail está presente e intencional.
+
 #### Empty states
 - **Sin eventos destacados:** ilustración + "Aún no hay eventos publicados" + botón "Publicar el primero" → `/crear`
 - **Sin heroes:** la sección no se renderiza (no empty state visible)

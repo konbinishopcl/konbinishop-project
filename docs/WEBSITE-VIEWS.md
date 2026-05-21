@@ -129,14 +129,13 @@ Requiere sesión. Wizard de 3 pasos.
 
 ### Upsell post-evento
 
-Pantalla intermedia que aparece después de crear un evento exitosamente, antes de ir al carrito.
+Mini-wizard de 2 pasos que aparece después de crear un evento exitosamente, antes de ir al carrito. Los pasos son secuenciales e independientes: responder "No" en el primero no omite el segundo.
 
-Muestra tarjetas con precio por día y cupos disponibles para:
-- **Aviso** — si hay cupo disponible
-- **Hero** — si hay cupo disponible
+**Paso 1 — Aviso:** "¿Quieres agregar un aviso?" Muestra precio por día y cupos disponibles. Si acepta, abre el formulario de aviso. Si no hay cupo, este paso se omite.
 
-El usuario puede elegir uno, ambos o ninguno ("Continuar sin publicitar").
-Si no hay cupo en ninguno, esta pantalla se omite y se va directo al carrito.
+**Paso 2 — Hero:** "¿Quieres agregar un hero?" Muestra precio por día y cupos disponibles. Si acepta, abre el formulario de hero. Si no hay cupo, este paso se omite.
+
+Si no hay cupo en ninguno de los dos, el upsell se omite completamente y se va directo al carrito.
 
 ---
 

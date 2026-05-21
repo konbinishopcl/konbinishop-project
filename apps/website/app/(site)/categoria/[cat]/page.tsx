@@ -1,9 +1,28 @@
+import type { Metadata } from "next";
 import { EventCard } from "@/components/EventCard";
 import { Ic } from "@/components/icons";
 import { api, toEventItem } from "@/lib/api";
 import type { EventItem } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ cat: string }> },
+): Promise<Metadata> {
+  const { cat } = await params;
+  try {
+    const categories = await api.categories();
+    const name = categories.find((c) => c.slug === cat)?.name ?? cat;
+    const description = `Explora eventos de ${name} en Konbini — anime, conciertos, ferias y conventions en Chile.`;
+    return {
+      title: name,
+      description,
+      openGraph: { title: `${name} · Konbini`, description },
+    };
+  } catch {
+    return { title: "Categoría" };
+  }
+}
 
 // Chips de filtro — placeholder visual; los filtros reales son trabajo de Phase 5.
 const CHIPS = ["Todos", "Hoy", "Esta semana", "Este mes", "Gratis", "Destacados"];

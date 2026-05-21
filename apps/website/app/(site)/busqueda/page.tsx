@@ -1,12 +1,49 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SearchView } from "./SearchView";
+import { api, toEventItem, type ApiCategory, type ApiRegion } from "@/lib/api";
+import type { EventItem } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
-export default function BusquedaPage() {
+export const metadata: Metadata = {
+  title: "Buscar eventos",
+  description: "Encuentra eventos de anime, conciertos, ferias y conventions en Chile. Filtra por categoría, región y fecha.",
+  openGraph: {
+    title: "Buscar eventos · Konbini",
+    description: "Encuentra eventos de anime, conciertos, ferias y conventions en Chile.",
+  },
+};
+
+type Props = { searchParams: Promise<{ q?: string; category?: string; region?: string }> };
+
+export default async function BusquedaPage({ searchParams }: Props) {
+  const { q, category, region } = await searchParams;
+
+  let initialResults: EventItem[] = [];
+  let initialCategories: ApiCategory[] = [];
+  let initialRegions: ApiRegion[] = [];
+
+  try {
+    const [list, cats, regs] = await Promise.all([
+      api.events({ q, category, region, pageSize: 60 }),
+      api.categories(),
+      api.regions(),
+    ]);
+    initialResults = list.items.map(toEventItem);
+    initialCategories = cats;
+    initialRegions = regs;
+  } catch {
+    // API no disponible — SearchView maneja el estado vacío.
+  }
+
   return (
     <Suspense>
-      <SearchView />
+      <SearchView
+        initialResults={initialResults}
+        initialCategories={initialCategories}
+        initialRegions={initialRegions}
+      />
     </Suspense>
   );
 }

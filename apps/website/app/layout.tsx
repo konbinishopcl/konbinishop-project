@@ -3,10 +3,33 @@ import type { ReactNode } from "react";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://konbini.cl";
+const TITLE = "Konbini · Plataforma de eventos";
+const DESCRIPTION =
+  "Todo lo que amas — anime, conciertos, ferias y conventions — en un solo lugar.";
+
 export const metadata: Metadata = {
-  title: "Konbini · Plataforma de eventos",
-  description:
-    "Todo lo que amas — anime, conciertos, ferias y conventions — en un solo lugar.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: TITLE,
+    template: "%s · Konbini",
+  },
+  description: DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "es_CL",
+    siteName: "Konbini",
+    title: TITLE,
+    description: DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  robots: { index: true, follow: true },
+  alternates: { canonical: SITE_URL },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

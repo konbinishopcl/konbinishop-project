@@ -34,7 +34,7 @@ export function imageUrl(path?: string | null): string {
   return `${API_ORIGIN}${path}`;
 }
 
-/** Builds the href for a hero/spot link, depending on its link type. */
+/** Builds the href for a spot link, depending on its link type. */
 export function linkHref(type: "URL" | "PHONE" | "EMAIL", value: string): string {
   if (type === "PHONE") return `tel:${value}`;
   if (type === "EMAIL") return `mailto:${value}`;
@@ -87,7 +87,7 @@ export type ApiEvent = {
   about: string | null;
   expirationDate: string | null;
   address: string;
-  addressNumber: string;
+  addressNumber: string | null;
   ticketUrl: string | null;
   banner: string | null;
   poster: string | null;
@@ -95,6 +95,7 @@ export type ApiEvent = {
   isApproved: boolean;
   isRejected: boolean;
   rejectedReason: string | null;
+  _count?: { likes: number };
   owner?: {
     id: number;
     firstname: string | null;
@@ -127,12 +128,11 @@ export type ApiHero = {
   image: string;
   date: string | null;
   place: string | null;
-  linkType: "URL" | "PHONE" | "EMAIL";
-  linkValue: string;
+  link: string | null;
   category: ApiCategory | null;
-  days: number;
-  amount: number;
-  expirationDate: string;
+  days: number | null;
+  amount: number | null;
+  expirationDate: string | null;
 };
 
 export type EventsQuery = {
@@ -151,7 +151,7 @@ export type CreateEventInput = {
   about?: string;
   expirationDate?: string;
   address: string;
-  addressNumber: string;
+  addressNumber?: string;
   ticketUrl?: string;
   banner?: string;
   poster?: string;
@@ -186,8 +186,9 @@ export const api = {
   createEvent: (body: CreateEventInput, token: string) =>
     request<ApiEvent>("/events", { method: "POST", body: JSON.stringify(body) }, token),
   myEvents: (token: string) => request<ApiEvent[]>("/events/mine", {}, token),
+  // El endpoint unificado /events devuelve todos los estados cuando el token es de admin.
   adminEvents: (token: string, query: EventsQuery = {}) =>
-    request<ApiEventList>(`/events/admin${qs(query)}`, {}, token),
+    request<ApiEventList>(`/events${qs(query)}`, {}, token),
   approveEvent: (id: number, token: string) =>
     request<ApiEvent>(`/events/${id}/approve`, { method: "PATCH" }, token),
   rejectEvent: (id: number, reason: string, token: string) =>
@@ -312,6 +313,6 @@ export function toHeroSlide(h: ApiHero): HeroSlide {
     date: h.date ? formatDateLabel(h.date) : "",
     place: h.place ?? "",
     image: imageUrl(h.image),
-    href: linkHref(h.linkType, h.linkValue),
+    href: h.link ?? "#",
   };
 }

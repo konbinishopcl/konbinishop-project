@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Poster } from "@/components/Poster";
@@ -5,6 +6,39 @@ import { Ic } from "@/components/icons";
 import { api, imageUrl, toEventItem, type ApiEvent } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata(
+  { params }: { params: Promise<{ slug: string }> },
+): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const event = await api.event(slug);
+    const image = imageUrl(event.banner ?? event.poster);
+    const place = [event.commune?.name, event.region?.name].filter(Boolean).join(", ");
+    const category = event.categories[0]?.name;
+    const description = event.description.slice(0, 160);
+    return {
+      title: event.title,
+      description,
+      openGraph: {
+        type: "article",
+        title: event.title,
+        description,
+        ...(image && { images: [{ url: image, width: 1200, height: 630, alt: event.title }] }),
+        ...(place && { section: place }),
+        ...(category && { tags: [category] }),
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: event.title,
+        description,
+        ...(image && { images: [image] }),
+      },
+    };
+  } catch {
+    return { title: "Evento" };
+  }
+}
 
 function clp(n: number): string {
   return `$${n.toLocaleString("es-CL")}`;

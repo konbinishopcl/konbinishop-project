@@ -7,7 +7,13 @@ import { Ic } from "@/components/icons";
 import { api, toEventItem, type ApiCategory, type ApiRegion } from "@/lib/api";
 import type { EventItem } from "@/lib/data";
 
-export function SearchView() {
+type Props = {
+  initialResults: EventItem[];
+  initialCategories: ApiCategory[];
+  initialRegions: ApiRegion[];
+};
+
+export function SearchView({ initialResults, initialCategories, initialRegions }: Props) {
   const router = useRouter();
   const params = useSearchParams();
   const q = params.get("q") ?? "";
@@ -15,38 +21,37 @@ export function SearchView() {
   const region = params.get("region") ?? "";
 
   const [text, setText] = useState(q);
-  const [results, setResults] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<ApiCategory[]>([]);
-  const [regions, setRegions] = useState<ApiRegion[]>([]);
+  const [results, setResults] = useState<EventItem[]>(initialResults);
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<ApiCategory[]>(initialCategories);
+  const [regions, setRegions] = useState<ApiRegion[]>(initialRegions);
+  // Rastrear si es el primer render (ya tenemos datos SSR).
+  const [hydrated, setHydrated] = useState(false);
 
-  // Mantener el input en sync cuando cambia la URL.
   useEffect(() => {
     setText(q);
   }, [q]);
 
-  // Catálogos para los filtros.
+  // Cargar catálogos solo si el server no los proveyó (fallo de API en SSR).
   useEffect(() => {
-    api.categories().then(setCategories).catch(() => {});
-    api.regions().then(setRegions).catch(() => {});
+    if (categories.length === 0) api.categories().then(setCategories).catch(() => {});
+    if (regions.length === 0) api.regions().then(setRegions).catch(() => {});
   }, []);
 
-  // Resultados.
+  // Re-fetch cuando cambian los filtros en el cliente (navegación con URL).
   useEffect(() => {
+    if (!hydrated) {
+      setHydrated(true);
+      return; // primer render: ya tenemos datos SSR, no re-fetch.
+    }
     setLoading(true);
     api
-      .events({
-        q: q || undefined,
-        category: category || undefined,
-        region: region || undefined,
-        pageSize: 60,
-      })
+      .events({ q: q || undefined, category: category || undefined, region: region || undefined, pageSize: 60 })
       .then((r) => setResults(r.items.map(toEventItem)))
       .catch(() => setResults([]))
       .finally(() => setLoading(false));
   }, [q, category, region]);
 
-  // Empuja los filtros a la URL (resultados compartibles).
   const pushParams = (next: { q?: string; category?: string; region?: string }) => {
     const merged = { q, category, region, ...next };
     const sp = new URLSearchParams();

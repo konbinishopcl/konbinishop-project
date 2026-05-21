@@ -50,15 +50,11 @@ export function HeroBlock() {
           </div>
         </div>
         <div className="hero-art">
-          <div className="hero-poster">
-            <div className="pp-jp">
-              ロヒアリム
-              <br />
-              戦記
-            </div>
-            <div className="pp-title">The War of the Rohirrim</div>
-            <div className="pp-foot">2025 · WARNER BROS ANIME</div>
-          </div>
+          <img
+            className="hero-art-img"
+            src={HERO.image}
+            alt={`${HERO.title1} ${HERO.title2}`}
+          />
         </div>
       </div>
     </section>

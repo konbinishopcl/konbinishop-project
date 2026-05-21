@@ -124,6 +124,10 @@
       radial-gradient(60% 60% at 20% 90%, color-mix(in oklab, var(--accent-3) 22%, transparent), transparent 60%),
       linear-gradient(135deg, #f0e3d0 0%, #d8c8b0 100%);
   }
+  .hero-art-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
   .hero-poster {
     position: absolute; right: 40px; top: 50%; transform: translateY(-50%) rotate(4deg);
     width: 260px; aspect-ratio: 2/3; border-radius: 14px; box-shadow: var(--shadow);
@@ -172,6 +176,10 @@
     background: var(--accent); color: white; padding: 4px 10px; border-radius: 4px;
     font-family: var(--font-mono); font-size: 11px; font-weight: 600;
   }
+  .card .poster .poster-img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
   .card .meta { padding: 12px 4px 0; }
   .card .title { font-weight: 600; font-size: 14px; line-height: 1.3; margin-bottom: 4px; letter-spacing: -.01em; }
   .card .sub { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); letter-spacing: .04em; }
@@ -208,7 +216,7 @@
   }
 
   /* horizontal landscape cards (cine row) */
-  .card.land .poster { aspect-ratio: 16/9; }
+  .card.land .poster { aspect-ratio: 4/3; }
 
   /* ───── filter chips on category screen ───── */
   .chip-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 12px; }

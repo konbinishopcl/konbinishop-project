@@ -15,7 +15,9 @@
       "Read(///wsl.localhost/Ubuntu/home/gab/**)",
       "Read(///wsl.localhost/Ubuntu/home/gab/.claude/**)",
       "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/website/**)",
-      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/**)"
+      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/**)",
+      "Bash(find \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\website\\\\app\\\\dashboard\" -type f -name \"page.tsx\")",
+      "Bash(find \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\website\\\\app\\\\dashboard\" -type f -name \"layout.tsx\")"
     ]
   }
 }

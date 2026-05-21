@@ -22,13 +22,46 @@
 ## Vistas públicas
 
 ### `/` — Home
-**Server component.** Fetcha eventos, categorías y heroes en paralelo.
+**Server component.** Fetcha eventos, categorías, heroes, usuarios recientes y estadísticas en paralelo.
 
-- **Hero carousel** — slides de heroes aprobados (imagen, título, subtítulo acento, descripción corta, fecha, lugar, botón CTA con el link del hero)
-- **Rail "Destacados"** — primeros 6 eventos aprobados
-- **Rails por categoría** — hasta 6 eventos por categoría con al menos un evento publicado
+#### Secciones (en orden de arriba a abajo)
 
-**Pendiente:** El botón "Ver todos" de cada rail no tiene href destino.
+**1. Hero carousel**
+Slides de heroes aprobados. Imagen full-width, título, subtítulo acento, descripción corta, fecha, lugar, botón CTA. Si no hay heroes: no se muestra.
+
+**2. Destacados — Top 12 más likeados**
+Grid de 6 columnas × 2 filas (12 eventos). Sin botón "Ver todos".
+- Ordenados por `_count.likes` descendente
+- Si hay menos de 12 eventos: muestra los que haya
+- Si no hay ninguno: **empty state** — mensaje + ilustración + CTA a `/crear`
+- API: `GET /events?pageSize=12&sortBy=likes`
+- Nota: requiere agregar `sortBy=likes` al query DTO de la API (`QueryEventsDto`) y al `orderBy` del servicio
+
+**3. Últimos en unirse — Social proof**
+Franja horizontal con avatares de los últimos N usuarios registrados (con foto o iniciales), contador total de organizadores, y frase tipo "Únete a +500 organizadores que ya publican en Konbini".
+- API: `GET /users/recent` (endpoint público a crear — devuelve solo `id`, `firstname`, `lastname`, `avatar` del profile)
+- Si no hay usuarios: no se muestra
+
+**4. Newsletter**
+Sección con frase vendedora, campo de email y botón de suscripción.
+- API: `POST /newsletter/subscribe` con `{ email }` (endpoint a crear, modelo `Subscriber` en Prisma)
+- Estado: idle → loading → success ("¡Listo! Te avisamos de los mejores eventos") → error
+- No requiere estar logueado
+
+**5. Rails por categoría**
+Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al menos un evento en esa categoría.
+- Si una categoría no tiene eventos aprobados: se omite silenciosamente (no empty state por categoría)
+- El link "Ver todos" apunta a `/categoria/:slug`
+
+#### Empty states
+- **Sin eventos destacados:** ilustración + "Aún no hay eventos publicados" + botón "Publicar el primero" → `/crear`
+- **Sin heroes:** la sección no se renderiza (no empty state visible)
+- **Sin categorías con eventos:** no se renderiza ningún rail
+
+**Pendiente de API:**
+- `sortBy=likes` en `GET /events`
+- `GET /users/recent` (público, devuelve últimos 10 usuarios con perfil)
+- `POST /newsletter/subscribe`
 
 ---
 

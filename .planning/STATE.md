@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1
 milestone_name: "Publicación gratuita de eventos"
 status: in_progress
-last_updated: "2026-05-20T23:45:00.000Z"
+last_updated: "2026-05-21T01:00:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -19,21 +19,21 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 1 — API de contenido
+**Current focus:** Phase 2 — Sitio público con datos reales
 
 ## Current Status
 
 **Milestone:** v1 — Publicación gratuita de eventos
-**Active Phase:** Phase 1 — API de contenido (en progreso — 1/3 planes)
-**Overall Progress:** [██░░░░░] Phase 0 completa · Phase 1 en curso
-**Last session:** 2026-05-20 — Phase 1 plan 01-01: módulo `events` de la API (9 endpoints)
+**Active Phase:** Phase 2 — Sitio público con datos reales (pendiente — por planear)
+**Overall Progress:** [███░░░░] Phases 0 y 1 completas
+**Last session:** 2026-05-21 — Phase 1 cerrada (plan 01-03: endpoint de subida de imágenes)
 
 ## Phase Summary
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
 | 0 | Re-alineación GSD | ✅ Complete | 1/1 |
-| 1 | API de contenido (eventos + taxonomías) | ◑ In Progress | 1/3 |
+| 1 | API de contenido (eventos + taxonomías) | ✅ Complete | 3/3 |
 | 2 | Sitio público con datos reales | ○ Pending | 0/? |
 | 3 | Publicación de eventos | ○ Pending | 0/? |
 | 4 | Moderación y panel admin | ○ Pending | 0/? |
@@ -42,6 +42,11 @@ administrador quedan visibles al público.
 
 ## Decisions
 
+- **[01-03]:** Subida de imágenes con `FileInterceptor` en memoria + escritura a disco con
+  `fs` — sin importar `multer` ni agregar dependencias. Formatos JPG/PNG/WebP, máx. 5 MB.
+- **[01-02]:** Almacenamiento de imágenes = disco local en `apps/api/uploads/`, servido en
+  `/uploads`. El catálogo (taxonomías + contenido) se agrupa en un único módulo `catalog` en
+  vez de un módulo por recurso.
 - **[01-01]:** Un evento creado por un organizador queda `isApproved=false`; editar/borrar lo
   permite el dueño o un admin; `reject` exige un motivo. `UpdateEventDto` escrito a mano para
   no añadir `@nestjs/mapped-types`.
@@ -63,8 +68,9 @@ administrador quedan visibles al público.
 
 ## Next Action
 
-Continuar **Phase 1** con el plan **01-02**: módulos de lectura de taxonomías (regiones,
-comunas, categorías, tags, heroes, spots, artículos) en la API NestJS.
+Planear **Phase 2 — Sitio público con datos reales**: conectar home, categorías y detalle de
+evento del website a la API NestJS (reemplazar `lib/data.ts` mock) y quitar el checkout /
+venta de entradas del diseño.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

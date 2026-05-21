@@ -1,6 +1,8 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -37,7 +39,11 @@ const EVENT_INCLUDE_ADMIN = {
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+    private readonly mail: MailService,
+  ) {}
 
   // ─────────────────────── Lectura ───────────────────────
 
@@ -234,7 +240,7 @@ export class EventsService {
 
   async approve(id: number, user: JwtUser) {
     await this.ensure(id);
-    return this.prisma.event.update({
+    const event = await this.prisma.event.update({
       where: { id },
       data: {
         status: PublicationStatus.APPROVED,
@@ -242,21 +248,46 @@ export class EventsService {
         approvedBy: { connect: { id: user.sub } },
         rejectedBy: { disconnect: true },
       },
-      include: EVENT_INCLUDE,
+      include: {
+        ...EVENT_INCLUDE,
+        owner: { select: { email: true, firstname: true } },
+      },
     });
+    if (event.owner?.email) {
+      const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+      await this.mail.sendEventApproved(
+        event.owner.email,
+        event.owner.firstname ?? event.owner.email,
+        event.title,
+        `${frontendUrl}/eventos/${event.slug}`,
+      );
+    }
+    return event;
   }
 
   async reject(id: number, reason: string, user: JwtUser) {
     await this.ensure(id);
-    return this.prisma.event.update({
+    const event = await this.prisma.event.update({
       where: { id },
       data: {
         status: PublicationStatus.REJECTED,
         rejectedReason: reason,
         rejectedBy: { connect: { id: user.sub } },
       },
-      include: EVENT_INCLUDE,
+      include: {
+        ...EVENT_INCLUDE,
+        owner: { select: { email: true, firstname: true } },
+      },
     });
+    if (event.owner?.email) {
+      await this.mail.sendEventRejected(
+        event.owner.email,
+        event.owner.firstname ?? event.owner.email,
+        event.title,
+        reason,
+      );
+    }
+    return event;
   }
 
   // ─────────────────────── Helpers ───────────────────────

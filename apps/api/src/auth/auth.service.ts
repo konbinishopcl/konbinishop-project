@@ -5,10 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { compare, hash } from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
@@ -17,6 +19,8 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   /** Firma un JWT con id, email y rol del usuario. */
@@ -77,6 +81,7 @@ export class AuthService {
     });
     const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
     await this.prisma.profile.create({ data: { userId: user.id, slug } });
+    await this.mail.sendWelcome(user.email, user.firstname ?? user.email);
     return { token: this.sign(user), user: this.sanitize(user) };
   }
 
@@ -112,8 +117,13 @@ export class AuthService {
           resetTokenExpiry: new Date(Date.now() + 60 * 60 * 1000),
         },
       });
-      // TODO(v2): enviar por email. Por ahora queda en el log del servidor.
-      console.log(`🔑 Token de recuperación para ${email}: ${token}`);
+      const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+      const resetUrl = `${frontendUrl}/recuperar-contrasena?token=${token}`;
+      await this.mail.sendPasswordReset(user.email, resetUrl);
+      // Fallback dev: mostrar el token en el log cuando Mailgun no está configurado
+      if (!this.config.get('MAILGUN_API_KEY')) {
+        console.log(`🔑 Token de recuperación para ${email}: ${token}`);
+      }
     }
     return { ok: true };
   }

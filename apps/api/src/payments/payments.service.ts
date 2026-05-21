@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { OrderStatus, PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { GatewayFactory } from './gateway.factory';
 import { GatewayType } from './dto/checkout.dto';
@@ -22,6 +23,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly gatewayFactory: GatewayFactory,
+    private readonly mail: MailService,
   ) {}
 
   /**
@@ -85,6 +87,7 @@ export class PaymentsService {
     const order = await this.prisma.order.findFirst({
       where: { externalId: tokenWs },
       include: {
+        owner: { select: { email: true, firstname: true } },
         items: {
           include: { event: true, spot: true, hero: true },
         },
@@ -128,6 +131,16 @@ export class PaymentsService {
     });
 
     this.logger.log(`Order ${order.id} → PAID`);
+
+    if (order.owner?.email) {
+      await this.mail.sendPaymentConfirmed(
+        order.owner.email,
+        order.owner.firstname ?? order.owner.email,
+        order.id,
+        order.total,
+      );
+    }
+
     return `${frontendUrl}/checkout/success?orderId=${order.id}`;
   }
 

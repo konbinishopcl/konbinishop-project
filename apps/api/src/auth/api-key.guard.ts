@@ -17,7 +17,7 @@ export class ApiKeyGuard implements CanActivate {
     const provided = req.headers['x-api-key'];
 
     if (!provided || provided !== this.key) {
-      throw new UnauthorizedException('API key inválida o ausente');
+      throw new UnauthorizedException();
     }
     return true;
   }

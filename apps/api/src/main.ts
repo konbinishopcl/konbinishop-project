@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { HttpExceptionFilter } from '../utils/http-exception.filter';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -11,6 +12,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors({ origin: true, credentials: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Imágenes subidas: apps/api/uploads/ servido en /uploads (sin el prefijo /api).
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });

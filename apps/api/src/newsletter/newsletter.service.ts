@@ -11,4 +11,13 @@ export class NewsletterService {
     await this.prisma.subscriber.create({ data: { email } });
     return { ok: true };
   }
+
+  findAll() {
+    return this.prisma.subscriber.findMany({ orderBy: { createdAt: 'desc' } });
+  }
+
+  async remove(id: number) {
+    await this.prisma.subscriber.delete({ where: { id } });
+    return { deleted: true };
+  }
 }

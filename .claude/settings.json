@@ -17,7 +17,16 @@
       "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/website/**)",
       "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/**)",
       "Bash(find \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\website\\\\app\\\\dashboard\" -type f -name \"page.tsx\")",
-      "Bash(find \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\website\\\\app\\\\dashboard\" -type f -name \"layout.tsx\")"
+      "Bash(find \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\website\\\\app\\\\dashboard\" -type f -name \"layout.tsx\")",
+      "Bash(ssh -T git@github.com)",
+      "Read(//c/Users/hola/.ssh/**)",
+      "Bash(ssh-add -l)",
+      "Bash(ssh -vT git@github.com)",
+      "Bash(wsl -d Ubuntu -- bash -lc 'ls -la ~/.ssh 2>&1; echo \"--- wsl agent ---\"; ssh-add -l 2>&1; echo \"--- wsl test ---\"; ssh -T git@github.com 2>&1')",
+      "Bash(wsl -d Ubuntu -u gab -- bash -lc 'whoami; ls -la ~/.ssh 2>&1; echo \"--- gab test ---\"; ssh -T git@github.com 2>&1; echo \"--- repo remote ---\"; cd /home/gab/Code/konbini-project && git remote -v && git config --get core.sshCommand')",
+      "Bash(wsl -d Ubuntu -- whoami)",
+      "Bash(wsl -d Ubuntu -- bash -lc 'ssh -T git@github.com 2>&1 | tail -1')",
+      "Bash(wsl -d Ubuntu -u gab -- bash -lc 'ssh -T git@github.com 2>&1 | tail -1')"
     ]
   }
 }

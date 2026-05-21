@@ -5,7 +5,7 @@
   "description": "Konbini monorepo",
   "packageManager": "yarn@1.22.22",
   "scripts": {
-    "dev": "turbo run dev --parallel",
+    "dev": "lsof -ti:24678,1337,3000,3001 | xargs kill -9 2>/dev/null || true && turbo run dev --parallel",
     "build": "turbo run build",
     "start": "turbo run start --parallel",
     "lint": "turbo run lint"

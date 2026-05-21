@@ -1,0 +1,1624 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>Konbini · Plataforma de eventos</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* dark (default) */
+    --bg: #0d0c0a;
+    --bg-2: #161412;
+    --surface: #1c1a17;
+    --surface-2: #25221e;
+    --line: #2a2622;
+    --line-2: #3a342e;
+    --ink: #f4efe6;
+    --ink-2: #b8b0a2;
+    --ink-3: #7a7367;
+    --accent: #ff5b49;        /* konbini red */
+    --accent-ink: #fff;
+    --accent-2: #f3c053;      /* yen-yellow */
+    --accent-3: #6c5cff;      /* signal */
+    --ok: #4ec38a;
+    --warn: #ffae3b;
+    --err: #ff5b5b;
+    --shadow: 0 30px 60px -20px rgba(0,0,0,.6), 0 8px 20px -10px rgba(0,0,0,.5);
+    --ring: 0 0 0 1px var(--line);
+    --r-sm: 8px; --r: 14px; --r-lg: 22px; --r-xl: 30px;
+    --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
+    --font-body: "Inter", system-ui, sans-serif;
+    --font-jp: "Zen Kaku Gothic New", "Space Grotesk", sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  [data-theme="light"] {
+    --bg: #f6f2ea;
+    --bg-2: #efe9dd;
+    --surface: #ffffff;
+    --surface-2: #faf6ee;
+    --line: #e6dfd0;
+    --line-2: #d6cdb8;
+    --ink: #14110d;
+    --ink-2: #4a443a;
+    --ink-3: #857d6f;
+    --accent: #e8331f;
+    --accent-ink: #fff;
+    --accent-2: #c08410;
+    --accent-3: #3a2bd7;
+    --shadow: 0 24px 50px -24px rgba(40,30,15,.18), 0 4px 14px -6px rgba(40,30,15,.10);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  input, textarea, select { font: inherit; color: inherit; }
+  img { max-width: 100%; display: block; }
+
+  /* ───── primitives ───── */
+  .container { width: min(1280px, calc(100% - 48px)); margin: 0 auto; }
+  .row { display: flex; gap: 16px; align-items: center; }
+  .col { display: flex; flex-direction: column; gap: 16px; }
+  .grid { display: grid; gap: 16px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; letter-spacing: .02em; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+  .pill.solid { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .pill.accent { background: color-mix(in oklab, var(--accent) 15%, transparent); color: var(--accent); border-color: color-mix(in oklab, var(--accent) 30%, transparent); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; transition: transform .15s ease, background .2s; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.dark { background: var(--ink); color: var(--bg); }
+  .btn.ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+  .btn.lg { padding: 16px 26px; font-size: 15px; }
+  .btn.block { width: 100%; }
+  .mono { font-family: var(--font-mono); letter-spacing: .01em; }
+  .display { font-family: var(--font-display); letter-spacing: -.02em; line-height: 1; font-weight: 700; }
+  .jp { font-family: var(--font-jp); letter-spacing: .04em; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-3); }
+  .divider { height: 1px; background: var(--line); width: 100%; }
+
+  /* ───── header ───── */
+  header.app {
+    position: sticky; top: 0; z-index: 50; backdrop-filter: blur(18px);
+    background: color-mix(in oklab, var(--bg) 78%, transparent);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-wrap { display: flex; align-items: center; justify-content: space-between; height: 72px; }
+  .brand { display: flex; align-items: baseline; gap: 8px; }
+  .brand .mark {
+    font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em;
+    background: var(--accent); color: var(--accent-ink); padding: 4px 10px 6px; border-radius: 6px;
+    transform: rotate(-2deg);
+  }
+  .brand .sub { font-size: 11px; color: var(--ink-3); font-family: var(--font-mono); letter-spacing: .15em; text-transform: uppercase; }
+  nav.cats { display: flex; gap: 2px; }
+  nav.cats button {
+    padding: 10px 16px; border-radius: 999px; font-size: 14px; color: var(--ink-2); font-weight: 500;
+    transition: background .15s, color .15s;
+  }
+  nav.cats button:hover { color: var(--ink); }
+  nav.cats button.active { background: var(--ink); color: var(--bg); }
+  .head-actions { display: flex; gap: 10px; align-items: center; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); }
+  .icon-btn:hover { color: var(--ink); }
+  .avatar { width: 40px; height: 40px; border-radius: 999px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; color: white; font-size: 14px; border: 2px solid var(--surface); }
+
+  /* ───── hero ───── */
+  .hero {
+    position: relative; margin: 28px 0 44px; border-radius: var(--r-xl); overflow: hidden;
+    background: var(--surface); border: 1px solid var(--line);
+    min-height: 520px;
+  }
+  .hero-grid { display: grid; grid-template-columns: 1.2fr .8fr; min-height: 520px; }
+  .hero-text { padding: 44px 48px; display: flex; flex-direction: column; justify-content: space-between; position: relative; z-index: 2; }
+  .hero-meta { display: flex; gap: 10px; align-items: center; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(40px, 5.2vw, 76px); line-height: .96; letter-spacing: -.035em; font-weight: 700; margin: 18px 0; max-width: 12ch; }
+  .hero h1 em { font-style: normal; color: var(--accent); }
+  .hero .lead { color: var(--ink-2); max-width: 44ch; line-height: 1.5; font-size: 15px; }
+  .hero-bottom { display: flex; gap: 18px; align-items: center; margin-top: 26px; flex-wrap: wrap; }
+  .hero-art {
+    position: relative;
+    background:
+      radial-gradient(80% 80% at 70% 20%, color-mix(in oklab, var(--accent) 40%, transparent), transparent 60%),
+      radial-gradient(60% 60% at 20% 90%, color-mix(in oklab, var(--accent-3) 35%, transparent), transparent 60%),
+      linear-gradient(135deg, #1a1310 0%, #2a1a14 100%);
+  }
+  [data-theme="light"] .hero-art {
+    background:
+      radial-gradient(80% 80% at 70% 20%, color-mix(in oklab, var(--accent) 30%, transparent), transparent 60%),
+      radial-gradient(60% 60% at 20% 90%, color-mix(in oklab, var(--accent-3) 22%, transparent), transparent 60%),
+      linear-gradient(135deg, #f0e3d0 0%, #d8c8b0 100%);
+  }
+  .hero-poster {
+    position: absolute; right: 40px; top: 50%; transform: translateY(-50%) rotate(4deg);
+    width: 260px; aspect-ratio: 2/3; border-radius: 14px; box-shadow: var(--shadow);
+    background: var(--surface-2); border: 1px solid var(--line);
+    display: flex; flex-direction: column; padding: 18px; gap: 8px; overflow: hidden;
+  }
+  .hero-poster::before {
+    content: ""; position: absolute; inset: 0; opacity: .35;
+    background:
+      repeating-linear-gradient(45deg, transparent 0 14px, color-mix(in oklab, var(--accent) 25%, transparent) 14px 16px),
+      linear-gradient(180deg, transparent 30%, color-mix(in oklab, var(--accent) 40%, transparent));
+  }
+  .hero-poster .pp-jp { position: relative; font-family: var(--font-jp); font-weight: 900; font-size: 48px; color: var(--ink); line-height: .9; }
+  .hero-poster .pp-title { position: relative; font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+  .hero-poster .pp-foot { position: relative; margin-top: auto; font-family: var(--font-mono); font-size: 10px; color: var(--ink-2); letter-spacing: .1em; }
+  .hero-dots { display: flex; gap: 8px; align-items: center; }
+  .hero-dots .d { width: 8px; height: 8px; border-radius: 999px; background: var(--line-2); }
+  .hero-dots .d.on { background: var(--accent); width: 22px; }
+  .hero-arrows { position: absolute; right: 22px; top: 22px; display: flex; gap: 8px; z-index: 3; }
+
+  /* ───── section header ───── */
+  .sec-head { display: flex; justify-content: space-between; align-items: end; margin: 48px 0 18px; }
+  .sec-head h2 { font-family: var(--font-display); font-size: 32px; letter-spacing: -.02em; margin: 0; font-weight: 700; }
+  .sec-head .ja { font-family: var(--font-jp); font-size: 14px; color: var(--ink-3); margin-left: 12px; letter-spacing: .15em; }
+  .sec-head .more { font-size: 13px; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+  .sec-head .more:hover { color: var(--accent); }
+
+  /* ───── cards ───── */
+  .card-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
+  .card-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .card-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .card { cursor: pointer; }
+  .card .poster {
+    position: relative; aspect-ratio: 3/4; border-radius: var(--r); overflow: hidden;
+    border: 1px solid var(--line); background: var(--surface);
+    transition: transform .2s ease;
+  }
+  .card:hover .poster { transform: translateY(-4px); }
+  .card .poster .ribbon {
+    position: absolute; bottom: 10px; left: 10px; z-index: 2;
+    background: rgba(0,0,0,.7); color: white; backdrop-filter: blur(8px);
+    padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  }
+  .card .poster .price-tag {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    background: var(--accent); color: white; padding: 4px 10px; border-radius: 4px;
+    font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+  }
+  .card .meta { padding: 12px 4px 0; }
+  .card .title { font-weight: 600; font-size: 14px; line-height: 1.3; margin-bottom: 4px; letter-spacing: -.01em; }
+  .card .sub { font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); letter-spacing: .04em; }
+  .card .sub .dot { margin: 0 6px; }
+
+  /* synthesized posters */
+  .poster-art { position: absolute; inset: 0; }
+  .poster-art::before { content: ""; position: absolute; inset: 0; }
+  .pa-1 { background: linear-gradient(160deg, #1a0c2b 0%, #4a1860 50%, #ff3d6e 100%); }
+  .pa-1::before { background: radial-gradient(50% 40% at 50% 35%, rgba(255,255,255,.4), transparent 60%); }
+  .pa-2 { background: linear-gradient(180deg, #0a0a0a 0%, #1d1d1d 60%, #000 100%); }
+  .pa-3 { background: linear-gradient(180deg, #2b1b0a 0%, #8a4818 40%, #f59c2c 100%); }
+  .pa-4 { background: linear-gradient(135deg, #ff7aaf 0%, #6c5cff 60%, #29c0ff 100%); }
+  .pa-5 { background: linear-gradient(180deg, #110421 0%, #321657 50%, #ff5b1d 100%); }
+  .pa-6 { background: linear-gradient(180deg, #4d091a 0%, #100404 100%); }
+  .pa-7 { background: linear-gradient(135deg, #043947 0%, #0c7589 50%, #79e0ff 100%); }
+  .pa-8 { background: linear-gradient(180deg, #003366 0%, #0078d4 50%, #ffd11a 100%); }
+  .pa-9 { background: linear-gradient(180deg, #1b0a0a 0%, #6a1818 60%, #ff3d2e 100%); }
+  .pa-10 { background: linear-gradient(135deg, #14140e 0%, #3a3a14 50%, #e3d23a 100%); }
+  .pa-11 { background: linear-gradient(180deg, #170a23 0%, #6c5cff 100%); }
+  .pa-12 { background: linear-gradient(160deg, #4c0a37 0%, #ff3da8 100%); }
+
+  .poster-label {
+    position: absolute; inset: 0; padding: 16px; display: flex; flex-direction: column; justify-content: space-between;
+    color: white;
+  }
+  .poster-label .jp-big { font-family: var(--font-jp); font-weight: 900; font-size: 36px; line-height: .9; mix-blend-mode: screen; opacity: .85; text-shadow: 0 2px 12px rgba(0,0,0,.5); }
+  .poster-label .en { font-family: var(--font-display); font-weight: 700; font-size: 15px; line-height: 1.1; max-width: 11ch; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+  .poster-label .stamp { font-family: var(--font-mono); font-size: 10px; letter-spacing: .15em; opacity: .75; }
+
+  .poster .placeholder-note {
+    position: absolute; bottom: 8px; right: 8px; font-family: var(--font-mono); font-size: 9px; color: rgba(255,255,255,.55);
+    padding: 2px 6px; border: 1px dashed rgba(255,255,255,.3); border-radius: 4px; letter-spacing: .08em;
+  }
+
+  /* horizontal landscape cards (cine row) */
+  .card.land .poster { aspect-ratio: 16/9; }
+
+  /* ───── filter chips on category screen ───── */
+  .chip-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 12px; }
+  .chip { padding: 9px 16px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; color: var(--ink-2); font-weight: 500; cursor: pointer; transition: all .15s; }
+  .chip:hover { color: var(--ink); border-color: var(--line-2); }
+  .chip.on { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+  .filter-bar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 20px 0 8px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .filter-bar .left, .filter-bar .right { display: flex; gap: 8px; align-items: center; }
+  .field-inline { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; }
+
+  /* ───── event interior ───── */
+  .event-hero {
+    position: relative; height: 460px; border-radius: var(--r-xl); overflow: hidden;
+    margin: 20px 0 28px; border: 1px solid var(--line);
+    background: linear-gradient(160deg, #0c0a18 0%, #1a0c1c 50%, #4a1820 100%);
+  }
+  [data-theme="light"] .event-hero { background: linear-gradient(160deg, #e8d5c0 0%, #d8b8a0 50%, #b89580 100%); }
+  .event-hero .haze { position: absolute; inset: 0; background: radial-gradient(60% 100% at 70% 30%, color-mix(in oklab, var(--accent) 30%, transparent), transparent 70%); }
+  .event-hero .grain { position: absolute; inset: 0; opacity: .06; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/></svg>"); }
+  .event-hero-body { position: absolute; left: 48px; bottom: 36px; right: 48px; display: flex; gap: 32px; align-items: end; }
+  .event-poster-lg {
+    width: 200px; aspect-ratio: 2/3; border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow);
+    flex: 0 0 200px;
+  }
+  .event-hero h1 { font-family: var(--font-display); font-size: clamp(36px, 4.8vw, 64px); line-height: .95; letter-spacing: -.03em; margin: 8px 0; color: white; }
+  [data-theme="light"] .event-hero h1 { color: #14110d; }
+  .event-hero .sub-line { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.75); }
+  [data-theme="light"] .event-hero .sub-line { color: rgba(20,17,13,.7); }
+
+  .event-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 36px; }
+  .event-body h2 { font-family: var(--font-display); font-size: 22px; margin: 28px 0 12px; }
+  .event-body p { line-height: 1.65; color: var(--ink-2); font-size: 15px; max-width: 60ch; }
+  .gallery { display: grid; grid-template-columns: 2fr 1fr 1fr; grid-template-rows: 180px 160px; gap: 10px; margin-top: 12px; }
+  .gallery > div { border-radius: var(--r); position: relative; overflow: hidden; border: 1px solid var(--line); }
+  .gallery .g1 { grid-row: span 2; }
+
+  .ticket-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 24px; position: sticky; top: 96px; }
+  .ticket-panel h3 { margin: 0 0 4px; font-family: var(--font-display); font-size: 20px; }
+  .ticket-row { display: flex; justify-content: space-between; padding: 16px 0; border-bottom: 1px dashed var(--line); }
+  .ticket-row:last-child { border-bottom: 0; }
+  .ticket-row .name { font-weight: 600; font-size: 14px; }
+  .ticket-row .desc { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .ticket-row .price { font-family: var(--font-mono); font-weight: 600; font-size: 14px; }
+
+  .info-block { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; margin-top: 14px; }
+  .info-block .lbl { font-family: var(--font-mono); font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 8px; }
+  .map { aspect-ratio: 16/9; border-radius: var(--r-sm); margin-top: 10px; overflow: hidden;
+    background:
+      linear-gradient(90deg, transparent 49%, var(--line-2) 49%, var(--line-2) 51%, transparent 51%),
+      linear-gradient(0deg, transparent 49%, var(--line-2) 49%, var(--line-2) 51%, transparent 51%),
+      repeating-linear-gradient(45deg, transparent 0 30px, color-mix(in oklab, var(--line) 50%, transparent) 30px 31px),
+      var(--surface-2);
+    background-size: 60px 60px, 60px 60px, auto, auto;
+    position: relative;
+  }
+  .map .pin { position: absolute; top: 45%; left: 55%; width: 16px; height: 16px; border-radius: 999px; background: var(--accent); box-shadow: 0 0 0 6px color-mix(in oklab, var(--accent) 30%, transparent); }
+
+  /* ───── form ───── */
+  .form-shell { max-width: 720px; margin: 0 auto; padding: 36px 0 80px; }
+  .form-stepbar { display: flex; gap: 10px; margin-bottom: 36px; }
+  .form-stepbar .seg { flex: 1; height: 4px; background: var(--line); border-radius: 999px; overflow: hidden; position: relative; }
+  .form-stepbar .seg.done { background: var(--ink); }
+  .form-stepbar .seg.curr::after { content: ""; position: absolute; inset: 0; background: var(--ink); width: 60%; border-radius: 999px; }
+  .step-num { font-family: var(--font-mono); font-size: 11px; letter-spacing: .2em; color: var(--ink-3); }
+  .step-title { font-family: var(--font-display); font-size: 36px; line-height: 1.05; letter-spacing: -.02em; margin: 6px 0 6px; }
+  .step-lead { color: var(--ink-2); margin: 0 0 32px; max-width: 50ch; }
+
+  fieldset { border: 0; padding: 0; margin: 0 0 28px; }
+  .field-set-title { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin: 6px 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; }
+  .field-set-title .n { background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+  .field .help { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+  .field input[type=text], .field input[type=email], .field input[type=tel], .field input[type=url],
+  .field input[type=number], .field select, .field textarea {
+    width: 100%; padding: 14px 16px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line);
+    transition: border-color .15s, background .15s;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: 0; border-color: var(--ink-2); background: var(--surface); }
+  .field textarea { min-height: 96px; resize: vertical; line-height: 1.55; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .input-prefix { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
+  .input-prefix span { padding: 0 14px; display: flex; align-items: center; font-family: var(--font-mono); font-size: 13px; color: var(--ink-3); background: var(--surface); border-right: 1px solid var(--line); }
+  .input-prefix input { flex: 1; padding: 14px 16px; border: 0; background: transparent; }
+  .input-prefix .suffix { border-left: 1px solid var(--line); border-right: 0; }
+
+  .pill-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill-pick button { padding: 10px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); font-size: 13px; color: var(--ink-2); cursor: pointer; }
+  .pill-pick button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  .ck-row { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); cursor: pointer; }
+  .ck { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--line-2); display: inline-flex; align-items: center; justify-content: center; }
+  .ck.on { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+
+  .price-row { display: grid; grid-template-columns: 1fr 200px 40px; gap: 10px; align-items: end; margin-bottom: 12px; }
+  .add-line { width: 100%; padding: 14px; border-radius: 999px; border: 1px dashed var(--line-2); background: transparent; color: var(--ink-2); font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+  .add-line:hover { color: var(--ink); border-color: var(--ink-2); }
+
+  .upload-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; }
+  .upload-box { border: 1.5px dashed var(--line-2); border-radius: var(--r); padding: 28px 18px; text-align: center; color: var(--ink-3); aspect-ratio: 16/9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface-2); cursor: pointer; transition: border-color .15s; }
+  .upload-box:hover { border-color: var(--accent); color: var(--ink-2); }
+  .upload-box.tall { aspect-ratio: 3/4; }
+  .upload-box .ic { width: 36px; height: 36px; border-radius: 999px; background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); }
+  .upload-box small { font-size: 11px; }
+
+  .form-foot {
+    position: sticky; bottom: 0;
+    margin: 36px -48px -80px; padding: 18px 48px;
+    background: color-mix(in oklab, var(--bg) 86%, transparent); backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  /* ───── login ───── */
+  .login-shell { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 0px); }
+  .login-art {
+    background: var(--bg-2); padding: 60px; position: relative; overflow: hidden;
+  }
+  .login-art .collage {
+    position: absolute; inset: -40px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    transform: rotate(-8deg); opacity: .65;
+  }
+  .login-art .collage > div { aspect-ratio: 2/3; border-radius: 14px; }
+  .login-art .mask {
+    position: absolute; inset: 0;
+    background: radial-gradient(60% 60% at 30% 50%, transparent 0%, var(--bg) 80%);
+  }
+  .login-brand-card {
+    position: relative; z-index: 2; width: 240px; padding: 28px; border-radius: 18px;
+    background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(14px);
+    margin: 30vh 0 0 0;
+  }
+  [data-theme="light"] .login-brand-card { background: rgba(255,255,255,.7); border-color: var(--line); }
+  .login-form-side { padding: 80px 8% 60px; display: flex; flex-direction: column; justify-content: center; max-width: 560px; }
+  .login-form-side h2 { font-family: var(--font-display); font-size: 44px; line-height: 1.04; letter-spacing: -.02em; margin: 0 0 8px; }
+  .login-form-side .lead { color: var(--ink-2); margin-bottom: 32px; max-width: 38ch; line-height: 1.55; }
+  .social-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 20px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-weight: 500; font-size: 14px; width: 100%; margin-bottom: 10px; cursor: pointer; transition: background .15s; }
+  .social-btn:hover { background: var(--surface-2); }
+  .login-sep { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--ink-3); font-size: 12px; }
+  .login-sep::before, .login-sep::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .login-form-side .legal { font-size: 11px; color: var(--ink-3); margin-top: 14px; line-height: 1.5; }
+  .login-form-side .legal a { color: var(--ink-2); text-decoration: underline; }
+
+  /* ───── dashboard / mis publicaciones ───── */
+  .dash { display: grid; grid-template-columns: 280px 1fr; gap: 36px; padding: 32px 0 80px; }
+  .dash-side { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 24px; position: sticky; top: 96px; height: fit-content; }
+  .dash-side .av-lg { width: 84px; height: 84px; border-radius: 999px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 30px; margin-bottom: 16px; font-family: var(--font-display); }
+  .dash-side h3 { font-family: var(--font-display); font-size: 20px; margin: 0; letter-spacing: -.01em; }
+  .dash-side .em { color: var(--ink-3); font-size: 12px; margin: 2px 0 16px; font-family: var(--font-mono); letter-spacing: .04em; }
+  .dash-nav { display: flex; flex-direction: column; gap: 2px; margin-top: 14px; padding-top: 18px; border-top: 1px solid var(--line); }
+  .dash-nav button { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; color: var(--ink-2); font-size: 14px; font-weight: 500; text-align: left; }
+  .dash-nav button:hover { background: var(--surface-2); color: var(--ink); }
+  .dash-nav button.on { background: var(--ink); color: var(--bg); }
+  .dash-nav button.danger { color: var(--err); margin-top: 8px; border-top: 1px solid var(--line); padding-top: 14px; border-radius: 0 0 10px 10px; }
+
+  .dash-body h1 { font-family: var(--font-display); font-size: 44px; letter-spacing: -.025em; margin: 0 0 4px; }
+  .dash-body .sub { color: var(--ink-3); margin: 0 0 28px; }
+  .tabs { display: flex; gap: 28px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+  .tabs button { padding: 14px 0; font-size: 14px; color: var(--ink-3); font-weight: 500; position: relative; border-bottom: 2px solid transparent; transform: translateY(1px); }
+  .tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
+  .tabs button .count { background: var(--surface-2); color: var(--ink-2); padding: 2px 8px; border-radius: 999px; font-size: 11px; margin-left: 6px; font-family: var(--font-mono); }
+  .tabs button.on .count { background: var(--accent); color: white; }
+  .pub-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .pub-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: transform .15s; cursor: pointer; }
+  .pub-card:hover { transform: translateY(-2px); }
+  .pub-card .img { aspect-ratio: 16/9; position: relative; }
+  .pub-card .stamp { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.7); backdrop-filter: blur(6px); color: white; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-family: var(--font-mono); letter-spacing: .04em; }
+  .pub-card .body { padding: 14px; }
+  .pub-card .status { font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .pub-card .status .dot { width: 8px; height: 8px; border-radius: 999px; display: inline-block; }
+  .st-rev { color: var(--warn); }
+  .st-rev .dot { background: var(--warn); }
+  .st-pub { color: var(--ok); }
+  .st-pub .dot { background: var(--ok); }
+  .st-rej { color: var(--err); }
+  .st-rej .dot { background: var(--err); }
+  .pub-card .ttl { font-weight: 600; font-size: 15px; margin: 0 0 4px; }
+  .pub-card .meta { color: var(--ink-3); font-size: 12px; }
+  .pub-card .price { font-family: var(--font-mono); font-size: 13px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+  .pub-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .pub-actions button { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--line); font-size: 12px; color: var(--ink-2); background: transparent; }
+  .pub-actions button:hover { background: var(--surface-2); color: var(--ink); }
+  .pub-actions button.primary-act { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  /* ───── modal ───── */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.55); backdrop-filter: blur(6px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 30px; animation: fadein .15s ease; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  .modal { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); width: min(520px, 100%); padding: 32px; box-shadow: var(--shadow); position: relative; max-height: 90vh; overflow-y: auto; }
+  .modal h2 { font-family: var(--font-display); font-size: 28px; letter-spacing: -.015em; margin: 0 0 24px; }
+  .modal .x { position: absolute; top: 18px; right: 18px; }
+
+  /* ───── checkout ───── */
+  .ck-shell { max-width: 980px; margin: 0 auto; padding: 36px 0 80px; }
+  .ck-head { display: flex; justify-content: space-between; align-items: end; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--line); }
+  .ck-steps { display: flex; gap: 12px; align-items: center; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; }
+  .ck-steps .s { display: flex; align-items: center; gap: 8px; color: var(--ink-3); }
+  .ck-steps .s.on { color: var(--ink); }
+  .ck-steps .s .n { width: 24px; height: 24px; border-radius: 999px; border: 1px solid var(--line-2); display: inline-flex; align-items: center; justify-content: center; font-weight: 600; }
+  .ck-steps .s.on .n { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .ck-steps .s.done .n { background: var(--accent); color: white; border-color: var(--accent); }
+  .ck-steps .line { width: 30px; height: 1px; background: var(--line); }
+
+  .ck-grid { display: grid; grid-template-columns: 1fr 360px; gap: 28px; }
+  .ck-tier { display: flex; justify-content: space-between; align-items: center; padding: 18px; border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 12px; background: var(--surface); }
+  .ck-tier .name { font-weight: 600; }
+  .ck-tier .desc { color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+  .ck-tier .price { font-family: var(--font-mono); font-weight: 600; }
+  .ck-qty { display: inline-flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px; }
+  .ck-qty button { width: 28px; height: 28px; border-radius: 999px; background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
+  .ck-qty button:disabled { opacity: .3; cursor: not-allowed; }
+  .ck-qty .v { font-family: var(--font-mono); font-weight: 600; min-width: 24px; text-align: center; }
+
+  .ck-summary { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 24px; position: sticky; top: 96px; height: fit-content; }
+  .ck-summary h3 { font-family: var(--font-display); font-size: 18px; margin: 0 0 14px; }
+  .ck-summary .sum-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+  .ck-summary .sum-row.tot { padding-top: 14px; border-top: 1px solid var(--line); margin-top: 6px; font-family: var(--font-display); font-size: 22px; font-weight: 700; }
+
+  .gateway-card { background: linear-gradient(135deg, var(--accent) 0%, color-mix(in oklab, var(--accent) 60%, #5500ff) 100%); color: white; border-radius: var(--r-lg); padding: 36px; text-align: center; position: relative; overflow: hidden; }
+  .gateway-card::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 60% at 50% 20%, rgba(255,255,255,.25), transparent 60%); }
+  .gateway-card .lock { width: 60px; height: 60px; border-radius: 999px; background: rgba(255,255,255,.18); display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .gateway-card h3 { font-family: var(--font-display); font-size: 28px; margin: 0 0 8px; letter-spacing: -.015em; position: relative; }
+  .gateway-card p { margin: 0 0 24px; opacity: .92; max-width: 38ch; margin-inline: auto; line-height: 1.5; position: relative; }
+  .gateway-logos { display: flex; gap: 18px; justify-content: center; margin-top: 24px; position: relative; opacity: .8; font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; }
+
+  .ticket-result { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 36px; position: relative; }
+  .ticket-result .perf { position: relative; }
+  .ticket-result .perf::before, .ticket-result .perf::after {
+    content: ""; position: absolute; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 999px; background: var(--bg);
+    border: 1px solid var(--line);
+  }
+  .ticket-result .perf::before { left: -48px; }
+  .ticket-result .perf::after { right: -48px; }
+  .ticket-result .perf { border-top: 1.5px dashed var(--line-2); border-bottom: 1.5px dashed var(--line-2); padding: 18px 0; margin: 22px 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .ticket-result .perf .cell .lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: .15em; color: var(--ink-3); margin-bottom: 4px; }
+  .ticket-result .perf .cell .val { font-weight: 600; font-size: 14px; }
+  .qr-code { width: 160px; height: 160px; border-radius: 12px; background:
+    repeating-conic-gradient(var(--ink) 0% 25%, transparent 0% 50%) 50% / 12px 12px,
+    var(--surface);
+    border: 8px solid var(--surface);
+    box-shadow: 0 0 0 1px var(--line);
+    position: relative;
+  }
+  .qr-code::after { content: ""; position: absolute; inset: 30%; background: var(--accent); border-radius: 4px; box-shadow: 0 0 0 4px var(--surface); }
+
+  .dash-empty { text-align: center; padding: 60px 0; color: var(--ink-3); }
+  .menu { position: absolute; top: 56px; right: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 8px; min-width: 240px; box-shadow: var(--shadow); z-index: 60; }
+  .menu .hdr { padding: 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+  .menu .hdr .nm { font-weight: 600; font-size: 14px; }
+  .menu .hdr .em { color: var(--ink-3); font-size: 12px; font-family: var(--font-mono); }
+  .menu button { display: flex; width: 100%; padding: 10px 12px; border-radius: 8px; font-size: 14px; color: var(--ink-2); text-align: left; align-items: center; gap: 10px; }
+  .menu button:hover { background: var(--surface-2); color: var(--ink); }
+  .menu button.danger { color: var(--err); }
+
+  /* ───── footer ───── */
+  footer.app {
+    border-top: 1px solid var(--line);
+    padding: 60px 0 30px; margin-top: 80px;
+  }
+  .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 30px; }
+  .foot-col h4 { font-family: var(--font-display); font-size: 13px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3); margin: 0 0 12px; }
+  .foot-col a { display: block; padding: 6px 0; color: var(--ink-2); font-size: 14px; }
+  .foot-col a:hover { color: var(--accent); }
+  .foot-bot { display: flex; justify-content: space-between; padding-top: 30px; border-top: 1px solid var(--line); margin-top: 40px; font-size: 12px; color: var(--ink-3); font-family: var(--font-mono); letter-spacing: .05em; }
+
+  /* responsive (basic, prototype focused on desktop) */
+  @media (max-width: 1100px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero-art { display: none; }
+    .card-grid { grid-template-columns: repeat(3, 1fr); }
+    .event-grid { grid-template-columns: 1fr; }
+    .login-shell { grid-template-columns: 1fr; }
+    .login-art { display: none; }
+    .foot-grid { grid-template-columns: 1fr 1fr; }
+    .dash { grid-template-columns: 1fr; }
+    .pub-grid { grid-template-columns: 1fr 1fr; }
+    .ck-grid { grid-template-columns: 1fr; }
+  }
+
+  /* page mode for login (no header) */
+  body.no-chrome header.app, body.no-chrome footer.app { display: none; }
+</style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, createContext, useContext } = React;
+
+/* ───────────────── data ───────────────── */
+const CATEGORIES = [
+  { id: "home", label: "Inicio", ja: "ホーム" },
+  { id: "cine", label: "Cine", ja: "シネマ" },
+  { id: "conciertos", label: "Conciertos", ja: "ライブ" },
+  { id: "convenciones", label: "Convenciones", ja: "コンベンション" },
+  { id: "streamings", label: "Streamings", ja: "配信" },
+  { id: "ferias", label: "Ferias", ja: "フェア" },
+];
+
+const EVENTS = [
+  { id: 1, title: "Ado: World Tour Hibana", cat: "Conciertos", ja: "ヒバナ", art: "pa-1", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 65, stamp: "WORLD TOUR" },
+  { id: 2, title: "Multitude", cat: "Conciertos", ja: "オーケーロック", art: "pa-2", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 80, stamp: "ONE OK ROCK" },
+  { id: 3, title: "Demon Slayer: Infinity Castle", cat: "Cine", ja: "鬼滅の刃", art: "pa-3", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
+  { id: 4, title: "Super Japan Expo 2025", cat: "Convenciones", ja: "ジャパン EXPO", art: "pa-4", date: "9–12 MAY 2025", place: "Estación Mapocho", price: 25, stamp: "4 DÍAS" },
+  { id: 5, title: "My Hero Academia: You're Next", cat: "Cine", ja: "僕のヒーロー", art: "pa-5", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
+  { id: 6, title: "Solo Leveling: ReAwakening", cat: "Cine", ja: "俺だけレベルアップ", art: "pa-6", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "COMING SOON" },
+  { id: 7, title: "Attack on Titan: Last Attack", cat: "Cine", ja: "進撃の巨人", art: "pa-9", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
+  { id: 8, title: "Creepy Nuts: One Man Tour", cat: "Conciertos", ja: "クリーピー", art: "pa-7", date: "16 JUN 2024", place: "Online", price: 22, stamp: "BEYOND LIVE" },
+  { id: 9, title: "One Ok Rock: Latin Tour", cat: "Conciertos", ja: "ワンオク", art: "pa-2", date: "5 ABR 2025", place: "Pepsi Center", price: 75, stamp: "LATAM" },
+  { id: 10, title: "Flow: Anime Shibari Tour", cat: "Conciertos", ja: "フロウ", art: "pa-10", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 60, stamp: "ANIME SHIBARI" },
+  { id: 11, title: "ComicCon Chile 2024", cat: "Convenciones", ja: "コミコン", art: "pa-11", date: "31 OCT–2 NOV", place: "Espacio Riesco", price: 35, stamp: "3 DÍAS" },
+  { id: 12, title: "Anime Crunchyroll Fest", cat: "Streamings", ja: "クランチーロール", art: "pa-12", date: "Mar 2025", place: "Online", price: 0, stamp: "GRATIS" },
+];
+
+const FEATURED = [EVENTS[0], EVENTS[1], EVENTS[2], EVENTS[3], EVENTS[4], EVENTS[5]];
+const HERO = {
+  cat: "Cine",
+  title1: "El Señor de los Anillos",
+  title2: "La Guerra de los Rohirrim",
+  date: "23 ABR 2025",
+  place: "Cinépolis · Santiago",
+  lead: "La épica regresa a la gran pantalla. Ambientada 183 años antes de los eventos de la Comunidad del Anillo.",
+  badge: "ESTRENO ANIME",
+};
+
+/* ───────────────── theme ───────────────── */
+const ThemeCtx = createContext(null);
+function ThemeProvider({ children }) {
+  const [theme, setTheme] = useState(() => localStorage.getItem("kb-theme") || "dark");
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("kb-theme", theme);
+  }, [theme]);
+  return <ThemeCtx.Provider value={{ theme, setTheme }}>{children}</ThemeCtx.Provider>;
+}
+const useTheme = () => useContext(ThemeCtx);
+
+/* ───────────────── router ───────────────── */
+const RouterCtx = createContext(null);
+function RouterProvider({ children }) {
+  const [route, setRoute] = useState({ name: "home", params: {} });
+  const nav = (name, params = {}) => { setRoute({ name, params }); window.scrollTo({ top: 0, behavior: "instant" }); };
+  return <RouterCtx.Provider value={{ route, nav }}>{children}</RouterCtx.Provider>;
+}
+const useRouter = () => useContext(RouterCtx);
+
+/* ───────────────── icons (inline svg) ───────────────── */
+const Ic = {
+  sun: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>,
+  moon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>,
+  search: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>,
+  chev: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="m9 18 6-6-6-6"/></svg>,
+  chevL: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m15 18-6-6 6-6"/></svg>,
+  chevR: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="m9 18 6-6-6-6"/></svg>,
+  plus: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>,
+  cal: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>,
+  pin: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
+  share: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>,
+  ticket: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 7v3a2 2 0 0 1 0 4v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 0 1 0-4V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2zM13 5v2M13 17v2M13 11v2"/></svg>,
+  play: <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>,
+  upl: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>,
+  help: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>,
+  close: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>,
+  arrow: <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M13 5l7 7-7 7"/></svg>,
+  google: <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A11 11 0 0 0 1 12c0 1.77.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>,
+  insta: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37zM17.5 6.5h.01"/></svg>,
+  apple: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 12.5c0-2.5 2-3.7 2.1-3.8-1.1-1.7-2.9-1.9-3.5-1.9-1.5-.2-2.9.9-3.7.9-.8 0-2-.9-3.3-.8-1.7 0-3.3 1-4.1 2.5-1.8 3-.4 7.5 1.3 10 .8 1.2 1.8 2.5 3.1 2.5 1.2 0 1.7-.8 3.1-.8 1.4 0 1.9.8 3.2.8 1.3 0 2.2-1.2 3-2.5.9-1.4 1.3-2.8 1.4-2.9-.1 0-2.6-1-2.6-4zM15.3 5.5c.7-.9 1.2-2.1 1-3.3-1.1.1-2.4.8-3.1 1.6-.7.8-1.3 2-1.1 3.2 1.2.1 2.4-.6 3.2-1.5z"/></svg>,
+  fb: <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M22 12a10 10 0 1 0-11.57 9.88V14.9h-2.5V12h2.5V9.8c0-2.47 1.47-3.83 3.72-3.83 1.08 0 2.2.2 2.2.2v2.42h-1.24c-1.22 0-1.6.76-1.6 1.54V12h2.72l-.43 2.9h-2.29v6.98A10 10 0 0 0 22 12z"/></svg>,
+};
+
+/* ───────────────── brand ───────────────── */
+function BrandMark({ size = 28 }) {
+  return (
+    <div className="brand">
+      <img src="konbini-logo.svg" alt="Konbini" style={{ height: size, width: "auto", display: "block" }} />
+    </div>
+  );
+}
+
+/* ───────────────── poster ───────────────── */
+function Poster({ e, landscape = false }) {
+  return (
+    <div className={`poster ${landscape ? "land" : ""}`}>
+      <div className={`poster-art ${e.art}`} />
+      <div className="poster-label">
+        <div className="jp-big">{e.ja}</div>
+        <div>
+          <div className="en">{e.title}</div>
+          <div className="stamp">{e.stamp}</div>
+        </div>
+      </div>
+      <div className="ribbon">{e.cat}</div>
+      {e.price > 0 ? <div className="price-tag">${e.price}</div> : <div className="price-tag" style={{ background: "#1f8a5b" }}>FREE</div>}
+      <div className="placeholder-note">placeholder</div>
+    </div>
+  );
+}
+
+function EventCard({ e, landscape = false }) {
+  const { nav } = useRouter();
+  return (
+    <div className={`card ${landscape ? "land" : ""}`} onClick={() => nav("event", { id: e.id })}>
+      <Poster e={e} landscape={landscape} />
+      <div className="meta">
+        <div className="title">{e.title}</div>
+        <div className="sub">{e.date}<span className="dot">·</span>{e.place}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────── user ───────────────── */
+const UserCtx = createContext(null);
+function UserProvider({ children }) {
+  const [user, setUser] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("kb-user") || "null"); } catch { return null; }
+  });
+  useEffect(() => { localStorage.setItem("kb-user", JSON.stringify(user)); }, [user]);
+  return <UserCtx.Provider value={{ user, setUser }}>{children}</UserCtx.Provider>;
+}
+const useUser = () => useContext(UserCtx);
+const MOCK_USER = { name: "Edgardo Toro", email: "edgardo.toro@gmail.com", phone: "+56 9 9771 7724", initials: "ET" };
+
+/* ───────────────── header ───────────────── */
+function Header() {
+  const { theme, setTheme } = useTheme();
+  const { route, nav } = useRouter();
+  const { user, setUser } = useUser();
+  const [menu, setMenu] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const active = route.params?.cat || (route.name === "home" ? "home" : route.name === "category" ? route.params?.cat : "");
+
+  return (
+    <header className="app">
+      <div className="container nav-wrap">
+        <div className="row" style={{ gap: 32 }}>
+          <a onClick={() => nav("home")} style={{ cursor: "pointer" }}><BrandMark /></a>
+          <nav className="cats">
+            {CATEGORIES.map(c => (
+              <button key={c.id} className={active === c.id ? "active" : ""}
+                onClick={() => c.id === "home" ? nav("home") : nav("category", { cat: c.id })}>
+                {c.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+        <div className="head-actions" style={{ position: "relative" }}>
+          <button className="icon-btn" title="Buscar">{Ic.search}</button>
+          <button className="icon-btn" title="Tema" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? Ic.sun : Ic.moon}
+          </button>
+          {!user ? (
+            <>
+              <button className="btn ghost" onClick={() => nav("login")}>Ingresar</button>
+              <button className="btn primary" onClick={() => nav("form")}>＋ Crear evento</button>
+            </>
+          ) : (
+            <>
+              <button className="btn primary" onClick={() => nav("form")}>＋ Crear evento</button>
+              <button className="avatar" onClick={() => setMenu(m => !m)} title={user.name}>{user.initials}</button>
+              {menu && (
+                <div className="menu" onMouseLeave={() => setMenu(false)}>
+                  <div className="hdr">
+                    <div className="nm">{user.name}</div>
+                    <div className="em">{user.email}</div>
+                  </div>
+                  <button onClick={() => { setProfileOpen(true); setMenu(false); }}>👤 Editar perfil</button>
+                  <button onClick={() => { nav("dashboard"); setMenu(false); }}>📋 Mis publicaciones</button>
+                  <button onClick={() => { nav("dashboard"); setMenu(false); }}>🎫 Mis entradas</button>
+                  <button onClick={() => setMenu(false)}>⚙️ Configuración</button>
+                  <button className="danger" onClick={() => { setUser(null); setMenu(false); nav("home"); }}>↩  Cerrar sesión</button>
+                </div>
+              )}
+              {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
+            </>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/* ───────────────── profile modal ───────────────── */
+function ProfileModal({ onClose }) {
+  const { user, setUser } = useUser();
+  const [f, setF] = useState({ ...user });
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <button className="icon-btn x" onClick={onClose}>{Ic.close}</button>
+        <div className="eyebrow">CUENTA · アカウント</div>
+        <h2 style={{ marginTop: 8 }}>Editar perfil</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 24 }}>
+          <div className="avatar" style={{ width: 64, height: 64, fontSize: 22 }}>{f.initials}</div>
+          <div>
+            <button className="btn ghost" style={{ fontSize: 12, padding: "8px 14px" }}>Cambiar foto</button>
+            <div style={{ color: "var(--ink-3)", fontSize: 11, marginTop: 6 }}>JPG / PNG · máx 2MB</div>
+          </div>
+        </div>
+        <div className="field">
+          <label>Nombre y apellido</label>
+          <input type="text" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
+        </div>
+        <div className="field">
+          <label>Correo electrónico</label>
+          <input type="email" value={f.email} onChange={e => setF({ ...f, email: e.target.value })} />
+        </div>
+        <div className="field">
+          <label>Teléfono móvil</label>
+          <input type="tel" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} />
+        </div>
+        <button className="btn dark lg block" onClick={() => { setUser({ ...f, initials: f.name.split(" ").map(s => s[0]).slice(0,2).join("").toUpperCase() }); onClose(); }}>
+          Guardar cambios
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────── footer ───────────────── */
+function Footer() {
+  return (
+    <footer className="app">
+      <div className="container foot-grid">
+        <div className="foot-col">
+          <BrandMark size={32} />
+          <p style={{ color: "var(--ink-3)", fontSize: 13, lineHeight: 1.6, marginTop: 14, maxWidth: 32 + "ch" }}>
+            Todo lo que amas — anime, conciertos, ferias y conventions — en un solo lugar.
+          </p>
+          <div className="row" style={{ marginTop: 18, gap: 10 }}>
+            <a className="icon-btn" href="#">{Ic.google}</a>
+            <a className="icon-btn" href="#">{Ic.insta}</a>
+            <a className="icon-btn" href="#">{Ic.fb}</a>
+            <a className="icon-btn" href="#">{Ic.apple}</a>
+          </div>
+        </div>
+        <div className="foot-col"><h4>Explora</h4><a>Cine</a><a>Conciertos</a><a>Convenciones</a><a>Ferias</a></div>
+        <div className="foot-col"><h4>Organiza</h4><a>Crear evento</a><a>Guía publicación</a><a>Pasarela de pago</a><a>Soporte</a></div>
+        <div className="foot-col"><h4>Comunidad</h4><a>Instagram</a><a>TikTok</a><a>Discord</a><a>Newsletter</a></div>
+        <div className="foot-col"><h4>Legal</h4><a>Términos</a><a>Privacidad</a><a>Cookies</a><a>Copyright</a></div>
+      </div>
+      <div className="container foot-bot">
+        <div>© 2025 KONBINI SHOP — コンビニショップ</div>
+        <div>v2.0 / SANTIAGO · CHILE</div>
+      </div>
+    </footer>
+  );
+}
+
+/* ───────────────── home ───────────────── */
+function HeroBlock() {
+  const [idx, setIdx] = useState(0);
+  const { nav } = useRouter();
+  return (
+    <section className="hero">
+      <div className="hero-arrows">
+        <button className="icon-btn" onClick={() => setIdx(i => (i + 3) % 4)}>{Ic.chevL}</button>
+        <button className="icon-btn" onClick={() => setIdx(i => (i + 1) % 4)}>{Ic.chevR}</button>
+      </div>
+      <div className="hero-grid">
+        <div className="hero-text">
+          <div>
+            <div className="row" style={{ gap: 10 }}>
+              <span className="pill accent">{HERO.cat}</span>
+              <span className="eyebrow">FEATURED · 注目</span>
+            </div>
+            <h1>{HERO.title1}<br/><em>{HERO.title2}</em></h1>
+            <p className="lead">{HERO.lead}</p>
+          </div>
+          <div className="hero-bottom">
+            <button className="btn dark lg" onClick={() => nav("checkout", { id: 1 })}>Comprar entradas {Ic.arrow}</button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: ".15em" }}>FECHA</span>
+              <span style={{ fontWeight: 600 }}>{HERO.date}</span>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: ".15em" }}>LUGAR</span>
+              <span style={{ fontWeight: 600 }}>{HERO.place}</span>
+            </div>
+            <div className="hero-dots" style={{ marginLeft: "auto" }}>
+              {[0,1,2,3].map(i => <div key={i} className={`d ${i === idx ? "on" : ""}`} onClick={() => setIdx(i)} />)}
+            </div>
+          </div>
+        </div>
+        <div className="hero-art">
+          <div className="hero-poster">
+            <div className="pp-jp">ロヒアリム<br/>戦記</div>
+            <div className="pp-title">The War of the Rohirrim</div>
+            <div className="pp-foot">2025 · WARNER BROS ANIME</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Rail({ title, ja, items, landscape = false, cols = 6 }) {
+  return (
+    <section>
+      <div className="sec-head">
+        <div style={{ display: "flex", alignItems: "baseline" }}>
+          <h2>{title}</h2>
+          <span className="ja">{ja}</span>
+        </div>
+        <a className="more">Ver todos {Ic.arrow}</a>
+      </div>
+      <div className={`card-grid ${cols === 4 ? "cols-4" : ""}`}>
+        {items.map((e, i) => <EventCard key={e.id + "-" + i} e={e} landscape={landscape} />)}
+      </div>
+    </section>
+  );
+}
+
+function HomePage() {
+  const conciertos = EVENTS.filter(e => e.cat === "Conciertos").concat(EVENTS.filter(e => e.cat === "Conciertos")).slice(0, 6);
+  const cine = EVENTS.filter(e => e.cat === "Cine").concat(EVENTS.filter(e => e.cat === "Cine")).slice(0, 6);
+  return (
+    <main className="container">
+      <HeroBlock />
+      <Rail title="Destacados" ja="注目の作品" items={FEATURED} />
+      <Rail title="Conciertos" ja="ライブ" items={conciertos} landscape />
+      <Rail title="Cine" ja="シネマ" items={cine} landscape />
+    </main>
+  );
+}
+
+/* ───────────────── category ───────────────── */
+function CategoryPage() {
+  const { route } = useRouter();
+  const cat = route.params?.cat || "cine";
+  const meta = CATEGORIES.find(c => c.id === cat) || CATEGORIES[1];
+  const [filter, setFilter] = useState("todos");
+  const filters = ["todos", "hoy", "esta semana", "este mes", "gratis", "destacados"];
+  const items = EVENTS.filter(e => e.cat.toLowerCase() === meta.label.toLowerCase());
+  const allItems = items.length ? [...items, ...items, ...items].slice(0, 12) : EVENTS.slice(0, 12);
+
+  return (
+    <main className="container">
+      <div style={{ margin: "32px 0 12px", display: "flex", justifyContent: "space-between", alignItems: "end", flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <div className="eyebrow">CATEGORÍA · カテゴリ</div>
+          <h1 className="display" style={{ fontSize: 64, margin: "12px 0 6px" }}>{meta.label}<span style={{ color: "var(--accent)" }}>.</span></h1>
+          <p style={{ color: "var(--ink-2)", margin: 0, maxWidth: "50ch" }}>
+            {allItems.length} eventos disponibles · explora y compra tu entrada en segundos.
+          </p>
+        </div>
+        <div className="jp" style={{ fontSize: 80, color: "var(--ink-3)", opacity: .3, lineHeight: .9, fontWeight: 900 }}>{meta.ja}</div>
+      </div>
+      <div className="chip-row">
+        {filters.map(f => (
+          <button key={f} className={`chip ${filter === f ? "on" : ""}`} onClick={() => setFilter(f)}>
+            {f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
+      </div>
+      <div className="filter-bar">
+        <div className="left">
+          <span className="mono" style={{ fontSize: 11, color: "var(--ink-3)", letterSpacing: ".15em" }}>MOSTRANDO</span>
+          <strong style={{ fontSize: 14 }}>{allItems.length} resultados</strong>
+        </div>
+        <div className="right">
+          <div className="field-inline">{Ic.cal} Cualquier fecha</div>
+          <div className="field-inline">{Ic.pin} Santiago, CL</div>
+          <div className="field-inline">Ordenar: Relevancia</div>
+        </div>
+      </div>
+      <div className="card-grid cols-4" style={{ margin: "24px 0 60px" }}>
+        {allItems.map((e, i) => <EventCard key={e.id + "-" + i} e={e} />)}
+      </div>
+    </main>
+  );
+}
+
+/* ───────────────── event interior ───────────────── */
+function EventPage() {
+  const { route, nav } = useRouter();
+  const e = EVENTS.find(x => x.id === route.params?.id) || EVENTS[0];
+
+  return (
+    <main className="container">
+      <div className="event-hero">
+        <div className={`poster-art ${e.art}`} style={{ position: "absolute", inset: 0, opacity: .55 }} />
+        <div className="haze" />
+        <div className="grain" />
+        <div className="event-hero-body">
+          <div className="event-poster-lg">
+            <Poster e={e} />
+          </div>
+          <div>
+            <div className="row" style={{ gap: 10 }}>
+              <span className="pill solid">{e.cat}</span>
+              <span className="pill">{e.ja}</span>
+            </div>
+            <h1>{e.title}</h1>
+            <div className="sub-line">{e.date} · {e.place}</div>
+          </div>
+          <button className="btn ghost" style={{ marginLeft: "auto" }}>{Ic.share} Compartir</button>
+        </div>
+      </div>
+
+      <div className="event-grid">
+        <div className="event-body">
+          <h2>Sobre el evento</h2>
+          <p>
+            Cinépolis trae a Chile la película más esperada del año: <strong>{e.title}</strong>. Ambientada en el legendario universo creado por J.R.R. Tolkien, esta épica animación nos transporta 183 años antes de los eventos de El Señor de los Anillos, a una historia jamás contada.
+          </p>
+          <p>
+            Un ataque sorpresivo de Wulf, un astuto y traicionero lord de Rohan en busca de venganza por la muerte de su padre, fuerza a Helm Mano de Martillo, rey de Rohan, y a su pueblo a hacer una resistencia desesperada en la antigua fortaleza de Hornburg.
+          </p>
+
+          <h2>Galería</h2>
+          <div className="gallery">
+            <div className="g1"><div className="poster-art pa-3" /><div style={{ position: "absolute", bottom: 12, left: 12, color: "white", fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: ".1em" }}>▶ TRAILER OFICIAL</div></div>
+            <div><div className="poster-art pa-9" /></div>
+            <div><div className="poster-art pa-5" /></div>
+            <div><div className="poster-art pa-1" /></div>
+            <div><div className="poster-art pa-6" /></div>
+          </div>
+
+          <h2>Etiquetas</h2>
+          <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
+            {["anime", "fantasía", "tolkien", "warner bros", "estreno", "épica", "doblaje latino"].map(t => (
+              <span key={t} className="pill">#{t}</span>
+            ))}
+          </div>
+        </div>
+
+        <aside>
+          <div className="ticket-panel">
+            <span className="eyebrow">TICKETS · チケット</span>
+            <h3 style={{ marginTop: 8 }}>Compra tu entrada</h3>
+            <p style={{ color: "var(--ink-3)", fontSize: 12, margin: "4px 0 8px" }}>Pago seguro vía pasarela. No solicitamos datos de tarjeta.</p>
+            <div>
+              <div className="ticket-row">
+                <div><div className="name">General</div><div className="desc">Sala estándar · butaca libre</div></div>
+                <div className="price">$9.990 <span style={{ fontWeight: 400, color: "var(--ink-3)" }}>CLP</span></div>
+              </div>
+              <div className="ticket-row">
+                <div><div className="name">3D Premium</div><div className="desc">Lentes incluidos · sala IMAX</div></div>
+                <div className="price">$14.990 <span style={{ fontWeight: 400, color: "var(--ink-3)" }}>CLP</span></div>
+              </div>
+              <div className="ticket-row">
+                <div><div className="name">VIP · Combo</div><div className="desc">Reclinable + cabritas + bebida</div></div>
+                <div className="price">$22.990 <span style={{ fontWeight: 400, color: "var(--ink-3)" }}>CLP</span></div>
+              </div>
+            </div>
+            <button className="btn primary block" style={{ marginTop: 14 }} onClick={() => nav("checkout", { id: e.id })}>Comprar entradas {Ic.arrow}</button>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: ".1em", textAlign: "center", marginTop: 10 }}>
+              POWERED BY · KONBINI PAY
+            </div>
+          </div>
+
+          <div className="info-block">
+            <div className="lbl">{Ic.cal} FECHA Y HORA</div>
+            <div className="row" style={{ justifyContent: "space-between", padding: "8px 0", borderBottom: "1px dashed var(--line)" }}>
+              <div><strong>23 Abril 2025</strong><div style={{ color: "var(--ink-3)", fontSize: 12 }}>Miércoles</div></div>
+              <div className="mono" style={{ fontSize: 13 }}>12:00 · 15:30 · 19:00</div>
+            </div>
+            <div className="row" style={{ justifyContent: "space-between", padding: "8px 0" }}>
+              <div><strong>24 Abril 2025</strong><div style={{ color: "var(--ink-3)", fontSize: 12 }}>Jueves</div></div>
+              <div className="mono" style={{ fontSize: 13 }}>14:00 · 18:00 · 21:30</div>
+            </div>
+          </div>
+
+          <div className="info-block">
+            <div className="lbl">{Ic.pin} UBICACIÓN</div>
+            <div style={{ fontWeight: 600 }}>Teatro Cariola</div>
+            <div style={{ color: "var(--ink-3)", fontSize: 13, marginTop: 2 }}>San Diego nº 246, Santiago, Región Metropolitana</div>
+            <div className="map"><div className="pin" /></div>
+          </div>
+
+          <div className="info-block">
+            <div className="lbl">ENLACES</div>
+            <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+              <a className="pill" href="#">{Ic.insta} Instagram</a>
+              <a className="pill" href="#">{Ic.fb} Facebook</a>
+              <a className="pill" href="#">Sitio oficial</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  );
+}
+
+/* ───────────────── form ───────────────── */
+function FormPage() {
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState({
+    title: "", company: "", category: "", desc: "", about: "",
+    free: false, prices: [{ name: "Entrada General", amount: "" }],
+    dates: [{ date: "", start: "", end: "" }],
+    venue: "", address: "",
+    web: "", socials: [""],
+    banner: null, poster: null, gallery: [], videos: [""],
+  });
+  const update = (k, v) => setData(d => ({ ...d, [k]: v }));
+
+  return (
+    <main>
+      <div style={{ background: "var(--bg-2)", borderBottom: "1px solid var(--line)", padding: "18px 0" }}>
+        <div className="container row" style={{ justifyContent: "space-between" }}>
+          <BrandMark size={28} />
+          <div className="row" style={{ gap: 10 }}>
+            <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>PASO {step} DE 3</span>
+            <button className="btn ghost"><span style={{ marginRight: 6 }}>?</span> Ayuda</button>
+          </div>
+        </div>
+      </div>
+
+      <div className="container">
+        <div className="form-shell">
+          <div className="form-stepbar">
+            {[1,2,3].map(n => <div key={n} className={`seg ${n < step ? "done" : ""} ${n === step ? "curr" : ""}`} />)}
+          </div>
+
+          <div className="step-num">PASO {step} / 03</div>
+          {step === 1 && <Step1 data={data} update={update} />}
+          {step === 2 && <Step2 data={data} update={update} />}
+          {step === 3 && <Step3 data={data} update={update} />}
+
+          <div className="form-foot">
+            <button className="btn ghost" onClick={() => step > 1 ? setStep(step - 1) : null} disabled={step === 1} style={{ opacity: step === 1 ? .3 : 1 }}>
+              {Ic.chevL} Volver
+            </button>
+            <div className="row" style={{ gap: 14 }}>
+              <button className="btn ghost">Guardar borrador</button>
+              <button className="btn primary" onClick={() => step < 3 ? setStep(step + 1) : alert("¡Publicación enviada a revisión!")}>
+                {step === 3 ? "Publicar evento" : "Continuar"} {Ic.arrow}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+function Step1({ data, update }) {
+  const cats = ["Cine", "Conciertos", "Convenciones", "Streamings", "Ferias", "Anime · TV", "Gaming", "Cosplay"];
+  return (
+    <div>
+      <h1 className="step-title">Hola, Gabriel.<br/>Cuéntanos sobre tu evento.</h1>
+      <p className="step-lead">Esta información se mostrará en tu publicación. Podrás editarla en cualquier momento antes de publicar.</p>
+
+      <fieldset>
+        <div className="field-set-title"><span className="n">1.1</span> Información básica</div>
+        <div className="field">
+          <label>Título del evento</label>
+          <input type="text" placeholder="Ej: Concierto Anime Symphonic Orchestra 2025" value={data.title} onChange={e => update("title", e.target.value)} />
+          <div className="help">Sé claro y descriptivo. Este es el nombre que verán los asistentes.</div>
+        </div>
+        <div className="grid-2">
+          <div className="field">
+            <label>Empresa / Productor</label>
+            <input type="text" placeholder="Ej: Cinépolis, Productora 8U" value={data.company} onChange={e => update("company", e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Categoría</label>
+            <select value={data.category} onChange={e => update("category", e.target.value)}>
+              <option value="">Selecciona una categoría</option>
+              {cats.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+        </div>
+        <div className="field">
+          <label>Descripción general</label>
+          <textarea placeholder="Describe brevemente el evento, su temática y formato." value={data.desc} onChange={e => update("desc", e.target.value)} />
+          <div className="help">Aparece en las tarjetas de búsqueda. 280 caracteres máx.</div>
+        </div>
+        <div className="field">
+          <label>Acerca de <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(opcional)</span></label>
+          <textarea placeholder="Cuenta lo que los asistentes pueden esperar: artistas invitados, actividades, proyecciones especiales…" value={data.about} onChange={e => update("about", e.target.value)} style={{ minHeight: 140 }} />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div className="field-set-title"><span className="n">1.2</span> Precio del evento</div>
+        <div className="ck-row" onClick={() => update("free", !data.free)} style={{ marginBottom: 16 }}>
+          <div className={`ck ${data.free ? "on" : ""}`}>{data.free && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M20 6 9 17l-5-5"/></svg>}</div>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Evento gratuito</div>
+            <div style={{ color: "var(--ink-3)", fontSize: 12 }}>Marca esta opción si no se cobra entrada.</div>
+          </div>
+        </div>
+
+        {!data.free && (
+          <div>
+            {data.prices.map((p, i) => (
+              <div className="price-row" key={i}>
+                <div className="field" style={{ margin: 0 }}>
+                  <label>Nombre de tarifa</label>
+                  <input type="text" placeholder="Ej: Entrada General, VIP, Estudiante" value={p.name}
+                    onChange={e => update("prices", data.prices.map((pp, j) => j === i ? { ...pp, name: e.target.value } : pp))} />
+                </div>
+                <div className="field" style={{ margin: 0 }}>
+                  <label>Precio</label>
+                  <div className="input-prefix">
+                    <span>$</span>
+                    <input type="number" placeholder="0" value={p.amount}
+                      onChange={e => update("prices", data.prices.map((pp, j) => j === i ? { ...pp, amount: e.target.value } : pp))} />
+                    <span className="suffix">CLP</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "end" }}>
+                  {data.prices.length > 1 && (
+                    <button className="icon-btn" onClick={() => update("prices", data.prices.filter((_, j) => j !== i))}>{Ic.close}</button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button className="add-line" onClick={() => update("prices", [...data.prices, { name: "", amount: "" }])}>{Ic.plus} Agregar otra tarifa</button>
+            <div className="help" style={{ marginTop: 12 }}>El pago se procesa a través de nuestra pasarela. <strong>No solicitamos datos de tarjeta directamente.</strong></div>
+          </div>
+        )}
+      </fieldset>
+    </div>
+  );
+}
+
+function Step2({ data, update }) {
+  return (
+    <div>
+      <h1 className="step-title">Horarios, ubicación y links.</h1>
+      <p className="step-lead">Indica dónde y cuándo ocurre el evento, y dónde podemos enviar a tus asistentes para más información.</p>
+
+      <fieldset>
+        <div className="field-set-title"><span className="n">2.1</span> Día y hora del evento</div>
+        {data.dates.map((d, i) => (
+          <div className="grid-3" key={i} style={{ marginBottom: 14 }}>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Fecha {i === 0 ? "" : `(día ${i + 1})`}</label>
+              <input type="text" placeholder="DD / MM / AAAA" value={d.date}
+                onChange={e => update("dates", data.dates.map((dd, j) => j === i ? { ...dd, date: e.target.value } : dd))} />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Hora inicio</label>
+              <input type="text" placeholder="20:00" value={d.start}
+                onChange={e => update("dates", data.dates.map((dd, j) => j === i ? { ...dd, start: e.target.value } : dd))} />
+            </div>
+            <div className="field" style={{ margin: 0 }}>
+              <label>Hora término</label>
+              <input type="text" placeholder="23:00" value={d.end}
+                onChange={e => update("dates", data.dates.map((dd, j) => j === i ? { ...dd, end: e.target.value } : dd))} />
+            </div>
+          </div>
+        ))}
+        <button className="add-line" onClick={() => update("dates", [...data.dates, { date: "", start: "", end: "" }])}>{Ic.plus} Agregar otro día</button>
+      </fieldset>
+
+      <fieldset>
+        <div className="field-set-title"><span className="n">2.2</span> Ubicación</div>
+        <div className="field">
+          <label>Lugar / Venue</label>
+          <input type="text" placeholder="Ej: Teatro Cariola, Movistar Arena, Online" value={data.venue} onChange={e => update("venue", e.target.value)} />
+        </div>
+        <div className="field">
+          <label>Dirección completa</label>
+          <input type="text" placeholder="Calle, número, comuna, región" value={data.address} onChange={e => update("address", e.target.value)} />
+          <div className="help">Si tu evento es online, escribe "Evento virtual".</div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div className="field-set-title"><span className="n">2.3</span> Enlaces importantes</div>
+        <div className="field">
+          <label>Sitio web / Ticketera</label>
+          <div className="input-prefix">
+            <span>https://</span>
+            <input type="text" placeholder="ticketmaster.com/tu-evento" value={data.web} onChange={e => update("web", e.target.value)} />
+          </div>
+          <div className="help">Si tienes una ticketera externa, los compradores serán dirigidos ahí.</div>
+        </div>
+        <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>Redes sociales</label>
+        {data.socials.map((s, i) => (
+          <div className="row" key={i} style={{ marginBottom: 10 }}>
+            <div className="input-prefix" style={{ flex: 1 }}>
+              <span>@</span>
+              <input type="text" placeholder="instagram.com/tu-evento" value={s}
+                onChange={e => update("socials", data.socials.map((ss, j) => j === i ? e.target.value : ss))} />
+            </div>
+            {data.socials.length > 1 && <button className="icon-btn" onClick={() => update("socials", data.socials.filter((_, j) => j !== i))}>{Ic.close}</button>}
+          </div>
+        ))}
+        <button className="add-line" onClick={() => update("socials", [...data.socials, ""])}>{Ic.plus} Agregar otra red social</button>
+      </fieldset>
+    </div>
+  );
+}
+
+function Step3({ data, update }) {
+  return (
+    <div>
+      <h1 className="step-title">Imágenes y video.</h1>
+      <p className="step-lead">Una buena imagen es decisiva. Usa el banner para destacar y el poster para listados verticales.</p>
+
+      <fieldset>
+        <div className="field-set-title"><span className="n">3.1</span> Imágenes principales</div>
+        <div className="upload-grid">
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>Banner (horizontal · 16:9)</label>
+            <div className="upload-box">
+              <div className="ic">{Ic.upl}</div>
+              <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube una imagen horizontal</div>
+              <small>JPG / PNG · máx 5MB · sin texto sobreimpreso</small>
+            </div>
+          </div>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>Poster (vertical · 2:3)</label>
+            <div className="upload-box tall">
+              <div className="ic">{Ic.upl}</div>
+              <div style={{ fontWeight: 500, color: "var(--ink-2)", fontSize: 13 }}>Poster oficial</div>
+              <small>JPG / PNG · 1200×1800</small>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <div className="field-set-title"><span className="n">3.2</span> Galería</div>
+        <div className="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          {[0,1,2,3,4,5,6,7].map(i => (
+            <div key={i} className="upload-box" style={{ aspectRatio: "1/1", padding: 14 }}>
+              <div className="ic" style={{ width: 28, height: 28 }}>{Ic.plus}</div>
+              <small style={{ fontSize: 10 }}>Imagen {i + 1}</small>
+            </div>
+          ))}
+        </div>
+        <div className="help" style={{ marginTop: 10 }}>Hasta 10 imágenes. Aparecerán en la sección "Galería" del evento.</div>
+      </fieldset>
+
+      <fieldset>
+        <div className="field-set-title"><span className="n">3.3</span> Videos</div>
+        {data.videos.map((v, i) => (
+          <div className="row" key={i} style={{ marginBottom: 10 }}>
+            <div className="input-prefix" style={{ flex: 1 }}>
+              <span>▶</span>
+              <input type="text" placeholder="https://youtube.com/watch?v=..." value={v}
+                onChange={e => update("videos", data.videos.map((vv, j) => j === i ? e.target.value : vv))} />
+            </div>
+            {data.videos.length > 1 && <button className="icon-btn" onClick={() => update("videos", data.videos.filter((_, j) => j !== i))}>{Ic.close}</button>}
+          </div>
+        ))}
+        <button className="add-line" onClick={() => update("videos", [...data.videos, ""])}>{Ic.plus} Agregar otro video</button>
+      </fieldset>
+
+      <div style={{ background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: 14, padding: 18, display: "flex", gap: 14, alignItems: "start" }}>
+        <div style={{ width: 36, height: 36, borderRadius: 999, background: "var(--accent)", color: "white", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{Ic.help}</div>
+        <div>
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>Revisión antes de publicar</div>
+          <div style={{ color: "var(--ink-2)", fontSize: 13, lineHeight: 1.55 }}>
+            Tu publicación pasará por una revisión rápida (24–48 hrs) antes de aparecer en Konbini. Te notificaremos por correo cuando esté lista.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────── login ───────────────── */
+function LoginPage() {
+  const { nav } = useRouter();
+  const { theme, setTheme } = useTheme();
+  const { setUser } = useUser();
+  const login = () => { setUser(MOCK_USER); nav("home"); };
+  useEffect(() => { document.body.classList.add("no-chrome"); return () => document.body.classList.remove("no-chrome"); }, []);
+
+  const tiles = ["pa-1","pa-2","pa-3","pa-4","pa-5","pa-6","pa-7","pa-8","pa-9","pa-10","pa-11","pa-12","pa-1","pa-2","pa-3","pa-4"];
+  return (
+    <div className="login-shell">
+      <div className="login-art">
+        <div className="collage">
+          {tiles.map((t, i) => <div key={i} className={`poster-art ${t}`} />)}
+        </div>
+        <div className="mask" />
+        <a onClick={() => nav("home")} style={{ position: "relative", zIndex: 2, cursor: "pointer", display: "inline-block" }}>
+          <BrandMark size={32} />
+        </a>
+        <div className="login-brand-card">
+          <div className="jp" style={{ fontSize: 11, letterSpacing: ".2em", color: "var(--ink-3)" }}>コンビニショップ</div>
+          <div className="display" style={{ fontSize: 28, margin: "10px 0 6px", color: "var(--ink)" }}>Konbini</div>
+          <div style={{ fontSize: 12, color: "var(--ink-2)", lineHeight: 1.5 }}>El supermercado del entretenimiento geek en LATAM.</div>
+        </div>
+      </div>
+      <div className="login-form-side">
+        <div className="row" style={{ justifyContent: "space-between", marginBottom: 30 }}>
+          <button className="btn ghost" onClick={() => nav("home")}>{Ic.chevL} Inicio</button>
+          <button className="icon-btn" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
+            {theme === "dark" ? Ic.sun : Ic.moon}
+          </button>
+        </div>
+        <div className="eyebrow">INGRESAR · ログイン</div>
+        <h2 style={{ marginTop: 12 }}>Todo lo que amas,<br/>en un solo lugar<span style={{ color: "var(--accent)" }}>.</span></h2>
+        <p className="lead">Crea tu cuenta para guardar eventos, comprar entradas con un click y publicar tu propio evento.</p>
+
+        <button className="social-btn" onClick={login}>{Ic.google} Continuar con Google</button>
+        <button className="social-btn" onClick={login}>{Ic.insta} Continuar con Instagram</button>
+        <button className="social-btn" onClick={login}>{Ic.apple} Continuar con Apple</button>
+
+        <div className="login-sep">o continúa con tu email</div>
+
+        <div className="field">
+          <input type="email" placeholder="tu@email.com" />
+        </div>
+        <button className="btn dark lg block" onClick={login}>Continuar {Ic.arrow}</button>
+
+        <p className="legal">
+          Al continuar aceptas nuestros <a>Términos</a> y <a>Política de privacidad</a>. Tus datos están protegidos bajo Ley 19.628 de Chile.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────── dashboard / mis publicaciones ───────────────── */
+const PUBS = [
+  { id: 1, title: "Creepy Nuts: One Man Tour 2025", date: "8 ABR 2025", place: "Teatro Caupolicán", price: "$50.000", art: "pa-7", created: "20 ABR 2025", status: "rev", reason: null },
+  { id: 2, title: "Anime Symphonic Orchestra", date: "12 MAY 2025", place: "Movistar Arena", price: "$45.000", art: "pa-4", created: "18 ABR 2025", status: "pub", reason: null },
+  { id: 3, title: "Cosplay Battle Royale", date: "1 JUN 2025", place: "Estación Mapocho", price: "$15.000", art: "pa-11", created: "15 ABR 2025", status: "rej", reason: "Imagen del banner contiene texto." },
+  { id: 4, title: "Studio Ghibli Marathon", date: "20 MAY 2025", place: "Cine Hoyts", price: "$8.990", art: "pa-3", created: "12 ABR 2025", status: "pub", reason: null },
+  { id: 5, title: "Festival K-Pop Chile", date: "30 JUN 2025", place: "Movistar Arena", price: "$75.000", art: "pa-12", created: "10 ABR 2025", status: "rev", reason: null },
+  { id: 6, title: "Gaming Convention 2024", date: "15 NOV 2024", place: "Espacio Riesco", price: "$25.000", art: "pa-8", created: "1 OCT 2024", status: "arc", reason: null },
+];
+const STATUS_META = {
+  rev: { cls: "st-rev", label: "En revisión" },
+  pub: { cls: "st-pub", label: "Publicado" },
+  rej: { cls: "st-rej", label: "Rechazado" },
+  arc: { cls: "", label: "Archivado" },
+};
+
+function DashboardPage() {
+  const { user } = useUser();
+  const { nav } = useRouter();
+  const [tab, setTab] = useState("all");
+  const [profileOpen, setProfileOpen] = useState(false);
+  const filtered = tab === "all" ? PUBS : PUBS.filter(p => p.status === tab);
+  const counts = { all: PUBS.length, rev: PUBS.filter(p => p.status === "rev").length, pub: PUBS.filter(p => p.status === "pub").length, rej: PUBS.filter(p => p.status === "rej").length, arc: PUBS.filter(p => p.status === "arc").length };
+  const u = user || MOCK_USER;
+
+  return (
+    <main className="container">
+      <div className="dash">
+        <aside className="dash-side">
+          <div className="av-lg">{u.initials}</div>
+          <h3>{u.name}</h3>
+          <div className="em">{u.email}</div>
+          <button className="btn ghost block" style={{ width: "100%" }} onClick={() => setProfileOpen(true)}>Editar perfil</button>
+          <nav className="dash-nav">
+            <button>👤 Mi cuenta</button>
+            <button className="on">📋 Mis publicaciones</button>
+            <button>🎫 Mis entradas</button>
+            <button>⚙️ Configuración</button>
+            <button>🔒 Contraseña y seguridad</button>
+            <button className="danger">↩  Cerrar sesión</button>
+          </nav>
+        </aside>
+
+        <div className="dash-body">
+          <div className="eyebrow">DASHBOARD · ダッシュボード</div>
+          <h1 style={{ marginTop: 8 }}>Mis publicaciones</h1>
+          <p className="sub">Gestiona tus eventos, revisa el estado de publicación y edita lo que necesites.</p>
+
+          <div className="tabs">
+            <button className={tab === "all" ? "on" : ""} onClick={() => setTab("all")}>Todos <span className="count">{counts.all}</span></button>
+            <button className={tab === "rev" ? "on" : ""} onClick={() => setTab("rev")}>En revisión <span className="count">{counts.rev}</span></button>
+            <button className={tab === "pub" ? "on" : ""} onClick={() => setTab("pub")}>Publicados <span className="count">{counts.pub}</span></button>
+            <button className={tab === "rej" ? "on" : ""} onClick={() => setTab("rej")}>Rechazados <span className="count">{counts.rej}</span></button>
+            <button className={tab === "arc" ? "on" : ""} onClick={() => setTab("arc")}>Archivados <span className="count">{counts.arc}</span></button>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div className="dash-empty">No hay publicaciones en esta categoría.</div>
+          ) : (
+            <div className="pub-grid">
+              {filtered.map(p => {
+                const m = STATUS_META[p.status];
+                return (
+                  <div key={p.id} className="pub-card">
+                    <div className="img">
+                      <div className={`poster-art ${p.art}`} />
+                      <div className="stamp">Creado {p.created}</div>
+                    </div>
+                    <div className="body">
+                      <div className={`status ${m.cls}`}>
+                        <span className="dot" />
+                        {m.label}
+                        {p.reason && <a style={{ marginLeft: 6, textDecoration: "underline", color: "inherit" }}>· ver motivo</a>}
+                      </div>
+                      <div className="ttl">{p.title}</div>
+                      <div className="meta">{p.date} · {p.place}</div>
+                      <div className="price">Entrada desde <strong>{p.price} CLP</strong></div>
+                      <div className="pub-actions">
+                        <button onClick={() => nav("event", { id: 1 })}>Ver</button>
+                        <button>Editar</button>
+                        <button className="primary-act">⋯</button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+      {profileOpen && <ProfileModal onClose={() => setProfileOpen(false)} />}
+    </main>
+  );
+}
+
+/* ───────────────── checkout ───────────────── */
+function CheckoutPage() {
+  const { route, nav } = useRouter();
+  const e = EVENTS.find(x => x.id === route.params?.id) || EVENTS[0];
+  const [step, setStep] = useState(1);
+  const [tiers, setTiers] = useState([
+    { name: "General", desc: "Sala estándar · butaca libre", price: 9990, qty: 1 },
+    { name: "3D Premium", desc: "Lentes incluidos · sala IMAX", price: 14990, qty: 0 },
+    { name: "VIP · Combo", desc: "Reclinable + cabritas + bebida", price: 22990, qty: 0 },
+  ]);
+  const subtotal = tiers.reduce((s, t) => s + t.price * t.qty, 0);
+  const fee = Math.round(subtotal * 0.06);
+  const total = subtotal + fee;
+  const fmt = n => n.toLocaleString("es-CL");
+  const setQty = (i, d) => setTiers(tiers.map((t, j) => j === i ? { ...t, qty: Math.max(0, t.qty + d) } : t));
+  const totalTickets = tiers.reduce((s, t) => s + t.qty, 0);
+
+  // simulate gateway redirect
+  useEffect(() => {
+    if (step === 2) { const id = setTimeout(() => setStep(3), 2200); return () => clearTimeout(id); }
+  }, [step]);
+
+  return (
+    <main className="container">
+      <div className="ck-shell">
+        <div className="ck-head">
+          <div>
+            <button className="btn ghost" style={{ fontSize: 12, padding: "6px 14px" }} onClick={() => nav("event", { id: e.id })}>{Ic.chevL} Volver al evento</button>
+            <h1 className="display" style={{ fontSize: 32, margin: "16px 0 4px" }}>Checkout</h1>
+            <div style={{ color: "var(--ink-3)", fontSize: 14 }}>{e.title} · {e.date}</div>
+          </div>
+          <div className="ck-steps">
+            <div className={`s ${step >= 1 ? "on" : ""} ${step > 1 ? "done" : ""}`}><span className="n">1</span> ENTRADAS</div>
+            <div className="line" />
+            <div className={`s ${step >= 2 ? "on" : ""} ${step > 2 ? "done" : ""}`}><span className="n">2</span> PAGO</div>
+            <div className="line" />
+            <div className={`s ${step >= 3 ? "on" : ""}`}><span className="n">3</span> CONFIRMACIÓN</div>
+          </div>
+        </div>
+
+        {step === 1 && (
+          <div className="ck-grid">
+            <div>
+              <h2 className="display" style={{ fontSize: 22, marginTop: 0 }}>Selecciona tus entradas</h2>
+              {tiers.map((t, i) => (
+                <div key={i} className="ck-tier">
+                  <div>
+                    <div className="name">{t.name}</div>
+                    <div className="desc">{t.desc}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+                    <div className="price">${fmt(t.price)}</div>
+                    <div className="ck-qty">
+                      <button onClick={() => setQty(i, -1)} disabled={t.qty === 0}>−</button>
+                      <span className="v">{t.qty}</span>
+                      <button onClick={() => setQty(i, +1)}>+</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div className="help" style={{ marginTop: 18, color: "var(--ink-3)", fontSize: 13, padding: 14, background: "var(--surface-2)", borderRadius: 10 }}>
+                💡 El pago se procesará por nuestra <strong>pasarela segura</strong>. No solicitamos ni almacenamos datos de tu tarjeta.
+              </div>
+            </div>
+            <aside className="ck-summary">
+              <h3>Resumen</h3>
+              {tiers.filter(t => t.qty > 0).map((t, i) => (
+                <div key={i} className="sum-row">
+                  <span>{t.name} × {t.qty}</span>
+                  <span className="mono">${fmt(t.price * t.qty)}</span>
+                </div>
+              ))}
+              {totalTickets === 0 && <div style={{ color: "var(--ink-3)", fontSize: 13, padding: "8px 0" }}>Agrega entradas para continuar.</div>}
+              {totalTickets > 0 && <>
+                <div className="sum-row">
+                  <span style={{ color: "var(--ink-3)" }}>Subtotal</span>
+                  <span className="mono">${fmt(subtotal)}</span>
+                </div>
+                <div className="sum-row">
+                  <span style={{ color: "var(--ink-3)" }}>Servicio (6%)</span>
+                  <span className="mono">${fmt(fee)}</span>
+                </div>
+                <div className="sum-row tot">
+                  <span>Total</span>
+                  <span>${fmt(total)}</span>
+                </div>
+              </>}
+              <button className="btn primary block lg" disabled={totalTickets === 0} style={{ marginTop: 18, opacity: totalTickets === 0 ? .4 : 1 }} onClick={() => setStep(2)}>
+                Continuar al pago {Ic.arrow}
+              </button>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: ".1em", textAlign: "center", marginTop: 12 }}>
+                🔒 PAGO SEGURO · SSL · 3D SECURE
+              </div>
+            </aside>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="gateway-card">
+            <div className="lock"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="11" width="16" height="11" rx="2"/><path d="M8 11V7a4 4 0 1 1 8 0v4"/></svg></div>
+            <h3>Redirigiendo a la pasarela…</h3>
+            <p>Estamos llevándote a nuestro procesador de pago certificado. Tus datos están protegidos con cifrado de extremo a extremo.</p>
+            <div style={{ position: "relative", margin: "20px auto", maxWidth: 280, height: 4, background: "rgba(255,255,255,.2)", borderRadius: 999, overflow: "hidden" }}>
+              <div style={{ position: "absolute", inset: 0, background: "white", borderRadius: 999, animation: "load 2.2s ease forwards" }} />
+            </div>
+            <style>{`@keyframes load { from { transform: translateX(-100%); } to { transform: translateX(0); } }`}</style>
+            <div className="gateway-logos">
+              <span>WEBPAY+</span>
+              <span>·</span>
+              <span>MERCADO PAGO</span>
+              <span>·</span>
+              <span>STRIPE</span>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="ck-grid">
+            <div className="ticket-result">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 18 }}>
+                <div>
+                  <div className="eyebrow" style={{ color: "var(--ok)" }}>✓ COMPRA CONFIRMADA</div>
+                  <h2 className="display" style={{ fontSize: 30, margin: "10px 0 4px" }}>{e.title}</h2>
+                  <div style={{ color: "var(--ink-3)" }}>{e.date} · {e.place}</div>
+                </div>
+                <div className="qr-code" />
+              </div>
+              <div className="perf">
+                <div className="cell"><div className="lbl">CÓDIGO</div><div className="val mono">KB-9F2A-71X</div></div>
+                <div className="cell"><div className="lbl">ASISTENTE</div><div className="val">Edgardo Toro</div></div>
+                <div className="cell"><div className="lbl">ENTRADAS</div><div className="val">{totalTickets || 1} tickets</div></div>
+                <div className="cell"><div className="lbl">PAGADO</div><div className="val mono">${fmt(total || 9990)}</div></div>
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
+                <button className="btn dark">Descargar PDF</button>
+                <button className="btn ghost">Enviar a mi correo</button>
+                <button className="btn ghost">Agregar al calendario</button>
+              </div>
+            </div>
+            <aside className="ck-summary">
+              <h3>¿Qué sigue?</h3>
+              <ol style={{ paddingLeft: 18, color: "var(--ink-2)", fontSize: 14, lineHeight: 1.7, margin: 0 }}>
+                <li>Te enviamos las entradas a tu correo.</li>
+                <li>Presenta el QR al ingresar al evento.</li>
+                <li>Comparte tu plan en redes con <span className="mono" style={{ color: "var(--accent)" }}>#Konbini</span></li>
+              </ol>
+              <button className="btn primary block" style={{ marginTop: 22 }} onClick={() => nav("home")}>Volver a explorar</button>
+            </aside>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+/* ───────────────── app ───────────────── */
+function App() {
+  return (
+    <ThemeProvider>
+      <UserProvider>
+        <RouterProvider>
+          <Shell />
+        </RouterProvider>
+      </UserProvider>
+    </ThemeProvider>
+  );
+}
+
+function Shell() {
+  const { route } = useRouter();
+  const isLogin = route.name === "login";
+  return (
+    <>
+      {!isLogin && <Header />}
+      {route.name === "home" && <HomePage />}
+      {route.name === "category" && <CategoryPage />}
+      {route.name === "event" && <EventPage />}
+      {route.name === "form" && <FormPage />}
+      {route.name === "login" && <LoginPage />}
+      {route.name === "dashboard" && <DashboardPage />}
+      {route.name === "checkout" && <CheckoutPage />}
+      {!isLogin && <Footer />}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(<App />);
+
+</script>
+</body>
+</html>

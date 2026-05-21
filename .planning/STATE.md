@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-28T03:00:21.890Z"
+last_updated: "2026-05-20T23:48:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 **Milestone:** v1 — Payments, Emails, Organizer Panel, Search
 **Active Phase:** Phase 1 — Security Foundation (in progress)
 **Overall Progress:** [███░░░░░░░] 33%
-**Last session:** 2026-03-28 - Completed quick task 260327-x7o: Crear seeders para article, hero y spot en Strapi
+**Last session:** 2026-05-20 - Completed quick task 260520-q4m: Exportar Strapi a schema.prisma del nuevo API NestJS + seeders (Neon Auth)
 
 ## Phase Summary
 
@@ -53,6 +53,7 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260327-x7o | Crear seeders para article, hero y spot en Strapi | 2026-03-28 | 3bd7606 | [260327-x7o-revisa-en-private-project-como-se-crean-](./quick/260327-x7o-revisa-en-private-project-como-se-crean-/) |
+| 260520-q4m | Exportar content types de Strapi a schema.prisma del nuevo API NestJS + seeders (auth vía Neon Auth) | 2026-05-20 | uncommitted | [260520-q4m-exportar-strapi-a-prisma-neon-auth](./quick/260520-q4m-exportar-strapi-a-prisma-neon-auth/) |
 
 ## Next Action
 

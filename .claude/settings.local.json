@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf /home/gab/Code/konbini-project/apps/dashboard/.git)",
+      "Bash(rm -rf /home/gab/Code/konbini-project/apps/strapi/.git)",
+      "Bash(rm -rf /home/gab/Code/konbini-project/apps/website/.git)",
+      "Bash(git branch:*)",
+      "Bash(yarn install:*)",
+      "Bash(yarn workspaces:*)",
+      "Bash(timeout 15 yarn dev)",
+      "Bash(yarn workspace:*)",
+      "Bash(timeout 30 yarn dev 2>&1)",
+      "Bash(node -e \"require.resolve\\(''@sentry/nextjs'', {paths: [''/home/gab/Code/konbini-project/apps/dashboard'']}\\)\")",
+      "Bash(timeout 35 yarn dev)",
+      "Bash(pkill -f 'strapi develop')",
+      "Bash(pkill -f 'nuxt dev')",
+      "Bash(pkill -f 'next dev')",
+      "Bash(pkill -f \"strapi\")",
+      "Bash(pkill -f \"nuxt\")",
+      "Bash(pkill -f \"next\")",
+      "Bash(fuser -k 1337/tcp 3000/tcp 3001/tcp)",
+      "Bash(timeout 40 yarn dev)",
+      "Bash(timeout 45 yarn dev)",
+      "Bash(grep:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)",
+      "Bash(find /home/gab/Code/konbini-project/node_modules -name package.json -path */vue/package.json)",
+      "Bash(grep '\"\"dev\"\"' /home/gab/Code/konbini-project/apps/website/package.json)",
+      "Bash(grep '\"\"dev\"\"' /home/gab/Code/konbini-project/apps/dashboard/package.json)",
+      "Skill(gsd:map-codebase)",
+      "Bash(wc -l /home/gab/Code/konbini-project/.planning/codebase/*.md)",
+      "Bash(git -C /home/gab/Code/konbini-project add .planning/research/)",
+      "Bash(git -C /home/gab/Code/konbini-project commit -m \"docs: add research files \\(stack, features, architecture, pitfalls\\)\")",
+      "Bash(git -C /home/gab/Code/konbini-project status --short .planning/)",
+      "Bash(git:*)",
+      "Skill(gsd:execute-phase)",
+      "Skill(gsd:pause-work)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

@@ -1,0 +1,218 @@
+// Prisma schema — modelos exportados desde Strapi (konbini-api).
+// Usuarios y autenticación se delegan a Neon Auth: no hay modelo User aquí.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Neon: conexión pooled (-pooler)
+  directUrl = env("DIRECT_URL")   // Neon: conexión directa, para migraciones
+}
+
+// ─────────────────────────── Geografía ───────────────────────────
+
+model Region {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+  communes  Commune[]
+  events    Event[]
+  heroes    Hero[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Commune {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  region    Region?  @relation(fields: [regionId], references: [id])
+  regionId  Int?
+  events    Event[]
+  heroes    Hero[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([regionId])
+}
+
+// ─────────────────────────── Taxonomía ───────────────────────────
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String?
+  slug        String   @unique
+  description String?
+  events      Event[]
+  heroes      Hero[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Tag {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+  articles  Article[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// ─────────────────────────── Contenido ───────────────────────────
+
+model Article {
+  id        Int      @id @default(autoincrement())
+  title     String
+  slug      String   @unique
+  excerpt   String?
+  content   String   @db.Text
+  image     String? // URL de imagen (Strapi media)
+  tags      Tag[]
+  events    Event[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Hero {
+  id             Int        @id @default(autoincrement())
+  title          String
+  slug           String?    @unique
+  date           DateTime   @db.Date
+  address        String
+  addressNumber  String
+  venue          String
+  link           String?
+  desktopImage   String // URL
+  tabletImage    String // URL
+  mobileImage    String // URL
+  thumbnail      String // URL
+  expirationDate DateTime   @db.Date
+  region         Region?    @relation(fields: [regionId], references: [id])
+  regionId       Int?
+  commune        Commune?   @relation(fields: [communeId], references: [id])
+  communeId      Int?
+  categories     Category[]
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  @@index([regionId])
+  @@index([communeId])
+}
+
+model Spot {
+  id             Int       @id @default(autoincrement())
+  title          String?
+  image          String? // URL
+  link           String?
+  expirationDate DateTime? @db.Date
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Event {
+  id             Int      @id @default(autoincrement())
+  title          String
+  company        String?
+  slug           String   @unique
+  description    String   @db.Text
+  about          String?  @db.Text
+  expirationDate DateTime? @db.Date
+  address        String
+  addressNumber  String
+  ticketUrl      String?
+
+  // Media (URLs)
+  banner  String?
+  poster  String?
+  gallery String[]
+
+  // Moderación
+  isApproved     Boolean @default(false)
+  isRejected     Boolean @default(false)
+  rejectedReason String? // corregido desde el typo de Strapi "rejected_reazon"
+
+  // Usuarios — ids de Neon Auth (sin FK; Neon Auth es el source of truth)
+  userId       String?
+  approvedById String? // corregido: Strapi lo modelaba como oneToMany
+  rejectedById String?
+
+  // Relaciones
+  region     Region?    @relation(fields: [regionId], references: [id])
+  regionId   Int?
+  commune    Commune?   @relation(fields: [communeId], references: [id])
+  communeId  Int?
+  categories Category[]
+  articles   Article[]
+
+  // Componentes (repetibles en Strapi → tablas propias)
+  prices      EventPrice[]
+  dates       EventDate[]
+  socialLinks EventSocialLink[]
+  videos      EventVideo[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([regionId])
+  @@index([communeId])
+  @@index([userId])
+}
+
+// ───────────────────── Componentes de Event ──────────────────────
+
+model EventPrice {
+  id      Int    @id @default(autoincrement())
+  name    String
+  price   Int    @default(0)
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId Int
+
+  @@index([eventId])
+}
+
+model EventDate {
+  id        Int       @id @default(autoincrement())
+  date      DateTime? @db.Date
+  startTime String? // Strapi "time" → "HH:mm"
+  endTime   String?
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   Int
+
+  @@index([eventId])
+}
+
+model EventSocialLink {
+  id      Int     @id @default(autoincrement())
+  link    String?
+  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId Int
+
+  @@index([eventId])
+}
+
+model EventVideo {
+  id      Int     @id @default(autoincrement())
+  link    String?
+  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId Int
+
+  @@index([eventId])
+}
+
+// ──────────────────────────── Perfil ─────────────────────────────
+// Campos extra del usuario que Neon Auth (neon_auth.users_sync) no cubre.
+// PK = id del usuario en Neon Auth.
+
+model Profile {
+  userId    String   @id
+  rut       String?
+  isCompany Boolean?
+  firstname String?
+  lastname  String?
+  role      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -338,6 +338,34 @@ model User {
   heroes         Hero[]  @relation("HeroOwner")
   orders         Order[]
   likes          Like[]
+  profile        Profile?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ──────────────────────────── Perfiles ───────────────────────────
+
+model Profile {
+  id          Int     @id @default(autoincrement())
+  slug        String  @unique
+  displayName String?
+  bio         String? @db.Text
+  avatar      String?
+  banner      String?
+  website     String?
+
+  // Redes sociales
+  instagram   String?
+  tiktok      String?
+  facebook    String?
+  x           String?
+  youtube     String?
+  twitch      String?
+  linkedin    String?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int      @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

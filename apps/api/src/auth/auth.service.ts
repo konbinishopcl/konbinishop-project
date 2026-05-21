@@ -40,6 +40,27 @@ export class AuthService {
     return createHash('sha256').update(token).digest('hex');
   }
 
+  /** Genera un slug único para el perfil público del usuario. */
+  private async generateProfileSlug(firstname: string | null, lastname: string | null, userId: number): Promise<string> {
+    const base = [firstname, lastname]
+      .filter(Boolean)
+      .join(' ')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || `user-${userId}`;
+    let candidate = base;
+    let attempt = 0;
+    while (true) {
+      const existing = await this.prisma.profile.findUnique({ where: { slug: candidate } });
+      if (!existing) return candidate;
+      attempt++;
+      candidate = `${base}-${attempt}`;
+    }
+  }
+
   async register(dto: RegisterDto) {
     const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (exists) throw new ConflictException('El email ya está registrado');
@@ -54,6 +75,8 @@ export class AuthService {
         confirmed: true,
       },
     });
+    const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
+    await this.prisma.profile.create({ data: { userId: user.id, slug } });
     return { token: this.sign(user), user: this.sanitize(user) };
   }
 

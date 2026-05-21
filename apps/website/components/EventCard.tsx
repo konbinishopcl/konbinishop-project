@@ -4,7 +4,7 @@ import type { EventItem } from "@/lib/data";
 
 export function EventCard({ e, landscape = false }: { e: EventItem; landscape?: boolean }) {
   return (
-    <Link href={`/evento/${e.id}`} className={`card ${landscape ? "land" : ""}`}>
+    <Link href={`/evento/${e.slug}`} className={`card ${landscape ? "land" : ""}`}>
       <Poster e={e} landscape={landscape} />
       <div className="meta">
         <div className="title">{e.title}</div>

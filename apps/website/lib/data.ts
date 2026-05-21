@@ -5,15 +5,18 @@ export type Category = { id: string; label: string; ja: string };
 
 export type EventItem = {
   id: number;
+  slug: string;
   title: string;
   cat: string;
-  ja: string;
-  art: string;
+  catSlug?: string;
   image: string;
   date: string;
   place: string;
   price: number;
-  stamp: string;
+  // Campos solo de la maqueta (la API no los provee).
+  ja?: string;
+  art?: string;
+  stamp?: string;
 };
 
 export type Pub = {
@@ -50,18 +53,18 @@ export const CATEGORIES: Category[] = [
 
 // `image`: imágenes de relleno (picsum, seed por evento) — se reemplazan por las reales al conectar la API.
 export const EVENTS: EventItem[] = [
-  { id: 1, title: "Ado: World Tour Hibana", cat: "Conciertos", ja: "ヒバナ", art: "pa-1", image: "https://picsum.photos/seed/konbini-1/600/800", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 65, stamp: "WORLD TOUR" },
-  { id: 2, title: "Multitude", cat: "Conciertos", ja: "オーケーロック", art: "pa-2", image: "https://picsum.photos/seed/konbini-2/600/800", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 80, stamp: "ONE OK ROCK" },
-  { id: 3, title: "Demon Slayer: Infinity Castle", cat: "Cine", ja: "鬼滅の刃", art: "pa-3", image: "https://picsum.photos/seed/konbini-3/600/800", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
-  { id: 4, title: "Super Japan Expo 2025", cat: "Convenciones", ja: "ジャパン EXPO", art: "pa-4", image: "https://picsum.photos/seed/konbini-4/600/800", date: "9–12 MAY 2025", place: "Estación Mapocho", price: 25, stamp: "4 DÍAS" },
-  { id: 5, title: "My Hero Academia: You're Next", cat: "Cine", ja: "僕のヒーロー", art: "pa-5", image: "https://picsum.photos/seed/konbini-5/600/800", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
-  { id: 6, title: "Solo Leveling: ReAwakening", cat: "Cine", ja: "俺だけレベルアップ", art: "pa-6", image: "https://picsum.photos/seed/konbini-6/600/800", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "COMING SOON" },
-  { id: 7, title: "Attack on Titan: Last Attack", cat: "Cine", ja: "進撃の巨人", art: "pa-9", image: "https://picsum.photos/seed/konbini-7/600/800", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
-  { id: 8, title: "Creepy Nuts: One Man Tour", cat: "Conciertos", ja: "クリーピー", art: "pa-7", image: "https://picsum.photos/seed/konbini-8/600/800", date: "16 JUN 2024", place: "Online", price: 22, stamp: "BEYOND LIVE" },
-  { id: 9, title: "One Ok Rock: Latin Tour", cat: "Conciertos", ja: "ワンオク", art: "pa-2", image: "https://picsum.photos/seed/konbini-9/600/800", date: "5 ABR 2025", place: "Pepsi Center", price: 75, stamp: "LATAM" },
-  { id: 10, title: "Flow: Anime Shibari Tour", cat: "Conciertos", ja: "フロウ", art: "pa-10", image: "https://picsum.photos/seed/konbini-10/600/800", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 60, stamp: "ANIME SHIBARI" },
-  { id: 11, title: "ComicCon Chile 2024", cat: "Convenciones", ja: "コミコン", art: "pa-11", image: "https://picsum.photos/seed/konbini-11/600/800", date: "31 OCT–2 NOV", place: "Espacio Riesco", price: 35, stamp: "3 DÍAS" },
-  { id: 12, title: "Anime Crunchyroll Fest", cat: "Streamings", ja: "クランチーロール", art: "pa-12", image: "https://picsum.photos/seed/konbini-12/600/800", date: "Mar 2025", place: "Online", price: 0, stamp: "GRATIS" },
+  { id: 1, slug: "ado-world-tour-hibana", title: "Ado: World Tour Hibana", cat: "Conciertos", ja: "ヒバナ", art: "pa-1", image: "https://picsum.photos/seed/konbini-1/600/800", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 65, stamp: "WORLD TOUR" },
+  { id: 2, slug: "multitude", title: "Multitude", cat: "Conciertos", ja: "オーケーロック", art: "pa-2", image: "https://picsum.photos/seed/konbini-2/600/800", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 80, stamp: "ONE OK ROCK" },
+  { id: 3, slug: "demon-slayer-infinity-castle", title: "Demon Slayer: Infinity Castle", cat: "Cine", ja: "鬼滅の刃", art: "pa-3", image: "https://picsum.photos/seed/konbini-3/600/800", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
+  { id: 4, slug: "super-japan-expo-2025", title: "Super Japan Expo 2025", cat: "Convenciones", ja: "ジャパン EXPO", art: "pa-4", image: "https://picsum.photos/seed/konbini-4/600/800", date: "9–12 MAY 2025", place: "Estación Mapocho", price: 25, stamp: "4 DÍAS" },
+  { id: 5, slug: "my-hero-academia-youre-next", title: "My Hero Academia: You're Next", cat: "Cine", ja: "僕のヒーロー", art: "pa-5", image: "https://picsum.photos/seed/konbini-5/600/800", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
+  { id: 6, slug: "solo-leveling-reawakening", title: "Solo Leveling: ReAwakening", cat: "Cine", ja: "俺だけレベルアップ", art: "pa-6", image: "https://picsum.photos/seed/konbini-6/600/800", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "COMING SOON" },
+  { id: 7, slug: "attack-on-titan-last-attack", title: "Attack on Titan: Last Attack", cat: "Cine", ja: "進撃の巨人", art: "pa-9", image: "https://picsum.photos/seed/konbini-7/600/800", date: "8 ABR 2025", place: "Cinépolis", price: 9.99, stamp: "ESTRENO" },
+  { id: 8, slug: "creepy-nuts-one-man-tour", title: "Creepy Nuts: One Man Tour", cat: "Conciertos", ja: "クリーピー", art: "pa-7", image: "https://picsum.photos/seed/konbini-8/600/800", date: "16 JUN 2024", place: "Online", price: 22, stamp: "BEYOND LIVE" },
+  { id: 9, slug: "one-ok-rock-latin-tour", title: "One Ok Rock: Latin Tour", cat: "Conciertos", ja: "ワンオク", art: "pa-2", image: "https://picsum.photos/seed/konbini-9/600/800", date: "5 ABR 2025", place: "Pepsi Center", price: 75, stamp: "LATAM" },
+  { id: 10, slug: "flow-anime-shibari-tour", title: "Flow: Anime Shibari Tour", cat: "Conciertos", ja: "フロウ", art: "pa-10", image: "https://picsum.photos/seed/konbini-10/600/800", date: "8 ABR 2025", place: "Teatro Caupolicán", price: 60, stamp: "ANIME SHIBARI" },
+  { id: 11, slug: "comiccon-chile-2024", title: "ComicCon Chile 2024", cat: "Convenciones", ja: "コミコン", art: "pa-11", image: "https://picsum.photos/seed/konbini-11/600/800", date: "31 OCT–2 NOV", place: "Espacio Riesco", price: 35, stamp: "3 DÍAS" },
+  { id: 12, slug: "anime-crunchyroll-fest", title: "Anime Crunchyroll Fest", cat: "Streamings", ja: "クランチーロール", art: "pa-12", image: "https://picsum.photos/seed/konbini-12/600/800", date: "Mar 2025", place: "Online", price: 0, stamp: "GRATIS" },
 ];
 
 export const FEATURED: EventItem[] = [EVENTS[0], EVENTS[1], EVENTS[2], EVENTS[3], EVENTS[4], EVENTS[5]];

@@ -7,9 +7,9 @@ import { BrandMark } from "./BrandMark";
 import { Ic } from "./icons";
 import { ProfileModal } from "./ProfileModal";
 import { useTheme, useUser } from "./providers";
-import { CATEGORIES } from "@/lib/data";
+import type { ApiCategory } from "@/lib/api";
 
-export function Header() {
+export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useUser();
   const router = useRouter();
@@ -32,13 +32,19 @@ export function Header() {
             <BrandMark />
           </Link>
           <nav className="cats">
-            {CATEGORIES.map((c) => (
+            <button
+              className={active === "home" ? "active" : ""}
+              onClick={() => router.push("/")}
+            >
+              Inicio
+            </button>
+            {categories.map((c) => (
               <button
                 key={c.id}
-                className={active === c.id ? "active" : ""}
-                onClick={() => router.push(c.id === "home" ? "/" : `/categoria/${c.id}`)}
+                className={active === c.slug ? "active" : ""}
+                onClick={() => router.push(`/categoria/${c.slug}`)}
               >
-                {c.label}
+                {c.name ?? c.slug}
               </button>
             ))}
           </nav>

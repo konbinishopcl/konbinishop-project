@@ -21,7 +21,7 @@ function slugify(text: string): string {
 const EVENT_INCLUDE = {
   region: true,
   commune: true,
-  categories: true,
+  category: true,
   prices: true,
   dates: true,
   socialLinks: true,
@@ -65,7 +65,7 @@ export class EventsService {
         status: PublicationStatus.APPROVED,
         OR: [{ expirationDate: null }, { expirationDate: { gte: new Date() } }],
       }),
-      ...(query.category ? { categories: { some: { slug: query.category } } } : {}),
+      ...(query.category ? { category: { slug: query.category } } : {}),
       ...(query.region ? { region: { slug: query.region } } : {}),
       ...textFilter,
     };
@@ -137,9 +137,7 @@ export class EventsService {
         owner: { connect: { id: user.sub } },
         region: dto.regionId ? { connect: { id: dto.regionId } } : undefined,
         commune: dto.communeId ? { connect: { id: dto.communeId } } : undefined,
-        categories: dto.categoryIds?.length
-          ? { connect: dto.categoryIds.map((id) => ({ id })) }
-          : undefined,
+        category: dto.categoryId ? { connect: { id: dto.categoryId } } : undefined,
         prices: dto.prices?.length
           ? { create: dto.prices.map((p) => ({ name: p.name, price: p.price ?? 0 })) }
           : undefined,
@@ -190,8 +188,8 @@ export class EventsService {
     if (dto.communeId !== undefined) {
       data.commune = dto.communeId ? { connect: { id: dto.communeId } } : { disconnect: true };
     }
-    if (dto.categoryIds !== undefined) {
-      data.categories = { set: dto.categoryIds.map((cid) => ({ id: cid })) };
+    if (dto.categoryId !== undefined) {
+      data.category = dto.categoryId ? { connect: { id: dto.categoryId } } : { disconnect: true };
     }
     if (dto.prices !== undefined) {
       data.prices = {

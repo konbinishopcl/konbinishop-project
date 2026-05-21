@@ -13,7 +13,7 @@ import type { JwtUser } from '../auth/current-user.decorator';
 import { AddItemDto, OrderItemType } from './dto/add-item.dto';
 
 const ITEM_INCLUDE = {
-  event: { include: { categories: true } },
+  event: { include: { category: true } },
   spot: true,
   hero: { include: { category: true } },
 } as const;
@@ -115,15 +115,14 @@ export class OrdersService {
     if (!dto.eventId) throw new BadRequestException('eventId es requerido para ítems de tipo EVENT');
     const event = await this.prisma.event.findUnique({
       where: { id: dto.eventId },
-      include: { categories: true },
+      include: { category: true },
     });
     if (!event) throw new NotFoundException('Evento no encontrado');
     if (event.userId !== user.sub) throw new ForbiddenException('Este evento no te pertenece');
     if (event.status !== PublicationStatus.DRAFT) {
       throw new BadRequestException('Solo se pueden agregar eventos en estado DRAFT al carrito');
     }
-    const prices = event.categories.map((c) => c.pricePerDay);
-    const unitPrice = prices.length ? Math.max(...prices) : 0;
+    const unitPrice = event.category?.pricePerDay ?? 0;
     return { unitPrice, eventId: dto.eventId, spotId: null, heroId: null };
   }
 

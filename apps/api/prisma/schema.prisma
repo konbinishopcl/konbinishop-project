@@ -187,7 +187,8 @@ model Event {
   regionId   Int?
   commune    Commune?   @relation(fields: [communeId], references: [id])
   communeId  Int?
-  categories Category[]
+  category   Category?  @relation(fields: [categoryId], references: [id])
+  categoryId Int?
   articles   Article[]
 
   // Componentes (repetibles en Strapi → tablas propias)

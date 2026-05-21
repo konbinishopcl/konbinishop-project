@@ -86,11 +86,10 @@ export class UpdateEventDto {
   @IsInt()
   communeId?: number;
 
-  @ApiPropertyOptional({ type: [Number], example: [1, 3], description: 'IDs de categorías' })
+  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría' })
   @IsOptional()
-  @IsArray()
-  @IsInt({ each: true })
-  categoryIds?: number[];
+  @IsInt()
+  categoryId?: number;
 
   @ApiPropertyOptional({ type: [EventPriceDto] })
   @IsOptional()

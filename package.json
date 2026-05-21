@@ -3,31 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "description": "Konbini monorepo",
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "pnpm@10.11.0",
   "scripts": {
     "dev": "lsof -ti:24678,1337,3000,3001 | xargs kill -9 2>/dev/null || true && turbo run dev --parallel",
     "build": "turbo run build",
     "start": "turbo run start --parallel",
     "lint": "turbo run lint"
   },
-  "workspaces": {
-    "packages": [
-      "apps/*"
-    ],
-    "nohoist": [
-      "konbini-dashboard/**",
-      "konbini-dashboard/**/**",
-      "konbini-website/pinia",
-      "konbini-website/@pinia/nuxt",
-      "konbini-website/@pinia-plugin-persistedstate",
-      "**/sharp",
-      "**/sharp/**"
-    ]
-  },
   "devDependencies": {
     "turbo": "latest"
   },
-  "resolutions": {
-    "pinia": "2.3.1"
+  "pnpm": {
+    "overrides": {
+      "pinia": "2.3.1"
+    }
   }
 }

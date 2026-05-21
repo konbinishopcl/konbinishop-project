@@ -158,7 +158,10 @@ const regionsData: { region: string; communes: string[] }[] = [
 async function main() {
   console.log('🌱 Seeding konbini-nest-api...');
 
-  // ── Limpieza (orden FK-safe; los componentes de Event caen por cascade) ──
+  // ── Limpieza (orden FK-safe) ──
+  await prisma.orderItem.deleteMany();
+  await prisma.order.deleteMany();
+  await prisma.subscriber.deleteMany();
   await prisma.event.deleteMany();
   await prisma.article.deleteMany();
   await prisma.hero.deleteMany();

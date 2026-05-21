@@ -347,91 +347,257 @@ async function main() {
   });
 
   // ── Eventos (con componentes) ──
-  await prisma.event.create({
-    data: {
+  // Imágenes alojadas en la API: apps/api/uploads/poster-N.jpg y banner-N.jpg,
+  // servidas en /uploads/. El campo del evento guarda la ruta relativa.
+  const catId: Record<string, number> = {
+    musica: musica.id,
+    teatro: teatro.id,
+    gastronomia: gastronomia.id,
+    anime: animeManga.id,
+    videojuegos: videojuegos.id,
+  };
+
+  type SeedEvent = {
+    title: string;
+    company: string;
+    description: string;
+    about?: string;
+    expirationDate: string;
+    address: string;
+    addressNumber: string;
+    ticketUrl?: string;
+    cats: string[];
+    regionSlug: string;
+    communeSlug: string;
+    approved: boolean;
+    prices: { name: string; price: number }[];
+    dates: { date: string; startTime: string; endTime: string }[];
+    socials?: string[];
+    videos?: string[];
+    img: number; // índice de /uploads/poster-N.jpg y /uploads/banner-N.jpg
+  };
+
+  const eventsData: SeedEvent[] = [
+    {
       title: 'Konbini Live Fest',
       company: 'Konbini Producciones',
-      slug: 'konbini-live-fest',
-      description: 'Festival de bandas indie y rock nacional.',
-      about: 'Una jornada completa con más de diez bandas en dos escenarios.',
-      expirationDate: new Date('2026-11-15'),
-      address: 'Av. Matta',
-      addressNumber: '890',
-      ticketUrl: 'https://konbini.cl/tickets/konbini-live-fest',
-      banner: 'https://placehold.co/1200x400/png',
-      poster: 'https://placehold.co/600x900/png',
-      gallery: ['https://placehold.co/800x600/png', 'https://placehold.co/800x600/png'],
-      isApproved: true,
-      isRejected: false,
-      userId: organizer.id,
-      approvedById: admin.id,
-      regionId: region('region-metropolitana-de-santiago').id,
-      communeId: commune('santiago').id,
-      categories: { connect: [{ id: musica.id }] },
-      prices: {
-        create: [
-          { name: 'Entrada general', price: 15000 },
-          { name: 'Entrada VIP', price: 35000 },
-        ],
-      },
-      dates: {
-        create: [{ date: new Date('2026-11-14'), startTime: '18:00', endTime: '23:30' }],
-      },
-      socialLinks: { create: [{ link: 'https://instagram.com/konbinilivefest' }] },
-      videos: { create: [{ link: 'https://youtube.com/watch?v=konbini-live' }] },
+      description: 'Festival de bandas indie y rock nacional con dos escenarios.',
+      about: 'Una jornada completa con más de diez bandas en vivo.',
+      expirationDate: '2026-11-15',
+      address: 'Av. Matta', addressNumber: '890',
+      ticketUrl: 'https://entradas.example.cl/konbini-live-fest',
+      cats: ['musica'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'santiago',
+      approved: true, img: 1,
+      prices: [
+        { name: 'Entrada general', price: 15000 },
+        { name: 'Entrada VIP', price: 35000 },
+      ],
+      dates: [{ date: '2026-11-14', startTime: '18:00', endTime: '23:30' }],
+      socials: ['https://instagram.com/konbinilivefest'],
+      videos: ['https://youtube.com/watch?v=konbini-live'],
     },
-  });
-
-  await prisma.event.create({
-    data: {
+    {
       title: 'Expo Anime Concepción',
       company: 'Otaku Sur SpA',
-      slug: 'expo-anime-concepcion',
       description: 'Convención de anime, manga y videojuegos en el Biobío.',
       about: 'Concursos de cosplay, zona gamer y artistas invitados.',
-      expirationDate: new Date('2026-10-20'),
-      address: 'Barros Arana',
-      addressNumber: '321',
-      ticketUrl: 'https://konbini.cl/tickets/expo-anime-concepcion',
-      banner: 'https://placehold.co/1200x400/png',
-      gallery: [],
-      isApproved: true,
-      isRejected: false,
-      userId: organizer.id,
-      approvedById: admin.id,
-      regionId: region('region-del-biobio').id,
-      communeId: commune('concepcion').id,
-      categories: { connect: [{ id: animeManga.id }, { id: videojuegos.id }] },
-      prices: { create: [{ name: 'Entrada por día', price: 8000 }] },
-      dates: {
-        create: [
-          { date: new Date('2026-10-18'), startTime: '10:00', endTime: '20:00' },
-          { date: new Date('2026-10-19'), startTime: '10:00', endTime: '20:00' },
-        ],
-      },
-      socialLinks: { create: [{ link: 'https://instagram.com/expoanimeccp' }] },
+      expirationDate: '2026-10-20',
+      address: 'Barros Arana', addressNumber: '321',
+      ticketUrl: 'https://entradas.example.cl/expo-anime-concepcion',
+      cats: ['anime', 'videojuegos'], regionSlug: 'region-del-biobio', communeSlug: 'concepcion',
+      approved: true, img: 2,
+      prices: [{ name: 'Entrada por día', price: 8000 }],
+      dates: [
+        { date: '2026-10-18', startTime: '10:00', endTime: '20:00' },
+        { date: '2026-10-19', startTime: '10:00', endTime: '20:00' },
+      ],
+      socials: ['https://instagram.com/expoanimeccp'],
     },
-  });
+    {
+      title: 'Festival J-Rock Santiago',
+      company: 'Rising Sun Live',
+      description: 'Lo mejor del rock japonés en una noche con bandas invitadas.',
+      about: 'Tributo y bandas originales de J-Rock y visual kei.',
+      expirationDate: '2026-09-13',
+      address: 'Av. Providencia', addressNumber: '2594',
+      ticketUrl: 'https://entradas.example.cl/festival-j-rock-santiago',
+      cats: ['musica'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'providencia',
+      approved: true, img: 3,
+      prices: [{ name: 'Entrada general', price: 22000 }],
+      dates: [{ date: '2026-09-12', startTime: '19:00', endTime: '23:00' }],
+      socials: ['https://instagram.com/jrockstgo'],
+    },
+    {
+      title: 'Convención Cosplay Valparaíso',
+      company: 'Puerto Geek',
+      description: 'Concurso de cosplay, talleres y feria de artistas en el puerto.',
+      about: 'Pasarela principal, jueces invitados y zona de fotografía.',
+      expirationDate: '2026-08-23',
+      address: 'Plaza Sotomayor', addressNumber: '233',
+      ticketUrl: 'https://entradas.example.cl/convencion-cosplay-valparaiso',
+      cats: ['anime'], regionSlug: 'valparaiso', communeSlug: 'valparaiso',
+      approved: true, img: 4,
+      prices: [
+        { name: 'Entrada general', price: 12000 },
+        { name: 'Pase día completo', price: 18000 },
+      ],
+      dates: [{ date: '2026-08-22', startTime: '11:00', endTime: '21:00' }],
+      socials: ['https://instagram.com/puertogeek'],
+    },
+    {
+      title: 'eSports Konbini Cup',
+      company: 'Konbini Gaming',
+      description: 'Torneo de eSports con competencias de varios títulos.',
+      about: 'Fase de grupos, playoffs y gran final con premios.',
+      expirationDate: '2026-07-27',
+      address: 'Av. Apoquindo', addressNumber: '4500',
+      ticketUrl: 'https://entradas.example.cl/esports-konbini-cup',
+      cats: ['videojuegos'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'las-condes',
+      approved: true, img: 5,
+      prices: [{ name: 'Entrada general', price: 10000 }],
+      dates: [
+        { date: '2026-07-25', startTime: '09:00', endTime: '22:00' },
+        { date: '2026-07-26', startTime: '09:00', endTime: '22:00' },
+      ],
+      socials: ['https://instagram.com/konbinigaming'],
+    },
+    {
+      title: 'Anime Sinfónico en Vivo',
+      company: 'Orquesta Geek',
+      description: 'Las bandas sonoras del anime interpretadas por orquesta.',
+      about: 'Un repertorio de clásicos del anime con orquesta completa.',
+      expirationDate: '2026-10-04',
+      address: 'Av. Matucana', addressNumber: '100',
+      ticketUrl: 'https://entradas.example.cl/anime-sinfonico-en-vivo',
+      cats: ['musica', 'teatro'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'santiago',
+      approved: true, img: 6,
+      prices: [
+        { name: 'Platea', price: 28000 },
+        { name: 'Palco', price: 45000 },
+      ],
+      dates: [{ date: '2026-10-03', startTime: '20:00', endTime: '22:30' }],
+      socials: ['https://instagram.com/orquestageek'],
+    },
+    {
+      title: 'Maratón de Cine Animado',
+      company: 'Cine Club Otaku',
+      description: 'Una jornada de proyecciones de cine animado en pantalla grande.',
+      about: 'Selección de películas animadas con foro entre funciones.',
+      expirationDate: '2026-09-28',
+      address: 'Av. San Martín', addressNumber: '880',
+      ticketUrl: 'https://entradas.example.cl/maraton-de-cine-animado',
+      cats: ['teatro'], regionSlug: 'valparaiso', communeSlug: 'vina-del-mar',
+      approved: true, img: 7,
+      prices: [{ name: 'Entrada', price: 6000 }],
+      dates: [{ date: '2026-09-27', startTime: '14:00', endTime: '23:00' }],
+    },
+    {
+      title: 'Expo Manga Antofagasta',
+      company: 'Norte Otaku',
+      description: 'Feria del manga con editoriales, autores y firma de ejemplares.',
+      about: 'Stands de editoriales, charlas y zona de ilustradores.',
+      expirationDate: '2026-11-08',
+      address: 'Av. Argentina', addressNumber: '1962',
+      ticketUrl: 'https://entradas.example.cl/expo-manga-antofagasta',
+      cats: ['anime'], regionSlug: 'antofagasta', communeSlug: 'antofagasta',
+      approved: true, img: 8,
+      prices: [{ name: 'Entrada por día', price: 7000 }],
+      dates: [{ date: '2026-11-07', startTime: '10:00', endTime: '19:00' }],
+      socials: ['https://instagram.com/norteotaku'],
+    },
+    {
+      title: 'Feria Retro Gaming',
+      company: 'Pixel Club',
+      description: 'Consolas clásicas, arcades y venta de videojuegos retro.',
+      about: 'Zona de arcades libres, torneos casuales y feria de coleccionismo.',
+      expirationDate: '2026-08-10',
+      address: 'Av. Irarrázaval', addressNumber: '3700',
+      ticketUrl: 'https://entradas.example.cl/feria-retro-gaming',
+      cats: ['videojuegos'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'nunoa',
+      approved: true, img: 9,
+      prices: [{ name: 'Entrada general', price: 5000 }],
+      dates: [{ date: '2026-08-09', startTime: '12:00', endTime: '20:00' }],
+    },
+    {
+      title: 'Mercado Geek Gastronómico',
+      company: 'Sabores Otaku',
+      description: 'Food trucks de cocina japonesa y feria geek al aire libre.',
+      about: 'Cocina temática, food trucks y stands de artistas.',
+      expirationDate: '2026-12-07',
+      address: 'Parque Bustamante', addressNumber: 's/n',
+      cats: ['gastronomia', 'anime'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'santiago',
+      approved: true, img: 10,
+      prices: [{ name: 'Acceso liberado', price: 0 }],
+      dates: [{ date: '2026-12-06', startTime: '12:00', endTime: '22:00' }],
+    },
+    {
+      title: 'Teatro Kabuki Contemporáneo',
+      company: 'Compañía Hanami',
+      description: 'Una puesta en escena que reinterpreta el teatro kabuki.',
+      about: 'Vestuario tradicional y narrativa contemporánea.',
+      expirationDate: '2026-09-20',
+      address: 'Av. Francisco de Aguirre', addressNumber: '210',
+      ticketUrl: 'https://entradas.example.cl/teatro-kabuki-contemporaneo',
+      cats: ['teatro'], regionSlug: 'coquimbo', communeSlug: 'la-serena',
+      approved: true, img: 11,
+      prices: [{ name: 'Entrada general', price: 14000 }],
+      dates: [{ date: '2026-09-19', startTime: '20:00', endTime: '22:00' }],
+    },
+    {
+      title: 'Encuentro Otaku Temuco',
+      company: 'Sur Geek',
+      description: 'Encuentro de la comunidad otaku del sur con feria y concursos.',
+      about: 'Concurso de cosplay, karaoke japonés y feria de fanzines.',
+      expirationDate: '2026-11-22',
+      address: 'Av. Alemania', addressNumber: '0671',
+      ticketUrl: 'https://entradas.example.cl/encuentro-otaku-temuco',
+      cats: ['anime'], regionSlug: 'region-de-la-araucania', communeSlug: 'temuco',
+      approved: false, img: 12,
+      prices: [{ name: 'Entrada general', price: 6000 }],
+      dates: [{ date: '2026-11-21', startTime: '11:00', endTime: '20:00' }],
+      socials: ['https://instagram.com/surgeek'],
+    },
+  ];
 
-  await prisma.event.create({
-    data: {
-      title: 'Feria Gastronómica Providencia',
-      company: 'Sabores Locales',
-      slug: 'feria-gastronomica-providencia',
-      description: 'Food trucks y cocina de autor al aire libre.',
-      address: 'Av. Providencia',
-      addressNumber: '2020',
-      gallery: [],
-      isApproved: false,
-      isRejected: false,
-      userId: organizer.id,
-      regionId: region('region-metropolitana-de-santiago').id,
-      communeId: commune('providencia').id,
-      categories: { connect: [{ id: gastronomia.id }] },
-      prices: { create: [{ name: 'Acceso liberado', price: 0 }] },
-      dates: { create: [{ date: new Date('2026-12-06'), startTime: '12:00', endTime: '22:00' }] },
-    },
-  });
+  for (const ev of eventsData) {
+    await prisma.event.create({
+      data: {
+        title: ev.title,
+        company: ev.company,
+        slug: slugify(ev.title),
+        description: ev.description,
+        about: ev.about,
+        expirationDate: new Date(ev.expirationDate),
+        address: ev.address,
+        addressNumber: ev.addressNumber,
+        ticketUrl: ev.ticketUrl,
+        banner: `/uploads/banner-${ev.img}.jpg`,
+        poster: `/uploads/poster-${ev.img}.jpg`,
+        gallery: [`/uploads/poster-${ev.img}.jpg`, `/uploads/banner-${ev.img}.jpg`],
+        isApproved: ev.approved,
+        isRejected: false,
+        userId: organizer.id,
+        approvedById: ev.approved ? admin.id : null,
+        regionId: region(ev.regionSlug).id,
+        communeId: commune(ev.communeSlug).id,
+        categories: { connect: ev.cats.map((c) => ({ id: catId[c] })) },
+        prices: { create: ev.prices },
+        dates: {
+          create: ev.dates.map((d) => ({
+            date: new Date(d.date),
+            startTime: d.startTime,
+            endTime: d.endTime,
+          })),
+        },
+        socialLinks: ev.socials?.length
+          ? { create: ev.socials.map((l) => ({ link: l })) }
+          : undefined,
+        videos: ev.videos?.length
+          ? { create: ev.videos.map((l) => ({ link: l })) }
+          : undefined,
+      },
+    });
+  }
 
   // ── Conteo final ──
   const counts = {

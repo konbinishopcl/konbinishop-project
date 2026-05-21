@@ -1,9 +1,6 @@
 // Cliente HTTP de la API de Konbini.
 import type { EventItem, Role, User } from "./data";
 
-// Imágenes /uploads: URL pública del backend (visible en cliente, no es un secreto).
-const API_ORIGIN = process.env.NEXT_PUBLIC_API_ORIGIN || "http://localhost:3333";
-
 // En servidor: llama al backend directamente con la API key (process.env no-público).
 // En cliente: llama al proxy Next.js /api/[...path] que agrega la key server-side.
 function apiBase(): string {
@@ -40,11 +37,11 @@ async function request<T>(path: string, options: RequestInit = {}, token?: strin
   return data as T;
 }
 
-/** Antepone el origen de la API a las rutas de imagen relativas (`/uploads/...`). */
+/** Rutas de imagen pasan por el proxy interno /api/media/ con cache inmutable. */
 export function imageUrl(path?: string | null): string {
   if (!path) return "";
   if (path.startsWith("http")) return path;
-  return `${API_ORIGIN}${path}`;
+  return `/api/media${path}`;
 }
 
 /** Builds the href for a spot link, depending on its link type. */

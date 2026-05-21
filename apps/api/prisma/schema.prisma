@@ -70,6 +70,7 @@ model Article {
   image     String? // URL de imagen (Strapi media)
   tags      Tag[]
   events    Event[]
+  likes     Like[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -195,6 +196,7 @@ model Event {
   socialLinks EventSocialLink[]
   videos      EventVideo[]
   orderItems  OrderItem[]
+  likes       Like[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -335,7 +337,28 @@ model User {
   spots          Spot[]  @relation("SpotOwner")
   heroes         Hero[]  @relation("HeroOwner")
   orders         Order[]
+  likes          Like[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ───────────────────────────── Likes ─────────────────────────────
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+
+  event     Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   Int?
+  article   Article? @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  articleId Int?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@unique([userId, articleId])
+  @@index([eventId])
+  @@index([articleId])
 }

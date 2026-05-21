@@ -21,11 +21,15 @@ import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
+import { LikesService } from '../likes/likes.service';
 
 @ApiTags('events')
 @Controller('events')
 export class EventsController {
-  constructor(private readonly events: EventsService) {}
+  constructor(
+    private readonly events: EventsService,
+    private readonly likes: LikesService,
+  ) {}
 
   // ── Lectura ──
 
@@ -106,5 +110,23 @@ export class EventsController {
     @CurrentUser() user: JwtUser,
   ) {
     return this.events.reject(id, dto.reason, user);
+  }
+
+  // ── Likes ──
+
+  @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Dar like a un evento' })
+  like(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
+    return this.likes.like('event', id, user);
+  }
+
+  @Delete(':id/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Quitar like de un evento' })
+  unlike(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
+    return this.likes.unlike('event', id, user);
   }
 }

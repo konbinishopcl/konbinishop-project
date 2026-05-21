@@ -13,7 +13,7 @@ function slugify(text: string): string {
     .replace(/\s+/g, '-');
 }
 
-const ARTICLE_INCLUDE = { tags: true } as const;
+const ARTICLE_INCLUDE = { tags: true, _count: { select: { likes: true } } } as const;
 
 @Injectable()
 export class ArticlesService {

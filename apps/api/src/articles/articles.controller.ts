@@ -6,11 +6,16 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
+import { LikesService } from '../likes/likes.service';
 
 @ApiTags('articles')
 @Controller('articles')
 export class ArticlesController {
-  constructor(private readonly articles: ArticlesService) {}
+  constructor(
+    private readonly articles: ArticlesService,
+    private readonly likes: LikesService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar artículos' })
@@ -49,5 +54,23 @@ export class ArticlesController {
   @ApiOperation({ summary: 'Eliminar un artículo (ADMIN+)' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.articles.remove(id);
+  }
+
+  // ── Likes ──
+
+  @Post(':id/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Dar like a un artículo' })
+  like(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
+    return this.likes.like('article', id, user);
+  }
+
+  @Delete(':id/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Quitar like de un artículo' })
+  unlike(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
+    return this.likes.unlike('article', id, user);
   }
 }

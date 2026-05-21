@@ -26,6 +26,7 @@ const EVENT_INCLUDE = {
   dates: true,
   socialLinks: true,
   videos: true,
+  _count: { select: { likes: true } },
 } satisfies Prisma.EventInclude;
 
 // Para vistas de admin: además del contenido, el organizador.

@@ -1,39 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(yarn -v)",
-      "Bash(wsl -e bash -lc 'cd /home/gab/Code/konbini-project && which yarn node && node -v')",
-      "Bash(wsl -e bash -lc 'cd /home/gab/Code/konbini-project && yarn install 2>&1 | tail -20')",
-      "Bash(wsl -e bash -lc 'cd /home/gab/Code/konbini-project && ls node_modules/@nestjs | head && echo \"---prisma client---\" && ls node_modules/.prisma/client 2>/dev/null | head && echo \"---build---\" && yarn workspace konbini-nest-api build 2>&1 | tail -15')",
-      "Bash(wsl -e bash -lc 'cd /home/gab/Code/konbini-project && yarn workspace konbini-nest-api prisma:generate 2>&1 | tail -15')",
-      "Bash(wsl -e bash -lc 'cd /home/gab/Code/konbini-project && yarn install 2>&1 | tail -4 && echo \"===build===\" && yarn workspace konbini-nest-api build 2>&1 | tail -4')",
-      "Bash(wsl -e bash -lc 'cd /home/gab/Code/konbini-project/apps/api && find . -type f -not -path \"./node_modules/*\" -not -path \"./dist/*\" | sort')",
-      "Bash(wsl -e bash -lc 'echo \"=== psql ===\"; which psql && psql --version; echo \"=== service ===\"; service postgresql status 2>&1 | head -5; echo \"=== pg_lsclusters ===\"; pg_lsclusters 2>&1; echo \"=== listening ===\"; \\(ss -ltnp 2>/dev/null || netstat -ltn 2>/dev/null\\) | grep -E \"5432|postgres\" ')",
-      "Bash(wsl -e bash -lc 'echo \"=== roles ===\"; sudo -n -u postgres psql -tAc \"SELECT rolname, rolsuper FROM pg_roles ORDER BY 1;\" 2>&1; echo \"=== databases ===\"; sudo -n -u postgres psql -tAc \"SELECT datname FROM pg_database WHERE datistemplate=false ORDER BY 1;\" 2>&1; echo \"=== current user ===\"; whoami')",
-      "Bash(wsl -e bash -lc 'sudo -n cat /etc/postgresql/16/main/pg_hba.conf 2>&1 | grep -vE \"^\\\\s*#\" | grep -vE \"^\\\\s*$\"')",
-      "Bash(wsl -e *)",
-      "Read(///wsl.localhost/Ubuntu/home/gab/**)",
-      "Read(///wsl.localhost/Ubuntu/home/gab/.claude/**)",
-      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/website/**)",
-      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/**)",
-      "Bash(find \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\website\\\\app\\\\dashboard\" -type f -name \"page.tsx\")",
-      "Bash(find \"\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\website\\\\app\\\\dashboard\" -type f -name \"layout.tsx\")",
-      "Bash(ssh -T git@github.com)",
-      "Read(//c/Users/hola/.ssh/**)",
-      "Bash(ssh-add -l)",
-      "Bash(ssh -vT git@github.com)",
-      "Bash(wsl -d Ubuntu -- bash -lc 'ls -la ~/.ssh 2>&1; echo \"--- wsl agent ---\"; ssh-add -l 2>&1; echo \"--- wsl test ---\"; ssh -T git@github.com 2>&1')",
-      "Bash(wsl -d Ubuntu -u gab -- bash -lc 'whoami; ls -la ~/.ssh 2>&1; echo \"--- gab test ---\"; ssh -T git@github.com 2>&1; echo \"--- repo remote ---\"; cd /home/gab/Code/konbini-project && git remote -v && git config --get core.sshCommand')",
-      "Bash(grep -n \"placehold\\\\|hero\\\\|Hero\" \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\\\\prisma\\\\seed.ts\")",
-      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/api/prisma/**)",
-      "Bash(ls -la \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\\\\uploads\" | head -40)",
-      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/api/**)",
-      "Bash(cd \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\\\\uploads\" && \\\\ *)",
-      "Bash(cd \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\" && cat src/heroes/heroes.service.ts && echo \"===SPOTS SERVICE===\" && cat src/spots/spots.service.ts)",
-      "Read(///wsl.localhost/Ubuntu/home/gab/Code/konbini-project/apps/**)",
-      "Bash(cd \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\" && echo \"===.env===\" && grep -nE \"SPOT_|HERO_\" .env && echo \"===.env.example===\" && grep -nE \"SPOT_|HERO_\" .env.example && echo \"===create-spot.dto===\" && cat src/spots/dto/create-spot.dto.ts)",
-      "Bash(sed -n '8,14p' .env)",
-      "Bash(cd \"\\\\\\\\\\\\\\\\wsl.localhost\\\\Ubuntu\\\\home\\\\gab\\\\Code\\\\konbini-project\\\\apps\\\\api\" && cat src/spots/spots.module.ts && echo \"===APP MODULE ConfigModule===\" && grep -n \"ConfigModule\" src/app.module.ts)"
+      "Bash(*)",
+      "Read(*)",
+      "Edit(*)",
+      "Write(*)"
     ]
   }
 }

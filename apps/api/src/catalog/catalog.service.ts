@@ -33,15 +33,6 @@ export class CatalogService {
     });
   }
 
-  /** Solo spots vigentes (sin fecha de expiración o futura). */
-  spots() {
-    const now = new Date();
-    return this.prisma.spot.findMany({
-      where: { OR: [{ expirationDate: null }, { expirationDate: { gte: now } }] },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
   articles() {
     return this.prisma.article.findMany({
       include: { tags: true },

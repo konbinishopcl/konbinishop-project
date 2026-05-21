@@ -302,15 +302,6 @@ async function main() {
     },
   });
 
-  // ── Spots (publicidad) ──
-  await prisma.spot.createMany({
-    data: [
-      { title: 'Banner promocional verano', image: 'https://placehold.co/600x300/png', link: 'https://konbini.cl/promos/verano', expirationDate: new Date('2026-12-31') },
-      { title: 'Spot patrocinador música', image: 'https://placehold.co/600x300/png', link: 'https://konbini.cl/promos/musica', expirationDate: new Date('2026-11-30') },
-      { title: 'Spot convención gamer', image: 'https://placehold.co/600x300/png', link: 'https://konbini.cl/promos/gamer', expirationDate: new Date('2026-10-31') },
-    ],
-  });
-
   // ── Usuarios (sistema local; un usuario por cada rol) ──
   const passwordHash = await hash('konbini123', 10);
   await prisma.user.create({
@@ -344,6 +335,34 @@ async function main() {
       role: 'AUTHENTICATED',
       confirmed: true,
     },
+  });
+
+  // ── Spots: paid ads shown among the event cards (created after the owner user) ──
+  await prisma.spot.createMany({
+    data: [
+      {
+        title: 'Arrienda tu local para eventos',
+        image: 'https://placehold.co/600x300/png',
+        linkType: 'URL',
+        linkValue: 'https://example.cl/arriendo-de-locales',
+        expirationDate: new Date('2026-12-31'),
+        userId: organizer.id,
+      },
+      {
+        title: 'Sonido e iluminación — llámanos',
+        linkType: 'PHONE',
+        linkValue: '+56912345678',
+        expirationDate: new Date('2026-11-30'),
+        userId: organizer.id,
+      },
+      {
+        title: 'Cotiza tu stand para convenciones',
+        image: 'https://placehold.co/600x300/png',
+        linkType: 'EMAIL',
+        linkValue: 'ventas@example.cl',
+        userId: organizer.id,
+      },
+    ],
   });
 
   // ── Eventos (con componentes) ──

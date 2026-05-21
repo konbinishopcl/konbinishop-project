@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { EventsModule } from './events/events.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { SpotsModule } from './spots/spots.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UploadsModule } from './uploads/uploads.module';
     EventsModule,
     CatalogModule,
     UploadsModule,
+    SpotsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

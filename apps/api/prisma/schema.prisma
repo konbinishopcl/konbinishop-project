@@ -101,14 +101,30 @@ model Hero {
   @@index([communeId])
 }
 
+// A paid ad shown among the event cards. No detail view: it is an image and/or a
+// title, and its link points to a URL, a phone number or an email.
+enum SpotLinkType {
+  URL
+  PHONE
+  EMAIL
+}
+
 model Spot {
-  id             Int       @id @default(autoincrement())
-  title          String?
+  id             Int          @id @default(autoincrement())
+  title          String
   image          String? // URL
-  link           String?
-  expirationDate DateTime? @db.Date
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  linkType       SpotLinkType
+  linkValue      String // a URL, a phone number or an email, per linkType
+  expirationDate DateTime?    @db.Date
+
+  // Owner — any authenticated user can create a spot.
+  owner  User @relation("SpotOwner", fields: [userId], references: [id])
+  userId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Event {
@@ -234,6 +250,7 @@ model User {
   events         Event[] @relation("EventOwner")
   approvedEvents Event[] @relation("EventApprover")
   rejectedEvents Event[] @relation("EventRejecter")
+  spots          Spot[]  @relation("SpotOwner")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -39,12 +39,6 @@ export class CatalogController {
     return this.catalog.heroes();
   }
 
-  @Get('spots')
-  @ApiOperation({ summary: 'Listar spots publicitarios vigentes' })
-  spots() {
-    return this.catalog.spots();
-  }
-
   @Get('articles')
   @ApiOperation({ summary: 'Listar artículos' })
   articles() {

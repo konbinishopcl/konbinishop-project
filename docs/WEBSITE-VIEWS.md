@@ -329,6 +329,22 @@ También puede crear avisos y heroes de forma independiente desde `/cuenta`, sin
 - Los eventos usan `slug` único generado desde el título.
 - Los perfiles públicos usan `slug` generado desde el nombre del usuario.
 
+### URLs externas — Spots y Heroes
+
+Todos los enlaces de destino de **spots** (`spot.url`) y **heroes** (`hero.url`) son URLs externas y deben abrirse siempre con `target="_blank" rel="noopener noreferrer"`.
+
+Además, antes de redirigir se deben inyectar parámetros UTM para trazabilidad:
+
+| Parámetro     | Valor fijo                                     |
+| ------------- | ---------------------------------------------- |
+| `utm_source`  | `konbini`                                      |
+| `utm_medium`  | `spot` o `hero` según el tipo                  |
+| `utm_campaign`| slug del spot/hero o su `id` si no tiene slug  |
+
+Ejemplo de URL final: `https://anunciante.com?utm_source=konbini&utm_medium=spot&utm_campaign=zapatillas-running`
+
+La construcción se hace en el cliente antes del redirect; no se almacena en la base de datos.
+
 ## APIs por sección
 
 ### Home

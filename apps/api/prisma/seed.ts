@@ -592,7 +592,7 @@ async function main() {
         approvedById: ev.approved ? admin.id : null,
         regionId: region(ev.regionSlug).id,
         communeId: commune(ev.communeSlug).id,
-        categories: { connect: ev.cats.map((c) => ({ id: catId[c] })) },
+        categoryId: catId[ev.cats[0]] ?? null,
         prices: { create: ev.prices },
         dates: {
           create: ev.dates.map((d) => ({

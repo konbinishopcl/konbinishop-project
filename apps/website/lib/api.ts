@@ -88,6 +88,12 @@ export type ApiEvent = {
   isApproved: boolean;
   isRejected: boolean;
   rejectedReason: string | null;
+  owner?: {
+    id: number;
+    firstname: string | null;
+    lastname: string | null;
+    email: string;
+  } | null;
   region: ApiRegion | null;
   commune: ApiCommune | null;
   categories: ApiCategory[];
@@ -156,6 +162,16 @@ export const api = {
   createEvent: (body: CreateEventInput, token: string) =>
     request<ApiEvent>("/events", { method: "POST", body: JSON.stringify(body) }, token),
   myEvents: (token: string) => request<ApiEvent[]>("/events/mine", {}, token),
+  adminEvents: (token: string, query: EventsQuery = {}) =>
+    request<ApiEventList>(`/events/admin${qs(query)}`, {}, token),
+  approveEvent: (id: number, token: string) =>
+    request<ApiEvent>(`/events/${id}/approve`, { method: "PATCH" }, token),
+  rejectEvent: (id: number, reason: string, token: string) =>
+    request<ApiEvent>(
+      `/events/${id}/reject`,
+      { method: "PATCH", body: JSON.stringify({ reason }) },
+      token,
+    ),
 
   // Subida de imagen (multipart) — el navegador fija el Content-Type con su boundary.
   uploadImage: async (file: File, token: string): Promise<{ url: string; filename: string }> => {

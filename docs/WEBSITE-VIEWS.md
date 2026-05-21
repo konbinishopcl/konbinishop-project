@@ -51,7 +51,7 @@ Sección con frase vendedora, campo de email y botón de suscripción.
 **5. Rails por categoría**
 Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al menos un evento en esa categoría.
 - Si una categoría no tiene eventos aprobados: se omite silenciosamente (no empty state por categoría)
-- El link "Ver todos" apunta a `/categoria/:slug`
+- El link "Ver todos" apunta a `/[category]` (ej. `/musica`)
 
 > **No modificar:** Esta sección ya está implementada y funciona correctamente. El botón "Ver todos" de cada rail está presente e intencional.
 
@@ -68,10 +68,24 @@ Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al meno
 
 ---
 
-### `/evento/[slug]` — Detalle de evento
-**Server component.** Fetcha el evento por slug. `notFound()` si no existe o no está aprobado.
+### `/[category]` — Eventos por categoría
+
+**Server component.** Fetcha categorías y eventos filtrados por slug de categoría. Ejemplo: `demo.com/musica`.
+
+> Las rutas estáticas del sitio (`/busqueda`, `/login`, `/registro`, `/cuenta`, `/crear`, `/carrito`, `/dashboard`, `/u`) tienen precedencia sobre este segmento dinámico en Next.js App Router.
+
+**Renderiza:** Nombre de categoría, contador de resultados, grilla de EventCards.
+
+**Pendiente:** Los chips de filtro (Hoy, Esta semana, etc.) y la barra de filtros (fecha, región, orden) son visuales — sin funcionalidad.
+
+---
+
+### `/[category]/[slug]` — Detalle de evento
+
+**Server component.** Fetcha el evento por slug. `notFound()` si no existe o no está aprobado. Ejemplo: `demo.com/musica/concierto-de-jazz`.
 
 **Renderiza:**
+
 - Imagen de fondo (banner o poster) con overlay
 - Categoría, empresa organizadora, título, fecha y lugar
 - Descripción y "about"
@@ -82,17 +96,10 @@ Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al meno
 - Links sociales y videos
 
 **Reglas:**
+
 - Solo eventos con `status: APPROVED` son accesibles públicamente
 - `ticketUrl` es externo — el botón redirige fuera del sitio
-
----
-
-### `/categoria/[cat]` — Eventos por categoría
-**Server component.** Fetcha categorías y eventos filtrados por slug de categoría.
-
-**Renderiza:** Nombre de categoría, contador de resultados, grilla de EventCards.
-
-**Pendiente:** Los chips de filtro (Hoy, Esta semana, etc.) y la barra de filtros (fecha, región, orden) son visuales — sin funcionalidad.
+- Si el evento tiene múltiples categorías, la URL usa la categoría principal (primera del array)
 
 ---
 
@@ -528,8 +535,8 @@ Página pública que muestra el perfil de un usuario con al menos un evento apro
 
 ### Flujo visitante
 1. Home → descubre eventos en el hero o en los rails
-2. `/categoria/[cat]` o `/busqueda` → filtra
-3. `/evento/[slug]` → detalle, fechas, precios, link de tickets
+2. `/[category]` o `/busqueda` → filtra
+3. `/[category]/[slug]` → detalle, fechas, precios, link de tickets
 
 ### Flujo admin
 1. Accede a `/dashboard` → ve cola de moderación

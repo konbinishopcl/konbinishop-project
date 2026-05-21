@@ -159,6 +159,7 @@ async function main() {
   console.log('🌱 Seeding konbini-nest-api...');
 
   // ── Limpieza (orden FK-safe) ──
+  await prisma.like.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.subscriber.deleteMany();
@@ -170,6 +171,7 @@ async function main() {
   await prisma.category.deleteMany();
   await prisma.tag.deleteMany();
   await prisma.region.deleteMany();
+  await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
   // ── Regiones + comunas (las 16 regiones de Chile) ──
@@ -614,6 +616,34 @@ async function main() {
     });
   }
 
+  // ── Perfiles ──
+  for (const u of [
+    { id: (await prisma.user.findUnique({ where: { email: 'superadmin@konbini.cl' }, select: { id: true } }))!.id, displayName: 'Super Admin', slug: 'superadmin' },
+    { id: (await prisma.user.findUnique({ where: { email: 'admin@konbini.cl' }, select: { id: true } }))!.id, displayName: 'Equipo Konbini', slug: 'equipo-konbini' },
+    { id: (await prisma.user.findUnique({ where: { email: 'organizador@konbini.cl' }, select: { id: true } }))!.id, displayName: 'Camila Rojas', slug: 'camila-rojas' },
+  ]) {
+    await prisma.profile.upsert({
+      where: { userId: u.id },
+      create: { userId: u.id, displayName: u.displayName, slug: u.slug },
+      update: {},
+    });
+  }
+
+  // ── Likes en eventos y artículos ──
+  const allEvents = await prisma.event.findMany({ select: { id: true }, take: 6 });
+  const allArticles = await prisma.article.findMany({ select: { id: true } });
+  const organizadorId = (await prisma.user.findUnique({ where: { email: 'organizador@konbini.cl' }, select: { id: true } }))!.id;
+  const adminId = (await prisma.user.findUnique({ where: { email: 'admin@konbini.cl' }, select: { id: true } }))!.id;
+  for (const ev of allEvents.slice(0, 4)) {
+    await prisma.like.createMany({ data: [{ userId: organizadorId, eventId: ev.id }, { userId: adminId, eventId: ev.id }], skipDuplicates: true });
+  }
+  for (const ev of allEvents.slice(4)) {
+    await prisma.like.createMany({ data: [{ userId: organizadorId, eventId: ev.id }], skipDuplicates: true });
+  }
+  for (const art of allArticles) {
+    await prisma.like.createMany({ data: [{ userId: organizadorId, articleId: art.id }], skipDuplicates: true });
+  }
+
   // ── Conteo final ──
   const counts = {
     regions: await prisma.region.count(),
@@ -625,6 +655,8 @@ async function main() {
     spots: await prisma.spot.count(),
     events: await prisma.event.count(),
     users: await prisma.user.count(),
+    profiles: await prisma.profile.count(),
+    likes: await prisma.like.count(),
   };
   console.log('✅ Seed completo:', counts);
 }

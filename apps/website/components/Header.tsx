@@ -50,7 +50,9 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
           </nav>
         </div>
         <div className="head-actions" style={{ position: "relative" }}>
-          <button className="icon-btn" title="Buscar">{Ic.search}</button>
+          <button className="icon-btn" title="Buscar" onClick={() => router.push("/busqueda")}>
+            {Ic.search}
+          </button>
           <button
             className="icon-btn"
             title="Tema"

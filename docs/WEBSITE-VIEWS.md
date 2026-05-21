@@ -162,7 +162,47 @@ Tras crear exitosamente el evento (respuesta 201 del `POST /events`), el website
 4. Si ninguno tiene cupo disponible: omitir la pantalla y redirigir directo al carrito.
 5. El usuario puede omitir el upsell con "Continuar sin publicitar" → va al carrito.
 
-> La pantalla es informativa: no realiza ninguna acción hasta que el usuario elige crear un aviso o un hero. Si lo hace, primero crea el recurso (`POST /spots` o `POST /heroes`) y luego agrega los ítems al carrito.
+> La pantalla es informativa: no realiza ninguna acción hasta que el usuario elige crear un aviso o un hero. Si lo hace, se muestra el formulario correspondiente (inline o modal), se crea el recurso en DRAFT (`POST /spots` o `POST /heroes`) y luego se agrega el ítem al carrito.
+
+---
+
+### Formulario de crear aviso (desde upsell)
+
+Formulario inline o modal que aparece al elegir "Crear aviso" en el upsell. No es una página separada.
+
+**Campos:**
+
+| Campo | Tipo | Requerido | Notas |
+| --- | --- | --- | --- |
+| `title` | texto | Sí | 2–120 caracteres |
+| `image` | upload | No | `POST /uploads` → URL |
+| `linkType` | enum | Sí | `URL`, `PHONE` o `EMAIL` |
+| `linkValue` | texto | Sí | URL, teléfono o email según `linkType` |
+
+**API:** `POST /spots` → devuelve el spot en `DRAFT`.
+
+**Pendiente:** La API no tiene targeting geográfico todavía. En una versión futura el formulario debería incluir selección de regiones y/o comunas donde el aviso se mostrará.
+
+---
+
+### Formulario de crear hero (desde upsell)
+
+Formulario inline o modal que aparece al elegir "Crear hero" en el upsell. No es una página separada.
+
+**Campos:**
+
+| Campo | Tipo | Requerido | Notas |
+| --- | --- | --- | --- |
+| `title` | texto | Sí | 2–120 caracteres |
+| `titleAccent` | texto | No | Parte resaltada del título (ej. año o palabra clave) |
+| `lead` | texto | No | Descripción corta, máx 240 caracteres |
+| `image` | upload | Sí | `POST /uploads` → URL. Se muestra como imagen de fondo full-width |
+| `date` | fecha | No | Fecha del evento asociado (formato ISO) |
+| `place` | texto | No | Lugar del evento, máx 120 caracteres |
+| `link` | URL | No | Destino al hacer clic en el hero |
+| `categoryId` | select | No | Categoría asociada (`GET /categories`) |
+
+**API:** `POST /heroes` → devuelve el hero en `DRAFT`.
 
 ---
 
@@ -376,6 +416,32 @@ Solo accesible para `SUPER_ADMIN`. Si el rol es `ADMIN`, muestra "Acceso restrin
 
 ---
 
+### `/dashboard/spots` — Avisos
+
+**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
+
+**Por implementar:**
+
+- `GET /spots` — lista todos los spots (cualquier estado).
+- Aprobar spot (`PATCH /spots/:id/approve`) → pasa a `APPROVED` y empieza a correr la expiración.
+- Rechazar spot con motivo.
+- `DELETE /spots/:id` — eliminar un spot.
+
+---
+
+### `/dashboard/heroes` — Heroes
+
+**No implementado** — PlaceholderView. Solo `ADMIN` y `SUPER_ADMIN`.
+
+**Por implementar:**
+
+- `GET /heroes` — lista todos los heroes (cualquier estado).
+- Aprobar hero (`PATCH /heroes/:id/approve`) → pasa a `APPROVED` y aparece en el carrusel de la home.
+- Rechazar hero con motivo.
+- `DELETE /heroes/:id` — eliminar un hero.
+
+---
+
 ### `/dashboard/payments` — Pagos
 **No implementado** — PlaceholderView.
 
@@ -432,7 +498,7 @@ Página pública que muestra el perfil de un usuario con al menos un evento apro
 
 ### Flujo organizador
 1. `/registro` → crea cuenta + perfil vacío (automático en API)
-2. `/crear` → crea evento en `DRAFT` (opcionalmente también crea spot y/o hero en `DRAFT`)
+2. `/crear` → crea evento en `DRAFT`
 3. Upsell post-wizard → ofrece agregar spot/hero si hay cupo
 4. `/carrito` → agrega ítems, elige días, revisa total → paga con Transbank
 5. Transbank confirma → ítems pasan a `PENDING_MODERATION`

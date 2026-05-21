@@ -64,7 +64,7 @@ Hasta 6 eventos por categoría (landscape cards). Solo se muestra si hay al meno
 
 - `GET /events?pageSize=12&sortBy=likes` — devuelve los 12 más likeados
 - `GET /users/recent` — público, devuelve últimos 10 usuarios: `{ id, firstname, lastname, profile: { avatar } }`
-- `POST /newsletter/subscribe` — `{ email }`, sin auth requerida
+- `POST /subscribers` — `{ email }`, sin auth requerida
 
 ---
 

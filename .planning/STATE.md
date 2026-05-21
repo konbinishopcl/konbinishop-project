@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1
 milestone_name: "Publicación gratuita de eventos"
 status: in_progress
-last_updated: "2026-05-21T05:30:00.000Z"
+last_updated: "2026-05-21T06:00:00.000Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 14
+  completed_plans: 14
 ---
 
 # Project State
@@ -24,9 +24,9 @@ administrador quedan visibles al público.
 ## Current Status
 
 **Milestone:** v1 — Publicación gratuita de eventos
-**Active Phase:** Phase 5 — Búsqueda (pendiente — por planear)
-**Overall Progress:** [██████░] Phases 0–4 completas
-**Last session:** 2026-05-21 — Phase 4 cerrada (plan 04-02: dashboard overview con datos reales)
+**Active Phase:** Phase 5 — Búsqueda (en progreso — 1/2 planes)
+**Overall Progress:** [██████░] Phases 0–4 completas · Phase 5 en curso
+**Last session:** 2026-05-21 — Phase 5 plan 05-01: página /busqueda (texto + categoría + región)
 
 ## Phase Summary
 
@@ -37,7 +37,7 @@ administrador quedan visibles al público.
 | 2 | Sitio público con datos reales | ✅ Complete | 4/4 |
 | 3 | Publicación de eventos | ✅ Complete | 3/3 |
 | 4 | Moderación y panel admin | ✅ Complete | 2/2 |
-| 5 | Búsqueda | ○ Pending | 0/? |
+| 5 | Búsqueda | ◑ In Progress | 1/2 |
 | 6 | Hardening para producción | ○ Pending | 0/? |
 
 ## Decisions
@@ -74,8 +74,9 @@ administrador quedan visibles al público.
 
 ## Next Action
 
-**Phase 5 — Búsqueda**: búsqueda de eventos con filtros (`/busqueda`). Las vistas admin se
-conservan todas; `/dashboard/users` queda diferido hasta que exista un diseño.
+Continuar **Phase 5** con el plan **05-02**: filtro por rango de fechas — agregar
+`desde`/`hasta` al `QueryEventsDto` y al servicio de la API, y los inputs de fecha en
+`/busqueda`. Con eso cierra Phase 5.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

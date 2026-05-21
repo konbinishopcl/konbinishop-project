@@ -14,9 +14,9 @@
 |---|---|
 | Visitante | Todo el sitio público |
 | Registrado | Lo anterior + `/cuenta`, `/crear`, `/carrito` |
-| Admin / Super Admin | Lo anterior + `/dashboard` |
+| Admin / Super Admin | Lo anterior + `/cuenta` (igual que cualquier registrado) + `/dashboard` |
 
-> `/cuenta` es para **todos** los usuarios registrados, incluyendo admins. Es donde cualquier usuario gestiona su perfil personal.
+> **`/cuenta` y `/dashboard` son vistas distintas.** `/cuenta` es el panel personal de cualquier usuario registrado (editar perfil, mis eventos, mis avisos, mis heroes). `/dashboard` es la herramienta de moderación exclusiva de admins. Un admin usa ambas: `/dashboard` para moderar, `/cuenta` para gestionar su propio contenido.
 
 ---
 
@@ -217,6 +217,8 @@ Formulario con "Nueva contraseña" y "Confirmar contraseña".
 ---
 
 ## Dashboard — Solo administradores
+
+> Los admins también tienen acceso completo a `/cuenta` (documentada en "Vistas autenticadas"). El dashboard es adicional, no reemplaza la cuenta personal.
 
 ### `/dashboard` — Panel principal
 - 4 KPI cards: ingresos, tickets vendidos, eventos publicados, pendientes de revisión.

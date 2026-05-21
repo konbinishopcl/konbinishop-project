@@ -60,8 +60,8 @@ export class EventsService {
     const textFilter: Prisma.EventWhereInput = query.q
       ? {
           OR: [
-            { title: { contains: query.q, mode: 'insensitive' } },
-            { description: { contains: query.q, mode: 'insensitive' } },
+            { title: { contains: query.q } },
+            { description: { contains: query.q } },
           ],
         }
       : {};

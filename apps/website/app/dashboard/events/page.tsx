@@ -208,7 +208,7 @@ export default function EventsPage() {
                           <div className="ti">{e.title}</div>
                           <div className="mt">
                             <span className="id">#{e.id}</span> ·{" "}
-                            {e.categories[0]?.name ?? "Sin categoría"}
+                            {e.category?.name ?? "Sin categoría"}
                           </div>
                         </div>
                       </div>

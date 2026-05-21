@@ -40,6 +40,7 @@ type FormData = {
 };
 
 type Update = <K extends keyof FormData>(k: K, v: FormData[K]) => void;
+type FieldErrors = Record<string, string>;
 
 const EMPTY: FormData = {
   title: "",
@@ -71,11 +72,39 @@ export default function FormPage() {
   const [categories, setCategories] = useState<ApiCategory[]>([]);
   const [regions, setRegions] = useState<ApiRegion[]>([]);
   const [communes, setCommunes] = useState<ApiCommune[]>([]);
-  const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
-  const update: Update = (k, v) => setData((d) => ({ ...d, [k]: v }));
+  const update: Update = (k, v) => {
+    setData((d) => ({ ...d, [k]: v }));
+    setFieldErrors((e) => {
+      const n = { ...e };
+      delete n[k as string];
+      if (k === "prices") Object.keys(n).filter((x) => x.startsWith("price_")).forEach((x) => delete n[x]);
+      return n;
+    });
+  };
+
+  const validateStep = (s: number): FieldErrors => {
+    const e: FieldErrors = {};
+    if (s === 1) {
+      if (!data.title.trim()) e.title = "El título es obligatorio.";
+      if (!data.categoryId) e.categoryId = "Selecciona una categoría.";
+      if (data.desc.trim().length < 10) e.desc = "Mínimo 10 caracteres.";
+      if (!data.free) {
+        data.prices.forEach((p, i) => {
+          if (!p.name.trim()) e[`price_${i}`] = "El nombre es obligatorio.";
+        });
+      }
+    }
+    if (s === 2) {
+      if (!data.address.trim()) e.address = "La dirección es obligatoria.";
+      if (!data.addressNumber.trim()) e.addressNumber = "El número es obligatorio.";
+    }
+    return e;
+  };
 
   // Sin sesión → al login.
   useEffect(() => {
@@ -142,16 +171,9 @@ export default function FormPage() {
   }
 
   const submit = async () => {
-    setError("");
-    if (
-      !data.title.trim() ||
-      data.desc.trim().length < 10 ||
-      !data.address.trim() ||
-      !data.addressNumber.trim()
-    ) {
-      setError("Completa el título, la descripción (mín. 10 caracteres), la dirección y el número.");
-      return;
-    }
+    setSubmitError("");
+    const errs = validateStep(2);
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
     setSubmitting(true);
     try {
       const web = data.web.trim().replace(/^https?:\/\//, "");
@@ -187,7 +209,7 @@ export default function FormPage() {
       await api.createEvent(payload, token);
       setDone(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "No se pudo publicar el evento");
+      setSubmitError(e instanceof Error ? e.message : "No se pudo publicar el evento");
     } finally {
       setSubmitting(false);
     }
@@ -213,20 +235,20 @@ export default function FormPage() {
           </div>
 
           <div className="step-num">PASO {step} / 03</div>
-          {step === 1 && <Step1 data={data} update={update} categories={categories} userName={user.name} />}
+          {step === 1 && <Step1 data={data} update={update} categories={categories} userName={user.name} errors={fieldErrors} />}
           {step === 2 && (
-            <Step2 data={data} update={update} regions={regions} communes={communes} />
+            <Step2 data={data} update={update} regions={regions} communes={communes} errors={fieldErrors} />
           )}
           {step === 3 && <Step3 data={data} update={update} token={token} />}
 
-          {error && (
-            <div style={{ color: "var(--err)", fontSize: 13, margin: "18px 0 0" }}>{error}</div>
+          {submitError && (
+            <div style={{ color: "var(--err)", fontSize: 13, margin: "18px 0 0" }}>{submitError}</div>
           )}
 
           <div className="form-foot">
             <button
               className="btn ghost"
-              onClick={() => step > 1 && setStep(step - 1)}
+              onClick={() => { if (step > 1) { setFieldErrors({}); setSubmitError(""); setStep(step - 1); } }}
               disabled={step === 1}
               style={{ opacity: step === 1 ? 0.3 : 1 }}
             >
@@ -235,7 +257,16 @@ export default function FormPage() {
             <button
               className="btn primary"
               disabled={submitting}
-              onClick={() => (step < 3 ? setStep(step + 1) : submit())}
+              onClick={() => {
+                if (step < 3) {
+                  const errs = validateStep(step);
+                  if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+                  setFieldErrors({});
+                  setStep(step + 1);
+                } else {
+                  submit();
+                }
+              }}
             >
               {step === 3
                 ? submitting
@@ -251,16 +282,23 @@ export default function FormPage() {
   );
 }
 
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <div style={{ color: "var(--err)", fontSize: 12, marginTop: 5 }}>{msg}</div>;
+}
+
 function Step1({
   data,
   update,
   categories,
   userName,
+  errors,
 }: {
   data: FormData;
   update: Update;
   categories: ApiCategory[];
   userName: string;
+  errors: FieldErrors;
 }) {
   const firstName = userName.split(" ")[0] || userName;
   return (
@@ -286,6 +324,7 @@ function Step1({
             value={data.title}
             onChange={(e) => update("title", e.target.value)}
           />
+          <FieldError msg={errors.title} />
           <div className="help">Sé claro y descriptivo. Este es el nombre que verán los asistentes.</div>
         </div>
         <div className="grid-2">
@@ -308,6 +347,7 @@ function Step1({
                 </option>
               ))}
             </select>
+            <FieldError msg={errors.categoryId} />
           </div>
         </div>
         <div className="field">
@@ -317,6 +357,7 @@ function Step1({
             value={data.desc}
             onChange={(e) => update("desc", e.target.value)}
           />
+          <FieldError msg={errors.desc} />
           <div className="help">Aparece en las tarjetas de búsqueda. Mínimo 10 caracteres.</div>
         </div>
         <div className="field">
@@ -363,6 +404,7 @@ function Step1({
                       )
                     }
                   />
+                  <FieldError msg={errors[`price_${i}`]} />
                 </div>
                 <div className="field" style={{ margin: 0 }}>
                   <label>Precio</label>
@@ -417,11 +459,13 @@ function Step2({
   update,
   regions,
   communes,
+  errors,
 }: {
   data: FormData;
   update: Update;
   regions: ApiRegion[];
   communes: ApiCommune[];
+  errors: FieldErrors;
 }) {
   return (
     <div>
@@ -535,6 +579,7 @@ function Step2({
               value={data.address}
               onChange={(e) => update("address", e.target.value)}
             />
+            <FieldError msg={errors.address} />
           </div>
           <div className="field">
             <label>Número</label>
@@ -544,6 +589,7 @@ function Step2({
               value={data.addressNumber}
               onChange={(e) => update("addressNumber", e.target.value)}
             />
+            <FieldError msg={errors.addressNumber} />
           </div>
         </div>
       </fieldset>

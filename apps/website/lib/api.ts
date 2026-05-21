@@ -1,20 +1,33 @@
 // Cliente HTTP de la API de Konbini.
 import type { EventItem, Role, User } from "./data";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333/api";
-// Origen sin el sufijo /api — para las imágenes servidas en /uploads.
-const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
+// Imágenes /uploads: URL pública del backend (visible en cliente, no es un secreto).
+const API_ORIGIN = process.env.NEXT_PUBLIC_API_ORIGIN || "http://localhost:3333";
+
+// En servidor: llama al backend directamente con la API key (process.env no-público).
+// En cliente: llama al proxy Next.js /api/[...path] que agrega la key server-side.
+function apiBase(): string {
+  return typeof window === "undefined"
+    ? process.env.API_URL || "http://localhost:3333/api"
+    : "/api";
+}
+
+function buildHeaders(token?: string): Record<string, string> {
+  const h: Record<string, string> = { "Content-Type": "application/json" };
+  if (typeof window === "undefined") {
+    const key = process.env.API_KEY;
+    if (key) h["X-API-Key"] = key;
+  }
+  if (token) h["Authorization"] = `Bearer ${token}`;
+  return h;
+}
 
 async function request<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {
+    res = await fetch(`${apiBase()}${path}`, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...options.headers,
-      },
+      headers: { ...buildHeaders(token), ...options.headers },
     });
   } catch {
     throw new Error("No se pudo conectar con el servidor. ¿Está corriendo la API?");
@@ -104,7 +117,7 @@ export type ApiEvent = {
   } | null;
   region: ApiRegion | null;
   commune: ApiCommune | null;
-  categories: ApiCategory[];
+  category: ApiCategory | null;
   prices: ApiEventPrice[];
   dates: ApiEventDate[];
   socialLinks: ApiEventLink[];
@@ -204,7 +217,7 @@ export const api = {
     form.append("file", file);
     let res: Response;
     try {
-      res = await fetch(`${API_URL}/upload`, {
+      res = await fetch(`${apiBase()}/upload`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: form,
@@ -282,8 +295,8 @@ export function toEventItem(e: ApiEvent): EventItem {
     id: e.id,
     slug: e.slug,
     title: e.title,
-    cat: e.categories[0]?.name ?? "Evento",
-    catSlug: e.categories[0]?.slug,
+    cat: e.category?.name ?? "Evento",
+    catSlug: e.category?.slug,
     image: imageUrl(e.poster ?? e.banner),
     date: formatEventDate(e.dates),
     place: e.commune?.name ?? e.address,

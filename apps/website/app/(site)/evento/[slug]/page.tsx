@@ -15,7 +15,7 @@ export async function generateMetadata(
     const event = await api.event(slug);
     const image = imageUrl(event.banner ?? event.poster);
     const place = [event.commune?.name, event.region?.name].filter(Boolean).join(", ");
-    const category = event.categories[0]?.name;
+    const category = event.category?.name;
     const description = event.description.slice(0, 160);
     return {
       title: event.title,
@@ -67,7 +67,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     notFound();
   }
 
-  const category = event.categories[0]?.name ?? "Evento";
+  const category = event.category?.name ?? "Evento";
   const place = [event.commune?.name, event.region?.name].filter(Boolean).join(", ");
   const firstDate = event.dates.find((d) => d.date)?.date;
   const dateLabel = firstDate ? fmtDate(firstDate).full : "Fecha por confirmar";
@@ -143,15 +143,13 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
             </>
           )}
 
-          {event.categories.length > 0 && (
+          {event.category && (
             <>
-              <h2>Categorías</h2>
+              <h2>Categoría</h2>
               <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
-                {event.categories.map((c) => (
-                  <Link key={c.id} className="pill" href={`/categoria/${c.slug}`}>
-                    {c.name ?? c.slug}
-                  </Link>
-                ))}
+                <Link className="pill" href={`/categoria/${event.category.slug}`}>
+                  {event.category.name ?? event.category.slug}
+                </Link>
               </div>
             </>
           )}

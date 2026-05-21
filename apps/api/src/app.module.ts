@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -19,6 +19,7 @@ import { HttpCacheInterceptor } from '../utils/cache/http-cache.interceptor';
 import { ProfilesModule } from './profiles/profiles.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { MailgunModule } from '../services/mailgun/mailgun.module';
+import { ApiKeyGuard } from './auth/api-key.guard';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { MailgunModule } from '../services/mailgun/mailgun.module';
   controllers: [AppController],
   providers: [
     AppService,
+    { provide: APP_GUARD, useClass: ApiKeyGuard },
     { provide: APP_INTERCEPTOR, useClass: HttpCacheInterceptor },
   ],
 })

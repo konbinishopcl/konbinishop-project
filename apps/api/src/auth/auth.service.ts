@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -16,6 +17,8 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
@@ -120,9 +123,8 @@ export class AuthService {
       const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
       const resetUrl = `${frontendUrl}/recuperar-contrasena?token=${token}`;
       await this.mail.sendPasswordReset(user.email, resetUrl);
-      // Fallback dev: mostrar el token en el log cuando Mailgun no está configurado
-      if (!this.config.get('MAILGUN_API_KEY')) {
-        console.log(`🔑 Token de recuperación para ${email}: ${token}`);
+      if (process.env.NODE_ENV === 'development' && !this.config.get('MAILGUN_API_KEY')) {
+        this.logger.debug(`Reset URL (dev only): ${resetUrl}`);
       }
     }
     return { ok: true };

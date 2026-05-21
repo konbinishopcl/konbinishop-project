@@ -2,6 +2,10 @@ import { Logger } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const mjml2html = require('mjml') as (input: string, options?: object) => { html: string; errors: { message: string }[] };
 
+function esc(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 const logger = new Logger('MailTemplates');
 
 interface TemplateOpts {
@@ -76,7 +80,7 @@ export function welcomeTemplate(name: string): { subject: string; html: string }
     subject: '¡Bienvenido/a a Konbini!',
     html: renderTemplate({
       title: 'Bienvenido a Konbini',
-      greeting: `¡Hola, ${name}!`,
+      greeting: `¡Hola, ${esc(name)}!`,
       body: `Nos alegra que te hayas unido a <strong>Konbini</strong>. Ya puedes explorar y publicar eventos en nuestra plataforma.<br/><br/>Si tienes alguna duda, no dudes en contactarnos. ¡Estamos aquí para ayudarte!`,
     }),
   };
@@ -101,11 +105,11 @@ export function eventApprovedTemplate(
   eventUrl: string,
 ): { subject: string; html: string } {
   return {
-    subject: `¡Tu evento fue aprobado! — ${eventTitle}`,
+    subject: `¡Tu evento fue aprobado! — ${esc(eventTitle)}`,
     html: renderTemplate({
       title: 'Evento aprobado',
-      greeting: `¡Buenas noticias, ${name}!`,
-      body: `Tu evento <strong>${eventTitle}</strong> ha sido revisado y <strong>aprobado</strong> por nuestro equipo. Ya está visible al público en Konbini.<br/><br/>¡Mucha suerte con tu evento!`,
+      greeting: `¡Buenas noticias, ${esc(name)}!`,
+      body: `Tu evento <strong>${esc(eventTitle)}</strong> ha sido revisado y <strong>aprobado</strong> por nuestro equipo. Ya está visible al público en Konbini.<br/><br/>¡Mucha suerte con tu evento!`,
       ctaLabel: 'Ver mi evento',
       ctaUrl: eventUrl,
     }),
@@ -118,11 +122,11 @@ export function eventRejectedTemplate(
   reason: string,
 ): { subject: string; html: string } {
   return {
-    subject: `Actualización sobre tu evento — ${eventTitle}`,
+    subject: `Actualización sobre tu evento — ${esc(eventTitle)}`,
     html: renderTemplate({
       title: 'Evento no aprobado',
-      greeting: `Hola, ${name}`,
-      body: `Lamentablemente, tu evento <strong>${eventTitle}</strong> no pudo ser aprobado en esta oportunidad.<br/><br/><strong>Motivo:</strong> ${reason}<br/><br/>Puedes editar tu evento y enviarlo nuevamente para revisión. Si tienes dudas, contáctanos.`,
+      greeting: `Hola, ${esc(name)}`,
+      body: `Lamentablemente, tu evento <strong>${esc(eventTitle)}</strong> no pudo ser aprobado en esta oportunidad.<br/><br/><strong>Motivo:</strong> ${esc(reason)}<br/><br/>Puedes editar tu evento y enviarlo nuevamente para revisión. Si tienes dudas, contáctanos.`,
     }),
   };
 }
@@ -141,7 +145,7 @@ export function paymentConfirmedTemplate(
     subject: `Confirmación de pago #${orderId} — Konbini`,
     html: renderTemplate({
       title: 'Pago confirmado',
-      greeting: `¡Gracias, ${name}!`,
+      greeting: `¡Gracias, ${esc(name)}!`,
       body: `Tu pago ha sido procesado exitosamente.<br/><br/><strong>Orden N.º:</strong> ${orderId}<br/><strong>Total:</strong> ${formattedAmount}<br/><br/>Hemos recibido tu compra y pronto recibirás más detalles. Si tienes alguna pregunta, contáctanos.`,
     }),
   };

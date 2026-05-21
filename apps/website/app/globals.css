@@ -292,15 +292,18 @@
   .field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; }
   .field .help { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
   .field input[type=text], .field input[type=email], .field input[type=tel], .field input[type=url],
-  .field input[type=number], .field input[type=password], .field select, .field textarea {
+  .field input[type=number], .field input[type=password], .field input[type=date], .field input[type=time],
+  .field select, .field textarea {
     width: 100%; padding: 14px 16px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line);
     transition: border-color .15s, background .15s;
   }
+  .field input[type=date]::-webkit-calendar-picker-indicator,
+  .field input[type=time]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
   .field input:focus, .field textarea:focus, .field select:focus { outline: 0; border-color: var(--ink-2); background: var(--surface); }
   .field textarea { min-height: 96px; resize: vertical; line-height: 1.55; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
-  .input-prefix { display: flex; align-items: stretch; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
+  .input-prefix { display: flex; align-items: stretch; width: 100%; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
   .input-prefix span { padding: 0 14px; display: flex; align-items: center; font-family: var(--font-mono); font-size: 13px; color: var(--ink-3); background: var(--surface); border-right: 1px solid var(--line); }
   .input-prefix input { flex: 1; padding: 14px 16px; border: 0; background: transparent; }
   .input-prefix .suffix { border-left: 1px solid var(--line); border-right: 0; }

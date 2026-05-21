@@ -34,8 +34,8 @@ export default function DashboardPage() {
   const catRows = useMemo(() => {
     const map = new Map<string, number>();
     for (const e of events) {
-      for (const c of e.categories) {
-        const nm = c.name ?? c.slug;
+      if (e.category) {
+        const nm = e.category.name ?? e.category.slug;
         map.set(nm, (map.get(nm) ?? 0) + 1);
       }
     }
@@ -192,7 +192,7 @@ export default function DashboardPage() {
                     <div className="ttl">{e.title}</div>
                     <div className="meta">
                       {producerOf(e).toUpperCase()} ·{" "}
-                      {(e.categories[0]?.name ?? "Sin categoría").toUpperCase()}
+                      {(e.category?.name ?? "Sin categoría").toUpperCase()}
                     </div>
                   </div>
                   <div className="acts">

@@ -117,9 +117,21 @@ URL compartible: `/busqueda?q=anime&category=convenciones&region=...`
 **Pendiente / Por implementar:**
 - **Editar perfil** → debe llamar a `PUT /profiles/me` con los campos del modelo `Profile` (displayName, bio, avatar, banner, slug, website, instagram, tiktok, facebook, x, youtube, twitch, linkedin)
 - **Subir avatar/banner** → `POST /uploads` + guardar URL en el perfil
-- **Ver mis spots** → `GET /spots/mine`
-- **Ver mis heroes** → `GET /heroes/mine`
 - **Ver mi perfil público** → link a `/u/:slug` (vista de perfil público, aún no existe en el website)
+
+#### Tab: Mis avisos
+
+Lista los spots del usuario (`GET /spots/mine`). Muestra estado, fechas de vigencia y link al aviso.
+
+- Botón "Crear aviso" → abre el formulario de aviso (mismo formulario que el upsell). El usuario puede crear un aviso de forma independiente, sin necesidad de haber creado un evento antes.
+- Puede editar (`PATCH /spots/:id`) o eliminar (`DELETE /spots/:id`) avisos propios en `DRAFT` o `REJECTED`.
+
+#### Tab: Mis heroes
+
+Lista los heroes del usuario (`GET /heroes/mine`). Muestra estado, imagen, título y fechas de vigencia.
+
+- Botón "Crear hero" → abre el formulario de hero (mismo formulario que el upsell). El usuario puede crear un hero de forma independiente.
+- Puede editar (`PATCH /heroes/:id`) o eliminar (`DELETE /heroes/:id`) heroes propios en `DRAFT` o `REJECTED`.
 
 > Esta vista aplica igual para usuarios `ADMIN` y `SUPER_ADMIN`. El admin también edita su perfil aquí.
 
@@ -166,9 +178,14 @@ Tras crear exitosamente el evento (respuesta 201 del `POST /events`), el website
 
 ---
 
-### Formulario de crear aviso (desde upsell)
+### Formulario de crear aviso
 
-Formulario inline o modal que aparece al elegir "Crear aviso" en el upsell. No es una página separada.
+Formulario inline o modal. Se usa en dos contextos:
+
+1. **Upsell post-evento** — al elegir "Crear aviso" después de crear un evento.
+2. **Desde `/cuenta` → Tab "Mis avisos"** — el usuario crea un aviso de forma independiente.
+
+No es una página separada.
 
 **Campos:**
 

@@ -1,9 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import { SpotLinkType } from '@prisma/client';
+import { IsInt, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
-// Only the content fields are editable. Days, amount and expiration are
-// set at payment confirmation and not changed through this DTO.
 export class UpdateHeroDto {
   @ApiPropertyOptional({ example: 'Festival de Verano', maxLength: 120 })
   @IsOptional()
@@ -30,7 +27,7 @@ export class UpdateHeroDto {
   @MinLength(3)
   image?: string;
 
-  @ApiPropertyOptional({ example: '2025-12-31', description: 'Fecha ISO mostrada en el hero' })
+  @ApiPropertyOptional({ example: '2025-12-31' })
   @IsOptional()
   @IsString()
   date?: string;
@@ -41,18 +38,13 @@ export class UpdateHeroDto {
   @MaxLength(120)
   place?: string;
 
-  @ApiPropertyOptional({ enum: SpotLinkType, enumName: 'SpotLinkType' })
-  @IsOptional()
-  @IsEnum(SpotLinkType)
-  linkType?: SpotLinkType;
-
-  @ApiPropertyOptional({ example: 'https://evento.ejemplo.com', description: 'URL, teléfono o email según linkType' })
+  @ApiPropertyOptional({ example: 'https://evento.ejemplo.com' })
   @IsOptional()
   @IsString()
   @MinLength(3)
-  linkValue?: string;
+  link?: string;
 
-  @ApiPropertyOptional({ example: 1, description: 'ID de categoría asociada' })
+  @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @IsInt()
   categoryId?: number;

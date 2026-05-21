@@ -1,13 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
-import { SpotLinkType } from '@prisma/client';
+import { IsInt, IsOptional, IsString, IsUrl, MaxLength, MinLength } from 'class-validator';
 
 export class CreateHeroDto {
   @ApiProperty({ example: 'Festival de Verano', maxLength: 120, minLength: 2 })
@@ -16,14 +8,12 @@ export class CreateHeroDto {
   @MaxLength(120)
   title: string;
 
-  // Second headline line — the accent (orange) part of the title in the design.
   @ApiPropertyOptional({ example: '2025', maxLength: 120, description: 'Parte destacada (acento) del título' })
   @IsOptional()
   @IsString()
   @MaxLength(120)
   titleAccent?: string;
 
-  // Short description shown under the title in the home hero.
   @ApiPropertyOptional({ example: 'El mejor festival del año llega a Santiago.', maxLength: 240 })
   @IsOptional()
   @IsString()
@@ -35,7 +25,6 @@ export class CreateHeroDto {
   @MinLength(3)
   image: string;
 
-  // Optional date label shown in the hero (ISO date).
   @ApiPropertyOptional({ example: '2025-12-31', description: 'Fecha ISO mostrada en el hero' })
   @IsOptional()
   @IsString()
@@ -47,15 +36,11 @@ export class CreateHeroDto {
   @MaxLength(120)
   place?: string;
 
-  @ApiProperty({ enum: SpotLinkType, enumName: 'SpotLinkType', example: SpotLinkType.URL })
-  @IsEnum(SpotLinkType)
-  linkType: SpotLinkType;
-
-  // A URL, a phone number or an email, depending on linkType.
-  @ApiProperty({ example: 'https://evento.ejemplo.com', minLength: 3, description: 'URL, teléfono o email según linkType' })
+  @ApiPropertyOptional({ example: 'https://evento.ejemplo.com', description: 'URL de destino al hacer clic en el hero' })
+  @IsOptional()
   @IsString()
   @MinLength(3)
-  linkValue: string;
+  link?: string;
 
   @ApiPropertyOptional({ example: 1, description: 'ID de categoría asociada' })
   @IsOptional()

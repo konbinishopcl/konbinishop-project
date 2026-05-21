@@ -34,8 +34,6 @@ export class SpotsController {
   }
 
   @Get('quota')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Spot quota and per-day price' })
   quota() {
     return this.spots.quota();

@@ -85,10 +85,11 @@ export class CreateEventDto {
   @MinLength(2)
   address: string;
 
-  @ApiProperty({ example: '1234', minLength: 1 })
+  @ApiPropertyOptional({ example: '1234' })
+  @IsOptional()
   @IsString()
   @MinLength(1)
-  addressNumber: string;
+  addressNumber?: string;
 
   @ApiPropertyOptional({ example: 'https://tickets.ejemplo.com/festival' })
   @IsOptional()

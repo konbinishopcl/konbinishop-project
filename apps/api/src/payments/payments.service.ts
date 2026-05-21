@@ -83,7 +83,7 @@ export class PaymentsService {
     }
 
     const order = await this.prisma.order.findFirst({
-      where: { externalId: tokenWs, status: OrderStatus.PENDING_PAYMENT },
+      where: { externalId: tokenWs },
       include: {
         items: {
           include: { event: true, spot: true, hero: true },
@@ -94,6 +94,18 @@ export class PaymentsService {
     if (!order) {
       this.logger.error(`No order found for Transbank token: ${tokenWs}`);
       return `${frontendUrl}/checkout/failed?reason=not_found`;
+    }
+
+    // Idempotencia: si el callback llega duplicado después de un pago exitoso,
+    // devolvemos success sin volver a llamar a Transbank (evita que marque como FAILED).
+    if (order.status === OrderStatus.PAID) {
+      this.logger.warn(`Duplicate callback for already-paid order ${order.id}`);
+      return `${frontendUrl}/checkout/success?orderId=${order.id}`;
+    }
+
+    if (order.status !== OrderStatus.PENDING_PAYMENT) {
+      this.logger.warn(`Callback for order ${order.id} in unexpected status: ${order.status}`);
+      return `${frontendUrl}/checkout/failed?reason=invalid_state`;
     }
 
     const pg = this.gatewayFactory.get(GatewayType.TRANSBANK);

@@ -77,8 +77,7 @@ export class HeroesService {
         image: dto.image,
         date: dto.date ? new Date(dto.date) : null,
         place: dto.place,
-        linkType: dto.linkType,
-        linkValue: dto.linkValue,
+        link: dto.link,
         category: dto.categoryId ? { connect: { id: dto.categoryId } } : undefined,
         owner: { connect: { id: user.sub } },
         status: PublicationStatus.DRAFT,
@@ -98,8 +97,7 @@ export class HeroesService {
         lead: dto.lead,
         image: dto.image,
         place: dto.place,
-        linkType: dto.linkType,
-        linkValue: dto.linkValue,
+        link: dto.link,
         ...(dto.date !== undefined ? { date: dto.date ? new Date(dto.date) : null } : {}),
         ...(dto.categoryId !== undefined
           ? {

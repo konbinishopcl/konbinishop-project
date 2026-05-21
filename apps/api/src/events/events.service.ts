@@ -122,7 +122,7 @@ export class EventsService {
         description: dto.description,
         about: dto.about,
         address: dto.address,
-        addressNumber: dto.addressNumber,
+        addressNumber: dto.addressNumber ?? null,
         ticketUrl: dto.ticketUrl,
         banner: dto.banner,
         poster: dto.poster,

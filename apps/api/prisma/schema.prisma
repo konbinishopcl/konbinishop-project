@@ -95,8 +95,7 @@ model Hero {
   image       String // URL
   date      DateTime?    @db.Date // optional date label shown in the hero
   place     String? // optional place label shown in the hero
-  linkType  SpotLinkType // CTA link — same kinds as a Spot
-  linkValue String
+  link      String?  // CTA URL
 
   category   Category? @relation(fields: [categoryId], references: [id])
   categoryId Int?
@@ -162,7 +161,7 @@ model Event {
   about          String?  @db.Text
   expirationDate DateTime? @db.Date
   address        String
-  addressNumber  String
+  addressNumber  String?
   ticketUrl      String?
 
   // Media (URLs)

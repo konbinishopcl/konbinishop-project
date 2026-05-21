@@ -33,8 +33,6 @@ export class HeroesController {
   }
 
   @Get('quota')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Hero quota and per-day price' })
   quota() {
     return this.heroes.quota();

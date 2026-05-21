@@ -9,7 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -24,6 +24,7 @@ export class UsersController {
 
   @Get('recent')
   @ApiOperation({ summary: 'Últimos 10 usuarios registrados — solo nombre y avatar (público)' })
+  @ApiResponse({ status: 200, description: 'Lista de usuarios recientes', schema: { example: [{ id: 1, firstname: 'Ana', lastname: 'García', profile: { avatar: '/uploads/avatar.jpg' } }] } })
   findRecent() {
     return this.users.findRecent();
   }

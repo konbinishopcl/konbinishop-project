@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
-import mjml2html from 'mjml';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const mjml2html = require('mjml') as (input: string, options?: object) => { html: string; errors: { message: string }[] };
 
 const logger = new Logger('MailTemplates');
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Poster } from "@/components/Poster";
 import { Ic } from "@/components/icons";
-import { api, imageUrl, toEventItem, type ApiEvent } from "@/lib/api";
+import { api, imageUrl, toEventItem, withUtm, type ApiEvent } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -191,7 +191,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
               <a
                 className="btn primary block"
                 style={{ marginTop: 14 }}
-                href={event.ticketUrl}
+                href={withUtm(event.ticketUrl, "event_ticket")}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -266,7 +266,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     <a
                       key={s.id}
                       className="pill"
-                      href={s.link!}
+                      href={withUtm(s.link!, "event_social")}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -279,7 +279,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
                     <a
                       key={v.id}
                       className="pill"
-                      href={v.link!}
+                      href={withUtm(v.link!, "event_video")}
                       target="_blank"
                       rel="noopener noreferrer"
                     >

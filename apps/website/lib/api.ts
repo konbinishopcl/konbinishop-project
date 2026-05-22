@@ -51,6 +51,20 @@ export function linkHref(type: "URL" | "PHONE" | "EMAIL", value: string): string
   return value;
 }
 
+/** Agrega UTM params a una URL externa. Ignora mailto:, tel: y anclas. */
+export function withUtm(url: string, campaign: string): string {
+  if (!url || url.startsWith("#") || url.startsWith("mailto:") || url.startsWith("tel:")) return url;
+  try {
+    const u = new URL(url);
+    u.searchParams.set("utm_source", "konbini");
+    u.searchParams.set("utm_medium", "web");
+    u.searchParams.set("utm_campaign", campaign);
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
 // ───────────────────────────── Auth ─────────────────────────────
 
 export type ApiUser = {
@@ -327,6 +341,6 @@ export function toHeroSlide(h: ApiHero): HeroSlide {
     date: h.date ? formatDateLabel(h.date) : "",
     place: h.place ?? "",
     image: imageUrl(h.image),
-    href: h.link ?? "#",
+    href: h.link ? withUtm(h.link, "event_hero") : "#",
   };
 }

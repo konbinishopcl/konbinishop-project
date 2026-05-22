@@ -236,6 +236,10 @@ Requiere sesión. Tiene dos zonas:
 
 Requiere sesión. Wizard de 3 pasos.
 
+**Layout dedicado:** El wizard no usa el header ni el footer global del sitio. En su lugar:
+- **Header mínimo:** logo (link al home) + indicador visual de progreso de pasos (Paso 1 / 2 / 3).
+- **Footer de acciones:** solo botones de navegación del wizard (Volver, Continuar) y, en el último paso, el botón de envío.
+
 **Paso 1:** Título, empresa organizadora, categoría, descripción, sección "about", tipo de entrada (gratis o con precios — nombre y valor por tipo de entrada).
 
 **Paso 2:** Fechas y horarios (múltiples), región → comuna (selector en cascada), dirección, URL de tickets, links de redes sociales.
@@ -246,7 +250,7 @@ Requiere sesión. Wizard de 3 pasos.
 
 ### Upsell post-evento
 
-Mini-wizard de 2 pasos que aparece después de crear un evento exitosamente, antes de ir al carrito. Los pasos son secuenciales e independientes: responder "No" en el primero no omite el segundo.
+Aparece después de enviar el evento exitosamente, dentro del mismo layout dedicado (sin header/footer global). Primero muestra un **resumen del evento creado** (título, fechas, categoría, imagen si existe). Luego presenta el mini-wizard de 2 pasos secuenciales e independientes: responder "No" en el primero no omite el segundo.
 
 **Paso 1 — Aviso:** "¿Quieres agregar un aviso?" Muestra precio por día y cupos disponibles. Si acepta, abre el formulario de aviso. Si no hay cupo, este paso se omite.
 
@@ -350,7 +354,9 @@ Cola de revisión: últimos 5 eventos esperando aprobación, con botones de apro
 Gráfico de actividad. Feed de actividad reciente. Desglose de eventos por categoría.
 
 ### `/dashboard/events` — Moderación de eventos
-Tabla de todos los eventos con búsqueda por texto y filtro por estado. Acciones por evento: aprobar, rechazar (con campo de motivo) y ver la publicación. Paginación.
+Tabla de todos los eventos con búsqueda por texto y filtro por estado. Acciones por evento: aprobar, rechazar (con campo de motivo), ver la publicación y editar. Paginación.
+
+**Creación y edición de evento (admin):** Tanto al crear un evento nuevo como al editar uno existente, el formulario se presenta como acordeones, uno por paso (no como wizard secuencial). Los tres acordeones están colapsados por defecto; el header de cada uno muestra un resumen del contenido (ej: título del evento en el Acordeón 1). El admin puede abrir cualquier acordeón directamente sin seguir orden. Cada acordeón tiene su propio botón "Guardar" que hace PATCH parcial (o POST al crear); no hay botón de submit global. Los toasts confirman cada guardado.
 
 ### `/dashboard/users` — Usuarios
 Solo Super Admin. Tabla de usuarios con opciones de bloquear/desbloquear y cambiar rol. **Pendiente de implementar.**

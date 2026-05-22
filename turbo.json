@@ -8,6 +8,10 @@
     },
     "build": {
       "outputs": [".nuxt/**", "dist/**", ".output/**", ".next/**"],
+      "env": [
+        "NEXT_PUBLIC_GOOGLE_CLIENT_ID",
+        "NEXT_PUBLIC_SITE_URL"
+      ],
       "cache": true
     },
     "lint": {

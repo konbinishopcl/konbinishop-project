@@ -76,6 +76,21 @@ administrador quedan visibles al público.
   ciegamente en `localStorage`)
 - [ ] **HARD-04**: Configuración de build y despliegue de ambas apps documentada y verificada
 
+### Audit
+
+- [ ] **AUD-01**: Migración Prisma que crea el modelo `AuditLog` con los campos
+  `userId` (Int?, sin FK), `action` (enum `AuditAction`), `entity` (enum `AuditEntity`),
+  `entityId` (Int), `metadata` (Json), `ip` (String?), `userAgent` (String?),
+  `url` (String?), `createdAt` — más índices de consulta
+- [ ] **AUD-02**: `AuditService` singleton inyectable que registra acciones (CREATE,
+  UPDATE, APPROVE, REJECT, BAN, UNBAN, DELETE) sobre las entidades del sistema, integrado
+  manualmente en los service methods de mutación de eventos, usuarios, avisos y portadas;
+  el fallo del registro nunca revierte la operación de negocio
+- [ ] **AUD-03**: Captura de la IP real del cliente detrás de Nginx mediante
+  `app.set('trust proxy', 1)` y `req.ip` (sin parsear `x-forwarded-for` manualmente)
+- [ ] **AUD-04**: Endpoint `GET /api/admin/audit-logs` con filtros (entity, action,
+  userId, dateFrom, dateTo), paginado, restringido a roles ADMIN y SUPER_ADMIN
+
 ## v2 Requirements (diferido)
 
 - **PAY-V2-01**: Cobro al organizador por publicar un evento (pasarela por definir)
@@ -105,8 +120,9 @@ administrador quedan visibles al público.
 | MOD-01..05 | Phase 4 | Pending |
 | SRCH-01..05 | Phase 5 | Pending |
 | HARD-01..04 | Phase 6 | Pending |
+| AUD-01..04 | Phase 7 | Pending |
 
-**Coverage:** v1 requirements (excluyendo AUTH ya completado): 25 — todos mapeados a fases ✓
+**Coverage:** v1 requirements (excluyendo AUTH ya completado): 29 — todos mapeados a fases ✓
 
 ---
 *Requirements defined: 2026-03-23 · Re-aligned: 2026-05-20 after the stack migration*

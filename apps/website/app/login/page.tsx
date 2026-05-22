@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { BrandMark } from "@/components/BrandMark";
 import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import { Ic } from "@/components/icons";
@@ -23,11 +23,6 @@ function LoginContent() {
   const { setAuth } = useUser();
 
   const returnTo = searchParams.get("returnTo") || "/";
-  const { user } = useUser();
-
-  useEffect(() => {
-    if (user) router.replace(user.role === "ADMIN" || user.role === "SUPER_ADMIN" ? "/dashboard" : returnTo);
-  }, [user]);
 
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");

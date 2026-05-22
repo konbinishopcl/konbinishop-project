@@ -322,6 +322,24 @@ heroes→Portadas y spots→Avisos como **nombres comerciales de UI**, sin cambi
 de base de datos.
 **Cómo evitar:** Ver Open Questions #1.
 
+### Pitfall 6: Ley 21.719 — ip y userAgent son datos personales
+**Qué sale mal:** La columna  almacena la dirección IP del cliente y  puede
+identificar individualmente a un usuario. Según la Ley 21.719 (Ley de Protección de Datos
+Personales de Chile), estos datos requieren base legal para tratarlos y no pueden retenerse
+indefinidamente.
+**Por qué pasa:** El proyecto ya está activamente cumpliendo Ley 21.719 (commits ,
+). Agregar columnas de IP sin declararlo en la Política de Privacidad sería
+incumplimiento.
+**Cómo evitar:**
+- Declarar el logging de auditoría (incluyendo IP) en el  de PRIVACY_POLICY.
+  El planner debe verificar que el contenido actual lo menciona; si no, agregar el párrafo.
+- Establecer una política de retención máxima (recomendado: 24 meses). La limpieza automática
+  puede diferirse a v2, pero la política debe definirse en v1.
+- Nunca incluir en  datos personales del usuario (email, nombre, RUT).
+- Los registros de AuditLog donde  forman parte del derecho de acceso del titular.
+  En v1 no se implementa el endpoint de acceso, pero debe estar en la hoja de ruta.
+**Señal de alerta:** La Política de Privacidad no menciona logs de auditoría o retención.
+
 ---
 
 ## Open Questions
@@ -349,6 +367,17 @@ de base de datos.
      FK con `onDelete: SetNull` en vez de Cascade, eso también funciona pero requiere que
      la columna sea nullable (ya lo es).
 
+4. **Ley 21.719: ¿cuánto tiempo retener los AuditLogs?**
+   - Lo que sabemos: La ley exige minimización y plazo limitado de retención para datos
+     personales.  y  son datos personales. La Política de Privacidad actual
+     en el sistema no hace referencia explícita a logs de auditoría (pendiente de verificar).
+   - Qué no está claro: ¿12 o 24 meses de retención? ¿Hay un requerimiento legal específico
+     para logs de acciones de admin?
+   - **Recomendación:** Definir 24 meses como plazo de retención en la Política de Privacidad
+     durante esta fase. Agregar una nota en el plan para que el contenido del LegalDocument
+     PRIVACY_POLICY mencione el logging de auditoría. La limpieza automática (cron job o
+     scheduled task) puede diferirse a v2; la **declaración** debe hacerse en v1.
+
 ---
 
 ## Acciones que SÍ deben auditarse
@@ -363,6 +392,7 @@ de base de datos.
 | UsersService | `setBanned(id, true)` | BAN | USER |
 | UsersService | `setBanned(id, false)` | UNBAN | USER |
 | UsersService | `remove()` | DELETE | USER |
+| UsersService | `update()` solo cuando cambia `role` | UPDATE | USER | con `metadata: { prevRole, newRole }` |
 | SpotsService | `approve()` | APPROVE | SPOT |
 | SpotsService | `reject()` | REJECT | SPOT |
 | SpotsService | `ban()` | BAN | SPOT |

@@ -74,7 +74,9 @@
     ├── /dashboard/tags
     ├── /dashboard/spots
     ├── /dashboard/heroes
-    └── /dashboard/payments
+    ├── /dashboard/payments
+    ├── /dashboard/contact
+    └── /dashboard/faq
 ```
 
 ---
@@ -367,7 +369,16 @@ Moderación de avisos: lista con estado, aprobar, rechazar, eliminar. **Pendient
 Moderación de heroes: lista con estado, imagen y título, aprobar, rechazar, eliminar. **Pendiente de implementar.**
 
 ### `/dashboard/payments` — Pagos
+
 Historial de órdenes y transacciones. **Pendiente de implementar.**
+
+### `/dashboard/contact` — Mensajes de contacto
+
+Lista de mensajes enviados por el formulario de contacto, ordenados por fecha descendente. Muestra nombre, email, asunto y estado de lectura. Permite marcar como leído/no leído y eliminar. **Pendiente de implementar.**
+
+### `/dashboard/faq` — Preguntas frecuentes
+
+CRUD de preguntas frecuentes con control de orden. Permite crear, editar, reordenar y eliminar preguntas. **Pendiente de implementar.**
 
 ---
 
@@ -610,6 +621,8 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 | `/dashboard/spots` | Pendiente |
 | `/dashboard/heroes` | Pendiente |
 | `/dashboard/payments` | Pendiente |
+| `/dashboard/contact` | Pendiente |
+| `/dashboard/faq` | Pendiente |
 
 ## Componentes clave
 

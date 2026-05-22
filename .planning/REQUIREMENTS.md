@@ -120,7 +120,7 @@ administrador quedan visibles al público.
 | MOD-01..05 | Phase 4 | Pending |
 | SRCH-01..05 | Phase 5 | Pending |
 | HARD-01..04 | Phase 6 | Pending |
-| AUD-01..04 | Phase 7 | Pending |
+| AUD-01..04 | Phase 7 | Complete |
 
 **Coverage:** v1 requirements (excluyendo AUTH ya completado): 29 — todos mapeados a fases ✓
 

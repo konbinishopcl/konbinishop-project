@@ -23,7 +23,7 @@
 | 4 | Moderación y panel admin | Aprobar/rechazar eventos; gestión de usuarios | MOD-01..05 |
 | 5 | Búsqueda | Búsqueda de eventos con filtros | SRCH-01..05 |
 | 6 | Hardening para producción | CORS, secretos, revalidación de sesión, despliegue | HARD-01..04 |
-| 7 | 5/5 | Complete   | 2026-05-22 |
+| 7 | Sistema de auditoría | Registrar en base de datos cada acción relevante de admins y usuarios | AUD-01..04 |
 
 ---
 
@@ -201,6 +201,8 @@ entidades del sistema (eventos, usuarios, avisos, spots) para trazabilidad y aud
 
 **Why:** Compliance, debugging operacional y visibilidad de qué admin hizo qué y cuándo.
 Depende de que existan entidades que auditar (Phases 1–4).
+
+**Status:** ✅ Complete (2026-05-22)
 
 **Plans:** 5/5 plans complete
 

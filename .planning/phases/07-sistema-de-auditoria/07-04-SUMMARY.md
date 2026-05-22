@@ -102,6 +102,20 @@ None - no se requiere configuración de servicios externos para este plan.
 - Patrón establecido: `req?: Request` como último parámetro en el service + `@Req() req` en el controller + `AuditModule` en el módulo
 - Listo para aplicar el mismo patrón en 07-05 (UsersService) y 07-06 (SpotsService + HeroesService)
 
+## Self-Check: PASSED
+
+- [x] `apps/api/src/events/events.service.ts` — FOUND
+- [x] `apps/api/src/events/events.controller.ts` — FOUND
+- [x] `apps/api/src/events/events.module.ts` — FOUND
+- [x] `07-04-SUMMARY.md` — FOUND
+- [x] Commit `8b7df05` — Task 1 (EventsService)
+- [x] Commit `d107445` — Task 2 (EventsController + EventsModule)
+- [x] `grep -c 'this.audit.log' events.service.ts` → 6 (PASS)
+- [x] All 6 action types present: CREATE, UPDATE, DELETE, APPROVE, REJECT, BAN
+- [x] No `await` on `this.audit.log` calls
+- [x] No `metadata: { dto` or `req.body` in events.service.ts
+- [x] `npx tsc --noEmit` → exit code 0
+
 ---
 *Phase: 07-sistema-de-auditoria*
 *Completed: 2026-05-22*

@@ -1,48 +1,35 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import NProgress from "nprogress";
 
 NProgress.configure({ showSpinner: false, minimum: 0.08, trickleSpeed: 200 });
 
 export function NavigationProgress() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const prevKey = useRef(`${pathname}?${searchParams.toString()}`);
   const started = useRef(false);
 
-  // Intercept link clicks → start bar
+  // Patch history.pushState — fires before React's event system, works in production
   useEffect(() => {
-    const onAnchorClick = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest("a");
-      if (!anchor?.href) return;
-      try {
-        const url = new URL(anchor.href);
-        if (url.origin !== window.location.origin) return;
-        const key = `${url.pathname}?${url.search}`;
-        if (key === prevKey.current) return;
-        NProgress.start();
-        started.current = true;
-      } catch {
-        // ignore
-      }
+    const original = history.pushState.bind(history);
+    history.pushState = function (...args: Parameters<typeof history.pushState>) {
+      NProgress.start();
+      started.current = true;
+      return original(...args);
     };
-    document.addEventListener("click", onAnchorClick);
-    return () => document.removeEventListener("click", onAnchorClick);
+    return () => {
+      history.pushState = original;
+    };
   }, []);
 
   // Route completed → finish bar
   useEffect(() => {
-    const key = `${pathname}?${searchParams.toString()}`;
-    if (key !== prevKey.current) {
-      prevKey.current = key;
-      if (started.current) {
-        NProgress.done();
-        started.current = false;
-      }
+    if (started.current) {
+      NProgress.done();
+      started.current = false;
     }
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   return null;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, Suspense, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { NavigationProgress } from "./NavigationProgress";
 import type { User } from "@/lib/data";
 
@@ -98,9 +98,7 @@ export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
       <UserProvider>
-        <Suspense>
-          <NavigationProgress />
-        </Suspense>
+        <NavigationProgress />
         {children}
       </UserProvider>
     </ThemeProvider>

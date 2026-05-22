@@ -35,6 +35,12 @@
 
 ├── /@[slug]
 
+├── /info                          ← submenu compartido
+│   ├── /contacto
+│   ├── /faq
+│   ├── /terminos
+│   └── /privacidad
+
 ├── /login
 ├── /registro
 ├── /recuperar-contrasena
@@ -144,6 +150,56 @@ Solo visible para eventos publicados y vigentes. Si no existe: 404.
 ### `/busqueda` — Búsqueda
 
 Barra de búsqueda por texto libre, selector de categoría y selector de región. Los resultados se actualizan al cambiar los filtros. La URL refleja los filtros activos y es compartible.
+
+---
+
+### Submenu informativo
+
+Las vistas `/contacto`, `/faq`, `/terminos` y `/privacidad` comparten un submenu de navegación horizontal (o sidebar en mobile) que aparece en todas ellas, permitiendo moverse entre las cuatro sin volver al home. El submenu muestra las 4 opciones y resalta la activa.
+
+---
+
+### `/contacto` — Contacto
+
+Formulario de contacto público. No requiere sesión.
+
+**Campos:**
+- Nombre (requerido)
+- Email (requerido)
+- Asunto (requerido)
+- Mensaje (requerido, mínimo 10 caracteres)
+
+Al enviar:
+
+- Se muestra mensaje de éxito: "Hemos recibido tu mensaje. Te responderemos a la brevedad."
+- El formulario se limpia.
+- Estados: esperando → cargando → éxito → error.
+
+---
+
+### `/faq` — Preguntas frecuentes
+
+Lista de preguntas y respuestas ordenadas por el campo `order`. Renderizado en el servidor.
+
+Cada pregunta se muestra como un acordeón: título visible, respuesta se despliega al hacer clic. Solo una puede estar abierta a la vez.
+
+Si no hay preguntas publicadas: mensaje "Aún no hay preguntas frecuentes."
+
+---
+
+### `/terminos` — Términos y condiciones
+
+Renderiza el campo `content` (HTML) del documento de tipo `TERMS_OF_SERVICE`. Renderizado en el servidor.
+
+Si el administrador aún no ha publicado el documento: mensaje "Los términos y condiciones están siendo actualizados."
+
+---
+
+### `/privacidad` — Política de privacidad
+
+Renderiza el campo `content` (HTML) del documento de tipo `PRIVACY_POLICY`. Renderizado en el servidor.
+
+Si el administrador aún no ha publicado el documento: mensaje "La política de privacidad está siendo actualizada."
 
 ---
 
@@ -475,6 +531,19 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 - `GET /subscribers` (ADMIN+) — lista de suscriptores al newsletter
 - `DELETE /subscribers/:id` — eliminar suscriptor
 
+### Contacto
+
+- `POST /contact` — `{ name, email, subject, message }`. Dispara 2 emails: confirmación al remitente + notificación a `CONTACT_NOTIFY_EMAILS`.
+
+### FAQ
+
+- `GET /faq` — lista ordenada por `order` asc, luego `createdAt` asc.
+
+### Términos y Privacidad
+
+- `GET /terms` — documento de tipo `TERMS_OF_SERVICE`. 404 si no existe.
+- `GET /privacy` — documento de tipo `PRIVACY_POLICY`. 404 si no existe.
+
 ### Perfil público
 - `GET /profiles/:slug` — devuelve 404 si el usuario no tiene eventos aprobados
 
@@ -503,6 +572,10 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 | `/carrito` | Pendiente |
 | `/checkout/success` | Pendiente |
 | `/checkout/failed` | Pendiente |
+| `/contacto` | Pendiente |
+| `/faq` | Pendiente |
+| `/terminos` | Pendiente |
+| `/privacidad` | Pendiente |
 | `/login` | Implementado |
 | `/registro` | Implementado |
 | `/recuperar-contrasena` | Pendiente |

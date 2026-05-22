@@ -5,6 +5,9 @@ import {
   passwordResetTemplate,
   eventApprovedTemplate,
   eventRejectedTemplate,
+  contentApprovedTemplate,
+  contentRejectedTemplate,
+  contentBannedTemplate,
   paymentConfirmedTemplate,
 } from '../../utils/templates/mail.templates';
 
@@ -29,6 +32,21 @@ export class MailService {
 
   async sendEventRejected(to: string, name: string, eventTitle: string, reason: string): Promise<void> {
     const { subject, html } = eventRejectedTemplate(name, eventTitle, reason);
+    await this.mailgun.send({ to, subject, html });
+  }
+
+  async sendContentApproved(to: string, name: string, contentName: string): Promise<void> {
+    const { subject, html } = contentApprovedTemplate(name, contentName);
+    await this.mailgun.send({ to, subject, html });
+  }
+
+  async sendContentRejected(to: string, name: string, contentName: string, reason: string): Promise<void> {
+    const { subject, html } = contentRejectedTemplate(name, contentName, reason);
+    await this.mailgun.send({ to, subject, html });
+  }
+
+  async sendContentBanned(to: string, name: string, contentName: string, reason: string): Promise<void> {
+    const { subject, html } = contentBannedTemplate(name, contentName, reason);
     await this.mailgun.send({ to, subject, html });
   }
 

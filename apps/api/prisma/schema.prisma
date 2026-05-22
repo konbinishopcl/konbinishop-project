@@ -82,7 +82,8 @@ enum PublicationStatus {
   PENDING_PAYMENT    // en carrito, esperando pago
   PENDING_MODERATION // pagado, esperando revisión del admin
   APPROVED           // visible públicamente
-  REJECTED           // rechazado por el admin
+  REJECTED           // rechazado antes de publicarse
+  BANNED             // baneado después de estar publicado
 }
 
 // A paid placement shown in the home hero carousel. Works like a Spot
@@ -111,7 +112,8 @@ model Hero {
   amount         Int?
   expirationDate DateTime? @db.Date
 
-  status PublicationStatus @default(DRAFT)
+  status       PublicationStatus @default(DRAFT)
+  statusReason String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -140,7 +142,8 @@ model Spot {
   amount         Int?
   expirationDate DateTime?    @db.Date
 
-  status PublicationStatus @default(DRAFT)
+  status       PublicationStatus @default(DRAFT)
+  statusReason String?
 
   // Owner — any authenticated user can create a spot.
   owner      User        @relation("SpotOwner", fields: [userId], references: [id])

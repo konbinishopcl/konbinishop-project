@@ -131,6 +131,50 @@ export function eventRejectedTemplate(
   };
 }
 
+export function contentApprovedTemplate(
+  name: string,
+  contentName: string,
+): { subject: string; html: string } {
+  return {
+    subject: `¡Tu publicación fue aprobada! — ${esc(contentName)}`,
+    html: renderTemplate({
+      title: 'Publicación aprobada',
+      greeting: `¡Buenas noticias, ${esc(name)}!`,
+      body: `Tu publicación <strong>${esc(contentName)}</strong> ha sido revisada y <strong>aprobada</strong> por nuestro equipo. Ya está visible al público en Konbini.<br/><br/>¡Gracias por confiar en nosotros!`,
+    }),
+  };
+}
+
+export function contentRejectedTemplate(
+  name: string,
+  contentName: string,
+  reason: string,
+): { subject: string; html: string } {
+  return {
+    subject: `Actualización sobre tu publicación — ${esc(contentName)}`,
+    html: renderTemplate({
+      title: 'Publicación no aprobada',
+      greeting: `Hola, ${esc(name)}`,
+      body: `Lamentablemente, tu publicación <strong>${esc(contentName)}</strong> no pudo ser aprobada en esta oportunidad.<br/><br/><strong>Motivo:</strong> ${esc(reason)}<br/><br/>Puedes editar tu publicación y enviarla nuevamente para revisión. Si tienes dudas, contáctanos.`,
+    }),
+  };
+}
+
+export function contentBannedTemplate(
+  name: string,
+  contentName: string,
+  reason: string,
+): { subject: string; html: string } {
+  return {
+    subject: `Tu publicación ha sido suspendida — ${esc(contentName)}`,
+    html: renderTemplate({
+      title: 'Publicación suspendida',
+      greeting: `Hola, ${esc(name)}`,
+      body: `Tu publicación <strong>${esc(contentName)}</strong> ha sido <strong>suspendida</strong> por nuestro equipo de moderación.<br/><br/><strong>Motivo:</strong> ${esc(reason)}<br/><br/>Si crees que esto es un error, por favor contáctanos.`,
+    }),
+  };
+}
+
 export function paymentConfirmedTemplate(
   name: string,
   orderId: number,

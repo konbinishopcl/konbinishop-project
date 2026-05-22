@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../../services/mailgun/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateSpotDto } from './dto/create-spot.dto';
 import { UpdateSpotDto } from './dto/update-spot.dto';
@@ -16,6 +17,7 @@ export class SpotsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   private maxActive(): number {
@@ -101,6 +103,50 @@ export class SpotsService {
     this.assertCanManage(spot, user);
     await this.prisma.spot.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  // ─────────────────────── Moderación ───────────────────────
+
+  async approve(id: number) {
+    const spot = await this.prisma.spot.update({
+      where: { id },
+      data: { status: PublicationStatus.APPROVED, statusReason: null },
+      include: { owner: { select: { email: true, firstname: true } } },
+    });
+    if (spot.owner?.email) {
+      await this.mail
+        .sendContentApproved(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title)
+        .catch(() => {});
+    }
+    return spot;
+  }
+
+  async reject(id: number, reason: string) {
+    const spot = await this.prisma.spot.update({
+      where: { id },
+      data: { status: PublicationStatus.REJECTED, statusReason: reason },
+      include: { owner: { select: { email: true, firstname: true } } },
+    });
+    if (spot.owner?.email) {
+      await this.mail
+        .sendContentRejected(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title, reason)
+        .catch(() => {});
+    }
+    return spot;
+  }
+
+  async ban(id: number, reason: string) {
+    const spot = await this.prisma.spot.update({
+      where: { id },
+      data: { status: PublicationStatus.BANNED, statusReason: reason },
+      include: { owner: { select: { email: true, firstname: true } } },
+    });
+    if (spot.owner?.email) {
+      await this.mail
+        .sendContentBanned(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title, reason)
+        .catch(() => {});
+    }
+    return spot;
   }
 
   /** Valida que haya cupo disponible; lanza excepción si no. */

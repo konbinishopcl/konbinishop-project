@@ -290,6 +290,33 @@ export class EventsService {
     return event;
   }
 
+  async ban(id: number, reason: string, user: JwtUser) {
+    await this.ensure(id);
+    const event = await this.prisma.event.update({
+      where: { id },
+      data: {
+        status: PublicationStatus.BANNED,
+        rejectedReason: reason,
+        rejectedBy: { connect: { id: user.sub } },
+      },
+      include: {
+        ...EVENT_INCLUDE,
+        owner: { select: { email: true, firstname: true } },
+      },
+    });
+    if (event.owner?.email) {
+      await this.mail
+        .sendContentBanned(
+          event.owner.email,
+          event.owner.firstname ?? event.owner.email,
+          event.title,
+          reason,
+        )
+        .catch(() => {});
+    }
+    return event;
+  }
+
   // ─────────────────────── Helpers ───────────────────────
 
   private async ensure(id: number) {

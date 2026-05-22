@@ -19,7 +19,10 @@ import { SpotsService } from './spots.service';
 import { CreateSpotDto } from './dto/create-spot.dto';
 import { UpdateSpotDto } from './dto/update-spot.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
+import { RejectEventDto } from '../events/dto/reject-event.dto';
 
 // Spots: paid ads shown among the event cards. No detail view.
 @ApiTags('spots')
@@ -74,5 +77,34 @@ export class SpotsController {
   @ApiBadRequestResponse({ description: 'Spot not found or access denied' })
   remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
     return this.spots.remove(id, user);
+  }
+
+  // ── Moderación (ADMIN+) ──
+
+  @Patch(':id/approve')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Aprobar un aviso (ADMIN+)' })
+  approve(@Param('id', ParseIntPipe) id: number) {
+    return this.spots.approve(id);
+  }
+
+  @Patch(':id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Rechazar un aviso con motivo (ADMIN+)' })
+  reject(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectEventDto) {
+    return this.spots.reject(id, dto.reason);
+  }
+
+  @Patch(':id/ban')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Bannear un aviso con motivo (ADMIN+)' })
+  ban(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectEventDto) {
+    return this.spots.ban(id, dto.reason);
   }
 }

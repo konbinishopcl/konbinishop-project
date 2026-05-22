@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../../services/mailgun/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
@@ -16,6 +17,7 @@ export class HeroesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly mail: MailService,
   ) {}
 
   private pricePerDay(): number {
@@ -116,6 +118,50 @@ export class HeroesService {
     this.assertCanManage(hero, user);
     await this.prisma.hero.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  // ─────────────────────── Moderación ───────────────────────
+
+  async approve(id: number) {
+    const hero = await this.prisma.hero.update({
+      where: { id },
+      data: { status: PublicationStatus.APPROVED, statusReason: null },
+      include: { owner: { select: { email: true, firstname: true } } },
+    });
+    if (hero.owner?.email) {
+      await this.mail
+        .sendContentApproved(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title)
+        .catch(() => {});
+    }
+    return hero;
+  }
+
+  async reject(id: number, reason: string) {
+    const hero = await this.prisma.hero.update({
+      where: { id },
+      data: { status: PublicationStatus.REJECTED, statusReason: reason },
+      include: { owner: { select: { email: true, firstname: true } } },
+    });
+    if (hero.owner?.email) {
+      await this.mail
+        .sendContentRejected(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title, reason)
+        .catch(() => {});
+    }
+    return hero;
+  }
+
+  async ban(id: number, reason: string) {
+    const hero = await this.prisma.hero.update({
+      where: { id },
+      data: { status: PublicationStatus.BANNED, statusReason: reason },
+      include: { owner: { select: { email: true, firstname: true } } },
+    });
+    if (hero.owner?.email) {
+      await this.mail
+        .sendContentBanned(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title, reason)
+        .catch(() => {});
+    }
+    return hero;
   }
 
   /** Valida que haya cupo disponible; lanza excepción si no. */

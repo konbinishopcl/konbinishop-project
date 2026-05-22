@@ -112,6 +112,19 @@ export class EventsController {
     return this.events.reject(id, dto.reason, user);
   }
 
+  @Patch(':id/ban')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Bannear un evento con un motivo (ADMIN+)' })
+  ban(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RejectEventDto,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.events.ban(id, dto.reason, user);
+  }
+
   // ── Likes ──
 
   @Post(':id/like')

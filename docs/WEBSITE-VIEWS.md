@@ -4,6 +4,8 @@
 > - **Parte 1 — Diseño:** qué ve el usuario, secciones, estados y flujos. Sin código ni APIs. Úsala para diseño y UI.
 > - **Parte 2 — Desarrollo:** stack, endpoints, guards, estado de implementación. Úsala para desarrollo.
 > - **Nomenclatura:** Los productos de publicidad paga tienen nombre técnico (código/API) y nombre comercial (UI/textos): `hero` → **Portada**, `spot` → **Aviso**. La Parte 1 usa siempre el nombre comercial; la Parte 2 usa los nombres técnicos que coinciden con los endpoints.
+> - **Feedback al usuario:** Todos los estados de error y éxito se comunican mediante **toasts** (notificación flotante esquina inferior-derecha, auto-dismiss 4s). Los formularios muestran errores inline solo para validación de campos; el resultado del submit siempre va al toast.
+> - **Privacidad (Ley 21.719):** Ver sección "Cumplimiento Ley de Protección de Datos" al final de la Parte 1.
 
 ---
 
@@ -404,6 +406,87 @@ Grilla de artículos con barra de búsqueda por texto y filtro por tag. Los resu
 
 ### `/articulos/[slug]` — Detalle de artículo
 Contenido del artículo, tags y eventos relacionados. Pendiente de implementar.
+
+---
+
+## Sistema de feedback — Toasts
+
+Todas las acciones que producen un resultado (éxito o error) lo comunican mediante un **toast**: notificación flotante en la esquina inferior-derecha, auto-dismiss en 4 segundos, con botón de cierre manual.
+
+**Variantes:**
+- **Éxito** (verde) — acción completada correctamente.
+- **Error** (rojo) — fallo del servidor o error de red. Mensaje legible, nunca un stack trace.
+- **Info** (neutro) — confirmación sin valor positivo/negativo (ej: "Enlace copiado").
+- **Advertencia** (amarillo) — acción completada con matices (ej: "Guardado, pero la imagen tardará en procesarse").
+
+**Regla general:**
+- Validación de campos del formulario → error **inline** bajo el campo.
+- Resultado del submit (éxito o fallo de red/servidor) → **toast**.
+- El toast no reemplaza el estado de la UI: si un evento se aprueba, la fila también cambia de estado visualmente.
+
+**Casos concretos:**
+- Login incorrecto → toast error "Credenciales incorrectas."
+- Registro exitoso → toast éxito "¡Bienvenido/a a Konbini!"
+- Evento enviado a revisión → toast éxito "Tu evento fue enviado. Lo revisaremos pronto."
+- Error de red (500, timeout) → toast error "Algo salió mal. Intenta de nuevo."
+- Perfil actualizado → toast éxito "Perfil guardado."
+- Contraseña cambiada → toast éxito "Contraseña actualizada."
+- Mensaje de contacto enviado → toast éxito "Mensaje enviado. Te responderemos a la brevedad." (el formulario también muestra el mensaje inline, pero el toast se superpone como confirmación inmediata).
+- Copia de enlace → toast info "Enlace copiado."
+
+---
+
+## Cumplimiento Ley de Protección de Datos — Ley 21.719
+
+Chile publicó la Ley 21.719 en diciembre de 2024. Entra en plena vigencia en **diciembre 2026**. Los siguientes elementos deben estar presentes en el diseño.
+
+### Banner de cookies
+
+Aparece en el primer acceso al sitio (visitante sin cookie de consentimiento previa). Es un banner fijo en la parte inferior de la pantalla, no un modal bloqueante.
+
+**Contenido:**
+- Texto breve explicando el uso de cookies analíticas y de sesión.
+- Botón principal "Aceptar todo".
+- Botón secundario "Solo esenciales".
+- Link "Política de privacidad" → `/privacidad`.
+
+**Comportamiento:**
+- Al elegir cualquier opción, el banner desaparece y se guarda la preferencia en `localStorage`.
+- No carga cookies analíticas (Google Analytics u equivalente) hasta que el usuario acepte.
+- En `/privacidad` debe haber un link "Cambiar preferencias de cookies" que reabre el banner.
+
+### Consentimiento en el registro
+
+El formulario de `/registro` incluye al final, antes del botón "Crear cuenta":
+
+1. **Checkbox requerido** — "He leído y acepto los [Términos y condiciones](/terminos) y la [Política de privacidad](/privacidad)." Sin marcar, el botón permanece deshabilitado.
+2. **Checkbox opcional** — "Acepto recibir novedades y comunicaciones de Konbini por email." Desmarcado por defecto. Controla si el usuario queda suscrito al newsletter.
+
+### Consentimiento en newsletter (home y otros puntos)
+
+El campo de suscripción al newsletter que aparece en el home y otros lugares incluye bajo el botón de suscripción:
+
+- Texto: "Al suscribirte aceptas recibir emails de Konbini. Puedes darte de baja en cualquier momento."
+
+No requiere checkbox adicional porque la acción de suscribirse es el consentimiento (opt-in explícito).
+
+### Derechos del usuario (ARCOP)
+
+En `/cuenta`, sección de configuración (pendiente de implementar), debe existir un bloque "Mis datos" con:
+
+- Botón "Descargar mis datos" — descarga un JSON con los datos del usuario (perfil, eventos, avisos, portadas, órdenes). Ejercicio del derecho de **portabilidad**.
+- Botón "Eliminar mi cuenta" — elimina la cuenta y todos los datos asociados, previa confirmación con contraseña. Ejercicio del derecho de **cancelación/supresión**.
+- Texto informativo con email de contacto para ejercer otros derechos (acceso, rectificación, oposición).
+
+### Aviso de cookies esenciales
+
+Las cookies/almacenamiento que Konbini usa sin consentimiento previo (esenciales):
+- `kb-token` — JWT de autenticación (necesario para el servicio).
+- `kb-user` — datos de sesión del usuario (necesario para el servicio).
+- `kb-theme` — preferencia de tema claro/oscuro (preferencia de UI).
+- Cookie de consentimiento de cookies (necesaria para recordar la decisión).
+
+Estas no necesitan opt-in porque son estrictamente necesarias para el funcionamiento.
 
 ---
 

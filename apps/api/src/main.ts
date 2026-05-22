@@ -18,13 +18,11 @@ async function bootstrap() {
   // Headers de seguridad HTTP.
   app.use(helmet());
 
-  // CORS — en producción solo se aceptan los dominios configurados.
-  const allowedOrigins = (config.get<string>('ALLOWED_ORIGINS') || 'http://localhost:3000,http://localhost:3001')
-    .split(',')
-    .map((o) => o.trim());
+  // CORS — en producción solo se acepta el dominio del frontend.
+  const frontendUrl = config.get<string>('FRONTEND_URL', 'http://localhost:3000');
   app.enableCors({
     origin: (origin, cb) => {
-      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      if (!origin || origin === frontendUrl) return cb(null, true);
       cb(new Error('Not allowed by CORS'));
     },
     credentials: true,

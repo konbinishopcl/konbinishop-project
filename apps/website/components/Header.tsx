@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { Ic } from "./icons";
 import { ProfileModal } from "./ProfileModal";
@@ -16,6 +16,35 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
   const pathname = usePathname();
   const [menu, setMenu] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    let lastY = window.scrollY;
+    let ticking = false;
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const el = headerRef.current;
+        if (el) {
+          if (y < 80) {
+            el.classList.remove("headroom--hidden");
+          } else if (y - lastY > 4) {
+            el.classList.add("headroom--hidden");
+          } else if (lastY - y > 4) {
+            el.classList.remove("headroom--hidden");
+          }
+        }
+        lastY = y;
+        ticking = false;
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const active =
     pathname === "/"
@@ -25,7 +54,7 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
         : "";
 
   return (
-    <header className="app">
+    <header className="app" ref={headerRef}>
       <div className="container nav-wrap">
         <div className="row" style={{ gap: 32 }}>
           <Link href="/" style={{ cursor: "pointer" }}>

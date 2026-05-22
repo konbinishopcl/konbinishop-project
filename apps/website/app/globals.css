@@ -77,6 +77,11 @@
     position: sticky; top: 0; z-index: 50; backdrop-filter: blur(18px);
     background: color-mix(in oklab, var(--bg) 78%, transparent);
     border-bottom: 1px solid var(--line);
+    transform: translateY(0);
+    transition: transform 0.28s ease;
+  }
+  header.app.headroom--hidden {
+    transform: translateY(-100%);
   }
   .nav-wrap { display: flex; align-items: center; justify-content: space-between; height: 72px; }
   .brand { display: flex; align-items: baseline; gap: 8px; }

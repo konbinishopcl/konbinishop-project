@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-22T19:50:09.768Z"
+last_updated: "2026-05-22T19:57:46.354Z"
 progress:
   total_phases: 8
   completed_phases: 6
   total_plans: 19
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -24,9 +24,9 @@ administrador quedan visibles al público.
 ## Current Status
 
 **Milestone:** v1 — Publicación gratuita de eventos
-**Active Phase:** Phase 7 — Sistema de auditoría (en progreso — 2/5 planes)
+**Active Phase:** Phase 7 — Sistema de auditoría (en progreso — 3/5 planes)
 **Overall Progress:** [███████░] Phases 0–6 completas · Phase 7 en curso
-**Last session:** 2026-05-22T19:49:49.748Z
+**Last session:** 2026-05-22T19:57:46.352Z
 
 ## Phase Summary
 
@@ -39,7 +39,7 @@ administrador quedan visibles al público.
 | 4 | Moderación y panel admin | ✅ Complete | 2/2 |
 | 5 | Búsqueda | ✅ Complete | 2/2 |
 | 6 | Hardening para producción | ✅ Complete | 3/3 |
-| 7 | Sistema de auditoría | ◑ In Progress | 2/5 |
+| 7 | Sistema de auditoría | ◑ In Progress | 3/5 |
 
 ## Decisions
 
@@ -74,6 +74,7 @@ administrador quedan visibles al público.
 
 - [Phase 07-01]: pnpm se usa para instalar deps en apps/api; npm falla por postinstall de @nestjs/cli que llama a husky
 - [Phase 07-01]: Enum AuditEntity usa SPOT y HERO (nombres de modelo Prisma) no AVISO/PORTADA (nombres comerciales UI) — más mantenible cuando la UI cambia
+- [Phase 07]: log() es síncrono (void) — fire-and-forget garantizado; e2e suite con describe.skip por DB en VPS; metadata requiere cast a Prisma.InputJsonValue
 
 ## Quick Tasks Completed
 
@@ -93,8 +94,8 @@ administrador quedan visibles al público.
 
 ## Next Action
 
-Continuar **Phase 7** con el plan **07-03**: `AuditService` — servicio singleton inyectable
-con método `log()` fire-and-forget, módulo `AuditModule`, e integración en `AppModule`.
+Continuar **Phase 7** con el plan **07-04**: integración de `AuditService.log()` en
+EventsService, UsersService, SpotsService y HeroesService.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

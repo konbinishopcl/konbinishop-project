@@ -43,6 +43,7 @@ administrador quedan visibles al público.
 
 ## Decisions
 
+- **[07-05]:** ensure() en UsersService retorna usuario (antes void) para obtener before.role sin query extra; actor como nombre de parámetro JwtUser en los tres servicios para evitar colisión con variables locales; UPDATE de rol auditado solo si dto.role cambia
 - **[07-02]:** AuditEntity usa AVISO/PORTADA (nombres comerciales), no SPOT/HERO (nombres de modelos Prisma). AuditAction tiene 7 valores sin CHANGE_ROLE (cambios de rol = UPDATE + metadata). userId es Int? sin FK — historial sobrevive borrado de usuarios.
 - **[04-02]:** `/dashboard/users` se difiere (no hay diseño). El dashboard overview se conecta
   con alcance "Mínimo": KPIs de eventos + cola de revisión + por-categoría reales; los widgets
@@ -94,8 +95,7 @@ administrador quedan visibles al público.
 
 ## Next Action
 
-Continuar **Phase 7** con el plan **07-04**: integración de `AuditService.log()` en
-EventsService, UsersService, SpotsService y HeroesService.
+**Phase 7 completada.** Todos los servicios (Events, Users, Spots, Heroes) instrumentados con `AuditService.log()`. El sistema de auditoría AUD-02 está completo. Próximo paso: Phase 8 o siguiente hito del roadmap.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

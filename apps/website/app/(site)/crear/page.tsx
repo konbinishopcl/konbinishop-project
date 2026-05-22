@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
@@ -65,6 +65,7 @@ const EMPTY: FormData = {
 
 export default function FormPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, token, ready } = useUser();
 
   const [step, setStep] = useState(1);
@@ -108,8 +109,8 @@ export default function FormPage() {
 
   // Sin sesión → al login.
   useEffect(() => {
-    if (ready && !user) router.replace("/login");
-  }, [ready, user, router]);
+    if (ready && !user) router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`);
+  }, [ready, user, router, pathname]);
 
   // Catálogos.
   useEffect(() => {

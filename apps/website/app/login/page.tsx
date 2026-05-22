@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { BrandMark } from "@/components/BrandMark";
@@ -16,14 +16,20 @@ const TILES = [
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { theme, setTheme } = useTheme();
   const { setAuth } = useUser();
+
+  const returnTo = searchParams.get("returnTo") || "/";
 
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const redirect = (role: string) =>
+    router.push(role === "ADMIN" || role === "SUPER_ADMIN" ? "/dashboard" : returnTo);
 
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -32,7 +38,7 @@ export default function LoginPage() {
       try {
         const { token, user } = await api.googleAuth(tokenResponse.access_token);
         setAuth(toUser(user), token);
-        router.push("/");
+        redirect(user.role);
       } catch (err) {
         setError(err instanceof Error ? err.message : "No se pudo iniciar sesión con Google");
       } finally {
@@ -60,7 +66,7 @@ export default function LoginPage() {
     try {
       const { token, user } = await api.login({ email, password });
       setAuth(toUser(user), token);
-      router.push("/");
+      redirect(user.role);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesión");
     } finally {

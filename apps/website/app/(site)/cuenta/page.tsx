@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProfileModal } from "@/components/ProfileModal";
 import { useUser } from "@/components/providers";
@@ -20,14 +20,15 @@ function statusOf(e: ApiEvent): Status {
 export default function CuentaPage() {
   const { user, token, ready, logout } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const [tab, setTab] = useState<Tab>("all");
   const [profileOpen, setProfileOpen] = useState(false);
   const [events, setEvents] = useState<ApiEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (ready && !user) router.replace("/login");
-  }, [ready, user, router]);
+    if (ready && !user) router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`);
+  }, [ready, user, router, pathname]);
 
   useEffect(() => {
     if (!token) return;

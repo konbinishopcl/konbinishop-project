@@ -91,7 +91,7 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
           </button>
           {!user ? (
             <>
-              <Link className="btn ghost" href="/login">Ingresar</Link>
+              <Link className="btn ghost" href={`/login?returnTo=${encodeURIComponent(pathname)}`}>Ingresar</Link>
               <Link className="btn primary" href="/crear">＋ Crear evento</Link>
             </>
           ) : (

@@ -14,13 +14,13 @@ export class LegalController {
 
   // ── Lectura pública ──
 
-  @Get('terms-of-service')
+  @Get('terms')
   @ApiOperation({ summary: 'Obtener términos y condiciones vigentes (público)' })
   getTerms() {
     return this.legal.findOne(LegalDocumentType.TERMS_OF_SERVICE);
   }
 
-  @Get('privacy-policy')
+  @Get('privacy')
   @ApiOperation({ summary: 'Obtener política de privacidad vigente (público)' })
   getPrivacy() {
     return this.legal.findOne(LegalDocumentType.PRIVACY_POLICY);
@@ -28,7 +28,7 @@ export class LegalController {
 
   // ── Escritura (ADMIN+) ──
 
-  @Put('terms-of-service')
+  @Put('terms')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
@@ -37,7 +37,7 @@ export class LegalController {
     return this.legal.upsert(LegalDocumentType.TERMS_OF_SERVICE, dto);
   }
 
-  @Put('privacy-policy')
+  @Put('privacy')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
@@ -46,7 +46,7 @@ export class LegalController {
     return this.legal.upsert(LegalDocumentType.PRIVACY_POLICY, dto);
   }
 
-  @Delete('terms-of-service')
+  @Delete('terms')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
@@ -55,7 +55,7 @@ export class LegalController {
     return this.legal.remove(LegalDocumentType.TERMS_OF_SERVICE);
   }
 
-  @Delete('privacy-policy')
+  @Delete('privacy')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()

@@ -844,8 +844,7 @@ export default function PasoPage() {
     const errs = validateStep(paso, data);
     if (Object.keys(errs).length) {
       setFieldErrors(errs);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
+      return; // no scrollear — el error está visible en la página
     }
     setFieldErrors({});
     router.push(`/crear/${paso + 1}`);
@@ -856,8 +855,7 @@ export default function PasoPage() {
     const errs = validateStep(3, data);
     if (Object.keys(errs).length) {
       setFieldErrors(errs);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
+      return; // no scrollear — el error está visible en la página
     }
     setSubmitting(true);
     try {

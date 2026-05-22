@@ -31,6 +31,8 @@ function RegistroContent() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
   const redirect = (role: string) =>
     router.push(role === "ADMIN" || role === "SUPER_ADMIN" ? "/dashboard" : returnTo);
 
@@ -135,9 +137,11 @@ function RegistroContent() {
 
         {step === 1 && (
           <>
-            <button className="social-btn" type="button" onClick={() => loginWithGoogle()} disabled={loading}>
-              {Ic.google} Continuar con Google
-            </button>
+            {googleClientId && (
+              <button className="social-btn" type="button" onClick={() => loginWithGoogle()} disabled={loading}>
+                {Ic.google} Continuar con Google
+              </button>
+            )}
             <button className="social-btn" type="button">{Ic.insta} Continuar con Instagram</button>
             <button className="social-btn" type="button">{Ic.apple} Continuar con Apple</button>
 

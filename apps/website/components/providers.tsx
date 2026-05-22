@@ -97,12 +97,13 @@ export function useUser() {
 
 /* ───────────────── wrapper ───────────────── */
 export function Providers({ children }: { children: ReactNode }) {
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
   return (
-    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}>
+    <GoogleOAuthProvider clientId={googleClientId}>
       <ThemeProvider>
         <UserProvider>
           <NavigationProgress />
-          <OneTap />
+          {googleClientId && <OneTap />}
           {children}
         </UserProvider>
       </ThemeProvider>

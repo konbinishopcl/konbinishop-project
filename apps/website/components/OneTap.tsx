@@ -12,10 +12,11 @@ export function OneTap() {
   const router = useRouter();
   const pathname = usePathname();
 
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   const excluded = EXCLUDED.some((p) => pathname.startsWith(p));
 
   useGoogleOneTapLogin({
-    disabled: !!user || excluded,
+    disabled: !clientId || !!user || excluded,
     onSuccess: async ({ credential }) => {
       if (!credential) return;
       try {

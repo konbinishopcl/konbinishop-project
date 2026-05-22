@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -15,6 +16,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { SpotsService } from './spots.service';
 import { CreateSpotDto } from './dto/create-spot.dto';
 import { UpdateSpotDto } from './dto/update-spot.dto';
@@ -86,8 +88,12 @@ export class SpotsController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Aprobar un aviso (ADMIN+)' })
-  approve(@Param('id', ParseIntPipe) id: number) {
-    return this.spots.approve(id);
+  approve(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.spots.approve(id, user, req);
   }
 
   @Patch(':id/reject')
@@ -95,8 +101,13 @@ export class SpotsController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Rechazar un aviso con motivo (ADMIN+)' })
-  reject(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectEventDto) {
-    return this.spots.reject(id, dto.reason);
+  reject(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RejectEventDto,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.spots.reject(id, dto.reason, user, req);
   }
 
   @Patch(':id/ban')
@@ -104,7 +115,12 @@ export class SpotsController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Bannear un aviso con motivo (ADMIN+)' })
-  ban(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectEventDto) {
-    return this.spots.ban(id, dto.reason);
+  ban(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RejectEventDto,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.spots.ban(id, dto.reason, user, req);
   }
 }

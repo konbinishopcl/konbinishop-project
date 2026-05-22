@@ -6,7 +6,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PublicationStatus } from '@prisma/client';
+import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { MailService } from '../../services/mailgun/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateSpotDto } from './dto/create-spot.dto';
@@ -18,6 +20,7 @@ export class SpotsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly mail: MailService,
+    private readonly audit: AuditService,
   ) {}
 
   private maxActive(): number {
@@ -107,12 +110,13 @@ export class SpotsService {
 
   // ─────────────────────── Moderación ───────────────────────
 
-  async approve(id: number) {
+  async approve(id: number, actor: JwtUser, req?: Request) {
     const spot = await this.prisma.spot.update({
       where: { id },
       data: { status: PublicationStatus.APPROVED, statusReason: null },
       include: { owner: { select: { email: true, firstname: true } } },
     });
+    this.audit.log({ userId: actor.sub, action: 'APPROVE', entity: 'AVISO', entityId: id, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentApproved(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title)
@@ -121,12 +125,13 @@ export class SpotsService {
     return spot;
   }
 
-  async reject(id: number, reason: string) {
+  async reject(id: number, reason: string, actor: JwtUser, req?: Request) {
     const spot = await this.prisma.spot.update({
       where: { id },
       data: { status: PublicationStatus.REJECTED, statusReason: reason },
       include: { owner: { select: { email: true, firstname: true } } },
     });
+    this.audit.log({ userId: actor.sub, action: 'REJECT', entity: 'AVISO', entityId: id, metadata: { reason }, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentRejected(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title, reason)
@@ -135,12 +140,13 @@ export class SpotsService {
     return spot;
   }
 
-  async ban(id: number, reason: string) {
+  async ban(id: number, reason: string, actor: JwtUser, req?: Request) {
     const spot = await this.prisma.spot.update({
       where: { id },
       data: { status: PublicationStatus.BANNED, statusReason: reason },
       include: { owner: { select: { email: true, firstname: true } } },
     });
+    this.audit.log({ userId: actor.sub, action: 'BAN', entity: 'AVISO', entityId: id, metadata: { reason }, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentBanned(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title, reason)

@@ -6,23 +6,34 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
+import { PrismaService } from '../prisma/prisma.service';
 
-/** Verifica el JWT del header Authorization y adjunta el payload a request.user. */
+/** Verifica el JWT y que el usuario no esté bloqueado en cada request. */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly jwt: JwtService) {}
+  constructor(
+    private readonly jwt: JwtService,
+    private readonly prisma: PrismaService,
+  ) {}
 
-  canActivate(ctx: ExecutionContext): boolean {
+  async canActivate(ctx: ExecutionContext): Promise<boolean> {
     const req = ctx.switchToHttp().getRequest<Request>();
     const header = req.headers.authorization;
     if (!header?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Token de autenticación faltante');
+      throw new UnauthorizedException();
     }
+    let payload: { sub: number };
     try {
-      (req as Request & { user: unknown }).user = this.jwt.verify(header.slice(7));
-      return true;
+      payload = this.jwt.verify(header.slice(7));
     } catch {
-      throw new UnauthorizedException('Token inválido o expirado');
+      throw new UnauthorizedException();
     }
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, blocked: true },
+    });
+    if (!user || user.blocked) throw new UnauthorizedException();
+    (req as Request & { user: unknown }).user = payload;
+    return true;
   }
 }

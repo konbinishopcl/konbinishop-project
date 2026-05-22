@@ -5,13 +5,31 @@ import { HttpExceptionFilter } from '../utils/http-exception.filter';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const config = app.get(ConfigService);
+
   app.setGlobalPrefix('api');
   app.disable('x-powered-by');
-  app.enableCors({ origin: true, credentials: true });
+
+  // Headers de seguridad HTTP.
+  app.use(helmet());
+
+  // CORS — en producción solo se aceptan los dominios configurados.
+  const allowedOrigins = (config.get<string>('ALLOWED_ORIGINS') || 'http://localhost:3000,http://localhost:3001')
+    .split(',')
+    .map((o) => o.trim());
+  app.enableCors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      cb(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+  });
+
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
 
@@ -28,7 +46,6 @@ async function bootstrap() {
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swaggerConfig));
   }
 
-  const config = app.get(ConfigService);
   const port = config.get<number>('PORT', 3333);
 
   await app.listen(port);

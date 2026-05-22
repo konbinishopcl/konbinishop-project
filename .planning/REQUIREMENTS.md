@@ -78,7 +78,7 @@ administrador quedan visibles al público.
 
 ### Audit
 
-- [ ] **AUD-01**: Migración Prisma que crea el modelo `AuditLog` con los campos
+- [x] **AUD-01**: Migración Prisma que crea el modelo `AuditLog` con los campos
   `userId` (Int?, sin FK), `action` (enum `AuditAction`), `entity` (enum `AuditEntity`),
   `entityId` (Int), `metadata` (Json), `ip` (String?), `userAgent` (String?),
   `url` (String?), `createdAt` — más índices de consulta

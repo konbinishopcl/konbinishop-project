@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1
 milestone_name: "Publicación gratuita de eventos"
 status: in_progress
-last_updated: "2026-05-21T20:35:00.000Z"
+last_updated: "2026-05-22T19:46:25Z"
 progress:
   total_phases: 7
   completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 19
+  completed_plans: 16
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 5 — Búsqueda
+**Current focus:** Phase 7 — Sistema de auditoría
 
 ## Current Status
 
 **Milestone:** v1 — Publicación gratuita de eventos
-**Active Phase:** Phase 5 — Búsqueda (en progreso — 1/2 planes)
-**Overall Progress:** [██████░] Phases 0–4 completas · Phase 5 en curso
-**Last session:** 2026-05-21 — Phase 5 plan 05-01: página /busqueda (texto + categoría + región)
+**Active Phase:** Phase 7 — Sistema de auditoría (en progreso — 2/5 planes)
+**Overall Progress:** [███████░] Phases 0–6 completas · Phase 7 en curso
+**Last session:** 2026-05-22 — Phase 7 plan 07-02: schema AuditLog + migración add_audit_log
 
 ## Phase Summary
 
@@ -37,11 +37,13 @@ administrador quedan visibles al público.
 | 2 | Sitio público con datos reales | ✅ Complete | 4/4 |
 | 3 | Publicación de eventos | ✅ Complete | 3/3 |
 | 4 | Moderación y panel admin | ✅ Complete | 2/2 |
-| 5 | Búsqueda | ◑ In Progress | 1/2 |
-| 6 | Hardening para producción | ○ Pending | 0/? |
+| 5 | Búsqueda | ✅ Complete | 2/2 |
+| 6 | Hardening para producción | ✅ Complete | 3/3 |
+| 7 | Sistema de auditoría | ◑ In Progress | 2/5 |
 
 ## Decisions
 
+- **[07-02]:** AuditEntity usa AVISO/PORTADA (nombres comerciales), no SPOT/HERO (nombres de modelos Prisma). AuditAction tiene 7 valores sin CHANGE_ROLE (cambios de rol = UPDATE + metadata). userId es Int? sin FK — historial sobrevive borrado de usuarios.
 - **[04-02]:** `/dashboard/users` se difiere (no hay diseño). El dashboard overview se conecta
   con alcance "Mínimo": KPIs de eventos + cola de revisión + por-categoría reales; los widgets
   de pagos (Ingresos, Tickets, RevenueChart, Conversión) y el feed de actividad quedan mock.
@@ -80,9 +82,8 @@ administrador quedan visibles al público.
 
 ## Next Action
 
-Continuar **Phase 5** con el plan **05-02**: filtro por rango de fechas — agregar
-`desde`/`hasta` al `QueryEventsDto` y al servicio de la API, y los inputs de fecha en
-`/busqueda`. Con eso cierra Phase 5.
+Continuar **Phase 7** con el plan **07-03**: `AuditService` — servicio singleton inyectable
+con método `log()` fire-and-forget, módulo `AuditModule`, e integración en `AppModule`.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

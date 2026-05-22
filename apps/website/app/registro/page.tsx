@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
@@ -14,7 +14,7 @@ const TILES = [
   "pa-4", "pa-3", "pa-2", "pa-1", "pa-12", "pa-11", "pa-10", "pa-9",
 ];
 
-export default function RegistroPage() {
+function RegistroContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { theme, setTheme } = useTheme();
@@ -240,4 +240,8 @@ export default function RegistroPage() {
       </div>
     </div>
   );
+}
+
+export default function RegistroPage() {
+  return <Suspense><RegistroContent /></Suspense>;
 }

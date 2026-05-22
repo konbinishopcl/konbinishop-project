@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
@@ -14,7 +14,7 @@ const TILES = [
   "pa-9", "pa-10", "pa-11", "pa-12", "pa-1", "pa-2", "pa-3", "pa-4",
 ];
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { theme, setTheme } = useTheme();
@@ -199,4 +199,8 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+export default function LoginPage() {
+  return <Suspense><LoginContent /></Suspense>;
 }

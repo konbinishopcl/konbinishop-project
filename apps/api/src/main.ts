@@ -18,12 +18,22 @@ async function bootstrap() {
   // Headers de seguridad HTTP.
   app.use(helmet());
 
-  // CORS — en producción solo se acepta el dominio del frontend.
+  // CORS — acepta los orígenes listados en ALLOWED_ORIGINS (separados por coma)
+  // más FRONTEND_URL. Usar cb(null, false) en vez de cb(new Error()) para que
+  // el rechazo devuelva 403 en lugar de 500.
   const frontendUrl = config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+  const extraOrigins = config.get<string>('ALLOWED_ORIGINS', '');
+  const allowedOrigins = new Set([
+    frontendUrl,
+    ...extraOrigins.split(',').map((o) => o.trim()).filter(Boolean),
+  ]);
   app.enableCors({
     origin: (origin, cb) => {
-      if (!origin || origin === frontendUrl) return cb(null, true);
-      cb(new Error('Not allowed by CORS'));
+      if (!origin) return cb(null, true);
+      if (allowedOrigins.has(origin)) return cb(null, true);
+      // Vercel preview deploys usan URLs con hashes que cambian en cada deploy
+      if (origin.includes('konbini-project-website') && origin.endsWith('.vercel.app')) return cb(null, true);
+      cb(null, false);
     },
     credentials: true,
   });

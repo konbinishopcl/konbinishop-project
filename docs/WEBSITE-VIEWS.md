@@ -3,6 +3,7 @@
 > **Cómo usar este documento**
 > - **Parte 1 — Diseño:** qué ve el usuario, secciones, estados y flujos. Sin código ni APIs. Úsala para diseño y UI.
 > - **Parte 2 — Desarrollo:** stack, endpoints, guards, estado de implementación. Úsala para desarrollo.
+> - **Nomenclatura:** Los productos de publicidad paga tienen nombre técnico (código/API) y nombre comercial (UI/textos): `hero` → **Portada**, `spot` → **Aviso**. La Parte 1 usa siempre el nombre comercial; la Parte 2 usa los nombres técnicos que coinciden con los endpoints.
 
 ---
 
@@ -16,7 +17,7 @@
 | Registrado | Lo anterior + `/cuenta`, `/crear`, `/carrito` |
 | Admin / Super Admin | Lo anterior + `/cuenta` (igual que cualquier registrado) + `/dashboard` |
 
-> **`/cuenta` y `/dashboard` son vistas distintas.** `/cuenta` es el panel personal de cualquier usuario registrado (editar perfil, mis eventos, mis avisos, mis heroes). `/dashboard` es la herramienta de moderación exclusiva de admins. Un admin usa ambas: `/dashboard` para moderar, `/cuenta` para gestionar su propio contenido.
+> **`/cuenta` y `/dashboard` son vistas distintas.** `/cuenta` es el panel personal de cualquier usuario registrado (editar perfil, mis eventos, mis avisos, mis portadas). `/dashboard` es la herramienta de moderación exclusiva de admins. Un admin usa ambas: `/dashboard` para moderar, `/cuenta` para gestionar su propio contenido.
 
 ---
 
@@ -50,8 +51,8 @@
 │   ├── Mis publicaciones
 │   ├── Mis avisos
 │   │   └── Formulario aviso
-│   └── Mis heroes
-│       └── Formulario hero
+│   └── Mis portadas
+│       └── Formulario portada
 
 ├── /crear
 │   ├── Paso 1
@@ -59,7 +60,7 @@
 │   ├── Paso 3
 │   └── Upsell post-evento
 │       ├── Formulario aviso
-│       └── Formulario hero
+│       └── Formulario portada
 
 ├── /carrito
 │   ├── /checkout/success
@@ -72,8 +73,8 @@
     ├── /dashboard/communes
     ├── /dashboard/categories
     ├── /dashboard/tags
-    ├── /dashboard/spots
-    ├── /dashboard/heroes
+    ├── /dashboard/spots        ← Avisos
+    ├── /dashboard/heroes       ← Portadas
     ├── /dashboard/payments
     ├── /dashboard/contact
     └── /dashboard/faq
@@ -87,9 +88,11 @@
 
 Página principal. Carga en el servidor. Secciones de arriba a abajo:
 
-**1. Carousel de heroes**
+**1. Carousel de portadas**
+
 Slides a pantalla completa. Cada slide tiene imagen de fondo, título, subtítulo en color de acento, descripción corta, fecha, lugar y botón CTA.
-- Si no hay heroes activos: la sección no aparece.
+
+- Si no hay portadas activas: la sección no aparece.
 
 **2. Destacados — Top 12**
 Grilla de 6 columnas × 2 filas con los 12 eventos más likeados. Sin botón "Ver todos".
@@ -223,7 +226,7 @@ Requiere sesión. Tiene dos zonas:
 
 - **Mis publicaciones** — lista de eventos propios con tabs Todos / En revisión / Publicados / Rechazados. Cada evento muestra estado, motivo de rechazo si aplica, precio y link a la publicación.
 - **Mis avisos** — lista de avisos propios con estado y fechas de vigencia. Botón "Crear aviso" para abrir el formulario. Puede editar o eliminar avisos en borrador o rechazados.
-- **Mis heroes** — lista de heroes propios con estado, imagen y título. Botón "Crear hero" para abrir el formulario. Puede editar o eliminar heroes en borrador o rechazados.
+- **Mis portadas** — lista de portadas propias con estado, imagen y título. Botón "Crear portada" para abrir el formulario. Puede editar o eliminar portadas en borrador o rechazadas.
 
 ---
 
@@ -245,7 +248,7 @@ Mini-wizard de 2 pasos que aparece después de crear un evento exitosamente, ant
 
 **Paso 1 — Aviso:** "¿Quieres agregar un aviso?" Muestra precio por día y cupos disponibles. Si acepta, abre el formulario de aviso. Si no hay cupo, este paso se omite.
 
-**Paso 2 — Hero:** "¿Quieres agregar un hero?" Muestra precio por día y cupos disponibles. Si acepta, abre el formulario de hero. Si no hay cupo, este paso se omite.
+**Paso 2 — Portada:** "¿Quieres agregar una portada?" Muestra precio por día y cupos disponibles. Si acepta, abre el formulario de portada. Si no hay cupo, este paso se omite.
 
 Si no hay cupo en ninguno de los dos, el upsell se omite completamente y se va directo al carrito.
 
@@ -265,9 +268,9 @@ Modal o sección inline. Aparece en dos contextos: desde el upsell post-evento y
 
 ---
 
-### Formulario de hero
+### Formulario de portada
 
-Modal o sección inline. Aparece en dos contextos: desde el upsell post-evento y desde el tab "Mis heroes" en `/cuenta`.
+Modal o sección inline. Aparece en dos contextos: desde el upsell post-evento y desde el tab "Mis portadas" en `/cuenta`.
 
 **Campos:**
 - Título (requerido)
@@ -285,7 +288,7 @@ Modal o sección inline. Aparece en dos contextos: desde el upsell post-evento y
 
 Requiere sesión.
 
-Muestra los ítems seleccionados: evento, aviso y/o hero. Cada ítem tiene nombre, selector de días de publicación, precio por día y subtotal. El total se calcula automáticamente.
+Muestra los ítems seleccionados: evento, aviso y/o portada. Cada ítem tiene nombre, selector de días de publicación, precio por día y subtotal. El total se calcula automáticamente.
 
 **Estado del carrito:**
 - **Borrador** — el usuario puede agregar, modificar o eliminar ítems y elegir los días.
@@ -295,7 +298,7 @@ Muestra los ítems seleccionados: evento, aviso y/o hero. Cada ítem tiene nombr
 
 Botón "Pagar" inicia el proceso de pago con Transbank y redirige al sitio de WebPay.
 
-**Días máximos por ítem:** Evento 60 días, Aviso 30 días, Hero 30 días.
+**Días máximos por ítem:** Evento 60 días, Aviso 30 días, Portada 30 días.
 
 ---
 
@@ -337,9 +340,9 @@ KPI cards alimentadas por `GET /stats`:
 
 - Total usuarios registrados
 - Eventos publicados (APPROVED)
-- Contenido pendiente de revisión (eventos + spots + heroes en PENDING_MODERATION)
+- Contenido pendiente de revisión (eventos + avisos + portadas en PENDING_MODERATION)
 - Ingresos totales (suma de órdenes en estado PAID)
-- Spots activos / Heroes activos
+- Avisos activos / Portadas activas
 
 Cola de revisión: últimos 5 eventos esperando aprobación, con botones de aprobar o rechazar.
 Gráfico de actividad. Feed de actividad reciente. Desglose de eventos por categoría.
@@ -365,8 +368,9 @@ CRUD de tags. Los tags se asocian a artículos, no a eventos. **Pendiente de imp
 ### `/dashboard/spots` — Avisos
 Moderación de avisos: lista con estado, aprobar, rechazar, eliminar. **Pendiente de implementar.**
 
-### `/dashboard/heroes` — Heroes
-Moderación de heroes: lista con estado, imagen y título, aprobar, rechazar, eliminar. **Pendiente de implementar.**
+### `/dashboard/heroes` — Portadas
+
+Moderación de portadas: lista con estado, imagen y título, aprobar, rechazar, eliminar. **Pendiente de implementar.**
 
 ### `/dashboard/payments` — Pagos
 
@@ -408,13 +412,13 @@ Contenido del artículo, tags y eventos relacionados. Pendiente de implementar.
 ### Organizador
 1. `/registro` — crea cuenta
 2. `/crear` — publica su evento
-3. Upsell — opcionalmente crea un aviso y/o hero
+3. Upsell — opcionalmente crea un aviso y/o portada
 4. `/carrito` — revisa ítems, elige días y paga
 5. Administrador aprueba — el contenido aparece en el sitio
 6. `/cuenta` — edita su perfil público
 7. `/@[slug]` — su perfil público es visible cuando tiene al menos un evento aprobado
 
-También puede crear avisos y heroes de forma independiente desde `/cuenta`, sin necesidad de crear un evento primero.
+También puede crear avisos y portadas de forma independiente desde `/cuenta`, sin necesidad de crear un evento primero.
 
 ### Visitante
 1. Home — descubre eventos en el carousel, la grilla de destacados o los rails
@@ -583,7 +587,7 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 
 | Vista | Estado |
 |---|---|
-| Home — carousel heroes | Implementado |
+| Home — carousel portadas | Implementado |
 | Home — rails por categoría | Implementado |
 | Home — destacados top 12 | Pendiente (frontend) |
 | Home — últimos en unirse | Pendiente (frontend) |
@@ -592,11 +596,11 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 | `/[category]/[slug]` | Implementado |
 | `/busqueda` | Implementado (SSR + client refetch) |
 | `/cuenta` — perfil (persistencia API) | Pendiente |
-| `/cuenta` — tabs spots/heroes | Pendiente |
+| `/cuenta` — tabs avisos/portadas | Pendiente |
 | `/crear` | Implementado (sin flujo de pago) |
 | Upsell post-evento | Pendiente |
 | Formulario de aviso | Pendiente |
-| Formulario de hero | Pendiente |
+| Formulario de portada | Pendiente |
 | `/carrito` | Pendiente |
 | `/checkout/success` | Pendiente |
 | `/checkout/failed` | Pendiente |
@@ -630,7 +634,7 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 |---|---|---|
 | `Header` | Nav con categorías y menú de usuario | Completo. "Mis tickets" y "Configuración" redirigen a `/cuenta` (stubs) |
 | `Footer` | Links del sitio | Visual. Todos los `href` apuntan a `#` |
-| `HeroBlock` | Carousel de heroes | Completo |
+| `HeroBlock` | Carousel de portadas | Completo |
 | `Rail` | Sección horizontal de event cards | Completo |
 | `EventCard` | Card de evento | Completo |
 | `ProfileModal` | Editar perfil | Solo actualiza contexto local — no llama a la API |

@@ -438,55 +438,96 @@ Todas las acciones que producen un resultado (éxito o error) lo comunican media
 
 ## Cumplimiento Ley de Protección de Datos — Ley 21.719
 
-Chile publicó la Ley 21.719 en diciembre de 2024. Entra en plena vigencia en **diciembre 2026**. Los siguientes elementos deben estar presentes en el diseño.
+> La Ley 21.719 fue publicada el 13 de diciembre de 2024 y entra en plena vigencia el **1 de diciembre de 2026**. Existe una ventana de gracia (dic 2026 – dic 2027) donde infracciones leves de PYMEs reciben amonestaciones antes de multas. Las multas máximas son 20.000 UTM (~$1.400M CLP). Todo lo descrito a continuación debe estar implementado antes de esa fecha.
 
-### Banner de cookies
+### Banner de cookies / almacenamiento analítico
 
-Aparece en el primer acceso al sitio (visitante sin cookie de consentimiento previa). Es un banner fijo en la parte inferior de la pantalla, no un modal bloqueante.
+La Ley 21.719 no regula cookies con el detalle del GDPR, pero sí aplica a cualquier tratamiento de datos que derive de ellas (analytics, pixels de remarketing). Si se usa cualquier herramienta de analytics de terceros, se necesita consentimiento previo.
+
+Aparece en el primer acceso al sitio (sin preferencia guardada). Es un banner fijo en la parte inferior, no un modal bloqueante.
 
 **Contenido:**
-- Texto breve explicando el uso de cookies analíticas y de sesión.
+- Texto breve: qué cookies se usan y para qué.
 - Botón principal "Aceptar todo".
 - Botón secundario "Solo esenciales".
 - Link "Política de privacidad" → `/privacidad`.
 
 **Comportamiento:**
-- Al elegir cualquier opción, el banner desaparece y se guarda la preferencia en `localStorage`.
-- No carga cookies analíticas (Google Analytics u equivalente) hasta que el usuario acepte.
-- En `/privacidad` debe haber un link "Cambiar preferencias de cookies" que reabre el banner.
+- Al elegir, el banner desaparece y se guarda la preferencia en `localStorage`.
+- Analytics de terceros (GA, Meta Pixel, etc.) no se cargan hasta que el usuario acepte.
+- En `/privacidad` debe existir un link "Cambiar preferencias" que reabre el banner.
 
-### Consentimiento en el registro
+**Almacenamiento esencial (no necesita consentimiento previo):**
+- `kb-token` — JWT de autenticación.
+- `kb-user` — datos de sesión.
+- `kb-theme` — preferencia de tema.
+- Preferencia de consentimiento de cookies.
 
-El formulario de `/registro` incluye al final, antes del botón "Crear cuenta":
+### Consentimiento en el registro (`/registro`)
 
-1. **Checkbox requerido** — "He leído y acepto los [Términos y condiciones](/terminos) y la [Política de privacidad](/privacidad)." Sin marcar, el botón permanece deshabilitado.
-2. **Checkbox opcional** — "Acepto recibir novedades y comunicaciones de Konbini por email." Desmarcado por defecto. Controla si el usuario queda suscrito al newsletter.
+El formulario de registro debe incluir, antes del botón "Crear cuenta", dos checkboxes separados:
+
+1. **Checkbox obligatorio** (sin él el botón permanece deshabilitado) — "He leído y acepto los [Términos y condiciones](/terminos) y la [Política de privacidad](/privacidad)."
+2. **Checkbox opcional, desmarcado por defecto** — "Quiero recibir novedades y ofertas de Konbini por email." Este consentimiento debe guardarse con timestamp en la base de datos (`newsletter_consent_at`). El consentimiento para el newsletter debe ser independiente del consentimiento de uso del servicio — la ley lo exige explícitamente (Art. 12).
+3. **Checkbox obligatorio** — "Confirmo que tengo 18 años o más." Ver sección de menores de edad.
 
 ### Consentimiento en newsletter (home y otros puntos)
 
-El campo de suscripción al newsletter que aparece en el home y otros lugares incluye bajo el botón de suscripción:
+El campo de suscripción al newsletter incluye bajo el botón:
 
 - Texto: "Al suscribirte aceptas recibir emails de Konbini. Puedes darte de baja en cualquier momento."
 
-No requiere checkbox adicional porque la acción de suscribirse es el consentimiento (opt-in explícito).
+La acción de suscribirse es el consentimiento (opt-in explícito). No se requiere checkbox adicional, pero sí guardar el timestamp de cuando se suscribió.
 
-### Derechos del usuario (ARCOP)
+Todos los emails de marketing/newsletter deben incluir enlace de unsubscribe al final.
 
-En `/cuenta`, sección de configuración (pendiente de implementar), debe existir un bloque "Mis datos" con:
+### Menores de edad
 
-- Botón "Descargar mis datos" — descarga un JSON con los datos del usuario (perfil, eventos, avisos, portadas, órdenes). Ejercicio del derecho de **portabilidad**.
-- Botón "Eliminar mi cuenta" — elimina la cuenta y todos los datos asociados, previa confirmación con contraseña. Ejercicio del derecho de **cancelación/supresión**.
-- Texto informativo con email de contacto para ejercer otros derechos (acceso, rectificación, oposición).
+La ley distingue dos tramos (Art. 16 quáter):
 
-### Aviso de cookies esenciales
+- **Menores de 14 años:** el consentimiento debe ser de los padres o representantes legales. Un checkbox del menor no es válido.
+- **14–17 años:** pueden consentir directamente para el servicio, pero con protección reforzada para marketing y perfilado.
 
-Las cookies/almacenamiento que Konbini usa sin consentimiento previo (esenciales):
-- `kb-token` — JWT de autenticación (necesario para el servicio).
-- `kb-user` — datos de sesión del usuario (necesario para el servicio).
-- `kb-theme` — preferencia de tema claro/oscuro (preferencia de UI).
-- Cookie de consentimiento de cookies (necesaria para recordar la decisión).
+Konbini no está diseñado para menores. Por ello el registro debe incluir el checkbox "Confirmo que tengo 18 años o más" y la Política de Privacidad debe indicar explícitamente que el servicio no está dirigido a menores de 18.
 
-Estas no necesitan opt-in porque son estrictamente necesarias para el funcionamiento.
+### Derechos del titular (ARCOPB)
+
+En `/cuenta` debe existir una sección "Mis datos" (pendiente de implementar) con:
+
+- **Botón "Descargar mis datos"** — exporta un archivo JSON/CSV con todos los datos del usuario: perfil, eventos, avisos, portadas, órdenes. Ejercicio del derecho de **portabilidad**. Plazo de respuesta: 30 días.
+- **Botón "Eliminar mi cuenta"** — elimina o anonimiza todos los datos del usuario, previa confirmación con contraseña. Se conservan solo los datos que la ley obliga a retener (registros contables). Ejercicio del derecho de **supresión**. Plazo: 30 días.
+- **Texto informativo** con email dedicado (ej. `privacidad@konbini.cl`) para ejercer otros derechos: acceso, rectificación, oposición, bloqueo. Plazo de respuesta siempre 30 días.
+
+El footer del sitio debe incluir un link "Mis derechos de privacidad" o similar que apunte a esta sección o al email de contacto.
+
+### Contenido mínimo de la Política de Privacidad (`/privacidad`)
+
+La política no es solo una página — la ley exige que cubra todos estos puntos (Art. 14 y 14 bis):
+
+- Identidad del responsable: nombre legal de la empresa, RUT, domicilio, email de contacto.
+- Categorías de datos tratados y finalidades de cada una.
+- Base legal de cada tratamiento: consentimiento / ejecución de contrato / interés legítimo / obligación legal.
+- Destinatarios y encargados: Transbank (pagos), Mailgun (emails), proveedor de cloud/hosting. Indicar relación jurídica con cada uno.
+- Transferencias internacionales: si Mailgun u otros operan fuera de Chile, indicarlo y señalar el mecanismo de garantía (cláusulas contractuales estándar).
+- Plazos de conservación por categoría de dato.
+- Derechos ARCOPB y cómo ejercerlos (canal y plazo de 30 días).
+- Mecanismo para notificar cambios a la política.
+- Link "Cambiar preferencias de cookies".
+
+### Plazos de retención de datos
+
+La ley no fija plazos universales — cada responsable debe establecerlos y publicarlos en la política. Referencia para Konbini:
+
+| Dato | Plazo sugerido | Fundamento |
+|---|---|---|
+| Datos de cuenta (nombre, email) | Vigencia de la cuenta + 5 años | Prescripción civil (Art. 2515 CC) |
+| Contraseñas hasheadas | Solo mientras la cuenta está activa | No hay fin después del cierre |
+| Fotos/imágenes de perfil | Hasta que el usuario las elimine o cierre cuenta | Consentimiento del servicio |
+| Datos de transacciones | 6 años mínimo | Prescripción tributaria SII |
+| Lista newsletter | Mientras el consentimiento esté vigente | Base: consentimiento; se retira, se elimina |
+| Logs de acceso/auditoría | 2–5 años | Proporcional al riesgo y posibles disputas |
+
+Se debe implementar un proceso de purga automática o anonimización cuando venzan los plazos.
 
 ---
 
@@ -725,3 +766,42 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 ## Cache
 
 Los `GET` públicos están cacheados en Redis con TTL de 1 día. Al hacer `POST`, `PATCH` o `DELETE` sobre una colección, el cache de esa colección se invalida automáticamente. Las peticiones con header `Authorization` no se cachean (el admin puede ver estados distintos al público).
+
+---
+
+## Checklist Ley 21.719 — Pendiente de implementar
+
+Vigencia: **1 de diciembre de 2026**. Todo esto debe estar listo antes de esa fecha.
+
+### Frontend / UX
+
+- [ ] Banner de cookies con "Aceptar todo" / "Solo esenciales" — guardar preferencia en `localStorage`
+- [ ] No cargar analytics de terceros hasta que el usuario acepte el banner
+- [ ] Link "Cambiar preferencias de cookies" en `/privacidad`
+- [ ] Checkbox requerido en `/registro`: aceptación de T&C y política de privacidad
+- [ ] Checkbox opcional desmarcado en `/registro`: consentimiento newsletter (separado del anterior)
+- [ ] Checkbox requerido en `/registro`: "Confirmo que tengo 18 años o más"
+- [ ] Texto de consentimiento bajo el formulario de newsletter del home: "Al suscribirte aceptas recibir emails de Konbini. Puedes darte de baja en cualquier momento."
+- [ ] Enlace de unsubscribe en todos los emails de marketing (implementar en las plantillas de Mailgun)
+- [ ] Sección "Mis datos" en `/cuenta` con botones de exportar y eliminar cuenta
+- [ ] Link "Mis derechos de privacidad" o email `privacidad@konbini.cl` en el footer
+- [ ] Política de privacidad (`/privacidad`) con contenido completo según los campos requeridos por la ley
+
+### Backend / API
+
+- [ ] Campo `newsletterConsentAt DateTime?` en el modelo `User` — guardar timestamp del consentimiento
+- [ ] `GET /auth/export` — exporta todos los datos del usuario autenticado en JSON (portabilidad). Plazo: 30 días, pero idealmente inmediato.
+- [ ] `DELETE /auth/account` — elimina o anonimiza todos los datos del usuario. Conserva solo datos de transacciones (obligación tributaria 6 años). Requiere confirmación con contraseña.
+- [ ] Campo `blockedForProcessing Boolean` en `User` — para el derecho de bloqueo temporal mientras se resuelve una disputa
+- [ ] Endpoint o proceso interno para recibir y registrar solicitudes ARCO+
+- [ ] Job/cron de purga automática: anonimizar cuentas inactivas según plazos de retención definidos en la política
+- [ ] Logs de auditoría para accesos administrativos a datos de usuarios
+
+### Documentos y procesos (no técnicos pero necesarios)
+
+- [ ] DPA firmado con Mailgun (disponible en su sitio como "Data Processing Agreement")
+- [ ] DPA firmado con proveedor de cloud/hosting (AWS, GCP, Hetzner, etc.)
+- [ ] Verificar cobertura de Transbank en sus términos de servicio para tratamiento de datos de pago
+- [ ] Registro de Actividades de Tratamiento (RAT) — documento interno, no público
+- [ ] Procedimiento documentado de respuesta a brechas de seguridad (Incident Response Plan)
+- [ ] Proceso interno para gestionar solicitudes ARCO+ con registro de cada una y resolución en 30 días

@@ -213,6 +213,7 @@ Requiere sesión. Tiene dos zonas:
 - Avatar (foto de perfil o iniciales)
 - Nombre y email
 - Botón "Editar perfil" — abre modal con: nombre para mostrar, bio, avatar, banner, sitio web y redes sociales (Instagram, TikTok, Facebook, X, YouTube, Twitch, LinkedIn)
+- Botón "Cambiar contraseña" — abre modal con: contraseña actual, nueva contraseña y confirmación.
 - Link al perfil público (solo visible si tiene al menos un evento aprobado)
 - Botón "Cerrar sesión"
 
@@ -329,11 +330,17 @@ Formulario con "Nueva contraseña" y "Confirmar contraseña".
 > Los admins también tienen acceso completo a `/cuenta` (documentada en "Vistas autenticadas"). El dashboard es adicional, no reemplaza la cuenta personal.
 
 ### `/dashboard` — Panel principal
-- 4 KPI cards: ingresos, tickets vendidos, eventos publicados, pendientes de revisión.
-- Cola de revisión: últimos 5 eventos esperando aprobación, con botones de aprobar o rechazar.
-- Gráfico de actividad.
-- Feed de actividad reciente.
-- Desglose de eventos por categoría.
+
+KPI cards alimentadas por `GET /stats`:
+
+- Total usuarios registrados
+- Eventos publicados (APPROVED)
+- Contenido pendiente de revisión (eventos + spots + heroes en PENDING_MODERATION)
+- Ingresos totales (suma de órdenes en estado PAID)
+- Spots activos / Heroes activos
+
+Cola de revisión: últimos 5 eventos esperando aprobación, con botones de aprobar o rechazar.
+Gráfico de actividad. Feed de actividad reciente. Desglose de eventos por categoría.
 
 ### `/dashboard/events` — Moderación de eventos
 Tabla de todos los eventos con búsqueda por texto y filtro por estado. Acciones por evento: aprobar, rechazar (con campo de motivo) y ver la publicación. Paginación.
@@ -377,7 +384,8 @@ Solo visible si el organizador tiene al menos un evento aprobado.
 - Grilla de eventos aprobados y vigentes
 
 ### `/articulos` — Listado de artículos
-Pendiente de implementar.
+
+Grilla de artículos con barra de búsqueda por texto y filtro por tag. Los resultados se actualizan al cambiar los filtros. La URL refleja los filtros activos y es compartible. Paginación. Pendiente de implementar.
 
 ### `/articulos/[slug]` — Detalle de artículo
 Contenido del artículo, tags y eventos relacionados. Pendiente de implementar.
@@ -475,6 +483,7 @@ La construcción se hace en el cliente antes del redirect; no se almacena en la 
 
 ### Cuenta
 - `GET /auth/me` — datos del usuario autenticado
+- `PATCH /auth/password` — `{ currentPassword, newPassword }` — cambiar contraseña estando autenticado
 - `GET /events/mine` — eventos propios
 - `PUT /profiles/me` — actualizar perfil (displayName, bio, avatar, banner, slug, website, redes)
 - `POST /uploads` — subir imagen, devuelve `{ url, filename }`
@@ -517,19 +526,27 @@ El sistema tiene arquitectura multi-gateway (`GatewayFactory`). Hoy solo Transba
 - `POST /auth/reset-password` — `{ token, password }`. Token expira en 1 hora.
 
 ### Dashboard
+
+- `GET /stats` (ADMIN+) — `{ users, eventsApproved, pendingModeration, totalRevenue, activeSpots, activeHeroes }`
 - `GET /events` (con JWT admin) — todos los eventos, todos los estados
 - `PATCH /events/:id/approve` — aprueba evento
 - `PATCH /events/:id/reject` — rechaza con `{ reason }`
+- `PATCH /events/:id/ban` — banea con `{ reason }`
 - `GET /users` (ADMIN+) — lista de usuarios
 - `PATCH /users/:id/ban` — bloquear/desbloquear
 - `GET /regions` / `POST /regions` / `PATCH /regions/:id` / `DELETE /regions/:id`
 - `GET /communes` / `POST /communes` / `PATCH /communes/:id` / `DELETE /communes/:id`
 - `GET /categories` / `POST /categories` / `PATCH /categories/:id` / `DELETE /categories/:id`
 - `GET /tags` / `POST /tags` / `PATCH /tags/:id` / `DELETE /tags/:id`
-- `GET /spots` / `PATCH /spots/:id/approve` / `DELETE /spots/:id`
-- `GET /heroes` / `PATCH /heroes/:id/approve` / `DELETE /heroes/:id`
+- `GET /spots` (ADMIN+, todos los estados) / `PATCH /spots/:id/approve` / `PATCH /spots/:id/reject` / `PATCH /spots/:id/ban` / `DELETE /spots/:id`
+- `GET /heroes` (ADMIN+, todos los estados) / `PATCH /heroes/:id/approve` / `PATCH /heroes/:id/reject` / `PATCH /heroes/:id/ban` / `DELETE /heroes/:id`
+- `GET /articles` / `POST /articles` / `PATCH /articles/:id` / `DELETE /articles/:id`
 - `GET /subscribers` (ADMIN+) — lista de suscriptores al newsletter
 - `DELETE /subscribers/:id` — eliminar suscriptor
+- `GET /contact` / `PATCH /contact/:id/read` / `DELETE /contact/:id`
+- `GET /faq` / `POST /faq` / `PATCH /faq/:id` / `DELETE /faq/:id`
+- `PATCH /terms` / `DELETE /terms`
+- `PATCH /privacy` / `DELETE /privacy`
 
 ### Contacto
 

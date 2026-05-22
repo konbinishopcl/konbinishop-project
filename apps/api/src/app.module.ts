@@ -18,6 +18,7 @@ import { RedisModule } from '../utils/redis/redis.module';
 import { HttpCacheInterceptor } from '../utils/cache/http-cache.interceptor';
 import { ProfilesModule } from './profiles/profiles.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
+import { LegalModule } from './legal/legal.module';
 import { MailgunModule } from '../services/mailgun/mailgun.module';
 import { ApiKeyGuard } from './auth/api-key.guard';
 
@@ -38,6 +39,7 @@ import { ApiKeyGuard } from './auth/api-key.guard';
     PaymentsModule,
     ProfilesModule,
     NewsletterModule,
+    LegalModule,
     MailgunModule,
   ],
   controllers: [AppController],

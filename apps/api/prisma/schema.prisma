@@ -375,6 +375,21 @@ model Profile {
   updatedAt DateTime @updatedAt
 }
 
+// ──────────────────────── Documentos legales ─────────────────────────
+
+enum LegalDocumentType {
+  TERMS_OF_SERVICE
+  PRIVACY_POLICY
+}
+
+model LegalDocument {
+  id        Int               @id @default(autoincrement())
+  type      LegalDocumentType @unique
+  content   String            @db.LongText
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+}
+
 // ─────────────────────────── Newsletter ──────────────────────────
 
 model Subscriber {

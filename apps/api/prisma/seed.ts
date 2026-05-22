@@ -646,6 +646,74 @@ async function main() {
     await prisma.like.createMany({ data: [{ userId: organizadorId, articleId: art.id }], skipDuplicates: true });
   }
 
+  // ── LegalDocuments ──
+  await prisma.legalDocument.upsert({
+    where: { type: 'PRIVACY_POLICY' },
+    create: {
+      type: 'PRIVACY_POLICY',
+      content: `# Política de Privacidad — Konbini
+
+Konbini trata los datos personales que nos proporcionas de acuerdo con la Ley N° 21.719
+de Protección de Datos Personales de Chile y las demás normas aplicables.
+
+## Datos que recopilamos
+
+Recopilamos los datos que nos proporcionas al registrarte (nombre, correo electrónico,
+contraseña), los datos de los eventos que publicas y los datos técnicos de uso de la
+plataforma.
+
+## Registros de auditoría
+
+Para garantizar la trazabilidad y la seguridad de la plataforma, Konbini registra
+las acciones administrativas y de publicación que realizan los usuarios sobre los
+contenidos del sistema (eventos, avisos y portadas). Cada registro incluye la fecha,
+la acción realizada, la entidad afectada y, cuando corresponde, la dirección IP y el
+agente de usuario (navegador) desde el que se originó la acción.
+
+La dirección IP y el agente de usuario constituyen datos personales conforme a la
+Ley N° 21.719. Se tratan con la única finalidad de auditoría y seguridad, y se
+conservan por un plazo máximo de 24 meses, transcurrido el cual son eliminados. El
+titular puede ejercer sus derechos de acceso, rectificación y supresión sobre estos
+registros conforme a la ley vigente.
+
+## Tus derechos
+
+Puedes ejercer tus derechos de acceso, rectificación, supresión, portabilidad y oposición
+escribiéndonos a hola@konbini.cl.`,
+    },
+    update: {
+      content: `# Política de Privacidad — Konbini
+
+Konbini trata los datos personales que nos proporcionas de acuerdo con la Ley N° 21.719
+de Protección de Datos Personales de Chile y las demás normas aplicables.
+
+## Datos que recopilamos
+
+Recopilamos los datos que nos proporcionas al registrarte (nombre, correo electrónico,
+contraseña), los datos de los eventos que publicas y los datos técnicos de uso de la
+plataforma.
+
+## Registros de auditoría
+
+Para garantizar la trazabilidad y la seguridad de la plataforma, Konbini registra
+las acciones administrativas y de publicación que realizan los usuarios sobre los
+contenidos del sistema (eventos, avisos y portadas). Cada registro incluye la fecha,
+la acción realizada, la entidad afectada y, cuando corresponde, la dirección IP y el
+agente de usuario (navegador) desde el que se originó la acción.
+
+La dirección IP y el agente de usuario constituyen datos personales conforme a la
+Ley N° 21.719. Se tratan con la única finalidad de auditoría y seguridad, y se
+conservan por un plazo máximo de 24 meses, transcurrido el cual son eliminados. El
+titular puede ejercer sus derechos de acceso, rectificación y supresión sobre estos
+registros conforme a la ley vigente.
+
+## Tus derechos
+
+Puedes ejercer tus derechos de acceso, rectificación, supresión, portabilidad y oposición
+escribiéndonos a hola@konbini.cl.`,
+    },
+  });
+
   // ── Conteo final ──
   const counts = {
     regions: await prisma.region.count(),

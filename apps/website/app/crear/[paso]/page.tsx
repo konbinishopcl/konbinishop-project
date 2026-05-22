@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
@@ -16,7 +16,7 @@ import {
   type ApiRegion,
   type CreateEventInput,
 } from "@/lib/api";
-import { useForm as useFormCtx, type ImageSlot } from "../FormContext";
+import { useForm as useFormCtx, type ImageSlot, type FormValues } from "../FormContext";
 import {
   step1Schema,
   step2Schema,
@@ -100,12 +100,33 @@ async function uploadSlot(slot: ImageSlot, token: string): Promise<string | unde
 // ─── Paso 1 ─────────────────────────────────────────────────────────────────
 
 function Step1Form({
-  defaultValues, categories, userName, onDone,
+  defaultValues, categories, userName, onDone, onSync,
 }: {
-  defaultValues: Step1Values; categories: ApiCategory[]; userName: string; onDone: (d: Step1Values) => void;
+  defaultValues: Step1Values;
+  categories: ApiCategory[];
+  userName: string;
+  onDone: (d: Step1Values) => void;
+  onSync: (patch: Partial<FormValues>) => void;
 }) {
   const { control, register, handleSubmit, watch, setValue, formState: { errors } } =
     useForm<Step1Values>({ resolver: zodResolver(step1Schema), mode: "onTouched", defaultValues });
+
+  // Sincronizar con FormContext (y localStorage) en cada cambio del formulario
+  useEffect(() => {
+    const { unsubscribe } = watch((d) => {
+      onSync({
+        title:      d.title,
+        company:    d.company ?? "",
+        categoryId: d.categoryId,
+        desc:       d.desc,
+        about:      d.about ?? "",
+        free:       d.free,
+        prices:     d.prices?.map((p) => ({ name: p?.name ?? "", amount: String(p?.amount ?? "") })),
+      });
+    });
+    return unsubscribe;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const free = watch("free");
   const { fields: priceFields, append, remove } = useFieldArray({ control, name: "prices" });
@@ -234,16 +255,33 @@ function Step1Form({
 // ─── Paso 2 ─────────────────────────────────────────────────────────────────
 
 function Step2Form({
-  defaultValues, regions, communes, onRegionChange, onDone,
+  defaultValues, regions, communes, onRegionChange, onDone, onSync,
 }: {
   defaultValues: Step2Values;
   regions: ApiRegion[];
   communes: ApiCommune[];
   onRegionChange: (id: string) => void;
   onDone: (d: Step2Values) => void;
+  onSync: (patch: Partial<FormValues>) => void;
 }) {
-  const { control, register, handleSubmit, formState: { errors } } =
+  const { control, register, handleSubmit, formState: { errors }, watch } =
     useForm<Step2Values>({ resolver: zodResolver(step2Schema), mode: "onTouched", defaultValues });
+
+  useEffect(() => {
+    const { unsubscribe } = watch((d) => {
+      onSync({
+        dates:         d.dates as FormValues["dates"],
+        address:       d.address,
+        addressNumber: d.addressNumber,
+        regionId:      d.regionId ?? "",
+        communeId:     d.communeId ?? "",
+        web:           d.web ?? "",
+        socials:       d.socials?.map((s) => s?.val ?? ""),
+      });
+    });
+    return unsubscribe;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { fields: dateFields, append: addDate, remove: removeDate } =
     useFieldArray({ control, name: "dates" });
@@ -376,15 +414,24 @@ function Step2Form({
 // ─── Paso 3 ─────────────────────────────────────────────────────────────────
 
 function Step3Form({
-  defaultValues, ctxData, updateCtx, onDone,
+  defaultValues, ctxData, updateCtx, onDone, onSync,
 }: {
   defaultValues: Step3Values;
   ctxData: { banner: ImageSlot; poster: ImageSlot; gallery: ImageSlot[] };
   updateCtx: (k: "banner" | "poster" | "gallery", v: unknown) => void;
   onDone: (d: Step3Values) => void;
+  onSync: (patch: Partial<FormValues>) => void;
 }) {
-  const { control, register, handleSubmit, formState: { errors } } =
+  const { control, register, handleSubmit, formState: { errors }, watch } =
     useForm<Step3Values>({ resolver: zodResolver(step3Schema), mode: "onTouched", defaultValues });
+
+  useEffect(() => {
+    const { unsubscribe } = watch((d) => {
+      onSync({ videos: d.videos?.map((v) => v?.val ?? "") });
+    });
+    return unsubscribe;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { fields: videoFields, append, remove } = useFieldArray({ control, name: "videos" });
   const galRef = useRef<HTMLInputElement>(null);
@@ -483,7 +530,12 @@ export default function PasoPage() {
   const router   = useRouter();
   const pathname = usePathname();
   const { user, token, ready } = useUser();
-  const { values, update, resetForm } = useFormCtx();
+  const { values, update, updateStep, resetForm } = useFormCtx();
+
+  // Sync handlers: RHF → FormContext (y localStorage) en cada cambio de campo
+  const onStep1Sync = useCallback((patch: Partial<FormValues>) => updateStep(patch), [updateStep]);
+  const onStep2Sync = useCallback((patch: Partial<FormValues>) => updateStep(patch), [updateStep]);
+  const onStep3Sync = useCallback((patch: Partial<FormValues>) => updateStep(patch), [updateStep]);
 
   const paso = Number(params.paso);
 
@@ -667,9 +719,9 @@ export default function PasoPage() {
           </div>
           <div className="step-num">PASO {paso} / 03</div>
 
-          {paso === 1 && <Step1Form defaultValues={step1Defaults} categories={categories} userName={user.name} onDone={onStep1Done} />}
-          {paso === 2 && <Step2Form defaultValues={step2Defaults} regions={regions} communes={communes} onRegionChange={(id) => update("regionId", id)} onDone={onStep2Done} />}
-          {paso === 3 && <Step3Form defaultValues={step3Defaults} ctxData={{ banner: values.banner, poster: values.poster, gallery: values.gallery }} updateCtx={(k, v) => update(k as "banner", v as ImageSlot)} onDone={onStep3Done} />}
+          {paso === 1 && <Step1Form defaultValues={step1Defaults} categories={categories} userName={user.name} onDone={onStep1Done} onSync={onStep1Sync} />}
+          {paso === 2 && <Step2Form defaultValues={step2Defaults} regions={regions} communes={communes} onRegionChange={(id) => update("regionId", id)} onDone={onStep2Done} onSync={onStep2Sync} />}
+          {paso === 3 && <Step3Form defaultValues={step3Defaults} ctxData={{ banner: values.banner, poster: values.poster, gallery: values.gallery }} updateCtx={(k, v) => update(k as "banner", v as ImageSlot)} onDone={onStep3Done} onSync={onStep3Sync} />}
 
           {submitError && (
             <div style={{ color: "var(--err)", fontSize: 13, margin: "18px 0 0" }}>{submitError}</div>

@@ -137,6 +137,8 @@ export function hasSavedDraft(): boolean {
 type Ctx = {
   values: FormValues;
   update: UpdateFn;
+  /** Actualiza múltiples campos en un solo render — para sync continuo desde RHF */
+  updateStep: (patch: Partial<FormValues>) => void;
   fieldErrors: FieldErrors;
   setFieldErrors: Dispatch<SetStateAction<FieldErrors>>;
   resetForm: () => void;
@@ -173,6 +175,17 @@ export function FormProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  /** Actualiza varios campos en un solo setState — evita re-renders extra durante sync continuo */
+  const updateStep = useCallback((patch: Partial<FormValues>) => {
+    setValues((prev) => {
+      const next = { ...prev };
+      (Object.entries(patch) as [keyof FormValues, FormValues[keyof FormValues]][]).forEach(([k, v]) => {
+        if (v !== undefined) (next as Record<string, unknown>)[k as string] = v;
+      });
+      return next;
+    });
+  }, []);
+
   const resetForm = useCallback(() => {
     clearDraft();
     setValues(EMPTY);
@@ -183,7 +196,7 @@ export function FormProvider({ children }: { children: ReactNode }) {
   if (!hydrated) return null;
 
   return (
-    <FormCtx.Provider value={{ values, update, fieldErrors, setFieldErrors, resetForm }}>
+    <FormCtx.Provider value={{ values, update, updateStep, fieldErrors, setFieldErrors, resetForm }}>
       {children}
     </FormCtx.Provider>
   );

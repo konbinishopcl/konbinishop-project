@@ -188,6 +188,8 @@ export const api = {
     request<AuthResponse>("/auth/register", { method: "POST", body: JSON.stringify(body) }),
   login: (body: { email: string; password: string }) =>
     request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  googleAuth: (accessToken: string) =>
+    request<AuthResponse>("/auth/google", { method: "POST", body: JSON.stringify({ accessToken }) }),
   me: (token: string) => request<ApiUser>("/auth/me", {}, token),
 
   // Contenido

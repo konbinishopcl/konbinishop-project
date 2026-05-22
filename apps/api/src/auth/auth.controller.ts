@@ -6,6 +6,7 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { GoogleAuthDto } from './dto/google-auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser, type JwtUser } from './current-user.decorator';
 
@@ -24,6 +25,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Iniciar sesión y obtener un JWT' })
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);
+  }
+
+  @Post('google')
+  @ApiOperation({ summary: 'Autenticar con Google (login o registro automático)' })
+  googleAuth(@Body() dto: GoogleAuthDto) {
+    return this.auth.googleAuth(dto.accessToken);
   }
 
   @Post('forgot-password')

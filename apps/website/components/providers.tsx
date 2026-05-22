@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import { NavigationProgress } from "./NavigationProgress";
 import type { User } from "@/lib/data";
 
@@ -96,11 +97,13 @@ export function useUser() {
 /* ───────────────── wrapper ───────────────── */
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
-      <UserProvider>
-        <NavigationProgress />
-        {children}
-      </UserProvider>
-    </ThemeProvider>
+    <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""}>
+      <ThemeProvider>
+        <UserProvider>
+          <NavigationProgress />
+          {children}
+        </UserProvider>
+      </ThemeProvider>
+    </GoogleOAuthProvider>
   );
 }

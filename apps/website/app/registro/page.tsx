@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
 import { useTheme, useUser } from "@/components/providers";
@@ -26,6 +27,23 @@ export default function RegistroPage() {
   const [lastname, setLastname] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      setError("");
+      try {
+        const { token, user } = await api.googleAuth(tokenResponse.access_token);
+        setAuth(toUser(user), token);
+        router.push("/");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "No se pudo continuar con Google");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => setError("No se pudo conectar con Google"),
+  });
 
   // Paso 1 → 2: como es copia del login, sólo se muestra el email aquí.
   const goStep2 = (e: React.FormEvent) => {
@@ -111,8 +129,9 @@ export default function RegistroPage() {
 
         {step === 1 && (
           <>
-            {/* Registro con RRSS — la conexión se implementa más adelante. */}
-            <button className="social-btn" type="button">{Ic.google} Continuar con Google</button>
+            <button className="social-btn" type="button" onClick={() => loginWithGoogle()} disabled={loading}>
+              {Ic.google} Continuar con Google
+            </button>
             <button className="social-btn" type="button">{Ic.insta} Continuar con Instagram</button>
             <button className="social-btn" type="button">{Ic.apple} Continuar con Apple</button>
 

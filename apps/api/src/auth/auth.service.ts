@@ -90,9 +90,45 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user || !(await compare(dto.password, user.passwordHash))) {
+    if (!user || !user.passwordHash || !(await compare(dto.password, user.passwordHash))) {
       throw new UnauthorizedException('Email o contraseña incorrectos');
     }
+    if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
+    return { token: this.sign(user), user: this.sanitize(user) };
+  }
+
+  async googleAuth(accessToken: string) {
+    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    const res = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
+    if (!res.ok) throw new UnauthorizedException('Token de Google inválido');
+    const payload = await res.json() as {
+      sub: string; email: string; email_verified: string;
+      given_name?: string; family_name?: string; aud: string;
+    };
+    if (payload.aud !== clientId) throw new UnauthorizedException('Token de Google no es para esta aplicación');
+    if (payload.email_verified !== 'true') throw new UnauthorizedException('El email de Google no está verificado');
+
+    const { sub: googleId, email, given_name, family_name } = payload;
+    if (!email) throw new UnauthorizedException('Google no proporcionó un email');
+
+    let user = await this.prisma.user.findUnique({ where: { googleId } });
+
+    if (!user) {
+      user = await this.prisma.user.findUnique({ where: { email } });
+      if (user) {
+        // Cuenta existente por email — vincular googleId
+        user = await this.prisma.user.update({ where: { id: user.id }, data: { googleId } });
+      } else {
+        // Usuario nuevo — registrar
+        user = await this.prisma.user.create({
+          data: { email, googleId, firstname: given_name ?? null, lastname: family_name ?? null, role: 'AUTHENTICATED', confirmed: true },
+        });
+        const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
+        await this.prisma.profile.create({ data: { userId: user.id, slug } });
+        await this.mail.sendWelcome(user.email, user.firstname ?? user.email);
+      }
+    }
+
     if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
     return { token: this.sign(user), user: this.sanitize(user) };
   }
@@ -132,7 +168,7 @@ export class AuthService {
 
   async changePassword(userId: number, currentPassword: string, newPassword: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !(await compare(currentPassword, user.passwordHash))) {
+    if (!user || !user.passwordHash || !(await compare(currentPassword, user.passwordHash))) {
       throw new BadRequestException('La contraseña actual es incorrecta');
     }
     await this.prisma.user.update({

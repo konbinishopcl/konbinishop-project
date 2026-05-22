@@ -23,7 +23,7 @@ export function OneTap() {
         const { token, user: apiUser } = await api.googleOneTap(credential);
         setAuth(toUser(apiUser), token);
         const isAdmin = apiUser.role === "ADMIN" || apiUser.role === "SUPER_ADMIN";
-        if (isAdmin) router.push("/dashboard");
+        router.push(isAdmin ? "/dashboard" : "/");
       } catch {
         // One Tap es no intrusivo — fallo silencioso
       }

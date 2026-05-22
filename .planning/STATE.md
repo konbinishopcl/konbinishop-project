@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-milestone: v1
-milestone_name: "Publicación gratuita de eventos"
-status: in_progress
-last_updated: "2026-05-22T19:46:25Z"
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-05-22T19:50:09.768Z"
 progress:
-  total_phases: 7
-  completed_phases: 5
+  total_phases: 8
+  completed_phases: 6
   total_plans: 19
   completed_plans: 16
 ---
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v1 — Publicación gratuita de eventos
 **Active Phase:** Phase 7 — Sistema de auditoría (en progreso — 2/5 planes)
 **Overall Progress:** [███████░] Phases 0–6 completas · Phase 7 en curso
-**Last session:** 2026-05-22 — Phase 7 plan 07-02: schema AuditLog + migración add_audit_log
+**Last session:** 2026-05-22T19:49:49.748Z
 
 ## Phase Summary
 
@@ -47,23 +47,33 @@ administrador quedan visibles al público.
 - **[04-02]:** `/dashboard/users` se difiere (no hay diseño). El dashboard overview se conecta
   con alcance "Mínimo": KPIs de eventos + cola de revisión + por-categoría reales; los widgets
   de pagos (Ingresos, Tickets, RevenueChart, Conversión) y el feed de actividad quedan mock.
+
 - **[02-01]:** El website mapea los eventos de la API al shape `EventItem` con `toEventItem`
   para no reescribir las cards. Detalle de evento será por `slug`. `HeroBlock` sigue en mock
   hasta conectarlo a `/api/heroes`.
+
 - **[01-03]:** Subida de imágenes con `FileInterceptor` en memoria + escritura a disco con
   `fs` — sin importar `multer` ni agregar dependencias. Formatos JPG/PNG/WebP, máx. 5 MB.
+
 - **[01-02]:** Almacenamiento de imágenes = disco local en `apps/api/uploads/`, servido en
   `/uploads`. El catálogo (taxonomías + contenido) se agrupa en un único módulo `catalog` en
   vez de un módulo por recurso.
+
 - **[01-01]:** Un evento creado por un organizador queda `isApproved=false`; editar/borrar lo
   permite el dueño o un admin; `reject` exige un motivo. `UpdateEventDto` escrito a mano para
   no añadir `@nestjs/mapped-types`.
+
 - **[Re-alineación 2026-05-20]:** El stack migró de Strapi 5 + Nuxt 4 + dashboard Next.js a
   NestJS 11 + Prisma 6 + una sola app Next.js (sitio público + admin).
+
 - **[Re-alineación 2026-05-20]:** v1 con publicación gratuita; el cobro al organizador por
   publicar se difiere a v2. Konbini no vende entradas (plataforma externa).
+
 - **[Re-alineación 2026-05-20]:** El roadmap de pagos previo (Strapi) quedó archivado en
   `phases/_archive-strapi/`; reemplazado por el roadmap de 7 fases actual.
+
+- [Phase 07-01]: pnpm se usa para instalar deps en apps/api; npm falla por postinstall de @nestjs/cli que llama a husky
+- [Phase 07-01]: Enum AuditEntity usa SPOT y HERO (nombres de modelo Prisma) no AVISO/PORTADA (nombres comerciales UI) — más mantenible cuando la UI cambia
 
 ## Quick Tasks Completed
 

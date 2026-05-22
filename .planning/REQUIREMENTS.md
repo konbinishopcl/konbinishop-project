@@ -82,13 +82,13 @@ administrador quedan visibles al público.
   `userId` (Int?, sin FK), `action` (enum `AuditAction`), `entity` (enum `AuditEntity`),
   `entityId` (Int), `metadata` (Json), `ip` (String?), `userAgent` (String?),
   `url` (String?), `createdAt` — más índices de consulta
-- [ ] **AUD-02**: `AuditService` singleton inyectable que registra acciones (CREATE,
+- [x] **AUD-02**: `AuditService` singleton inyectable que registra acciones (CREATE,
   UPDATE, APPROVE, REJECT, BAN, UNBAN, DELETE) sobre las entidades del sistema, integrado
   manualmente en los service methods de mutación de eventos, usuarios, avisos y portadas;
   el fallo del registro nunca revierte la operación de negocio
-- [ ] **AUD-03**: Captura de la IP real del cliente detrás de Nginx mediante
+- [x] **AUD-03**: Captura de la IP real del cliente detrás de Nginx mediante
   `app.set('trust proxy', 1)` y `req.ip` (sin parsear `x-forwarded-for` manualmente)
-- [ ] **AUD-04**: Endpoint `GET /api/admin/audit-logs` con filtros (entity, action,
+- [x] **AUD-04**: Endpoint `GET /api/admin/audit-logs` con filtros (entity, action,
   userId, dateFrom, dateTo), paginado, restringido a roles ADMIN y SUPER_ADMIN
 
 ## v2 Requirements (diferido)

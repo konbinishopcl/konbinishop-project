@@ -205,7 +205,7 @@ Depende de que existan entidades que auditar (Phases 1–4).
 **Plans:** 1/5 plans executed
 
 Plans:
-- [ ] 07-01-PLAN.md — Definir AUD-01..04 en REQUIREMENTS.md, configurar Jest en el API y declarar el logging de auditoría en la Política de Privacidad (Ley 21.719)
+- [x] 07-01-PLAN.md — Definir AUD-01..04 en REQUIREMENTS.md, configurar Jest en el API y declarar el logging de auditoría en la Política de Privacidad (Ley 21.719)
 - [x] 07-02-PLAN.md — Migración Prisma del modelo `AuditLog` y los enums `AuditAction` / `AuditEntity` (EVENT, USER, AVISO, PORTADA)
 - [ ] 07-03-PLAN.md — Módulo `audit`: `AuditService` singleton, endpoint `GET /api/admin/audit-logs` (ADMIN+) y `trust proxy 1` en main.ts
 - [ ] 07-04-PLAN.md — Instrumentar `EventsService` (CREATE, UPDATE, APPROVE, REJECT, BAN, DELETE) con auditoría

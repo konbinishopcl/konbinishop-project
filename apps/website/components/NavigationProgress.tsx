@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import NProgress from "nprogress";
-import "nprogress/nprogress.css";
 
 NProgress.configure({ showSpinner: false, minimum: 0.08, trickleSpeed: 200 });
 

@@ -33,7 +33,7 @@ export class UsersController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiOperation({ summary: 'Listar usuarios (ADMIN o SUPER_ADMIN)' })
+  @ApiOperation({ summary: 'Listar usuarios (ADMIN+)' })
   findAll() {
     return this.users.findAll();
   }

@@ -15,6 +15,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.disable('x-powered-by');
 
+  // Detrás de Nginx: confiar en 1 hop para que req.ip refleje la IP real del cliente
+  // (vía X-Forwarded-For) en lugar de la IP interna del proxy. Lo usa el AuditService.
+  app.set('trust proxy', 1);
+
   // Headers de seguridad HTTP.
   app.use(helmet());
 

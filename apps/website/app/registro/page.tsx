@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { useGoogleLogin } from "@react-oauth/google";
 import { BrandMark } from "@/components/BrandMark";
+import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import { Ic } from "@/components/icons";
 import { useTheme, useUser } from "@/components/providers";
 import { api, toUser } from "@/lib/api";
@@ -13,6 +13,8 @@ const TILES = [
   "pa-12", "pa-11", "pa-10", "pa-9", "pa-8", "pa-7", "pa-6", "pa-5",
   "pa-4", "pa-3", "pa-2", "pa-1", "pa-12", "pa-11", "pa-10", "pa-9",
 ];
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 function RegistroContent() {
   const router = useRouter();
@@ -31,27 +33,22 @@ function RegistroContent() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
   const redirect = (role: string) =>
     router.push(role === "ADMIN" || role === "SUPER_ADMIN" ? "/dashboard" : returnTo);
 
-  const loginWithGoogle = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true);
-      setError("");
-      try {
-        const { token, user } = await api.googleAuth(tokenResponse.access_token);
-        setAuth(toUser(user), token);
-        redirect(user.role);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "No se pudo continuar con Google");
-      } finally {
-        setLoading(false);
-      }
-    },
-    onError: () => setError("No se pudo conectar con Google"),
-  });
+  const handleGoogleSuccess = async (accessToken: string) => {
+    setLoading(true);
+    setError("");
+    try {
+      const { token, user } = await api.googleAuth(accessToken);
+      setAuth(toUser(user), token);
+      redirect(user.role);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo continuar con Google");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Paso 1 → 2: como es copia del login, sólo se muestra el email aquí.
   const goStep2 = (e: React.FormEvent) => {
@@ -137,10 +134,12 @@ function RegistroContent() {
 
         {step === 1 && (
           <>
-            {googleClientId && (
-              <button className="social-btn" type="button" onClick={() => loginWithGoogle()} disabled={loading}>
-                {Ic.google} Continuar con Google
-              </button>
+            {GOOGLE_CLIENT_ID && (
+              <GoogleLoginButton
+                onSuccess={handleGoogleSuccess}
+                onError={() => setError("No se pudo conectar con Google")}
+                disabled={loading}
+              />
             )}
             <button className="social-btn" type="button">{Ic.insta} Continuar con Instagram</button>
             <button className="social-btn" type="button">{Ic.apple} Continuar con Apple</button>

@@ -442,3 +442,47 @@ model Like {
   @@index([eventId])
   @@index([articleId])
 }
+
+// ─────────────────────── Auditoría ───────────────────────
+// Registro de acciones de admins y usuarios sobre las entidades del sistema.
+// userId es Int? SIN relación FK: así un usuario eliminado no borra su historial
+// de auditoría (cumplimiento / trazabilidad). El join con User, si se necesita el
+// email del actor, se hace manualmente en el endpoint de consulta.
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  APPROVE
+  REJECT
+  BAN
+  UNBAN
+}
+
+// Nombres comerciales del producto: AVISO = Spot, PORTADA = Hero.
+// El enum usa los nombres de marca por decisión de producto (D-Phase7).
+enum AuditEntity {
+  EVENT
+  USER
+  AVISO
+  PORTADA
+}
+
+model AuditLog {
+  id        Int         @id @default(autoincrement())
+  userId    Int?        // actor; null si la acción es de sistema o el usuario fue eliminado
+  action    AuditAction
+  entity    AuditEntity
+  entityId  Int
+  metadata  Json        @default("{}")
+  ip        String?     // dato personal (Ley 21.719) — retención 24 meses
+  userAgent String?     // dato personal (Ley 21.719) — retención 24 meses
+  url       String?
+  createdAt DateTime    @default(now())
+
+  @@index([entity, entityId])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@index([entity, action, createdAt])
+  @@map("audit_logs")
+}

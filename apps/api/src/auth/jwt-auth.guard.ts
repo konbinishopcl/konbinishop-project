@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../utils/prisma/prisma.service';
 
 /** Verifica el JWT y que el usuario no esté bloqueado en cada request. */
 @Injectable()

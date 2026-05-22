@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../utils/prisma/prisma.service';
 import { MailService } from '../../services/mailgun/mail.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 

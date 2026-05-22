@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../utils/prisma/prisma.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 
 export type LikeTarget = 'event' | 'article';

@@ -8,7 +8,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { OrderStatus, PublicationStatus } from '@prisma/client';
 
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../utils/prisma/prisma.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { AddItemDto, OrderItemType } from './dto/add-item.dto';
 

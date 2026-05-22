@@ -160,7 +160,12 @@ export default function FormPage() {
 
     if (s === 2) {
       if (!data.address.trim()) e.address = "La dirección es obligatoria.";
-      if (!data.addressNumber.trim()) e.addressNumber = "El número es obligatorio.";
+      const addrNum = data.addressNumber.trim();
+      if (!addrNum) {
+        e.addressNumber = "El número es obligatorio.";
+      } else if (!/^\d/.test(addrNum) && !/^[Ss]\/[Nn]$/i.test(addrNum)) {
+        e.addressNumber = "Ingresa un número válido (ej: 890, 1234 A, S/N).";
+      }
 
       // Fechas: al menos una con fecha no vacía
       const filledDates = data.dates.filter((d) => d.date);
@@ -626,6 +631,43 @@ function Step2({
   communes: ApiCommune[];
   errors: FieldErrors;
 }) {
+  // Errores en tiempo real (onBlur) — se fusionan con los del paso (errors prop)
+  const [blurErrors, setBlurErrors] = useState<FieldErrors>({});
+  const allErrors = { ...blurErrors, ...errors };
+
+  const setBErr = (key: string, msg: string | null) =>
+    setBlurErrors((prev) => {
+      const next = { ...prev };
+      if (msg) next[key] = msg;
+      else delete next[key];
+      return next;
+    });
+
+  const validateWeb = (val: string) => {
+    const raw = val.trim();
+    if (!raw) { setBErr("web", null); return; }
+    setBErr("web", isValidUrl(`https://${raw}`) ? null : "Ingresa una dirección web válida (ej: ticketera.cl/evento).");
+  };
+
+  const validateSocial = (val: string, i: number) => {
+    const raw = val.trim();
+    if (!raw) { setBErr(`social_${i}`, null); return; }
+    const withoutAt = raw.startsWith("@") ? raw.slice(1) : raw;
+    const toValidate = /^https?:\/\//.test(withoutAt) ? withoutAt : `https://${withoutAt}`;
+    setBErr(`social_${i}`, isValidUrl(toValidate) ? null : "Ingresa una URL válida (ej: instagram.com/tu-evento).");
+  };
+
+  const validateDate = (d: { date: string; start: string; end: string }, i: number) => {
+    if (!d.date) { setBErr(`date_${i}`, null); return; }
+    if (d.date < todayISO()) {
+      setBErr(`date_${i}`, "La fecha no puede estar en el pasado.");
+    } else if (d.start && d.end && d.end <= d.start) {
+      setBErr(`date_${i}`, "La hora de término debe ser posterior al inicio.");
+    } else {
+      setBErr(`date_${i}`, null);
+    }
+  };
+
   return (
     <div>
       <h1 className="step-title">Horarios, ubicación y links.</h1>
@@ -647,12 +689,12 @@ function Step2({
                   type="date"
                   min={todayISO()}
                   value={d.date}
-                  onChange={(e) =>
-                    update(
-                      "dates",
-                      data.dates.map((dd, j) => (j === i ? { ...dd, date: e.target.value } : dd)),
-                    )
-                  }
+                  onChange={(e) => {
+                    const updated = data.dates.map((dd, j) => (j === i ? { ...dd, date: e.target.value } : dd));
+                    update("dates", updated);
+                    validateDate({ ...d, date: e.target.value }, i);
+                  }}
+                  onBlur={() => validateDate(d, i)}
                 />
               </div>
               <div className="field" style={{ margin: 0 }}>
@@ -660,12 +702,11 @@ function Step2({
                 <input
                   type="time"
                   value={d.start}
-                  onChange={(e) =>
-                    update(
-                      "dates",
-                      data.dates.map((dd, j) => (j === i ? { ...dd, start: e.target.value } : dd)),
-                    )
-                  }
+                  onChange={(e) => {
+                    const updated = data.dates.map((dd, j) => (j === i ? { ...dd, start: e.target.value } : dd));
+                    update("dates", updated);
+                    validateDate({ ...d, start: e.target.value }, i);
+                  }}
                 />
               </div>
               <div className="field" style={{ margin: 0 }}>
@@ -673,19 +714,18 @@ function Step2({
                 <input
                   type="time"
                   value={d.end}
-                  onChange={(e) =>
-                    update(
-                      "dates",
-                      data.dates.map((dd, j) => (j === i ? { ...dd, end: e.target.value } : dd)),
-                    )
-                  }
+                  onChange={(e) => {
+                    const updated = data.dates.map((dd, j) => (j === i ? { ...dd, end: e.target.value } : dd));
+                    update("dates", updated);
+                    validateDate({ ...d, end: e.target.value }, i);
+                  }}
                 />
               </div>
             </div>
-            <FieldError msg={errors[`date_${i}`]} />
+            <FieldError msg={allErrors[`date_${i}`]} />
           </div>
         ))}
-        <FieldError msg={errors.dates} />
+        <FieldError msg={allErrors.dates} />
         <button
           className="add-line"
           onClick={() => update("dates", [...data.dates, { date: "", start: "", end: "" }])}
@@ -744,7 +784,7 @@ function Step2({
               maxLength={120}
               onChange={(e) => update("address", e.target.value)}
             />
-            <FieldError msg={errors.address} />
+            <FieldError msg={allErrors.address} />
           </div>
           <div className="field">
             <label>Número</label>
@@ -753,9 +793,14 @@ function Step2({
               placeholder="Ej: 890"
               value={data.addressNumber}
               maxLength={12}
-              onChange={(e) => update("addressNumber", e.target.value)}
+              inputMode="numeric"
+              onChange={(e) => {
+                // Solo dígitos, letras, espacios, guion y barra (para S/N)
+                const val = e.target.value.replace(/[^0-9A-Za-z\s\-\/]/g, "");
+                update("addressNumber", val);
+              }}
             />
-            <FieldError msg={errors.addressNumber} />
+            <FieldError msg={allErrors.addressNumber} />
           </div>
         </div>
       </fieldset>
@@ -774,9 +819,10 @@ function Step2({
               placeholder="ticketera.cl/tu-evento"
               value={data.web}
               onChange={(e) => update("web", e.target.value)}
+              onBlur={(e) => validateWeb(e.target.value)}
             />
           </div>
-          <FieldError msg={errors.web} />
+          <FieldError msg={allErrors.web} />
           <div className="help">
             La compra de entradas ocurre fuera de Konbini: los asistentes serán dirigidos a este
             enlace.
@@ -801,6 +847,7 @@ function Step2({
                       data.socials.map((ss, j) => (j === i ? e.target.value : ss)),
                     )
                   }
+                  onBlur={(e) => validateSocial(e.target.value, i)}
                 />
               </div>
               {data.socials.length > 1 && (
@@ -812,7 +859,7 @@ function Step2({
                 </button>
               )}
             </div>
-            <FieldError msg={errors[`social_${i}`]} />
+            <FieldError msg={allErrors[`social_${i}`]} />
           </div>
         ))}
         <button className="add-line" onClick={() => update("socials", [...data.socials, ""])}>

@@ -15,6 +15,38 @@ import {
   type CreateEventInput,
 } from "@/lib/api";
 
+// ---------------------------------------------------------------------------
+// Helpers de validación (sin dependencias externas)
+// ---------------------------------------------------------------------------
+
+/** Precio mínimo en CLP para eventos de pago. */
+const MIN_PRICE = 500;
+/** Longitud mínima del título. */
+const MIN_TITLE_LEN = 3;
+
+/** Devuelve la fecha de hoy en formato YYYY-MM-DD (zona local). */
+function todayISO(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
+ * Valida que `value` sea una URL http/https bien formada.
+ * Devuelve false para string vacío o malformado.
+ */
+function isValidUrl(value: string): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 type Price = { name: string; amount: string };
 type DateRow = { date: string; start: string; end: string };
 
@@ -86,27 +118,98 @@ export default function FormPage() {
     setFieldErrors((e) => {
       const n = { ...e };
       delete n[k as string];
-      if (k === "prices") Object.keys(n).filter((x) => x.startsWith("price_")).forEach((x) => delete n[x]);
+      if (k === "prices") {
+        Object.keys(n).filter((x) => x.startsWith("price_")).forEach((x) => delete n[x]);
+      }
+      if (k === "dates") {
+        Object.keys(n).filter((x) => x.startsWith("date_") || x === "dates").forEach((x) => delete n[x]);
+      }
+      if (k === "socials") {
+        Object.keys(n).filter((x) => x.startsWith("social_")).forEach((x) => delete n[x]);
+      }
+      if (k === "videos") {
+        Object.keys(n).filter((x) => x.startsWith("video_")).forEach((x) => delete n[x]);
+      }
       return n;
     });
   };
 
   const validateStep = (s: number): FieldErrors => {
     const e: FieldErrors = {};
+
     if (s === 1) {
-      if (!data.title.trim()) e.title = "El título es obligatorio.";
+      if (!data.title.trim()) {
+        e.title = "El título es obligatorio.";
+      } else if (data.title.trim().length < MIN_TITLE_LEN) {
+        e.title = "El título debe tener al menos 3 caracteres.";
+      }
       if (!data.categoryId) e.categoryId = "Selecciona una categoría.";
       if (data.desc.trim().length < 10) e.desc = "Mínimo 10 caracteres.";
       if (!data.free) {
         data.prices.forEach((p, i) => {
           if (!p.name.trim()) e[`price_${i}`] = "El nombre es obligatorio.";
+          const n = Number(p.amount);
+          if (p.amount === "" || !Number.isInteger(n)) {
+            e[`price_amount_${i}`] = "Ingresa un monto válido.";
+          } else if (n < MIN_PRICE) {
+            e[`price_amount_${i}`] = "El precio mínimo es $500 CLP.";
+          }
         });
       }
     }
+
     if (s === 2) {
       if (!data.address.trim()) e.address = "La dirección es obligatoria.";
       if (!data.addressNumber.trim()) e.addressNumber = "El número es obligatorio.";
+
+      // Fechas: al menos una con fecha no vacía
+      const filledDates = data.dates.filter((d) => d.date);
+      if (!filledDates.length) {
+        e.dates = "Agrega al menos una fecha para el evento.";
+      }
+      data.dates.forEach((d, i) => {
+        if (!d.date) return;
+        if (d.date < todayISO()) {
+          e[`date_${i}`] = "La fecha no puede estar en el pasado.";
+        } else if (d.start && d.end && d.end <= d.start) {
+          e[`date_${i}`] = "La hora de término debe ser posterior al inicio.";
+        }
+      });
+
+      // URL ticketera (opcional)
+      const webTrimmed = data.web.trim();
+      if (webTrimmed && !isValidUrl(`https://${webTrimmed}`)) {
+        e.web = "Ingresa una dirección web válida.";
+      }
+
+      // Redes sociales (opcionales): normalizar @ inicial y validar como URL
+      data.socials.forEach((s, i) => {
+        const raw = s.trim();
+        if (!raw) return;
+        // Quitar @ inicial si lo tiene
+        const withoutAt = raw.startsWith("@") ? raw.slice(1) : raw;
+        // Si ya tiene esquema, validar tal cual; si no, anteponerlo
+        const toValidate =
+          withoutAt.startsWith("http://") || withoutAt.startsWith("https://")
+            ? withoutAt
+            : `https://${withoutAt}`;
+        if (!isValidUrl(toValidate)) {
+          e[`social_${i}`] = "Ingresa una URL de red social válida.";
+        }
+      });
     }
+
+    if (s === 3) {
+      // Videos (opcionales): validar URLs completas
+      data.videos.forEach((v, i) => {
+        const raw = v.trim();
+        if (!raw) return;
+        if (!isValidUrl(raw)) {
+          e[`video_${i}`] = "Ingresa una URL de video válida.";
+        }
+      });
+    }
+
     return e;
   };
 
@@ -199,8 +302,12 @@ export default function FormPage() {
 
   const submit = async () => {
     setSubmitError("");
-    const errs = validateStep(2);
-    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+    const errs = validateStep(3);
+    if (Object.keys(errs).length) {
+      setFieldErrors(errs);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setSubmitting(true);
     try {
       const web = data.web.trim().replace(/^https?:\/\//, "");
@@ -246,7 +353,7 @@ export default function FormPage() {
     <main style={{ paddingTop: 64 }}>
       <header className="pub-header" ref={pubHeaderRef}>
         <div className="container row" style={{ justifyContent: "space-between" }}>
-          <BrandMark size={28} />
+          <Link href="/"><BrandMark size={28} /></Link>
           <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>
             PASO {step} DE 3
           </span>
@@ -266,7 +373,7 @@ export default function FormPage() {
           {step === 2 && (
             <Step2 data={data} update={update} regions={regions} communes={communes} errors={fieldErrors} />
           )}
-          {step === 3 && <Step3 data={data} update={update} token={token} />}
+          {step === 3 && <Step3 data={data} update={update} token={token} errors={fieldErrors} />}
 
           {submitError && (
             <div style={{ color: "var(--err)", fontSize: 13, margin: "18px 0 0" }}>{submitError}</div>
@@ -288,7 +395,11 @@ export default function FormPage() {
               onClick={() => {
                 if (step < 3) {
                   const errs = validateStep(step);
-                  if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+                  if (Object.keys(errs).length) {
+                    setFieldErrors(errs);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    return;
+                  }
                   setFieldErrors({});
                   setStep(step + 1);
                 } else {
@@ -351,6 +462,8 @@ function Step1({
             type="text"
             placeholder="Ej: Konbini Live Fest 2026"
             value={data.title}
+            minLength={MIN_TITLE_LEN}
+            maxLength={120}
             onChange={(e) => update("title", e.target.value)}
           />
           <FieldError msg={errors.title} />
@@ -406,7 +519,17 @@ function Step1({
         <div className="field-set-title">
           <span className="n">1.2</span> Valores de entrada
         </div>
-        <div className="ck-row" onClick={() => update("free", !data.free)} style={{ marginBottom: 16 }}>
+        <div
+          className="ck-row"
+          onClick={() => {
+            const goingFree = !data.free;
+            update("free", goingFree);
+            if (goingFree) {
+              update("prices", data.prices.map((p) => ({ ...p, amount: "0" })));
+            }
+          }}
+          style={{ marginBottom: 16 }}
+        >
           <div className={`ck ${data.free ? "on" : ""}`}>{data.free && Ic.check}</div>
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Evento gratuito</div>
@@ -441,19 +564,26 @@ function Step1({
                     <span>$</span>
                     <input
                       type="number"
+                      inputMode="numeric"
                       placeholder="0"
+                      min={MIN_PRICE}
+                      step="1"
                       value={p.amount}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        // Solo aceptar dígitos enteros (sin decimales ni texto)
+                        if (val !== "" && !/^\d+$/.test(val)) return;
                         update(
                           "prices",
                           data.prices.map((pp, j) =>
-                            j === i ? { ...pp, amount: e.target.value } : pp,
+                            j === i ? { ...pp, amount: val } : pp,
                           ),
-                        )
-                      }
+                        );
+                      }}
                     />
                     <span className="suffix">CLP</span>
                   </div>
+                  <FieldError msg={errors[`price_amount_${i}`]} />
                 </div>
                 <div style={{ display: "flex", alignItems: "end" }}>
                   {data.prices.length > 1 && (
@@ -509,48 +639,53 @@ function Step2({
           <span className="n">2.1</span> Día y hora del evento
         </div>
         {data.dates.map((d, i) => (
-          <div className="grid-3" key={i} style={{ marginBottom: 14 }}>
-            <div className="field" style={{ margin: 0 }}>
-              <label>Fecha {i === 0 ? "" : `(día ${i + 1})`}</label>
-              <input
-                type="date"
-                value={d.date}
-                onChange={(e) =>
-                  update(
-                    "dates",
-                    data.dates.map((dd, j) => (j === i ? { ...dd, date: e.target.value } : dd)),
-                  )
-                }
-              />
+          <div key={i} style={{ marginBottom: 14 }}>
+            <div className="grid-3">
+              <div className="field" style={{ margin: 0 }}>
+                <label>Fecha {i === 0 ? "" : `(día ${i + 1})`}</label>
+                <input
+                  type="date"
+                  min={todayISO()}
+                  value={d.date}
+                  onChange={(e) =>
+                    update(
+                      "dates",
+                      data.dates.map((dd, j) => (j === i ? { ...dd, date: e.target.value } : dd)),
+                    )
+                  }
+                />
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Hora inicio</label>
+                <input
+                  type="time"
+                  value={d.start}
+                  onChange={(e) =>
+                    update(
+                      "dates",
+                      data.dates.map((dd, j) => (j === i ? { ...dd, start: e.target.value } : dd)),
+                    )
+                  }
+                />
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Hora término</label>
+                <input
+                  type="time"
+                  value={d.end}
+                  onChange={(e) =>
+                    update(
+                      "dates",
+                      data.dates.map((dd, j) => (j === i ? { ...dd, end: e.target.value } : dd)),
+                    )
+                  }
+                />
+              </div>
             </div>
-            <div className="field" style={{ margin: 0 }}>
-              <label>Hora inicio</label>
-              <input
-                type="time"
-                value={d.start}
-                onChange={(e) =>
-                  update(
-                    "dates",
-                    data.dates.map((dd, j) => (j === i ? { ...dd, start: e.target.value } : dd)),
-                  )
-                }
-              />
-            </div>
-            <div className="field" style={{ margin: 0 }}>
-              <label>Hora término</label>
-              <input
-                type="time"
-                value={d.end}
-                onChange={(e) =>
-                  update(
-                    "dates",
-                    data.dates.map((dd, j) => (j === i ? { ...dd, end: e.target.value } : dd)),
-                  )
-                }
-              />
-            </div>
+            <FieldError msg={errors[`date_${i}`]} />
           </div>
         ))}
+        <FieldError msg={errors.dates} />
         <button
           className="add-line"
           onClick={() => update("dates", [...data.dates, { date: "", start: "", end: "" }])}
@@ -606,6 +741,7 @@ function Step2({
               type="text"
               placeholder="Ej: Av. Matta"
               value={data.address}
+              maxLength={120}
               onChange={(e) => update("address", e.target.value)}
             />
             <FieldError msg={errors.address} />
@@ -616,6 +752,7 @@ function Step2({
               type="text"
               placeholder="Ej: 890"
               value={data.addressNumber}
+              maxLength={12}
               onChange={(e) => update("addressNumber", e.target.value)}
             />
             <FieldError msg={errors.addressNumber} />
@@ -633,11 +770,13 @@ function Step2({
             <span>https://</span>
             <input
               type="text"
+              inputMode="url"
               placeholder="ticketera.cl/tu-evento"
               value={data.web}
               onChange={(e) => update("web", e.target.value)}
             />
           </div>
+          <FieldError msg={errors.web} />
           <div className="help">
             La compra de entradas ocurre fuera de Konbini: los asistentes serán dirigidos a este
             enlace.
@@ -647,29 +786,33 @@ function Step2({
           Redes sociales
         </label>
         {data.socials.map((s, i) => (
-          <div className="row" key={i} style={{ marginBottom: 10 }}>
-            <div className="input-prefix" style={{ flex: 1 }}>
-              <span>@</span>
-              <input
-                type="text"
-                placeholder="instagram.com/tu-evento"
-                value={s}
-                onChange={(e) =>
-                  update(
-                    "socials",
-                    data.socials.map((ss, j) => (j === i ? e.target.value : ss)),
-                  )
-                }
-              />
+          <div key={i} style={{ marginBottom: 10 }}>
+            <div className="row">
+              <div className="input-prefix" style={{ flex: 1 }}>
+                <span>@</span>
+                <input
+                  type="text"
+                  inputMode="url"
+                  placeholder="instagram.com/tu-evento"
+                  value={s}
+                  onChange={(e) =>
+                    update(
+                      "socials",
+                      data.socials.map((ss, j) => (j === i ? e.target.value : ss)),
+                    )
+                  }
+                />
+              </div>
+              {data.socials.length > 1 && (
+                <button
+                  className="icon-btn"
+                  onClick={() => update("socials", data.socials.filter((_, j) => j !== i))}
+                >
+                  {Ic.close}
+                </button>
+              )}
             </div>
-            {data.socials.length > 1 && (
-              <button
-                className="icon-btn"
-                onClick={() => update("socials", data.socials.filter((_, j) => j !== i))}
-              >
-                {Ic.close}
-              </button>
-            )}
+            <FieldError msg={errors[`social_${i}`]} />
           </div>
         ))}
         <button className="add-line" onClick={() => update("socials", [...data.socials, ""])}>
@@ -758,7 +901,7 @@ function ImageUploader({
   );
 }
 
-function Step3({ data, update, token }: { data: FormData; update: Update; token: string }) {
+function Step3({ data, update, token, errors }: { data: FormData; update: Update; token: string; errors: FieldErrors }) {
   const galRef = useRef<HTMLInputElement>(null);
   const [galBusy, setGalBusy] = useState(false);
   const [galErr, setGalErr] = useState("");
@@ -863,29 +1006,33 @@ function Step3({ data, update, token }: { data: FormData; update: Update; token:
           <span className="n">3.3</span> Videos
         </div>
         {data.videos.map((v, i) => (
-          <div className="row" key={i} style={{ marginBottom: 10 }}>
-            <div className="input-prefix" style={{ flex: 1 }}>
-              <span>▶</span>
-              <input
-                type="text"
-                placeholder="https://youtube.com/watch?v=..."
-                value={v}
-                onChange={(e) =>
-                  update(
-                    "videos",
-                    data.videos.map((vv, j) => (j === i ? e.target.value : vv)),
-                  )
-                }
-              />
+          <div key={i} style={{ marginBottom: 10 }}>
+            <div className="row">
+              <div className="input-prefix" style={{ flex: 1 }}>
+                <span>▶</span>
+                <input
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://youtube.com/watch?v=..."
+                  value={v}
+                  onChange={(e) =>
+                    update(
+                      "videos",
+                      data.videos.map((vv, j) => (j === i ? e.target.value : vv)),
+                    )
+                  }
+                />
+              </div>
+              {data.videos.length > 1 && (
+                <button
+                  className="icon-btn"
+                  onClick={() => update("videos", data.videos.filter((_, j) => j !== i))}
+                >
+                  {Ic.close}
+                </button>
+              )}
             </div>
-            {data.videos.length > 1 && (
-              <button
-                className="icon-btn"
-                onClick={() => update("videos", data.videos.filter((_, j) => j !== i))}
-              >
-                {Ic.close}
-              </button>
-            )}
+            <FieldError msg={errors[`video_${i}`]} />
           </div>
         ))}
         <button className="add-line" onClick={() => update("videos", [...data.videos, ""])}>

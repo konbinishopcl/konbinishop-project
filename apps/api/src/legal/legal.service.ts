@@ -20,4 +20,10 @@ export class LegalService {
       update: { content: dto.content },
     });
   }
+
+  async remove(type: LegalDocumentType) {
+    await this.findOne(type);
+    await this.prisma.legalDocument.delete({ where: { type } });
+    return { deleted: true };
+  }
 }

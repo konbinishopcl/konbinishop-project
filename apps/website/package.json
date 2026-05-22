@@ -9,12 +9,15 @@
     "start": "next start -p 3000"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
     "@react-oauth/google": "^0.13.5",
     "next": "^15.1.0",
     "next-nprogress-bar": "^2.4.7",
     "nprogress": "^0.2.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.76.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20",

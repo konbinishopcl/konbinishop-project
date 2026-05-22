@@ -19,10 +19,10 @@ export function Footer() {
             Todo lo que amas — anime, conciertos, ferias y conventions — en un solo lugar.
           </p>
           <div className="row" style={{ marginTop: 18, gap: 10 }}>
-            <a className="icon-btn" href="#">{Ic.google}</a>
-            <a className="icon-btn" href="#">{Ic.insta}</a>
-            <a className="icon-btn" href="#">{Ic.fb}</a>
-            <a className="icon-btn" href="#">{Ic.apple}</a>
+            <a className="icon-btn" href="#">{Ic.ig}</a>
+            <a className="icon-btn" href="#">{Ic.tiktok}</a>
+            <a className="icon-btn" href="#">{Ic.x}</a>
+            <a className="icon-btn" href="#">{Ic.discord}</a>
           </div>
         </div>
         <div className="foot-col">
@@ -42,9 +42,11 @@ export function Footer() {
           <a>Términos</a><a>Privacidad</a><a>Cookies</a><a>Copyright</a>
         </div>
       </div>
-      <div className="container foot-bot">
-        <div>© 2025 KONBINI SHOP — コンビニショップ</div>
-        <div>v2.0 / SANTIAGO · CHILE</div>
+      <div className="foot-bot-wrap">
+        <div className="container foot-bot">
+          <div>© 2025 KONBINI SHOP — コンビニショップ</div>
+          <div>v2.0 / SANTIAGO · CHILE</div>
+        </div>
       </div>
     </footer>
   );

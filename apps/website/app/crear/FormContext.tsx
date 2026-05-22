@@ -21,7 +21,7 @@ export type UploadedImage = { kind: "uploaded"; url: string };
 export type ImageSlot = PendingImage | UploadedImage | null;
 
 export type Price = { name: string; amount: string };
-export type DateRow = { date: string; start: string; end: string };
+export type DateRow = { date: string; start?: string; end?: string };
 export type FieldErrors = Record<string, string>;
 
 export type FormValues = {

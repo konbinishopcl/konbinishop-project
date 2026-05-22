@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
 import { useUser } from "@/components/providers";
@@ -14,161 +16,66 @@ import {
   type ApiRegion,
   type CreateEventInput,
 } from "@/lib/api";
+import { useForm as useFormCtx, type ImageSlot } from "../FormContext";
 import {
-  useForm,
-  clearDraft,
-  MIN_PRICE,
-  MIN_TITLE_LEN,
-  todayISO,
-  isValidUrl,
-  type FormValues,
-  type UpdateFn,
-  type FieldErrors,
-  type ImageSlot,
-} from "../FormContext";
+  step1Schema,
+  step2Schema,
+  step3Schema,
+  type Step1Values,
+  type Step2Values,
+  type Step3Values,
+} from "../schemas";
 
-// ─── Validación por paso ────────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-function validateStep(s: number, data: FormValues): FieldErrors {
-  const e: FieldErrors = {};
-
-  if (s === 1) {
-    if (!data.title.trim()) {
-      e.title = "El título es obligatorio.";
-    } else if (data.title.trim().length < MIN_TITLE_LEN) {
-      e.title = "El título debe tener al menos 3 caracteres.";
-    }
-    if (!data.categoryId) e.categoryId = "Selecciona una categoría.";
-    if (data.desc.trim().length < 10) e.desc = "Mínimo 10 caracteres.";
-    if (!data.free) {
-      data.prices.forEach((p, i) => {
-        if (!p.name.trim()) e[`price_${i}`] = "El nombre es obligatorio.";
-        const n = Number(p.amount);
-        if (p.amount === "" || !Number.isInteger(n)) {
-          e[`price_amount_${i}`] = "Ingresa un monto válido.";
-        } else if (n < MIN_PRICE) {
-          e[`price_amount_${i}`] = "El precio mínimo es $500 CLP.";
-        }
-      });
-    }
-  }
-
-  if (s === 2) {
-    if (!data.address.trim()) e.address = "La dirección es obligatoria.";
-    const addrNum = data.addressNumber.trim();
-    if (!addrNum) {
-      e.addressNumber = "El número es obligatorio.";
-    } else if (!/^\d/.test(addrNum) && !/^[Ss]\/[Nn]$/i.test(addrNum)) {
-      e.addressNumber = "Ingresa un número válido (ej: 890, 1234 A, S/N).";
-    }
-
-    const filledDates = data.dates.filter((d) => d.date);
-    if (!filledDates.length) {
-      e.dates = "Agrega al menos una fecha para el evento.";
-    }
-    data.dates.forEach((d, i) => {
-      if (!d.date) return;
-      if (d.date < todayISO()) {
-        e[`date_${i}`] = "La fecha no puede estar en el pasado.";
-      } else if (d.start && d.end && d.end <= d.start) {
-        e[`date_${i}`] = "La hora de término debe ser posterior al inicio.";
-      }
-    });
-
-    const webTrimmed = data.web.trim();
-    if (webTrimmed && !isValidUrl(`https://${webTrimmed}`)) {
-      e.web = "Ingresa una dirección web válida.";
-    }
-
-    data.socials.forEach((s, i) => {
-      const raw = s.trim();
-      if (!raw) return;
-      const withoutAt = raw.startsWith("@") ? raw.slice(1) : raw;
-      const toValidate = /^https?:\/\//.test(withoutAt) ? withoutAt : `https://${withoutAt}`;
-      if (!isValidUrl(toValidate)) {
-        e[`social_${i}`] = "Ingresa una URL de red social válida.";
-      }
-    });
-  }
-
-  if (s === 3) {
-    data.videos.forEach((v, i) => {
-      const raw = v.trim();
-      if (!raw) return;
-      if (!isValidUrl(raw)) e[`video_${i}`] = "Ingresa una URL de video válida.";
-    });
-  }
-
-  return e;
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// ─── Upload diferido ────────────────────────────────────────────────────────
+/** Bloquea en el teclado todo lo que no sea dígito ni tecla de control */
+const onlyDigits = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const nav = ["Backspace", "Tab", "Delete", "ArrowLeft", "ArrowRight", "Home", "End", "Enter"];
+  if (!nav.includes(e.key) && !/^\d$/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault();
+  }
+};
 
-async function uploadSlot(slot: ImageSlot, token: string): Promise<string | undefined> {
-  if (!slot) return undefined;
-  if (slot.kind === "uploaded") return slot.url;
-  const { url } = await api.uploadImage(slot.file, token);
-  return url;
+// ─── FieldError ─────────────────────────────────────────────────────────────
+
+function FieldError({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <div style={{ color: "var(--err)", fontSize: 12, marginTop: 5 }}>{msg}</div>;
 }
 
-// ─── ImageUploader — imágenes viven en memoria hasta el submit ──────────────
+// ─── ImageUploader — imágenes en memoria hasta el submit ────────────────────
 
 function ImageUploader({
-  label,
-  value,
-  onChange,
-  tall,
+  label, value, onChange, tall,
 }: {
-  label: string;
-  value: ImageSlot;
-  onChange: (slot: ImageSlot) => void;
-  tall?: boolean;
+  label: string; value: ImageSlot; onChange: (s: ImageSlot) => void; tall?: boolean;
 }) {
   const ref = useRef<HTMLInputElement>(null);
-
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    // Liberar object URL anterior si existe
     if (value?.kind === "pending") URL.revokeObjectURL(value.preview);
     onChange({ kind: "pending", file, preview: URL.createObjectURL(file) });
   };
-
-  const previewSrc =
-    value?.kind === "pending"
-      ? value.preview
-      : value?.kind === "uploaded"
-        ? imageUrl(value.url)
-        : null;
-
+  const src =
+    value?.kind === "pending" ? value.preview :
+    value?.kind === "uploaded" ? imageUrl(value.url) : null;
   return (
     <div>
-      <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>
-        {label}
-      </label>
-      <input
-        ref={ref}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        style={{ display: "none" }}
-        onChange={onFile}
-      />
-      {previewSrc ? (
-        <div
-          className={`upload-box ${tall ? "tall" : ""}`}
-          style={{ padding: 0, overflow: "hidden", position: "relative" }}
-        >
-          <img src={previewSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={() => {
-              if (value?.kind === "pending") URL.revokeObjectURL(value.preview);
-              onChange(null);
-            }}
-            style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.6)", color: "white" }}
-          >
+      <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>{label}</label>
+      <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={onFile} />
+      {src ? (
+        <div className={`upload-box ${tall ? "tall" : ""}`} style={{ padding: 0, overflow: "hidden", position: "relative" }}>
+          <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <button type="button" className="icon-btn"
+            onClick={() => { if (value?.kind === "pending") URL.revokeObjectURL(value.preview); onChange(null); }}
+            style={{ position: "absolute", top: 8, right: 8, background: "rgba(0,0,0,.6)", color: "white" }}>
             {Ic.close}
           </button>
         </div>
@@ -183,176 +90,135 @@ function ImageUploader({
   );
 }
 
-// ─── FieldError ─────────────────────────────────────────────────────────────
-
-function FieldError({ msg }: { msg?: string }) {
-  if (!msg) return null;
-  return <div style={{ color: "var(--err)", fontSize: 12, marginTop: 5 }}>{msg}</div>;
+async function uploadSlot(slot: ImageSlot, token: string): Promise<string | undefined> {
+  if (!slot) return undefined;
+  if (slot.kind === "uploaded") return slot.url;
+  const { url } = await api.uploadImage(slot.file, token);
+  return url;
 }
 
 // ─── Paso 1 ─────────────────────────────────────────────────────────────────
 
-function Step1({
-  data,
-  update,
-  categories,
-  userName,
-  errors,
+function Step1Form({
+  defaultValues, categories, userName, onDone,
 }: {
-  data: FormValues;
-  update: UpdateFn;
-  categories: ApiCategory[];
-  userName: string;
-  errors: FieldErrors;
+  defaultValues: Step1Values; categories: ApiCategory[]; userName: string; onDone: (d: Step1Values) => void;
 }) {
+  const { control, register, handleSubmit, watch, setValue, formState: { errors } } =
+    useForm<Step1Values>({ resolver: zodResolver(step1Schema), mode: "onTouched", defaultValues });
+
+  const free = watch("free");
+  const { fields: priceFields, append, remove } = useFieldArray({ control, name: "prices" });
   const firstName = userName.split(" ")[0] || userName;
+
   return (
-    <div>
-      <h1 className="step-title">
-        Hola, {firstName}.
-        <br />
-        Cuéntanos sobre tu evento.
-      </h1>
-      <p className="step-lead">
-        Esta información se mostrará en tu publicación. Podrás editarla antes de que se apruebe.
-      </p>
+    <form id="crear-form" onSubmit={handleSubmit(onDone)}>
+      <h1 className="step-title">Hola, {firstName}.<br />Cuéntanos sobre tu evento.</h1>
+      <p className="step-lead">Esta información se mostrará en tu publicación. Podrás editarla antes de que se apruebe.</p>
 
       <fieldset>
-        <div className="field-set-title">
-          <span className="n">1.1</span> Información básica
-        </div>
+        <div className="field-set-title"><span className="n">1.1</span> Información básica</div>
+
         <div className="field">
           <label>Título del evento</label>
-          <input
-            type="text"
-            placeholder="Ej: Konbini Live Fest 2026"
-            value={data.title}
-            minLength={MIN_TITLE_LEN}
-            maxLength={120}
-            onChange={(e) => update("title", e.target.value)}
-          />
-          <FieldError msg={errors.title} />
+          <input type="text" placeholder="Ej: Konbini Live Fest 2026" maxLength={120} {...register("title")} />
+          <FieldError msg={errors.title?.message} />
           <div className="help">Sé claro y descriptivo. Este es el nombre que verán los asistentes.</div>
         </div>
+
         <div className="grid-2">
           <div className="field">
             <label>Empresa / Productor</label>
-            <input
-              type="text"
-              placeholder="Ej: Konbini Producciones"
-              value={data.company}
-              onChange={(e) => update("company", e.target.value)}
-            />
+            <input type="text" placeholder="Ej: Konbini Producciones" {...register("company")} />
           </div>
           <div className="field">
             <label>Categoría</label>
-            <select value={data.categoryId} onChange={(e) => update("categoryId", e.target.value)}>
+            <select {...register("categoryId")}>
               <option value="">Selecciona una categoría</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name ?? c.slug}</option>
-              ))}
+              {categories.map((c) => <option key={c.id} value={c.id}>{c.name ?? c.slug}</option>)}
             </select>
-            <FieldError msg={errors.categoryId} />
+            <FieldError msg={errors.categoryId?.message} />
           </div>
         </div>
+
         <div className="field">
           <label>Descripción general</label>
-          <textarea
-            placeholder="Describe brevemente el evento, su temática y formato."
-            value={data.desc}
-            onChange={(e) => update("desc", e.target.value)}
-          />
-          <FieldError msg={errors.desc} />
+          <textarea placeholder="Describe brevemente el evento, su temática y formato." {...register("desc")} />
+          <FieldError msg={errors.desc?.message} />
           <div className="help">Aparece en las tarjetas de búsqueda. Mínimo 10 caracteres.</div>
         </div>
+
         <div className="field">
-          <label>
-            Acerca de <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(opcional)</span>
-          </label>
+          <label>Acerca de <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(opcional)</span></label>
           <textarea
             placeholder="Cuenta lo que los asistentes pueden esperar: artistas invitados, actividades…"
-            value={data.about}
-            onChange={(e) => update("about", e.target.value)}
             style={{ minHeight: 140 }}
+            {...register("about")}
           />
         </div>
       </fieldset>
 
       <fieldset>
-        <div className="field-set-title">
-          <span className="n">1.2</span> Valores de entrada
-        </div>
-        <div
-          className="ck-row"
-          onClick={() => {
-            const goingFree = !data.free;
-            update("free", goingFree);
-            if (goingFree) update("prices", data.prices.map((p) => ({ ...p, amount: "0" })));
-          }}
-          style={{ marginBottom: 16 }}
-        >
-          <div className={`ck ${data.free ? "on" : ""}`}>{data.free && Ic.check}</div>
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>Evento gratuito</div>
-            <div style={{ color: "var(--ink-3)", fontSize: 12 }}>
-              Marca esta opción si la entrada es liberada.
-            </div>
-          </div>
-        </div>
+        <div className="field-set-title"><span className="n">1.2</span> Valores de entrada</div>
 
-        {!data.free && (
+        <Controller
+          control={control}
+          name="free"
+          render={({ field }) => (
+            <div
+              className="ck-row"
+              onClick={() => {
+                const next = !field.value;
+                field.onChange(next);
+                // Al marcar gratuito, zerear montos para no bloquear el submit
+                if (next) priceFields.forEach((_, i) => setValue(`prices.${i}.amount`, 0));
+              }}
+              style={{ marginBottom: 16 }}
+            >
+              <div className={`ck ${field.value ? "on" : ""}`}>{field.value && Ic.check}</div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 14 }}>Evento gratuito</div>
+                <div style={{ color: "var(--ink-3)", fontSize: 12 }}>Marca esta opción si la entrada es liberada.</div>
+              </div>
+            </div>
+          )}
+        />
+
+        {!free && (
           <div>
-            {data.prices.map((p, i) => (
-              <div className="price-row" key={i}>
+            {priceFields.map((field, i) => (
+              <div className="price-row" key={field.id}>
                 <div className="field" style={{ margin: 0 }}>
                   <label>Nombre de tarifa</label>
-                  <input
-                    type="text"
-                    placeholder="Ej: Entrada General, VIP"
-                    value={p.name}
-                    onChange={(e) =>
-                      update("prices", data.prices.map((pp, j) => (j === i ? { ...pp, name: e.target.value } : pp)))
-                    }
-                  />
-                  <FieldError msg={errors[`price_${i}`]} />
+                  <input type="text" placeholder="Ej: Entrada General, VIP" {...register(`prices.${i}.name`)} />
+                  <FieldError msg={errors.prices?.[i]?.name?.message} />
                 </div>
                 <div className="field" style={{ margin: 0 }}>
                   <label>Precio</label>
                   <div className="input-prefix">
                     <span>$</span>
+                    {/* type="number" → el navegador bloquea letras de forma nativa */}
                     <input
                       type="number"
                       inputMode="numeric"
-                      placeholder="0"
-                      min={MIN_PRICE}
-                      step="1"
-                      value={p.amount}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val !== "" && !/^\d+$/.test(val)) return;
-                        update("prices", data.prices.map((pp, j) => (j === i ? { ...pp, amount: val } : pp)));
-                      }}
+                      placeholder="500"
+                      min={500}
+                      step={1}
+                      {...register(`prices.${i}.amount`, { valueAsNumber: true })}
                     />
                     <span className="suffix">CLP</span>
                   </div>
-                  <FieldError msg={errors[`price_amount_${i}`]} />
+                  <FieldError msg={errors.prices?.[i]?.amount?.message} />
                 </div>
                 <div style={{ display: "flex", alignItems: "end" }}>
-                  {data.prices.length > 1 && (
-                    <button
-                      className="icon-btn"
-                      onClick={() => update("prices", data.prices.filter((_, j) => j !== i))}
-                    >
-                      {Ic.close}
-                    </button>
+                  {priceFields.length > 1 && (
+                    <button type="button" className="icon-btn" onClick={() => remove(i)}>{Ic.close}</button>
                   )}
                 </div>
               </div>
             ))}
-            <button
-              className="add-line"
-              onClick={() => update("prices", [...data.prices, { name: "", amount: "" }])}
-            >
+            <button type="button" className="add-line"
+              onClick={() => append({ name: "", amount: undefined as unknown as number })}>
               {Ic.plus} Agregar otra tarifa
             </button>
             <div className="help" style={{ marginTop: 12 }}>
@@ -361,259 +227,166 @@ function Step1({
           </div>
         )}
       </fieldset>
-    </div>
+    </form>
   );
 }
 
 // ─── Paso 2 ─────────────────────────────────────────────────────────────────
 
-function Step2({
-  data,
-  update,
-  regions,
-  communes,
-  errors,
+function Step2Form({
+  defaultValues, regions, communes, onRegionChange, onDone,
 }: {
-  data: FormValues;
-  update: UpdateFn;
+  defaultValues: Step2Values;
   regions: ApiRegion[];
   communes: ApiCommune[];
-  errors: FieldErrors;
+  onRegionChange: (id: string) => void;
+  onDone: (d: Step2Values) => void;
 }) {
-  // Errores en tiempo real (onBlur)
-  const [blurErrors, setBlurErrors] = useState<FieldErrors>({});
-  const allErrors = { ...blurErrors, ...errors };
+  const { control, register, handleSubmit, formState: { errors } } =
+    useForm<Step2Values>({ resolver: zodResolver(step2Schema), mode: "onTouched", defaultValues });
 
-  const setBErr = (key: string, msg: string | null) =>
-    setBlurErrors((prev) => {
-      const next = { ...prev };
-      if (msg) next[key] = msg;
-      else delete next[key];
-      return next;
-    });
+  const { fields: dateFields, append: addDate, remove: removeDate } =
+    useFieldArray({ control, name: "dates" });
+  const { fields: socialFields, append: addSocial, remove: removeSocial } =
+    useFieldArray({ control, name: "socials" });
 
-  const validateWeb = (val: string) => {
-    const raw = val.trim();
-    if (!raw) { setBErr("web", null); return; }
-    setBErr("web", isValidUrl(`https://${raw}`) ? null : "Ingresa una dirección web válida (ej: ticketera.cl/evento).");
-  };
-
-  const validateSocial = (val: string, i: number) => {
-    const raw = val.trim();
-    if (!raw) { setBErr(`social_${i}`, null); return; }
-    const withoutAt = raw.startsWith("@") ? raw.slice(1) : raw;
-    const toValidate = /^https?:\/\//.test(withoutAt) ? withoutAt : `https://${withoutAt}`;
-    setBErr(`social_${i}`, isValidUrl(toValidate) ? null : "Ingresa una URL válida (ej: instagram.com/tu-evento).");
-  };
-
-  const validateDate = (d: { date: string; start: string; end: string }, i: number) => {
-    if (!d.date) { setBErr(`date_${i}`, null); return; }
-    if (d.date < todayISO()) {
-      setBErr(`date_${i}`, "La fecha no puede estar en el pasado.");
-    } else if (d.start && d.end && d.end <= d.start) {
-      setBErr(`date_${i}`, "La hora de término debe ser posterior al inicio.");
-    } else {
-      setBErr(`date_${i}`, null);
-    }
-  };
+  // Error de fechas puede venir como root error (superRefine)
+  const datesRootError = (errors.dates as { message?: string } | undefined)?.message;
 
   return (
-    <div>
+    <form id="crear-form" onSubmit={handleSubmit(onDone)}>
       <h1 className="step-title">Horarios, ubicación y links.</h1>
-      <p className="step-lead">
-        Indica dónde y cuándo ocurre el evento, y dónde enviar a los asistentes para más información.
-      </p>
+      <p className="step-lead">Indica dónde y cuándo ocurre el evento, y dónde enviar a los asistentes.</p>
 
       <fieldset>
-        <div className="field-set-title">
-          <span className="n">2.1</span> Día y hora del evento
-        </div>
-        {data.dates.map((d, i) => (
-          <div key={i} style={{ marginBottom: 14 }}>
+        <div className="field-set-title"><span className="n">2.1</span> Día y hora del evento</div>
+        {dateFields.map((field, i) => (
+          <div key={field.id} style={{ marginBottom: 14 }}>
             <div className="grid-3">
               <div className="field" style={{ margin: 0 }}>
-                <label>Fecha {i === 0 ? "" : `(día ${i + 1})`}</label>
-                <input
-                  type="date"
-                  min={todayISO()}
-                  value={d.date}
-                  onChange={(e) => {
-                    const updated = data.dates.map((dd, j) => (j === i ? { ...dd, date: e.target.value } : dd));
-                    update("dates", updated);
-                    validateDate({ ...d, date: e.target.value }, i);
-                  }}
-                  onBlur={() => validateDate(d, i)}
-                />
+                <label>Fecha {i > 0 ? `(día ${i + 1})` : ""}</label>
+                {/* min bloquea fechas pasadas en el picker nativo */}
+                <input type="date" min={todayISO()} {...register(`dates.${i}.date`)} />
+                <FieldError msg={errors.dates?.[i]?.date?.message} />
               </div>
               <div className="field" style={{ margin: 0 }}>
                 <label>Hora inicio</label>
-                <input
-                  type="time"
-                  value={d.start}
-                  onChange={(e) => {
-                    const updated = data.dates.map((dd, j) => (j === i ? { ...dd, start: e.target.value } : dd));
-                    update("dates", updated);
-                    validateDate({ ...d, start: e.target.value }, i);
-                  }}
-                />
+                <input type="time" {...register(`dates.${i}.start`)} />
               </div>
               <div className="field" style={{ margin: 0 }}>
                 <label>Hora término</label>
-                <input
-                  type="time"
-                  value={d.end}
-                  onChange={(e) => {
-                    const updated = data.dates.map((dd, j) => (j === i ? { ...dd, end: e.target.value } : dd));
-                    update("dates", updated);
-                    validateDate({ ...d, end: e.target.value }, i);
-                  }}
-                />
+                <input type="time" {...register(`dates.${i}.end`)} />
+                <FieldError msg={errors.dates?.[i]?.end?.message} />
               </div>
             </div>
-            <FieldError msg={allErrors[`date_${i}`]} />
+            {dateFields.length > 1 && (
+              <button type="button" className="icon-btn" onClick={() => removeDate(i)} style={{ marginTop: 6 }}>
+                {Ic.close}
+              </button>
+            )}
           </div>
         ))}
-        <FieldError msg={allErrors.dates} />
-        <button
-          className="add-line"
-          onClick={() => update("dates", [...data.dates, { date: "", start: "", end: "" }])}
-        >
+        {datesRootError && <FieldError msg={datesRootError} />}
+        <button type="button" className="add-line" onClick={() => addDate({ date: "", start: "", end: "" })}>
           {Ic.plus} Agregar otro día
         </button>
       </fieldset>
 
       <fieldset>
-        <div className="field-set-title">
-          <span className="n">2.2</span> Ubicación
-        </div>
+        <div className="field-set-title"><span className="n">2.2</span> Ubicación</div>
         <div className="grid-2">
           <div className="field">
             <label>Región</label>
             <select
-              value={data.regionId}
-              onChange={(e) => { update("regionId", e.target.value); update("communeId", ""); }}
+              {...register("regionId")}
+              onChange={(e) => { register("regionId").onChange(e); onRegionChange(e.target.value); }}
             >
               <option value="">Selecciona una región</option>
-              {regions.map((r) => (
-                <option key={r.id} value={r.id}>{r.name}</option>
-              ))}
+              {regions.map((r) => <option key={r.id} value={String(r.id)}>{r.name}</option>)}
             </select>
           </div>
           <div className="field">
             <label>Comuna</label>
-            <select
-              value={data.communeId}
-              onChange={(e) => update("communeId", e.target.value)}
-              disabled={!data.regionId}
-            >
-              <option value="">{data.regionId ? "Selecciona una comuna" : "Elige una región primero"}</option>
-              {communes.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
+            <select {...register("communeId")} disabled={communes.length === 0}>
+              <option value="">{communes.length ? "Selecciona una comuna" : "Elige una región primero"}</option>
+              {communes.map((c) => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
             </select>
           </div>
         </div>
         <div className="grid-2">
           <div className="field">
             <label>Dirección</label>
-            <input
-              type="text"
-              placeholder="Ej: Av. Matta"
-              value={data.address}
-              maxLength={120}
-              onChange={(e) => update("address", e.target.value)}
-            />
-            <FieldError msg={allErrors.address} />
+            <input type="text" placeholder="Ej: Av. Matta" maxLength={120} {...register("address")} />
+            <FieldError msg={errors.address?.message} />
           </div>
           <div className="field">
             <label>Número</label>
+            {/*
+              onKeyDown bloquea cualquier tecla que no sea dígito — imposible
+              escribir "Maxime" o cualquier letra.
+            */}
             <input
               type="text"
-              placeholder="Ej: 890"
-              value={data.addressNumber}
-              maxLength={12}
               inputMode="numeric"
-              onChange={(e) => {
-                // Solo permite dígitos, letras, espacios, guion y barra (S/N)
-                const val = e.target.value.replace(/[^0-9A-Za-z\s\-\/]/g, "");
-                update("addressNumber", val);
-              }}
+              placeholder="890"
+              maxLength={8}
+              {...register("addressNumber")}
+              onKeyDown={onlyDigits}
             />
-            <FieldError msg={allErrors.addressNumber} />
+            <FieldError msg={errors.addressNumber?.message} />
           </div>
         </div>
       </fieldset>
 
       <fieldset>
-        <div className="field-set-title">
-          <span className="n">2.3</span> Enlaces importantes
-        </div>
+        <div className="field-set-title"><span className="n">2.3</span> Enlaces importantes</div>
         <div className="field">
           <label>Sitio de venta de entradas / Ticketera</label>
           <div className="input-prefix">
             <span>https://</span>
-            <input
-              type="text"
-              inputMode="url"
-              placeholder="ticketera.cl/tu-evento"
-              value={data.web}
-              onChange={(e) => update("web", e.target.value)}
-              onBlur={(e) => validateWeb(e.target.value)}
-            />
+            <input type="text" inputMode="url" placeholder="ticketera.cl/tu-evento" {...register("web")} />
           </div>
-          <FieldError msg={allErrors.web} />
-          <div className="help">
-            La compra de entradas ocurre fuera de Konbini: los asistentes serán dirigidos a este enlace.
-          </div>
+          <FieldError msg={errors.web?.message} />
+          <div className="help">La compra de entradas ocurre fuera de Konbini: los asistentes serán dirigidos a este enlace.</div>
         </div>
-        <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>
-          Redes sociales
-        </label>
-        {data.socials.map((s, i) => (
-          <div key={i} style={{ marginBottom: 10 }}>
+
+        <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>Redes sociales</label>
+        {socialFields.map((field, i) => (
+          <div key={field.id} style={{ marginBottom: 10 }}>
             <div className="row">
               <div className="input-prefix" style={{ flex: 1 }}>
                 <span>@</span>
-                <input
-                  type="text"
-                  inputMode="url"
-                  placeholder="instagram.com/tu-evento"
-                  value={s}
-                  onChange={(e) => update("socials", data.socials.map((ss, j) => (j === i ? e.target.value : ss)))}
-                  onBlur={(e) => validateSocial(e.target.value, i)}
-                />
+                <input type="text" inputMode="url" placeholder="instagram.com/tu-evento" {...register(`socials.${i}.val`)} />
               </div>
-              {data.socials.length > 1 && (
-                <button
-                  className="icon-btn"
-                  onClick={() => update("socials", data.socials.filter((_, j) => j !== i))}
-                >
-                  {Ic.close}
-                </button>
+              {socialFields.length > 1 && (
+                <button type="button" className="icon-btn" onClick={() => removeSocial(i)}>{Ic.close}</button>
               )}
             </div>
-            <FieldError msg={allErrors[`social_${i}`]} />
+            <FieldError msg={errors.socials?.[i]?.val?.message} />
           </div>
         ))}
-        <button className="add-line" onClick={() => update("socials", [...data.socials, ""])}>
+        <button type="button" className="add-line" onClick={() => addSocial({ val: "" })}>
           {Ic.plus} Agregar otra red social
         </button>
       </fieldset>
-    </div>
+    </form>
   );
 }
 
 // ─── Paso 3 ─────────────────────────────────────────────────────────────────
 
-function Step3({
-  data,
-  update,
-  errors,
+function Step3Form({
+  defaultValues, ctxData, updateCtx, onDone,
 }: {
-  data: FormValues;
-  update: UpdateFn;
-  errors: FieldErrors;
+  defaultValues: Step3Values;
+  ctxData: { banner: ImageSlot; poster: ImageSlot; gallery: ImageSlot[] };
+  updateCtx: (k: "banner" | "poster" | "gallery", v: unknown) => void;
+  onDone: (d: Step3Values) => void;
 }) {
+  const { control, register, handleSubmit, formState: { errors } } =
+    useForm<Step3Values>({ resolver: zodResolver(step3Schema), mode: "onTouched", defaultValues });
+
+  const { fields: videoFields, append, remove } = useFieldArray({ control, name: "videos" });
   const galRef = useRef<HTMLInputElement>(null);
   const [galErr, setGalErr] = useState("");
 
@@ -622,141 +395,74 @@ function Step3({
     e.target.value = "";
     if (!file) return;
     setGalErr("");
-    // Validar tamaño (5 MB)
     if (file.size > 5 * 1024 * 1024) { setGalErr("La imagen no debe superar 5 MB."); return; }
-    update("gallery", [...data.gallery, { kind: "pending", file, preview: URL.createObjectURL(file) }]);
+    updateCtx("gallery", [...ctxData.gallery, { kind: "pending", file, preview: URL.createObjectURL(file) }]);
   };
 
   return (
-    <div>
+    <form id="crear-form" onSubmit={handleSubmit(onDone)}>
       <h1 className="step-title">Imágenes y video.</h1>
-      <p className="step-lead">
-        Una buena imagen es decisiva. El banner destaca el evento; el poster va en los listados verticales.
-      </p>
+      <p className="step-lead">Una buena imagen es decisiva. El banner destaca el evento; el poster va en los listados verticales.</p>
 
       <fieldset>
-        <div className="field-set-title">
-          <span className="n">3.1</span> Imágenes principales
-        </div>
+        <div className="field-set-title"><span className="n">3.1</span> Imágenes principales</div>
         <div className="upload-grid">
-          <ImageUploader
-            label="Banner (horizontal · 16:9)"
-            value={data.banner}
-            onChange={(slot) => update("banner", slot)}
-          />
-          <ImageUploader
-            label="Poster (vertical · 2:3)"
-            value={data.poster}
-            onChange={(slot) => update("poster", slot)}
-            tall
-          />
+          <ImageUploader label="Banner (horizontal · 16:9)" value={ctxData.banner} onChange={(s) => updateCtx("banner", s)} />
+          <ImageUploader label="Poster (vertical · 2:3)" value={ctxData.poster} onChange={(s) => updateCtx("poster", s)} tall />
         </div>
       </fieldset>
 
       <fieldset>
-        <div className="field-set-title">
-          <span className="n">3.2</span> Galería
-        </div>
-        <input
-          ref={galRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          style={{ display: "none" }}
-          onChange={onGalleryFile}
-        />
+        <div className="field-set-title"><span className="n">3.2</span> Galería</div>
+        <input ref={galRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={onGalleryFile} />
         <div className="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-          {data.gallery.map((slot, i) => {
+          {ctxData.gallery.map((slot, i) => {
             const src = slot?.kind === "pending" ? slot.preview : slot?.kind === "uploaded" ? imageUrl(slot.url) : null;
             return src ? (
-              <div
-                key={i}
-                className="upload-box"
-                style={{ aspectRatio: "1/1", padding: 0, overflow: "hidden", position: "relative" }}
-              >
+              <div key={i} className="upload-box" style={{ aspectRatio: "1/1", padding: 0, overflow: "hidden", position: "relative" }}>
                 <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <button
-                  type="button"
-                  className="icon-btn"
-                  onClick={() => {
-                    if (slot?.kind === "pending") URL.revokeObjectURL(slot.preview);
-                    update("gallery", data.gallery.filter((_, j) => j !== i));
-                  }}
-                  style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,.6)", color: "white" }}
-                >
+                <button type="button" className="icon-btn"
+                  onClick={() => { if (slot?.kind === "pending") URL.revokeObjectURL(slot.preview); updateCtx("gallery", ctxData.gallery.filter((_, j) => j !== i)); }}
+                  style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,.6)", color: "white" }}>
                   {Ic.close}
                 </button>
               </div>
             ) : null;
           })}
-          {data.gallery.length < 10 && (
-            <div
-              className="upload-box"
-              style={{ aspectRatio: "1/1", padding: 14 }}
-              onClick={() => galRef.current?.click()}
-            >
+          {ctxData.gallery.length < 10 && (
+            <div className="upload-box" style={{ aspectRatio: "1/1", padding: 14 }} onClick={() => galRef.current?.click()}>
               <div className="ic" style={{ width: 28, height: 28 }}>{Ic.plus}</div>
               <small style={{ fontSize: 10 }}>Agregar</small>
             </div>
           )}
         </div>
         {galErr && <div style={{ color: "var(--err)", fontSize: 12, marginTop: 8 }}>{galErr}</div>}
-        <div className="help" style={{ marginTop: 10 }}>
-          Hasta 10 imágenes. Aparecen en la sección &quot;Galería&quot; del evento.
-        </div>
+        <div className="help" style={{ marginTop: 10 }}>Hasta 10 imágenes. Aparecen en la sección &quot;Galería&quot; del evento.</div>
       </fieldset>
 
       <fieldset>
-        <div className="field-set-title">
-          <span className="n">3.3</span> Videos
-        </div>
-        {data.videos.map((v, i) => (
-          <div key={i} style={{ marginBottom: 10 }}>
+        <div className="field-set-title"><span className="n">3.3</span> Videos</div>
+        {videoFields.map((field, i) => (
+          <div key={field.id} style={{ marginBottom: 10 }}>
             <div className="row">
               <div className="input-prefix" style={{ flex: 1 }}>
                 <span>▶</span>
-                <input
-                  type="url"
-                  inputMode="url"
-                  placeholder="https://youtube.com/watch?v=..."
-                  value={v}
-                  onChange={(e) => update("videos", data.videos.map((vv, j) => (j === i ? e.target.value : vv)))}
-                />
+                <input type="url" inputMode="url" placeholder="https://youtube.com/watch?v=..." {...register(`videos.${i}.val`)} />
               </div>
-              {data.videos.length > 1 && (
-                <button
-                  className="icon-btn"
-                  onClick={() => update("videos", data.videos.filter((_, j) => j !== i))}
-                >
-                  {Ic.close}
-                </button>
+              {videoFields.length > 1 && (
+                <button type="button" className="icon-btn" onClick={() => remove(i)}>{Ic.close}</button>
               )}
             </div>
-            <FieldError msg={errors[`video_${i}`]} />
+            <FieldError msg={errors.videos?.[i]?.val?.message} />
           </div>
         ))}
-        <button className="add-line" onClick={() => update("videos", [...data.videos, ""])}>
+        <button type="button" className="add-line" onClick={() => append({ val: "" })}>
           {Ic.plus} Agregar otro video
         </button>
       </fieldset>
 
-      <div
-        style={{
-          background: "var(--surface-2)",
-          border: "1px solid var(--line)",
-          borderRadius: 14,
-          padding: 18,
-          display: "flex",
-          gap: 14,
-          alignItems: "start",
-        }}
-      >
-        <div
-          style={{
-            width: 36, height: 36, borderRadius: 999,
-            background: "var(--accent)", color: "white",
-            display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-          }}
-        >
+      <div style={{ background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: 14, padding: 18, display: "flex", gap: 14, alignItems: "start" }}>
+        <div style={{ width: 36, height: 36, borderRadius: 999, background: "var(--accent)", color: "white", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
           {Ic.help}
         </div>
         <div>
@@ -766,64 +472,50 @@ function Step3({
           </div>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
 
 // ─── Página principal ────────────────────────────────────────────────────────
 
 export default function PasoPage() {
-  const params = useParams<{ paso: string }>();
-  const router = useRouter();
+  const params   = useParams<{ paso: string }>();
+  const router   = useRouter();
   const pathname = usePathname();
   const { user, token, ready } = useUser();
-  const { values: data, update, fieldErrors, setFieldErrors, resetForm } = useForm();
+  const { values, update, resetForm } = useFormCtx();
 
   const paso = Number(params.paso);
 
-  // Redirigir si paso inválido
-  useEffect(() => {
-    if (![1, 2, 3].includes(paso)) router.replace("/crear/1");
-  }, [paso, router]);
+  useEffect(() => { if (![1, 2, 3].includes(paso)) router.replace("/crear/1"); }, [paso, router]);
+  useEffect(() => { if (ready && !user) router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`); }, [ready, user, router, pathname]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [paso]);
 
-  // Redirigir si no está autenticado
-  useEffect(() => {
-    if (ready && !user) router.replace(`/login?returnTo=${encodeURIComponent(pathname)}`);
-  }, [ready, user, router, pathname]);
-
-  // Scroll al inicio al cambiar de paso
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [paso]);
-
-  // Headroom — oculta el header al bajar, lo muestra al subir
+  // Headroom
   const pubHeaderRef = useRef<HTMLElement>(null);
   useEffect(() => {
-    let lastY = window.scrollY;
-    let ticking = false;
-    const onScroll = () => {
+    let lastY = window.scrollY, ticking = false;
+    const fn = () => {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const el = pubHeaderRef.current;
+        const y = window.scrollY, el = pubHeaderRef.current;
         if (el) {
           if (y < 80) el.classList.remove("headroom--hidden");
           else if (y - lastY > 4) el.classList.add("headroom--hidden");
           else if (lastY - y > 4) el.classList.remove("headroom--hidden");
         }
-        lastY = y;
-        ticking = false;
+        lastY = y; ticking = false;
       });
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
   }, []);
 
   // Catálogos
   const [categories, setCategories] = useState<ApiCategory[]>([]);
-  const [regions, setRegions] = useState<ApiRegion[]>([]);
-  const [communes, setCommunes] = useState<ApiCommune[]>([]);
+  const [regions,    setRegions]    = useState<ApiRegion[]>([]);
+  const [communes,   setCommunes]   = useState<ApiCommune[]>([]);
 
   useEffect(() => {
     api.categories().then(setCategories).catch(() => {});
@@ -831,70 +523,72 @@ export default function PasoPage() {
   }, []);
 
   useEffect(() => {
-    const region = regions.find((r) => String(r.id) === data.regionId);
-    if (!region) { setCommunes([]); return; }
-    api.communes(region.slug).then(setCommunes).catch(() => setCommunes([]));
-  }, [data.regionId, regions]);
+    const r = regions.find((r) => String(r.id) === values.regionId);
+    if (!r) { setCommunes([]); return; }
+    api.communes(r.slug).then(setCommunes).catch(() => setCommunes([]));
+  }, [values.regionId, regions]);
 
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-  const [done, setDone] = useState(false);
+  const [submitting,   setSubmitting]   = useState(false);
+  const [submitError,  setSubmitError]  = useState("");
+  const [done,         setDone]         = useState(false);
 
-  const advance = () => {
-    const errs = validateStep(paso, data);
-    if (Object.keys(errs).length) {
-      setFieldErrors(errs);
-      return; // no scrollear — el error está visible en la página
-    }
-    setFieldErrors({});
-    router.push(`/crear/${paso + 1}`);
+  // ── Handlers de cada paso ─────────────────────────────────────────────────
+
+  const onStep1Done = (d: Step1Values) => {
+    update("title",      d.title);
+    update("company",    d.company ?? "");
+    update("categoryId", d.categoryId);
+    update("desc",       d.desc);
+    update("about",      d.about ?? "");
+    update("free",       d.free);
+    update("prices",     d.prices.map((p) => ({ name: p.name, amount: String(p.amount ?? "") })));
+    router.push("/crear/2");
   };
 
-  const submit = async () => {
+  const onStep2Done = (d: Step2Values) => {
+    update("dates",         d.dates);
+    update("address",       d.address);
+    update("addressNumber", d.addressNumber);
+    update("regionId",      d.regionId ?? "");
+    update("communeId",     d.communeId ?? "");
+    update("web",           d.web ?? "");
+    update("socials",       d.socials.map((s) => s.val));
+    router.push("/crear/3");
+  };
+
+  const onStep3Done = async (d: Step3Values) => {
     setSubmitError("");
-    const errs = validateStep(3, data);
-    if (Object.keys(errs).length) {
-      setFieldErrors(errs);
-      return; // no scrollear — el error está visible en la página
-    }
     setSubmitting(true);
     try {
-      // Subir imágenes pendientes en paralelo
       const [bannerUrl, posterUrl, galleryUrls] = await Promise.all([
-        uploadSlot(data.banner, token!),
-        uploadSlot(data.poster, token!),
-        Promise.all(data.gallery.map((g) => uploadSlot(g, token!))),
+        uploadSlot(values.banner, token!),
+        uploadSlot(values.poster, token!),
+        Promise.all(values.gallery.map((g) => uploadSlot(g, token!))),
       ]);
-
-      const web = data.web.trim().replace(/^https?:\/\//, "");
+      const web = values.web.trim().replace(/^https?:\/\//, "");
       const payload: CreateEventInput = {
-        title: data.title.trim(),
-        company: data.company.trim() || undefined,
-        description: data.desc.trim(),
-        about: data.about.trim() || undefined,
-        address: data.address.trim(),
-        addressNumber: data.addressNumber.trim(),
-        ticketUrl: web ? `https://${web}` : undefined,
-        banner: bannerUrl,
-        poster: posterUrl,
-        gallery: galleryUrls.filter((u): u is string => !!u).length
-          ? galleryUrls.filter((u): u is string => !!u)
-          : undefined,
-        regionId: data.regionId ? Number(data.regionId) : undefined,
-        communeId: data.communeId ? Number(data.communeId) : undefined,
-        categoryIds: data.categoryId ? [Number(data.categoryId)] : undefined,
-        prices: data.free
+        title:         values.title.trim(),
+        company:       values.company.trim() || undefined,
+        description:   values.desc.trim(),
+        about:         values.about.trim() || undefined,
+        address:       values.address.trim(),
+        addressNumber: values.addressNumber.trim(),
+        ticketUrl:     web ? `https://${web}` : undefined,
+        banner:        bannerUrl,
+        poster:        posterUrl,
+        gallery:       galleryUrls.filter((u): u is string => !!u).length
+                         ? galleryUrls.filter((u): u is string => !!u) : undefined,
+        regionId:    values.regionId  ? Number(values.regionId)  : undefined,
+        communeId:   values.communeId ? Number(values.communeId) : undefined,
+        categoryIds: values.categoryId ? [Number(values.categoryId)] : undefined,
+        prices:      values.free
           ? []
-          : data.prices.filter((p) => p.name.trim()).map((p) => ({ name: p.name.trim(), price: Number(p.amount) || 0 })),
-        dates: data.dates
-          .filter((d) => d.date)
-          .map((d) => ({ date: d.date, startTime: d.start || undefined, endTime: d.end || undefined })),
-        socialLinks: data.socials.filter((s) => s.trim()).map((s) => ({ link: s.trim() })),
-        videos: data.videos.filter((v) => v.trim()).map((v) => ({ link: v.trim() })),
+          : values.prices.filter((p) => p.name.trim()).map((p) => ({ name: p.name.trim(), price: Number(p.amount) || 0 })),
+        dates:       values.dates.filter((dt) => dt.date).map((dt) => ({ date: dt.date, startTime: dt.start || undefined, endTime: dt.end || undefined })),
+        socialLinks: values.socials.filter((s) => s.trim()).map((s) => ({ link: s.trim() })),
+        videos:      d.videos.filter((v) => v.val.trim()).map((v) => ({ link: v.val.trim() })),
       };
-
       await api.createEvent(payload, token!);
-      // Limpiar borrador y resetear formulario
       resetForm();
       setDone(true);
     } catch (err) {
@@ -903,6 +597,8 @@ export default function PasoPage() {
       setSubmitting(false);
     }
   };
+
+  // ── Guards ────────────────────────────────────────────────────────────────
 
   if (!ready || !user || !token) {
     return (
@@ -918,9 +614,7 @@ export default function PasoPage() {
         <div className="form-shell" style={{ textAlign: "center", padding: "64px 32px" }}>
           <div className="step-num">EVENTO ENVIADO</div>
           <h1 className="step-title" style={{ marginTop: 12 }}>Tu evento fue enviado a revisión.</h1>
-          <p className="step-lead" style={{ margin: "0 auto" }}>
-            Un administrador lo revisará antes de publicarlo. Te avisaremos cuando esté aprobado.
-          </p>
+          <p className="step-lead" style={{ margin: "0 auto" }}>Un administrador lo revisará antes de publicarlo. Te avisaremos cuando esté aprobado.</p>
           <div className="row" style={{ gap: 12, justifyContent: "center", marginTop: 24 }}>
             <Link className="btn ghost" href="/">Volver al inicio</Link>
             <Link className="btn primary" href="/cuenta">Ver mis eventos {Ic.arrow}</Link>
@@ -929,6 +623,29 @@ export default function PasoPage() {
       </main>
     );
   }
+
+  // ── Defaults para cada paso ───────────────────────────────────────────────
+
+  const step1Defaults: Step1Values = {
+    title: values.title, company: values.company, categoryId: values.categoryId,
+    desc: values.desc, about: values.about, free: values.free,
+    prices: values.prices.map((p) => ({
+      name: p.name,
+      amount: p.amount === "" ? (undefined as unknown as number) : Number(p.amount),
+    })),
+  };
+
+  const step2Defaults: Step2Values = {
+    dates: values.dates, address: values.address, addressNumber: values.addressNumber,
+    regionId: values.regionId, communeId: values.communeId, web: values.web,
+    socials: values.socials.map((s) => ({ val: s })),
+  };
+
+  const step3Defaults: Step3Values = {
+    videos: values.videos.map((v) => ({ val: v })),
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <main style={{ paddingTop: 64 }}>
@@ -948,18 +665,11 @@ export default function PasoPage() {
               <div key={n} className={`seg ${n < paso ? "done" : ""} ${n === paso ? "curr" : ""}`} />
             ))}
           </div>
-
           <div className="step-num">PASO {paso} / 03</div>
 
-          {paso === 1 && (
-            <Step1 data={data} update={update} categories={categories} userName={user.name} errors={fieldErrors} />
-          )}
-          {paso === 2 && (
-            <Step2 data={data} update={update} regions={regions} communes={communes} errors={fieldErrors} />
-          )}
-          {paso === 3 && (
-            <Step3 data={data} update={update} errors={fieldErrors} />
-          )}
+          {paso === 1 && <Step1Form defaultValues={step1Defaults} categories={categories} userName={user.name} onDone={onStep1Done} />}
+          {paso === 2 && <Step2Form defaultValues={step2Defaults} regions={regions} communes={communes} onRegionChange={(id) => update("regionId", id)} onDone={onStep2Done} />}
+          {paso === 3 && <Step3Form defaultValues={step3Defaults} ctxData={{ banner: values.banner, poster: values.poster, gallery: values.gallery }} updateCtx={(k, v) => update(k as "banner", v as ImageSlot)} onDone={onStep3Done} />}
 
           {submitError && (
             <div style={{ color: "var(--err)", fontSize: 13, margin: "18px 0 0" }}>{submitError}</div>
@@ -967,27 +677,14 @@ export default function PasoPage() {
 
           <div className="form-foot">
             <div className="container">
-              <button
-                className="btn ghost"
-                onClick={() => {
-                  if (paso > 1) {
-                    setFieldErrors({});
-                    setSubmitError("");
-                    router.push(`/crear/${paso - 1}`);
-                  }
-                }}
-                disabled={paso === 1}
-                style={{ opacity: paso === 1 ? 0.3 : 1 }}
-              >
+              <button type="button" className="btn ghost"
+                onClick={() => { if (paso > 1) router.push(`/crear/${paso - 1}`); }}
+                disabled={paso === 1} style={{ opacity: paso === 1 ? 0.3 : 1 }}>
                 {Ic.chevL} Volver
               </button>
-              <button
-                className="btn primary"
-                disabled={submitting}
-                onClick={() => (paso < 3 ? advance() : submit())}
-              >
-                {paso === 3 ? (submitting ? "Publicando…" : "Publicar evento") : "Continuar"}{" "}
-                {Ic.arrow}
+              {/* type="submit" + form="crear-form" dispara el handleSubmit del step activo */}
+              <button type="submit" form="crear-form" className="btn primary" disabled={submitting}>
+                {paso === 3 ? (submitting ? "Publicando…" : "Publicar evento") : "Continuar"} {Ic.arrow}
               </button>
             </div>
           </div>

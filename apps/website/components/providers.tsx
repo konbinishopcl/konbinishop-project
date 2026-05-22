@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { NavigationProgress } from "./NavigationProgress";
+import { OneTap } from "./OneTap";
 import type { User } from "@/lib/data";
 
 type Theme = "dark" | "light";
@@ -101,6 +102,7 @@ export function Providers({ children }: { children: ReactNode }) {
       <ThemeProvider>
         <UserProvider>
           <NavigationProgress />
+          <OneTap />
           {children}
         </UserProvider>
       </ThemeProvider>

@@ -9,6 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { compare, hash } from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../../services/mailgun/mail.service';
@@ -97,6 +98,25 @@ export class AuthService {
     return { token: this.sign(user), user: this.sanitize(user) };
   }
 
+  /** Upsert de usuario Google: busca por googleId → email → crea nuevo. */
+  private async upsertGoogleUser(googleId: string, email: string, givenName?: string, familyName?: string): Promise<User> {
+    let user = await this.prisma.user.findUnique({ where: { googleId } });
+    if (!user) {
+      user = await this.prisma.user.findUnique({ where: { email } });
+      if (user) {
+        user = await this.prisma.user.update({ where: { id: user.id }, data: { googleId } });
+      } else {
+        user = await this.prisma.user.create({
+          data: { email, googleId, firstname: givenName ?? null, lastname: familyName ?? null, role: 'AUTHENTICATED', confirmed: true },
+        });
+        const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
+        await this.prisma.profile.create({ data: { userId: user.id, slug } });
+        await this.mail.sendWelcome(user.email, user.firstname ?? user.email);
+      }
+    }
+    return user;
+  }
+
   async googleAuth(accessToken: string) {
     const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -107,28 +127,27 @@ export class AuthService {
       given_name?: string; family_name?: string;
     };
     if (!payload.email_verified) throw new UnauthorizedException('El email de Google no está verificado');
+    if (!payload.email) throw new UnauthorizedException('Google no proporcionó un email');
 
-    const { sub: googleId, email, given_name, family_name } = payload;
-    if (!email) throw new UnauthorizedException('Google no proporcionó un email');
+    const user = await this.upsertGoogleUser(payload.sub, payload.email, payload.given_name, payload.family_name);
+    if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
+    return { token: this.sign(user), user: this.sanitize(user) };
+  }
 
-    let user = await this.prisma.user.findUnique({ where: { googleId } });
-
-    if (!user) {
-      user = await this.prisma.user.findUnique({ where: { email } });
-      if (user) {
-        // Cuenta existente por email — vincular googleId
-        user = await this.prisma.user.update({ where: { id: user.id }, data: { googleId } });
-      } else {
-        // Usuario nuevo — registrar
-        user = await this.prisma.user.create({
-          data: { email, googleId, firstname: given_name ?? null, lastname: family_name ?? null, role: 'AUTHENTICATED', confirmed: true },
-        });
-        const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
-        await this.prisma.profile.create({ data: { userId: user.id, slug } });
-        await this.mail.sendWelcome(user.email, user.firstname ?? user.email);
-      }
+  async googleOneTap(credential: string) {
+    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
+    const client = new OAuth2Client(clientId);
+    let sub: string, email: string, givenName: string | undefined, familyName: string | undefined;
+    try {
+      const ticket = await client.verifyIdToken({ idToken: credential, audience: clientId });
+      const p = ticket.getPayload();
+      if (!p || !p.email_verified || !p.email) throw new Error();
+      sub = p.sub; email = p.email; givenName = p.given_name; familyName = p.family_name;
+    } catch {
+      throw new UnauthorizedException('Credencial de Google inválida');
     }
 
+    const user = await this.upsertGoogleUser(sub, email, givenName, familyName);
     if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
     return { token: this.sign(user), user: this.sanitize(user) };
   }

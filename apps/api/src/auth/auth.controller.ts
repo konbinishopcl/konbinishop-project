@@ -7,6 +7,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
+import { GoogleOneTapDto } from './dto/google-onetap.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser, type JwtUser } from './current-user.decorator';
 
@@ -31,6 +32,12 @@ export class AuthController {
   @ApiOperation({ summary: 'Autenticar con Google (login o registro automático)' })
   googleAuth(@Body() dto: GoogleAuthDto) {
     return this.auth.googleAuth(dto.accessToken);
+  }
+
+  @Post('google/onetap')
+  @ApiOperation({ summary: 'Autenticar con Google One Tap (ID token)' })
+  googleOneTap(@Body() dto: GoogleOneTapDto) {
+    return this.auth.googleOneTap(dto.credential);
   }
 
   @Post('forgot-password')

@@ -190,6 +190,8 @@ export const api = {
     request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
   googleAuth: (accessToken: string) =>
     request<AuthResponse>("/auth/google", { method: "POST", body: JSON.stringify({ accessToken }) }),
+  googleOneTap: (credential: string) =>
+    request<AuthResponse>("/auth/google/onetap", { method: "POST", body: JSON.stringify({ credential }) }),
   me: (token: string) => request<ApiUser>("/auth/me", {}, token),
 
   // Contenido

@@ -1,7 +1,9 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { QueryArticlesDto } from './dto/query-articles.dto';
 
 function slugify(text: string): string {
   return text
@@ -19,11 +21,27 @@ const ARTICLE_INCLUDE = { tags: true, _count: { select: { likes: true } } } as c
 export class ArticlesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
-    return this.prisma.article.findMany({
-      include: ARTICLE_INCLUDE,
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(query: QueryArticlesDto = {}) {
+    const page = query.page ?? 1;
+    const pageSize = Math.min(query.pageSize ?? 12, 50);
+
+    const where: Prisma.ArticleWhereInput = {
+      ...(query.q && { OR: [{ title: { contains: query.q } }, { excerpt: { contains: query.q } }] }),
+      ...(query.tag && { tags: { some: { slug: query.tag } } }),
+    };
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.article.findMany({
+        where,
+        include: ARTICLE_INCLUDE,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.article.count({ where }),
+    ]);
+
+    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }
 
   async findBySlug(slug: string) {

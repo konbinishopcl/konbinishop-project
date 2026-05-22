@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { QueryArticlesDto } from './dto/query-articles.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -18,9 +19,9 @@ export class ArticlesController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar artículos' })
-  findAll() {
-    return this.articles.findAll();
+  @ApiOperation({ summary: 'Listar artículos con paginación y filtros opcionales (?q=&tag=&page=&pageSize=)' })
+  findAll(@Query() query: QueryArticlesDto) {
+    return this.articles.findAll(query);
   }
 
   @Get(':slug')

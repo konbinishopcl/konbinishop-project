@@ -130,6 +130,18 @@ export class AuthService {
     return { ok: true };
   }
 
+  async changePassword(userId: number, currentPassword: string, newPassword: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !(await compare(currentPassword, user.passwordHash))) {
+      throw new BadRequestException('La contraseña actual es incorrecta');
+    }
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: await hash(newPassword, 10) },
+    });
+    return { ok: true };
+  }
+
   /** Paso 2 de recuperación: valida el token y fija la nueva contraseña. */
   async resetPassword(token: string, password: string) {
     const user = await this.prisma.user.findFirst({

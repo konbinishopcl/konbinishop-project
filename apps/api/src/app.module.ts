@@ -21,6 +21,7 @@ import { NewsletterModule } from './newsletter/newsletter.module';
 import { LegalModule } from './legal/legal.module';
 import { FaqModule } from './faq/faq.module';
 import { ContactModule } from './contact/contact.module';
+import { StatsModule } from './stats/stats.module';
 import { MailgunModule } from '../services/mailgun/mailgun.module';
 import { ApiKeyGuard } from './auth/api-key.guard';
 
@@ -44,6 +45,7 @@ import { ApiKeyGuard } from './auth/api-key.guard';
     LegalModule,
     FaqModule,
     ContactModule,
+    StatsModule,
     MailgunModule,
   ],
   controllers: [AppController],

@@ -24,6 +24,7 @@ import { ContactModule } from './contact/contact.module';
 import { StatsModule } from './stats/stats.module';
 import { MailgunModule } from '../services/mailgun/mailgun.module';
 import { ApiKeyGuard } from './auth/api-key.guard';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { ApiKeyGuard } from './auth/api-key.guard';
     ContactModule,
     StatsModule,
     MailgunModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [

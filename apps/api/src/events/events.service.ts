@@ -1,8 +1,10 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, PublicationStatus } from '@prisma/client';
+import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { MailService } from '../../services/mailgun/mail.service';
+import { AuditService } from '../audit/audit.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -43,6 +45,7 @@ export class EventsService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly mail: MailService,
+    private readonly audit: AuditService,
   ) {}
 
   // ─────────────────────── Lectura ───────────────────────
@@ -124,9 +127,9 @@ export class EventsService {
 
   // ─────────────────────── Creación ───────────────────────
 
-  async create(dto: CreateEventDto, user: JwtUser) {
+  async create(dto: CreateEventDto, user: JwtUser, req?: Request) {
     const slug = await this.uniqueSlug(dto.title);
-    return this.prisma.event.create({
+    const event = await this.prisma.event.create({
       data: {
         title: dto.title,
         company: dto.company,
@@ -165,11 +168,13 @@ export class EventsService {
       },
       include: EVENT_INCLUDE,
     });
+    this.audit.log({ userId: user.sub, action: 'CREATE', entity: 'EVENT', entityId: event.id, req });
+    return event;
   }
 
   // ─────────────────────── Actualización ───────────────────────
 
-  async update(id: number, dto: UpdateEventDto, user: JwtUser) {
+  async update(id: number, dto: UpdateEventDto, user: JwtUser, req?: Request) {
     const event = await this.ensure(id);
     this.assertCanManage(event, user);
 
@@ -226,19 +231,22 @@ export class EventsService {
       };
     }
 
-    return this.prisma.event.update({ where: { id }, data, include: EVENT_INCLUDE });
+    const updated = await this.prisma.event.update({ where: { id }, data, include: EVENT_INCLUDE });
+    this.audit.log({ userId: user.sub, action: 'UPDATE', entity: 'EVENT', entityId: id, req });
+    return updated;
   }
 
-  async remove(id: number, user: JwtUser) {
+  async remove(id: number, user: JwtUser, req?: Request) {
     const event = await this.ensure(id);
     this.assertCanManage(event, user);
     await this.prisma.event.delete({ where: { id } });
+    this.audit.log({ userId: user.sub, action: 'DELETE', entity: 'EVENT', entityId: id, req });
     return { deleted: true };
   }
 
   // ─────────────────────── Moderación ───────────────────────
 
-  async approve(id: number, user: JwtUser) {
+  async approve(id: number, user: JwtUser, req?: Request) {
     await this.ensure(id);
     const event = await this.prisma.event.update({
       where: { id },
@@ -253,6 +261,7 @@ export class EventsService {
         owner: { select: { email: true, firstname: true } },
       },
     });
+    this.audit.log({ userId: user.sub, action: 'APPROVE', entity: 'EVENT', entityId: id, req });
     if (event.owner?.email) {
       const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
       await this.mail.sendEventApproved(
@@ -265,7 +274,7 @@ export class EventsService {
     return event;
   }
 
-  async reject(id: number, reason: string, user: JwtUser) {
+  async reject(id: number, reason: string, user: JwtUser, req?: Request) {
     await this.ensure(id);
     const event = await this.prisma.event.update({
       where: { id },
@@ -279,6 +288,7 @@ export class EventsService {
         owner: { select: { email: true, firstname: true } },
       },
     });
+    this.audit.log({ userId: user.sub, action: 'REJECT', entity: 'EVENT', entityId: id, metadata: { reason }, req });
     if (event.owner?.email) {
       await this.mail.sendEventRejected(
         event.owner.email,
@@ -290,7 +300,7 @@ export class EventsService {
     return event;
   }
 
-  async ban(id: number, reason: string, user: JwtUser) {
+  async ban(id: number, reason: string, user: JwtUser, req?: Request) {
     await this.ensure(id);
     const event = await this.prisma.event.update({
       where: { id },
@@ -304,6 +314,7 @@ export class EventsService {
         owner: { select: { email: true, firstname: true } },
       },
     });
+    this.audit.log({ userId: user.sub, action: 'BAN', entity: 'EVENT', entityId: id, metadata: { reason }, req });
     if (event.owner?.email) {
       await this.mail
         .sendContentBanned(

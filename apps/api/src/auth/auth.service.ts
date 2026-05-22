@@ -98,15 +98,15 @@ export class AuthService {
   }
 
   async googleAuth(accessToken: string) {
-    const clientId = this.config.get<string>('GOOGLE_CLIENT_ID');
-    const res = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${accessToken}`);
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
     if (!res.ok) throw new UnauthorizedException('Token de Google inválido');
     const payload = await res.json() as {
-      sub: string; email: string; email_verified: string;
-      given_name?: string; family_name?: string; aud: string;
+      sub: string; email: string; email_verified: boolean;
+      given_name?: string; family_name?: string;
     };
-    if (payload.aud !== clientId) throw new UnauthorizedException('Token de Google no es para esta aplicación');
-    if (payload.email_verified !== 'true') throw new UnauthorizedException('El email de Google no está verificado');
+    if (!payload.email_verified) throw new UnauthorizedException('El email de Google no está verificado');
 
     const { sub: googleId, email, given_name, family_name } = payload;
     if (!email) throw new UnauthorizedException('Google no proporcionó un email');

@@ -131,6 +131,35 @@ export function eventRejectedTemplate(
   };
 }
 
+export function contactReceivedTemplate(
+  name: string,
+): { subject: string; html: string } {
+  return {
+    subject: 'Hemos recibido tu mensaje — Konbini',
+    html: renderTemplate({
+      title: 'Mensaje recibido',
+      greeting: `¡Hola, ${esc(name)}!`,
+      body: `Hemos recibido tu mensaje y nos pondremos en contacto contigo a la brevedad.<br/><br/>¡Gracias por escribirnos!`,
+    }),
+  };
+}
+
+export function contactNotifyTemplate(
+  name: string,
+  email: string,
+  subject: string,
+  message: string,
+): { subject: string; html: string } {
+  return {
+    subject: `Nuevo mensaje de contacto: ${esc(subject)}`,
+    html: renderTemplate({
+      title: 'Nuevo mensaje de contacto',
+      greeting: 'Nuevo mensaje de contacto',
+      body: `<strong>Nombre:</strong> ${esc(name)}<br/><strong>Email:</strong> ${esc(email)}<br/><strong>Asunto:</strong> ${esc(subject)}<br/><br/><strong>Mensaje:</strong><br/>${esc(message).replace(/\n/g, '<br/>')}`,
+    }),
+  };
+}
+
 export function contentApprovedTemplate(
   name: string,
   contentName: string,

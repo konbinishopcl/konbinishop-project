@@ -3,6 +3,8 @@ import { MailgunService } from './mailgun.service';
 import {
   welcomeTemplate,
   passwordResetTemplate,
+  contactReceivedTemplate,
+  contactNotifyTemplate,
   eventApprovedTemplate,
   eventRejectedTemplate,
   contentApprovedTemplate,
@@ -14,6 +16,17 @@ import {
 @Injectable()
 export class MailService {
   constructor(private readonly mailgun: MailgunService) {}
+
+  async sendContactReceived(to: string, name: string): Promise<void> {
+    const { subject, html } = contactReceivedTemplate(name);
+    await this.mailgun.send({ to, subject, html });
+  }
+
+  async sendContactNotify(to: string | string[], name: string, email: string, subject: string, message: string): Promise<void> {
+    const { subject: sub, html } = contactNotifyTemplate(name, email, subject, message);
+    const recipients = Array.isArray(to) ? to.join(',') : to;
+    await this.mailgun.send({ to: recipients, subject: sub, html });
+  }
 
   async sendWelcome(to: string, name: string): Promise<void> {
     const { subject, html } = welcomeTemplate(name);

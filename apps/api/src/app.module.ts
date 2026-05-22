@@ -19,6 +19,8 @@ import { HttpCacheInterceptor } from '../utils/cache/http-cache.interceptor';
 import { ProfilesModule } from './profiles/profiles.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { LegalModule } from './legal/legal.module';
+import { FaqModule } from './faq/faq.module';
+import { ContactModule } from './contact/contact.module';
 import { MailgunModule } from '../services/mailgun/mailgun.module';
 import { ApiKeyGuard } from './auth/api-key.guard';
 
@@ -40,6 +42,8 @@ import { ApiKeyGuard } from './auth/api-key.guard';
     ProfilesModule,
     NewsletterModule,
     LegalModule,
+    FaqModule,
+    ContactModule,
     MailgunModule,
   ],
   controllers: [AppController],

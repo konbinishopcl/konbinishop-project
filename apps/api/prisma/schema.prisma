@@ -386,8 +386,32 @@ model LegalDocument {
   id        Int               @id @default(autoincrement())
   type      LegalDocumentType @unique
   content   String            @db.LongText
+  order     Int               @default(0)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+}
+
+// ──────────────────────── Preguntas frecuentes ───────────────────────
+
+model Faq {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String   @db.Text
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ──────────────────────── Formulario de contacto ─────────────────────
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 // ─────────────────────────── Newsletter ──────────────────────────

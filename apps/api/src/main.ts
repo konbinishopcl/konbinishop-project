@@ -16,14 +16,16 @@ async function bootstrap() {
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/api/uploads' });
 
-  // Documentación OpenAPI / Swagger — UI en /docs, JSON en /docs-json.
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Konbini API')
-    .setDescription('API de publicación de eventos de Konbini (NestJS + Prisma).')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swaggerConfig));
+  // Swagger solo en desarrollo local.
+  if (process.env.NODE_ENV !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('Konbini API')
+      .setDescription('API de publicación de eventos de Konbini (NestJS + Prisma).')
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
+    SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swaggerConfig));
+  }
 
   const config = app.get(ConfigService);
   const port = config.get<number>('PORT', 3333);

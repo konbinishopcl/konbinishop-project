@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -14,6 +15,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { HeroesService } from './heroes.service';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
@@ -84,8 +86,12 @@ export class HeroesController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Aprobar un hero (ADMIN+)' })
-  approve(@Param('id', ParseIntPipe) id: number) {
-    return this.heroes.approve(id);
+  approve(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.heroes.approve(id, user, req);
   }
 
   @Patch(':id/reject')
@@ -93,8 +99,13 @@ export class HeroesController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Rechazar un hero con motivo (ADMIN+)' })
-  reject(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectEventDto) {
-    return this.heroes.reject(id, dto.reason);
+  reject(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RejectEventDto,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.heroes.reject(id, dto.reason, user, req);
   }
 
   @Patch(':id/ban')
@@ -102,7 +113,12 @@ export class HeroesController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Bannear un hero con motivo (ADMIN+)' })
-  ban(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectEventDto) {
-    return this.heroes.ban(id, dto.reason);
+  ban(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: RejectEventDto,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.heroes.ban(id, dto.reason, user, req);
   }
 }

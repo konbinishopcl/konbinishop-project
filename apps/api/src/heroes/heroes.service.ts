@@ -6,7 +6,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PublicationStatus } from '@prisma/client';
+import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
 import { MailService } from '../../services/mailgun/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateHeroDto } from './dto/create-hero.dto';
@@ -18,6 +20,7 @@ export class HeroesService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly mail: MailService,
+    private readonly audit: AuditService,
   ) {}
 
   private pricePerDay(): number {
@@ -122,12 +125,13 @@ export class HeroesService {
 
   // ─────────────────────── Moderación ───────────────────────
 
-  async approve(id: number) {
+  async approve(id: number, actor: JwtUser, req?: Request) {
     const hero = await this.prisma.hero.update({
       where: { id },
       data: { status: PublicationStatus.APPROVED, statusReason: null },
       include: { owner: { select: { email: true, firstname: true } } },
     });
+    this.audit.log({ userId: actor.sub, action: 'APPROVE', entity: 'PORTADA', entityId: id, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentApproved(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title)
@@ -136,12 +140,13 @@ export class HeroesService {
     return hero;
   }
 
-  async reject(id: number, reason: string) {
+  async reject(id: number, reason: string, actor: JwtUser, req?: Request) {
     const hero = await this.prisma.hero.update({
       where: { id },
       data: { status: PublicationStatus.REJECTED, statusReason: reason },
       include: { owner: { select: { email: true, firstname: true } } },
     });
+    this.audit.log({ userId: actor.sub, action: 'REJECT', entity: 'PORTADA', entityId: id, metadata: { reason }, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentRejected(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title, reason)
@@ -150,12 +155,13 @@ export class HeroesService {
     return hero;
   }
 
-  async ban(id: number, reason: string) {
+  async ban(id: number, reason: string, actor: JwtUser, req?: Request) {
     const hero = await this.prisma.hero.update({
       where: { id },
       data: { status: PublicationStatus.BANNED, statusReason: reason },
       include: { owner: { select: { email: true, firstname: true } } },
     });
+    this.audit.log({ userId: actor.sub, action: 'BAN', entity: 'PORTADA', entityId: id, metadata: { reason }, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentBanned(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title, reason)

@@ -3,9 +3,10 @@ import { EventsController } from './events.controller';
 import { EventsService } from './events.service';
 import { AuthModule } from '../auth/auth.module';
 import { LikesModule } from '../likes/likes.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
-  imports: [AuthModule, LikesModule],
+  imports: [AuthModule, LikesModule, AuditModule],
   controllers: [EventsController],
   providers: [EventsService],
 })

@@ -8,8 +8,10 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -64,8 +66,8 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Crear un evento (queda pendiente de moderación)' })
-  create(@Body() dto: CreateEventDto, @CurrentUser() user: JwtUser) {
-    return this.events.create(dto, user);
+  create(@Body() dto: CreateEventDto, @CurrentUser() user: JwtUser, @Req() req: Request) {
+    return this.events.create(dto, user, req);
   }
 
   @Patch(':id')
@@ -76,16 +78,17 @@ export class EventsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateEventDto,
     @CurrentUser() user: JwtUser,
+    @Req() req: Request,
   ) {
-    return this.events.update(id, dto, user);
+    return this.events.update(id, dto, user, req);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Eliminar un evento (dueño o admin)' })
-  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
-    return this.events.remove(id, user);
+  remove(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser, @Req() req: Request) {
+    return this.events.remove(id, user, req);
   }
 
   // ── Moderación (ADMIN+) ──
@@ -95,8 +98,8 @@ export class EventsController {
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Aprobar un evento (ADMIN+)' })
-  approve(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
-    return this.events.approve(id, user);
+  approve(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser, @Req() req: Request) {
+    return this.events.approve(id, user, req);
   }
 
   @Patch(':id/reject')
@@ -108,8 +111,9 @@ export class EventsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RejectEventDto,
     @CurrentUser() user: JwtUser,
+    @Req() req: Request,
   ) {
-    return this.events.reject(id, dto.reason, user);
+    return this.events.reject(id, dto.reason, user, req);
   }
 
   @Patch(':id/ban')
@@ -121,8 +125,9 @@ export class EventsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: RejectEventDto,
     @CurrentUser() user: JwtUser,
+    @Req() req: Request,
   ) {
-    return this.events.ban(id, dto.reason, user);
+    return this.events.ban(id, dto.reason, user, req);
   }
 
   // ── Likes ──

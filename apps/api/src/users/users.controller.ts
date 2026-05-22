@@ -7,15 +7,18 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
 
 @ApiTags('users')
 @Controller('users')
@@ -52,8 +55,13 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @ApiOperation({ summary: 'Editar un usuario (SUPER_ADMIN)' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
-    return this.users.update(id, dto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateUserDto,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.users.update(id, dto, user, req);
   }
 
   @Patch(':id/ban')
@@ -61,8 +69,13 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @ApiOperation({ summary: 'Banear o desbanear un usuario (SUPER_ADMIN)' })
-  ban(@Param('id', ParseIntPipe) id: number, @Body('blocked') blocked?: boolean) {
-    return this.users.setBanned(id, blocked ?? true);
+  ban(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('blocked') blocked: boolean | undefined,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.users.setBanned(id, blocked ?? true, user, req);
   }
 
   @Delete(':id')
@@ -70,7 +83,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('SUPER_ADMIN')
   @ApiOperation({ summary: 'Eliminar un usuario (SUPER_ADMIN)' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.users.remove(id);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtUser,
+    @Req() req: Request,
+  ) {
+    return this.users.remove(id, user, req);
   }
 }

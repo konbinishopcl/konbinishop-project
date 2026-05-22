@@ -502,3 +502,7 @@
 
   /* page mode for login (no header) */
   body.no-chrome header.app, body.no-chrome footer.app { display: none; }
+
+/* NProgress — barra de carga naranja */
+#nprogress .bar { background: #ff5b49 !important; height: 3px !important; z-index: 9999 !important; }
+#nprogress .peg { box-shadow: 0 0 10px #ff5b49, 0 0 5px #ff5b49 !important; }

@@ -2,7 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'konbini-prod',
-      script: 'dist/src/main.js',
+      script: 'npm',
+      args: 'run start:prod',
       instances: 'max',
       exec_mode: 'cluster',
       autorestart: true,

@@ -43,6 +43,8 @@ Un cuarto producto opcional es el **artículo patrocinado** — el organizador e
 
 Los cuatro productos del carrito (evento, aviso, portada y artículo patrocinado) se gestionan como ítems de un **carrito de compras**. El organizador elige cuántos días quiere publicar cada ítem (mínimo 10, máximo 60 días para eventos y 30 días para avisos y portadas) y paga todo junto al finalizar. El precio por día varía según la categoría del evento.
 
+Como alternativa al pago por evento, existe un **plan de suscripción mensual** que incluye 10 créditos de publicación de eventos por mes. Cada crédito cubre una publicación de 45 días, o hasta la fecha del evento si esta cae antes de cumplirse los 45 días. Los créditos no utilizados se pierden al final del mes — no se acumulan. Los avisos y portadas siempre se pagan aparte, aunque los suscriptores pueden tener un descuento sobre esos productos.
+
 ---
 
 ## 2. Dirección Visual
@@ -249,6 +251,9 @@ Contenido:
 
 - Propuesta de valor ("Llega a miles de fans geeks en Chile")
 - Explicación del modelo: el costo es por días de publicación, el precio varía según la categoría del evento
+- Comparación de planes — tabla o cards lado a lado con dos opciones:
+  - **Pay as you go** — pago por evento individual, sin compromiso
+  - **Plan mensual** — suscripción con 10 créditos de publicación por mes (45 días por evento), descuento en avisos y portadas, créditos no acumulables
 - Productos disponibles: Publicación de evento / Aviso / Portada — qué es cada uno y para qué sirve
 - CTA principal: "Publicar mi evento"
 - Preguntas frecuentes de publicación
@@ -265,6 +270,7 @@ Links en orden, el ítem activo resaltado:
 
 - Mi perfil → `/cuenta`
 - Organizador → `/cuenta/organizador` *(aparece en el sidebar solo después del primer pago)*
+- Suscripción → `/cuenta/suscripcion` *(aparece siempre; si no tiene plan activo muestra CTA para suscribirse)*
 - Mis eventos → `/cuenta/mis-eventos`
 - Mis avisos → `/cuenta/mis-avisos`
 - Mis portadas → `/cuenta/mis-portadas`
@@ -309,6 +315,26 @@ Campos:
 - Redes sociales: Instagram, TikTok, Facebook, X, YouTube, Twitch, LinkedIn (opcionales)
 
 Link directo a `/@handle` para ver el perfil público (visible solo cuando tiene al menos un evento aprobado).
+
+---
+
+##### `/cuenta/suscripcion`
+
+Gestión del plan mensual del usuario.
+
+**Sin suscripción activa:**
+
+- Descripción del plan y sus beneficios
+- CTA para suscribirse (redirige al carrito/checkout de suscripción)
+
+**Con suscripción activa:**
+
+- Estado del plan: activo / cancelado / por vencer
+- Contador de créditos del mes actual: **X / 10 créditos usados** — con barra de progreso visual. Fecha de renovación o vencimiento del ciclo.
+- Historial de créditos usados: lista de los eventos publicados con cada crédito (título del evento, fecha de uso)
+- Botón para cancelar la suscripción — con lightbox de confirmación que advierte que los créditos restantes del mes se perderán y la suscripción vence al final del ciclo actual (no se cobra el siguiente mes)
+
+> El contador de créditos también es visible en `/cuenta/mis-eventos` como recordatorio: "Te quedan X créditos este mes."
 
 ---
 
@@ -457,6 +483,8 @@ Este formulario es idéntico al que aparece en `/cuenta/mis-articulos` — es el
 ##### Etapa 3 — Carrito (`/carrito`)
 
 Muestra los ítems seleccionados: evento, aviso, portada y/o artículo patrocinado. Para evento, aviso y portada el usuario elige el número de días de publicación (mínimo 10) — el selector no aparece para el artículo patrocinado, que es una publicación fija sin límite de días. El subtotal por ítem y el total se calculan en tiempo real.
+
+**Si el usuario tiene suscripción activa con créditos disponibles**, la línea del evento en el carrito muestra precio $0 con una etiqueta "Crédito de suscripción (X restantes este mes)" en vez del precio calculado. El selector de días desaparece — la duración es fija (45 días o hasta la fecha del evento). Si ya usó todos sus créditos del mes, el evento se cobra normalmente. El descuento en avisos y portadas para suscriptores se aplica automáticamente como línea de descuento.
 
 El carrito incluye un selector de **medio de pago**. Al lanzamiento solo estará disponible Transbank (WebPay), que aparece preseleccionado. El diseño debe contemplar múltiples opciones (Flow, MercadoPago, etc.) para que puedan incorporarse sin rediseñar esta pantalla — el patrón típico es una lista de opciones tipo radio button o cards, una por pasarela.
 
@@ -626,7 +654,7 @@ Contenido:
 
 Vista general del sistema.
 
-- KPIs en grid: ingresos del mes, eventos publicados, eventos en revisión, avisos activos, portadas activas, usuarios registrados
+- KPIs en grid: ingresos del mes, eventos publicados, eventos en revisión, avisos activos, portadas activas, usuarios registrados, suscriptores activos
 - Gráfico de ingresos por mes con selector de período
 
 > Konbini no vende entradas — no hay métricas de "tickets vendidos". Los ingresos corresponden a los pagos de los organizadores por publicar eventos, avisos, portadas y artículos patrocinados.
@@ -726,7 +754,26 @@ Acción: Exportar CSV.
 
 ---
 
-#### 3.26 Mantenedores
+#### 3.26 Suscripciones `/dashboard/subscriptions`
+
+Gestión del plan mensual desde el panel de administración.
+
+KPIs: suscriptores activos, nuevas suscripciones del mes, cancelaciones del mes, ingresos recurrentes mensuales (MRR).
+
+Tabla con columnas: usuario, email, fecha de inicio, fecha de renovación, créditos usados / disponibles del ciclo actual, estado (Activo / Cancelado / Vencido).
+
+Filtros: estado, rango de fechas, búsqueda por usuario.
+
+Configuración del plan (bloque separado en la misma página):
+
+- Precio mensual de la suscripción (CLP)
+- Cantidad de créditos por mes (default: 10)
+- Descuento sobre avisos para suscriptores (%)
+- Descuento sobre portadas para suscriptores (%)
+
+---
+
+#### 3.27 Mantenedores
 
 Secciones CRUD para la información que alimenta los selectores del formulario de creación de eventos y otras partes del sistema. Todos los mantenedores protegen la eliminación si el registro tiene contenido asociado.
 
@@ -762,7 +809,7 @@ Los tres mantenedores geográficos funcionan en cascada en los formularios del s
 
 ---
 
-#### 3.27 Reportes `/dashboard/reports`
+#### 3.28 Reportes `/dashboard/reports`
 
 Reportes exportables de la plataforma.
 
@@ -774,7 +821,7 @@ Exportar en CSV.
 
 ---
 
-#### 3.28 Logs & auditoría `/dashboard/logs`
+#### 3.29 Logs & auditoría `/dashboard/logs`
 
 Historial completo de acciones administrativas. Solo lectura.
 
@@ -784,7 +831,7 @@ Filtros: admin responsable, tipo de acción, rango de fechas.
 
 ---
 
-#### 3.29 Contacto `/dashboard/contact`
+#### 3.30 Contacto `/dashboard/contact`
 
 Bandeja de mensajes recibidos desde el formulario de contacto del sitio público.
 
@@ -796,7 +843,7 @@ Acciones: marcar como leído, archivar. La respuesta se hace fuera de la platafo
 
 ---
 
-#### 3.30 FAQ `/dashboard/faq`
+#### 3.31 FAQ `/dashboard/faq`
 
 Gestión del contenido de la sección de preguntas frecuentes del sitio público.
 
@@ -804,7 +851,7 @@ CRUD de pares pregunta/respuesta. Permite reordenar manualmente.
 
 ---
 
-#### 3.31 Configuración `/dashboard/settings`
+#### 3.32 Configuración `/dashboard/settings`
 
 ##### Precios y límites de Avisos
 

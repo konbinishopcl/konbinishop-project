@@ -83,7 +83,8 @@ Estructura fija de arriba a abajo:
 3. **Avisos (Spots)** — franja de avisos pagados. Cada aviso tiene imagen y un CTA cuyo destino puede ser una URL externa, una URL interna, un email o un teléfono. El diseño del botón debe contemplar estos casos (ícono y texto varían según el tipo de enlace). **Los avisos deben tener el mismo tamaño de card que los Destacados** — son un producto pagado y deben tener la misma prominencia visual. Si hay cupos disponibles (menos de 12 avisos activos), los slots vacíos muestran una **card de venta** con diseño diferenciado (ej: borde punteado, tono apagado) y texto tipo "Tu aviso aquí".
 4. **Rails por categoría** — una sección horizontal por cada categoría que tenga al menos un evento, con hasta 6 cards y un botón "Ver todos".
 5. **Últimas noticias** — rail horizontal con 4-6 cards de artículos editoriales y un botón "Ver todas" que lleva a `/noticias`. Va al final del home: los eventos tienen prioridad, las noticias son el cierre para quienes quieren más contenido.
-6. **Últimos en unirse** — franja de cierre con avatares de los organizadores más recientes y un contador social ("Únete a +500 organizadores"). CTA hacia la página de precios. Funciona como prueba social para convertir visitantes en organizadores.
+6. **Fotografía para tu evento** — franja de venta del servicio de fotografía de Konbini. Aparece antes de "Últimos en unirse". Imagen de fondo con fotos de eventos reales, titular, descripción corta del servicio y CTA "Cotizar fotógrafo" que lleva a `/fotografia`.
+7. **Últimos en unirse** — franja de cierre con avatares de los organizadores más recientes y un contador social ("Únete a +500 organizadores"). CTA hacia la página de precios. Funciona como prueba social para convertir visitantes en organizadores.
 
 Estados a diseñar: sin portadas activas (sección oculta), sin eventos publicados aún (estado de lanzamiento), cargando.
 
@@ -258,7 +259,17 @@ Contenido:
 
 ---
 
-#### 3.10 Mi Cuenta (`/cuenta`)
+#### 3.10 Fotografía `/fotografia`
+
+Landing de venta del servicio de fotografía de Konbini para eventos.
+
+- **Hero con formulario de cotización** — imagen de fondo con fotos de eventos reales. Encima, el formulario de contacto básico con los campos: nombre del organizador, nombre del evento, fecha del evento, lugar, descripción breve de lo que necesitan y email de contacto. El botón de envío despacha la solicitud directamente a los admins (aparece en `/dashboard/photography`). El formulario está en el hero para maximizar conversión — el usuario no tiene que hacer scroll para cotizar.
+- **Galería de trabajos** — muestra fotos de eventos anteriores cubiertos por Konbini.
+- **Descripción del servicio** — qué incluye, tipos de cobertura disponibles, etc.
+
+---
+
+#### 3.12 Mi Cuenta (`/cuenta`)
 
 Panel personal transversal — lo usan todos los usuarios, incluyendo admins. Layout de dos columnas: sidebar de navegación a la izquierda, contenido a la derecha.
 
@@ -415,7 +426,7 @@ Empty state: mensaje informando que aún no hay transacciones.
 
 ---
 
-#### 3.11 Flujo Crear Evento + Upsell + Carrito
+#### 3.13 Flujo Crear Evento + Upsell + Carrito
 
 El flujo completo de publicación tiene tres etapas encadenadas.
 
@@ -490,11 +501,12 @@ Estados del carrito: borrador → en proceso de pago → pagado / fallido.
 
 Al pagar: redirige a la pasarela seleccionada. Al volver, hay dos pantallas dedicadas:
 
-- **Éxito** — pantalla de confirmación con cuatro elementos:
+- **Éxito** — pantalla de confirmación con cinco elementos:
   1. **Resumen del pago** — detalle de los ítems recién comprados (evento, aviso, portada y/o artículo), monto total y estado ("tu contenido está en revisión")
   2. **Aviso de perfil de organizador** — mensaje que invita a completar o actualizar los datos del perfil público en `/cuenta` para que la audiencia los encuentre
-  3. **Formulario de satisfacción** — valoración de 5 estrellas + campo de texto opcional + botón enviar. Simple y rápido.
-  4. **CTAs de salida** — dos opciones: "Ver mi evento" (preview del evento recién creado, visible solo para el dueño aunque esté en revisión) y "Ir al home"
+  3. **Fotografía para tu evento** — bloque que pregunta "¿Necesitas fotógrafo para tu evento?" con una descripción breve del servicio y CTA "Cotizar fotógrafo" que lleva a `/fotografia`. Aparece siempre, independiente de si el organizador ya contrató el servicio antes.
+  4. **Formulario de satisfacción** — valoración de 5 estrellas + campo de texto opcional + botón enviar. Simple y rápido.
+  5. **CTAs de salida** — dos opciones: "Ver mi evento" (preview del evento recién creado, visible solo para el dueño aunque esté en revisión) y "Ir al home"
 
 - **Fallido** — mensaje claro del motivo, opción de reintentar con la misma pasarela u opción de cambiar a otra.
 
@@ -502,7 +514,7 @@ Al pagar: redirige a la pasarela seleccionada. Al volver, hay dos pantallas dedi
 
 ---
 
-#### 3.12 Artículos
+#### 3.14 Artículos
 
 Konbini ya produce contenido editorial activamente (anime, manga, cine, gaming). Esta sección no es un blog secundario — es el motor de tráfico del sitio.
 
@@ -533,7 +545,7 @@ Debajo de ambas columnas — ancho completo:
 
 ### Prioridad Baja
 
-#### 3.13 About
+#### 3.15 About
 
 Página que presenta a Konbini — quiénes son, de dónde viene la comunidad, qué es el directorio de eventos y por qué existe. Es la página a la que llega alguien que no conoce la marca y quiere entender con quién está tratando.
 
@@ -544,7 +556,7 @@ Contenido sugerido:
 - El equipo o las caras detrás de la marca
 - CTA hacia "Publicar evento" y hacia Noticias
 
-#### 3.14 Ayuda
+#### 3.16 Ayuda
 
 Agrupa cuatro páginas bajo una misma sección con submenu compartido. El submenu es horizontal en desktop (o sidebar en móvil), está presente en las cuatro páginas y resalta la activa — el usuario se mueve entre ellas sin volver al home.
 
@@ -557,7 +569,7 @@ Páginas incluidas:
 
 El acceso a "Ayuda" va en el footer.
 
-#### 3.15 Auth — Login, Registro y 2FA
+#### 3.17 Auth — Login, Registro y 2FA
 
 Todas las pantallas de autenticación usan layout dedicado sin header ni footer global.
 
@@ -606,7 +618,7 @@ Redirección post-autenticación — aplica tanto al login como al registro:
 
 ---
 
-#### 3.16 Página 404
+#### 3.18 Página 404
 
 Página de error personalizada — no puede ser la pantalla genérica del servidor.
 
@@ -618,7 +630,7 @@ Contenido:
 
 ---
 
-#### 3.17 Evento Expirado
+#### 3.19 Evento Expirado
 
 Pantalla que reemplaza el detalle de un evento cuya fecha ya pasó. **No es un 404** — la URL sigue válida y la página sigue indexada en Google. Eliminarla sería desperdiciar ese tráfico SEO.
 
@@ -630,7 +642,7 @@ Contenido:
 
 ---
 
-#### 3.18 Vista de Tag
+#### 3.20 Vista de Tag
 
 Página que agrupa todo el contenido etiquetado con un tag específico. Se accede al hacer clic en cualquier tag visible en el sitio (artículos, eventos). URL tipo `/tag/shonen`.
 
@@ -841,7 +853,19 @@ Acciones: marcar como leído, archivar. La respuesta se hace fuera de la platafo
 
 ---
 
-#### 3.31 FAQ `/dashboard/faq`
+#### 3.31 Fotografía `/dashboard/photography`
+
+Bandeja de solicitudes de fotografía recibidas desde el formulario de `/fotografia` y desde el bloque en la thank you page.
+
+Cada solicitud muestra: nombre del organizador, nombre del evento, fecha del evento, lugar, descripción y email de contacto.
+
+Estados: Nueva · En contacto · Cerrada.
+
+Acciones: cambiar estado, archivar. La respuesta y coordinación se hace fuera de la plataforma (email externo).
+
+---
+
+#### 3.32 FAQ `/dashboard/faq`
 
 Gestión del contenido de la sección de preguntas frecuentes del sitio público.
 
@@ -849,7 +873,7 @@ CRUD de pares pregunta/respuesta. Permite reordenar manualmente.
 
 ---
 
-#### 3.32 Configuración `/dashboard/settings`
+#### 3.33 Configuración `/dashboard/settings`
 
 ##### Precios y límites de Avisos
 

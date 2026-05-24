@@ -653,6 +653,35 @@ async function main() {
     await prisma.like.createMany({ data: [{ userId: organizadorId, articleId: art.id }], skipDuplicates: true });
   }
 
+  // ─────────────── Settings defaults (v2 — Phase 8) ───────────────
+  // Estos valores existen en la DB desde Phase 8, pero el código de aplicación
+  // sigue leyendo de env vars hasta que Phase 11 los migre a leer de Settings.
+
+  const settingsDefaults: { key: string; value: string }[] = [
+    { key: 'SPOT_PRICE_PER_DAY',          value: '8000' },
+    { key: 'SPOT_MIN_DAYS',               value: '10' },
+    { key: 'SPOT_MAX_DAYS',               value: '30' },
+    { key: 'SPOT_MAX_ACTIVE',             value: '12' },
+    { key: 'HERO_PRICE_PER_DAY',          value: '15000' },
+    { key: 'HERO_MIN_DAYS',               value: '10' },
+    { key: 'HERO_MAX_DAYS',               value: '30' },
+    { key: 'HERO_MAX_ACTIVE',             value: '5' },
+    { key: 'SUBSCRIPTION_PRICE',          value: '9990' },
+    { key: 'SUBSCRIPTION_CREDITS',        value: '10' },
+    { key: 'SUBSCRIPTION_SPOT_DISCOUNT',  value: '20' },
+    { key: 'SUBSCRIPTION_HERO_DISCOUNT',  value: '20' },
+  ];
+
+  for (const setting of settingsDefaults) {
+    await prisma.settings.upsert({
+      where: { key: setting.key },
+      update: {},  // NO sobreescribir si el admin ya cambió el valor
+      create: setting,
+    });
+  }
+
+  console.log(`✓ Settings seeded: ${settingsDefaults.length} defaults (upsert no-op si existían)`);
+
   // ── LegalDocuments ──
   await prisma.legalDocument.upsert({
     where: { type: 'PRIVACY_POLICY' },

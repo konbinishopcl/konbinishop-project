@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-05-22T20:06:26.695Z"
+milestone: v2.0
+milestone_name: Plataforma completa
+status: in_progress
+last_updated: "2026-05-24T00:00:00.000Z"
 progress:
-  total_phases: 8
-  completed_phases: 7
+  total_phases: 15
+  completed_phases: 8
   total_plans: 19
   completed_plans: 19
 ---
@@ -18,17 +18,19 @@ progress:
 See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
-administrador quedan visibles al público.
-**Current focus:** Phase 7 — Sistema de auditoría
+administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
+**Current focus:** Phase 8 — Schema v2
 
 ## Current Status
 
-**Milestone:** v1 — Publicación gratuita de eventos
-**Active Phase:** Phase 7 — Sistema de auditoría (en progreso — 5/5 planes)
-**Overall Progress:** [████████] Phases 0–7 completas
-**Last session:** 2026-05-22T20:06:26.693Z
+**Milestone:** v2 — Plataforma completa
+**Active Phase:** Phase 8 — Schema v2 (planificando)
+**Overall Progress:** [████████--------] Phases 0–7 completas (v1) · Phases 8–14 pendientes (v2)
+**Last session:** 2026-05-24T00:00:00.000Z
 
 ## Phase Summary
+
+### Milestone v1 — Publicación gratuita de eventos ✅
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
@@ -40,6 +42,18 @@ administrador quedan visibles al público.
 | 5 | Búsqueda | ✅ Complete | 2/2 |
 | 6 | Hardening para producción | ✅ Complete | 3/3 |
 | 7 | Sistema de auditoría | ✅ Complete | 5/5 |
+
+### Milestone v2 — Plataforma completa 🔄
+
+| Phase | Name | Status | Plans |
+|-------|------|--------|-------|
+| 8 | Schema v2 | 🔄 Planning | 0/6 |
+| 9 | Organizaciones y transferencias | ⏳ Pending | 0/5 |
+| 10 | Auth avanzado | ⏳ Pending | 0/4 |
+| 11 | Notificaciones y Settings | ⏳ Pending | 0/3 |
+| 12 | Suscripciones y carrito v2 | ⏳ Pending | 0/4 |
+| 13 | Contenido avanzado | ⏳ Pending | 0/4 |
+| 14 | Servicios y CRM | ⏳ Pending | 0/5 |
 
 ## Decisions
 

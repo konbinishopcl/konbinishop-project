@@ -221,7 +221,7 @@ Plans:
 
 ---
 
-## Dependencies
+## Dependencies (Milestone v1)
 
 ```
 Phase 0 (Re-alineación) → todo lo demás — planear sobre datos correctos
@@ -236,3 +236,251 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 
 *Roadmap creado: 2026-03-23 · Re-alineado: 2026-05-20*
 *Basado en: PROJECT.md, REQUIREMENTS.md y la encuesta de codebase de 2026-05-20*
+
+---
+---
+
+# Milestone v2 — Plataforma completa
+
+**Created:** 2026-05-24
+**Milestone:** v2 — Plataforma completa con organizaciones, suscripción, servicios y CRM
+
+> **v2 introduce cobro real al organizador** (suscripción mensual, avisos y portadas pagados),
+> organizaciones con membresías (modelo GitHub), 2FA + Google OAuth, notificaciones,
+> transferencia de contenido entre cuentas, servicios de fotografía y creadores de contenido,
+> y un CRM interno. El schema cambia sustancialmente — Region/Commune se reemplaza por
+> País/División/Ciudad; el modelo User gana `type`, `handle` y datos de perfil.
+
+---
+
+## Milestone v2 Overview
+
+| Phase | Name | Goal | Requirements |
+|-------|------|------|--------------|
+| 8 | Schema v2 | Migrar el schema Prisma al modelo de datos completo de v2 | SCH-01..06 |
+| 9 | Organizaciones y transferencias | Organizaciones con roles OWNER/MEMBER, middleware X-Org-Context, transferencia de contenido | ORG-01..05 |
+| 10 | Auth avanzado | 2FA obligatorio, Google OAuth con onboarding, change email/password | AUTH-01..04 |
+| 11 | Notificaciones y Settings | Sistema de mensajes internos, valores configurables desde DB | CFG-01..03 |
+| 12 | Suscripciones y carrito v2 | Plan mensual con créditos, carrito con org context y tipo ARTICLE | COM-01..04 |
+| 13 | Contenido avanzado | Artículos patrocinados, favoritos, perfil público con handle y badge Verificado | CNT-01..04 |
+| 14 | Servicios y CRM | Fotografía y creadores de contenido con opciones configurables, CRM pipeline unificado | SVC-01..05 |
+
+---
+
+## Phase 8: Schema v2
+
+**Goal:** Migrar el schema Prisma al modelo de datos completo que soporta todas las
+funcionalidades de v2: organizaciones, geografía 3-nivel, settings, suscripciones,
+notificaciones, transferencias, favoritos, servicios y CRM.
+
+**Why first:** Todo el código de v2 depende de los modelos. Sin la migración no se puede
+implementar ninguna otra fase.
+
+**Status:** 🔄 Planning (6 plans creados, ejecución pendiente)
+
+**Plans:** 6 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — User v2 (SCH-01): type, handle, isVerified, twoFactorCode, twoFactorExpiry + agregar SCH-01..06 a REQUIREMENTS.md
+- [ ] 08-02-PLAN.md — Geografía 3-nivel (SCH-02): Country/State/City + seeder Chile + reescritura catalog/events/profiles
+- [ ] 08-03-PLAN.md — Organizaciones (SCH-03): OrgMember, OrgInvitation, enum OrgRole
+- [ ] 08-04-PLAN.md — Sistemas core (SCH-04): Settings, Notification, SavedEvent, Subscription, Transfer + seed de 12 defaults
+- [ ] 08-05-PLAN.md — Category v2 + Orders v2 + Article v2 (SCH-05): Category metadata, ARTICLE en OrderItemType, Order.orgId, Article.status/userId
+- [ ] 08-06-PLAN.md — Servicios y CRM (SCH-06): ServiceRequest, ServiceOption, CrmEntry (NUEVO independiente), CrmNote — ContactMessage SIN CAMBIOS
+
+**Requirements:**
+- SCH-01: User con type, handle, 2FA fields
+- SCH-02: Country/State/City (reemplaza Region/Commune)
+- SCH-03: OrgMember, OrgInvitation
+- SCH-04: Settings, Notification, SavedEvent, Subscription, Transfer
+- SCH-05: Category v2, Order/OrderItem v2 (ARTICLE type), Article v2 (status + userId — KEY DECISION #4)
+- SCH-06: ServiceRequest, ServiceOption, CrmEntry (NUEVO, independiente — KEY DECISION #2), CrmNote
+
+**UAT:**
+- `pnpm prisma migrate dev` corre sin error (6 migraciones aplicadas: sch01..sch06)
+- `pnpm prisma generate` genera el cliente
+- `pnpm tsc --noEmit` pasa (blast radius de Region/Commune resuelto)
+- `pnpm prisma:seed` corre end-to-end con datos de Chile en jerarquía 3-nivel
+
+
+---
+
+## Phase 9: Organizaciones y transferencias
+
+**Goal:** Cualquier usuario puede crear una organización, invitar miembros, operar con
+contexto de org (header `X-Org-Context`) y transferir contenido entre su cuenta personal y
+sus organizaciones.
+
+**Why second (in v2):** La mayoría de fases siguientes usan el contexto de org. El middleware
+X-Org-Context debe estar listo antes de que spots, heroes, eventos y pedidos lo consuman.
+
+**Plans (estimado):**
+1. **Middleware OrgContext** — guard/interceptor que lee `X-Org-Context`, valida membresía y expone `req.orgContext`.
+2. **Módulo `organizations`** — CRUD de org (crear, leer, editar datos críticos, eliminar); `GET /organizations/:id/members`.
+3. **Membresías e invitaciones** — invite por email (token 72h), accept invitation, change role, remove member.
+4. **Módulo `transfers`** — crear transferencia, auto-approve si OWNER, queue si MEMBER; accept/reject por OWNER; admin direct transfer.
+5. **Integración en módulos existentes** — events, spots, heroes, orders: leer `req.orgContext` para asignar ownership correcto.
+
+**Requirements:**
+- ORG-01: Middleware X-Org-Context
+- ORG-02: CRUD organizaciones
+- ORG-03: Membresías e invitaciones
+- ORG-04: Transferencias
+- ORG-05: Módulos existentes con contexto de org
+
+**UAT:**
+- Crear org → usuario queda como OWNER; org sin credenciales de login
+- `X-Org-Context: <orgId>` con user MEMBER → req.orgContext resuelto
+- Invitación expirada o token inválido → 401
+- Transfer de OWNER → auto-aprobada; de MEMBER → pendiente con notificación al OWNER
+- Admin puede transferir directamente cualquier ítem
+
+---
+
+## Phase 10: Auth avanzado
+
+**Goal:** 2FA obligatorio tras login/registro (excepto Google OAuth), flujo completo de
+Google OAuth con mini-onboarding para nuevos usuarios, y endpoints de cambio de email y
+contraseña.
+
+**Why third:** La seguridad de sesión es base para todo lo demás. El Google OAuth es una vía
+alternativa de registro que impacta el flujo de onboarding.
+
+**Plans (estimado):**
+1. **2FA por email** — generar código de 6 dígitos, enviar por email (Mailgun), endpoint verify + resend; login/register devuelven token pendiente de 2FA.
+2. **Google OAuth** — `passport-google-oauth20`; callback distingue usuario nuevo vs existente; token de onboarding para nuevos.
+3. **Onboarding Google** — endpoint `POST /auth/google/onboarding` completa el registro (país, T&C); devuelve token definitivo.
+4. **Change email/password** — `PATCH /auth/change-password` (requiere pass actual), `POST /auth/change-email/request` + `POST /auth/change-email/confirm` con token por email.
+
+**Requirements:**
+- AUTH-01: 2FA por email (verify + resend)
+- AUTH-02: Google OAuth flow
+- AUTH-03: Google onboarding
+- AUTH-04: Change email/password
+
+**UAT:**
+- Login → devuelve token pendiente → `POST /auth/2fa/verify` con código correcto → token definitivo
+- Google OAuth usuario existente → login directo sin 2FA
+- Google OAuth usuario nuevo → token onboarding → POST onboarding → token definitivo
+- Change password con contraseña incorrecta → 401
+- Change email → email enviado al nuevo email → confirm con token → email actualizado
+
+---
+
+## Phase 11: Notificaciones y Settings
+
+**Goal:** Sistema de mensajes internos generados automáticamente por el sistema (aprobación,
+rechazo, transferencias, invitaciones); y tabla Settings en DB para los valores configurables
+del sistema (precios, cupos, créditos de suscripción).
+
+**Why:** Notificaciones son el mecanismo de comunicación entre el sistema y el usuario.
+Settings permite que el admin cambie precios sin tocar código ni reiniciar el servidor.
+
+**Plans (estimado):**
+1. **Módulo `notifications`** — `NotificationService.create()` interno; endpoints GET, PATCH read, PATCH read-all, GET unread-count.
+2. **Auto-notificaciones** — inyectar NotificationService en events, spots, heroes, organizations, transfers para generar notificaciones en los eventos relevantes.
+3. **Módulo `settings`** — seed inicial de todos los defaults; `GET /settings` (admin), `PATCH /settings` (admin), `GET /settings/public` (público); integrar en Spots/Heroes para leer precio/cupo desde DB en vez de env.
+
+**Requirements:**
+- CFG-01: Módulo notifications
+- CFG-02: Auto-notificaciones en módulos
+- CFG-03: Módulo settings + integración spots/heroes
+
+**UAT:**
+- Aprobar un evento → notificación al organizador aparece en `GET /notifications`
+- `GET /notifications/unread-count` devuelve número correcto
+- `PATCH /settings` cambia el precio de spot → `GET /spots/quota` devuelve el nuevo precio
+- `GET /settings/public` no expone claves internas
+
+---
+
+## Phase 12: Suscripciones y carrito v2
+
+**Goal:** Plan de suscripción mensual con créditos de eventos, descuentos en spots/heroes para
+suscriptores, y carrito actualizado con contexto de org, tipo ARTICLE y lógica de créditos.
+
+**Plans (estimado):**
+1. **Módulo `subscriptions`** — activar (genera orden especial + pasarela), cancelar (fin de ciclo), GET estado + créditos; admin GET lista.
+2. **Orders v2** — contexto de org en Order (orgId), tipo ARTICLE en OrderItemType, upsert ARTICLE; validaciones de cupo re-verificadas al pagar.
+3. **Créditos de suscripción en carrito** — al agregar EVENT con suscripción activa: sin costo, 45 días fijos; descuentos en spots/heroes al pagar.
+4. **Pago suscripción** — flujo checkout para suscripción; callback activa el plan y registra ciclo.
+
+**Requirements:**
+- COM-01: Subscriptions CRUD
+- COM-02: Orders v2 con org context + ARTICLE
+- COM-03: Créditos en carrito
+- COM-04: Pago suscripción
+
+**UAT:**
+- Usuario suscrito agrega EVENT al carrito → subtotal = 0, days = 45 fijos
+- Pago exitoso de suscripción → `GET /subscriptions/me` muestra créditos = SUBSCRIPTION_CREDITS
+- Usar 1 crédito → créditos restantes = N-1
+- `DELETE /subscriptions/me` → suscripción cancela al fin del ciclo, sin cobro siguiente
+
+---
+
+## Phase 13: Contenido avanzado
+
+**Goal:** Artículos patrocinados (flujo DRAFT→...→APPROVED igual que eventos), favoritos
+(guardar eventos), y perfil público con handle único y badge Verificado asignado por SUPER_ADMIN.
+
+**Plans (estimado):**
+1. **Artículos patrocinados** — `POST /articles/sponsored`; estados PublicationStatus; flujo admin de aprobar/rechazar/banear artículos patrocinados.
+2. **Favoritos** — `POST/DELETE /events/:id/save`; `GET /users/me/saved-events`; campo `isSaved` en respuestas de eventos con sesión.
+3. **Perfil público v2** — `GET /users/:handle` (persona u org); `PATCH /users/me/organizer`; `PATCH /users/:id/verified` (SUPER_ADMIN only).
+4. **Category v2** — campos `minDays`, `maxDays`, `icon`, `color`, `order` en CRUD de categorías; integrar en validación de carrito.
+
+**Requirements:**
+- CNT-01: Artículos patrocinados
+- CNT-02: Favoritos
+- CNT-03: Perfil público v2
+- CNT-04: Category v2 en catálogo
+
+**UAT:**
+- `POST /articles/sponsored` → artículo en DRAFT, no visible públicamente
+- `POST /events/:id/save` → aparece en `GET /users/me/saved-events`
+- `GET /users/:handle` de una org → devuelve sus eventos aprobados
+- SUPER_ADMIN asigna `isVerified: true`; otro rol recibe 403
+
+---
+
+## Phase 14: Servicios y CRM
+
+**Goal:** Formularios de cotización para fotografía y creadores de contenido (con opciones
+configurables desde el dashboard), y CRM interno unificado con pipeline kanban para
+Contacto, Fotografía y Creadores.
+
+**Plans (estimado):**
+1. **Módulo `services`** — `POST /services/photography` y `POST /services/content-creators` (públicos); GET/PATCH admin; `GET /services/*/options` (público).
+2. **Service options CRUD** — `POST/PATCH/DELETE /services/photography/options` y equivalentes para content-creators (admin).
+3. **Módulo `crm`** — `GET /crm`, `PATCH /crm/:id/stage`, `POST /crm/:id/notes`, `GET /crm/:id/notes`; todos los tipos CONTACT/PHOTOGRAPHY/CONTENT en una sola vista.
+4. **Contact → CRM** — `POST /contact` crea entrada CRM con tipo CONTACT + estado NEW; `GET /contact` como alias de `GET /crm?type=CONTACT`.
+5. **Integración services → CRM** — cuando llega un form de fotografía o creadores, también se crea entrada CRM con tipo correspondiente.
+
+**Requirements:**
+- SVC-01: Services endpoints públicos (photography + content-creators)
+- SVC-02: Service options CRUD
+- SVC-03: CRM pipeline
+- SVC-04: Contact integrado con CRM
+- SVC-05: Services integrados con CRM
+
+**UAT:**
+- `POST /services/photography` → solicitud guardada + entrada CRM en estado NEW con tipo PHOTOGRAPHY
+- `PATCH /crm/:id/stage` a LOST sin reason → 400
+- `POST /crm/:id/notes` → nota guardada con timestamp y autor
+- `GET /crm?type=CONTACT` devuelve solo los mensajes de contacto
+- `GET /services/photography/options` devuelve la lista pública sin auth
+
+---
+
+## Dependencies (Milestone v2)
+
+```
+Phase 8  (Schema v2)          → todo v2 — los modelos deben existir antes
+Phase 9  (Orgs)               → Phase 11 (notificaciones de org), Phase 12 (carrito con org)
+Phase 10 (Auth)               → Phase 9 (OrgMember usa sesión robusta)
+Phase 11 (Notificaciones)     → Phase 9, 10, 12, 13 — los eventos generan notificaciones
+Phase 12 (Suscripciones)      → Phase 8 — Subscription model
+Phase 13 (Contenido avanzado) → Phase 8, 11 (isSaved requiere sesión)
+Phase 14 (Servicios y CRM)    → Phase 8 (ServiceRequest model)
+```

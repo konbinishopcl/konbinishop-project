@@ -88,11 +88,21 @@ model Article {
   excerpt   String?
   content   String   @db.Text
   image     String? // URL de imagen (Strapi media)
+  // v2: artículos patrocinados — siguen el mismo flujo de estados que Event/Spot/Hero
+  status       PublicationStatus @default(DRAFT)
+  statusReason String?
+  // v2: dueño del artículo patrocinado (null para artículos editoriales legacy)
+  owner        User?             @relation("ArticleOwner", fields: [userId], references: [id])
+  userId       Int?
   tags      Tag[]
   events    Event[]
   likes     Like[]
+  orderItems   OrderItem[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
 }
 
 // ── Estado de publicación unificado para Event, Spot y Hero ──────
@@ -285,6 +295,7 @@ enum OrderItemType {
   EVENT
   SPOT
   HERO
+  ARTICLE
 }
 
 model Order {
@@ -293,13 +304,18 @@ model Order {
   total      Int         @default(0)
   gateway    String?     // pasarela usada: TRANSBANK, FLOW, etc.
   externalId String?     // token o ID de transacción devuelto por la pasarela
-  owner      User        @relation(fields: [userId], references: [id])
+  owner      User        @relation("UserOrders", fields: [userId], references: [id])
   userId     Int
+  // v2: contexto de organización al pagar (carrito de la org en vez de la persona).
+  // FK apunta a User con type=ORGANIZATION — validación en service layer (Pitfall #6).
+  org        User?       @relation("OrgOrders", fields: [orgId], references: [id])
+  orgId      Int?
   items      OrderItem[]
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
 
   @@index([userId])
+  @@index([orgId])
 }
 
 model OrderItem {
@@ -317,6 +333,8 @@ model OrderItem {
   spotId  Int?
   hero    Hero?  @relation(fields: [heroId], references: [id])
   heroId  Int?
+  article Article? @relation(fields: [articleId], references: [id])
+  articleId Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -326,6 +344,7 @@ model OrderItem {
   @@index([eventId])
   @@index([spotId])
   @@index([heroId])
+  @@index([articleId])
 }
 
 // ──────────────────────────── Usuarios ───────────────────────────
@@ -379,7 +398,9 @@ model User {
   rejectedEvents Event[] @relation("EventRejecter")
   spots          Spot[]  @relation("SpotOwner")
   heroes         Hero[]  @relation("HeroOwner")
-  orders         Order[]
+  orders         Order[] @relation("UserOrders")
+  orgOrders      Order[] @relation("OrgOrders")
+  articles       Article[] @relation("ArticleOwner")
   likes          Like[]
   profile        Profile?
 

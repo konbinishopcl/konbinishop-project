@@ -32,10 +32,10 @@ export class QueryEventsDto {
   @IsString()
   category?: string;
 
-  @ApiPropertyOptional({ example: 'metropolitana', description: 'Slug de región' })
+  @ApiPropertyOptional({ example: 'region-metropolitana-de-santiago', description: 'Slug de estado/región' })
   @IsOptional()
   @IsString()
-  region?: string;
+  state?: string;
 
   @ApiPropertyOptional({ enum: SortBy, description: 'Ordenar por: "likes" = más likeados primero' })
   @IsOptional()

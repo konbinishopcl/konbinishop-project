@@ -76,15 +76,10 @@ export class UpdateEventDto {
   @IsString({ each: true })
   gallery?: string[];
 
-  @ApiPropertyOptional({ example: 10, description: 'ID de la región' })
+  @ApiPropertyOptional({ example: 101, description: 'ID de la ciudad/comuna' })
   @IsOptional()
   @IsInt()
-  regionId?: number;
-
-  @ApiPropertyOptional({ example: 101, description: 'ID de la comuna' })
-  @IsOptional()
-  @IsInt()
-  communeId?: number;
+  cityId?: number;
 
   @ApiPropertyOptional({ example: 1, description: 'ID de la categoría' })
   @IsOptional()

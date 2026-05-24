@@ -1,9 +1,11 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../utils/prisma/prisma.service';
-import { CreateRegionDto } from './dto/create-region.dto';
-import { UpdateRegionDto } from './dto/update-region.dto';
-import { CreateCommuneDto } from './dto/create-commune.dto';
-import { UpdateCommuneDto } from './dto/update-commune.dto';
+import { CreateCountryDto } from './dto/create-country.dto';
+import { UpdateCountryDto } from './dto/update-country.dto';
+import { CreateStateDto } from './dto/create-state.dto';
+import { UpdateStateDto } from './dto/update-state.dto';
+import { CreateCityDto } from './dto/create-city.dto';
+import { UpdateCityDto } from './dto/update-city.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -13,80 +15,131 @@ import { UpdateTagDto } from './dto/update-tag.dto';
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ── Regions ──
+  // ── Countries ──
 
-  regions() {
-    return this.prisma.region.findMany({ orderBy: { name: 'asc' } });
+  findCountries() {
+    return this.prisma.country.findMany({ orderBy: { name: 'asc' } });
   }
 
-  async findRegion(id: number) {
-    const region = await this.prisma.region.findUnique({ where: { id }, include: { communes: true } });
-    if (!region) throw new NotFoundException('Región no encontrada');
-    return region;
+  async findCountry(id: number) {
+    const country = await this.prisma.country.findUnique({ where: { id }, include: { states: true } });
+    if (!country) throw new NotFoundException('País no encontrado');
+    return country;
   }
 
-  async createRegion(dto: CreateRegionDto) {
-    await this.assertUnique('region', dto.slug);
-    return this.prisma.region.create({ data: { name: dto.name, slug: dto.slug } });
+  async createCountry(dto: CreateCountryDto) {
+    const slug = dto.slug ?? dto.name.toLowerCase().replace(/\s+/g, '-');
+    await this.assertUniqueSlug('country', slug);
+    return this.prisma.country.create({ data: { name: dto.name, slug } });
   }
 
-  async updateRegion(id: number, dto: UpdateRegionDto) {
-    await this.findRegion(id);
-    if (dto.slug) await this.assertUnique('region', dto.slug, id);
-    return this.prisma.region.update({ where: { id }, data: dto });
+  async updateCountry(id: number, dto: UpdateCountryDto) {
+    await this.findCountry(id);
+    if (dto.slug) await this.assertUniqueSlug('country', dto.slug, id);
+    return this.prisma.country.update({ where: { id }, data: dto });
   }
 
-  async removeRegion(id: number) {
-    await this.findRegion(id);
-    await this.prisma.region.delete({ where: { id } });
+  async removeCountry(id: number) {
+    await this.findCountry(id);
+    await this.prisma.country.delete({ where: { id } });
     return { deleted: true };
   }
 
-  // ── Communes ──
+  // ── States ──
 
-  communes(regionSlug?: string) {
-    return this.prisma.commune.findMany({
-      where: regionSlug ? { region: { slug: regionSlug } } : undefined,
-      include: { region: true },
+  findStates(countrySlug?: string) {
+    return this.prisma.state.findMany({
+      where: countrySlug ? { country: { slug: countrySlug } } : undefined,
+      include: { country: true },
       orderBy: { name: 'asc' },
     });
   }
 
-  async findCommune(id: number) {
-    const commune = await this.prisma.commune.findUnique({ where: { id }, include: { region: true } });
-    if (!commune) throw new NotFoundException('Comuna no encontrada');
-    return commune;
+  async findState(id: number) {
+    const state = await this.prisma.state.findUnique({ where: { id }, include: { country: true, cities: true } });
+    if (!state) throw new NotFoundException('Estado/Región no encontrado');
+    return state;
   }
 
-  async createCommune(dto: CreateCommuneDto) {
-    await this.assertUnique('commune', dto.slug);
-    return this.prisma.commune.create({
+  async createState(dto: CreateStateDto) {
+    await this.assertUniqueSlug('state', dto.slug);
+    if (!dto.countryId) throw new Error('countryId es requerido para crear un estado');
+    return this.prisma.state.create({
       data: {
         name: dto.name,
         slug: dto.slug,
-        region: dto.regionId ? { connect: { id: dto.regionId } } : undefined,
+        country: { connect: { id: dto.countryId } },
       },
-      include: { region: true },
+      include: { country: true },
     });
   }
 
-  async updateCommune(id: number, dto: UpdateCommuneDto) {
-    await this.findCommune(id);
-    if (dto.slug) await this.assertUnique('commune', dto.slug, id);
-    const { regionId, ...rest } = dto;
-    return this.prisma.commune.update({
+  async updateState(id: number, dto: UpdateStateDto) {
+    await this.findState(id);
+    if (dto.slug) await this.assertUniqueSlug('state', dto.slug, id);
+    const { countryId, ...rest } = dto;
+    return this.prisma.state.update({
       where: { id },
       data: {
         ...rest,
-        ...(regionId !== undefined && { region: { connect: { id: regionId } } }),
+        ...(countryId !== undefined && { country: { connect: { id: countryId } } }),
       },
-      include: { region: true },
+      include: { country: true },
     });
   }
 
-  async removeCommune(id: number) {
-    await this.findCommune(id);
-    await this.prisma.commune.delete({ where: { id } });
+  async removeState(id: number) {
+    await this.findState(id);
+    await this.prisma.state.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  // ── Cities ──
+
+  findCities(stateSlug?: string) {
+    return this.prisma.city.findMany({
+      where: stateSlug ? { state: { slug: stateSlug } } : undefined,
+      include: { state: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async findCity(id: number) {
+    const city = await this.prisma.city.findUnique({ where: { id }, include: { state: { include: { country: true } } } });
+    if (!city) throw new NotFoundException('Ciudad/Comuna no encontrada');
+    return city;
+  }
+
+  async createCity(dto: CreateCityDto) {
+    await this.assertUniqueSlug('city', dto.slug);
+    if (!dto.stateId) throw new Error('stateId es requerido para crear una ciudad');
+    return this.prisma.city.create({
+      data: {
+        name: dto.name,
+        slug: dto.slug,
+        state: { connect: { id: dto.stateId } },
+      },
+      include: { state: true },
+    });
+  }
+
+  async updateCity(id: number, dto: UpdateCityDto) {
+    await this.findCity(id);
+    if (dto.slug) await this.assertUniqueSlug('city', dto.slug, id);
+    const { stateId, ...rest } = dto;
+    return this.prisma.city.update({
+      where: { id },
+      data: {
+        ...rest,
+        ...(stateId !== undefined && { state: { connect: { id: stateId } } }),
+      },
+      include: { state: true },
+    });
+  }
+
+  async removeCity(id: number) {
+    await this.findCity(id);
+    await this.prisma.city.delete({ where: { id } });
     return { deleted: true };
   }
 
@@ -103,13 +156,13 @@ export class CatalogService {
   }
 
   async createCategory(dto: CreateCategoryDto) {
-    await this.assertUnique('category', dto.slug);
+    await this.assertUniqueSlug('category', dto.slug);
     return this.prisma.category.create({ data: dto });
   }
 
   async updateCategory(id: number, dto: UpdateCategoryDto) {
     await this.findCategory(id);
-    if (dto.slug) await this.assertUnique('category', dto.slug, id);
+    if (dto.slug) await this.assertUniqueSlug('category', dto.slug, id);
     return this.prisma.category.update({ where: { id }, data: dto });
   }
 
@@ -132,13 +185,13 @@ export class CatalogService {
   }
 
   async createTag(dto: CreateTagDto) {
-    await this.assertUnique('tag', dto.slug);
+    await this.assertUniqueSlug('tag', dto.slug);
     return this.prisma.tag.create({ data: dto });
   }
 
   async updateTag(id: number, dto: UpdateTagDto) {
     await this.findTag(id);
-    if (dto.slug) await this.assertUnique('tag', dto.slug, id);
+    if (dto.slug) await this.assertUniqueSlug('tag', dto.slug, id);
     return this.prisma.tag.update({ where: { id }, data: dto });
   }
 
@@ -150,7 +203,11 @@ export class CatalogService {
 
   // ── Helper ──
 
-  private async assertUnique(model: 'region' | 'commune' | 'category' | 'tag', slug: string, excludeId?: number) {
+  private async assertUniqueSlug(
+    model: 'country' | 'state' | 'city' | 'category' | 'tag',
+    slug: string,
+    excludeId?: number,
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const existing = await (this.prisma[model] as any).findUnique({ where: { slug } });
     if (existing && existing.id !== excludeId) {

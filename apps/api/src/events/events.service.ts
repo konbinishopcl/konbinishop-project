@@ -23,8 +23,7 @@ function slugify(text: string): string {
 
 // Relaciones y componentes que se devuelven con cada evento.
 const EVENT_INCLUDE = {
-  region: true,
-  commune: true,
+  city: { include: { state: { include: { country: true } } } },
   category: true,
   prices: true,
   dates: true,
@@ -75,7 +74,7 @@ export class EventsService {
         OR: [{ expirationDate: null }, { expirationDate: { gte: new Date() } }],
       }),
       ...(query.category ? { category: { slug: query.category } } : {}),
-      ...(query.region ? { region: { slug: query.region } } : {}),
+      ...(query.state ? { city: { state: { slug: query.state } } } : {}),
       ...textFilter,
     };
 
@@ -144,8 +143,7 @@ export class EventsService {
         gallery: dto.gallery ?? [],
         status: PublicationStatus.DRAFT,
         owner: { connect: { id: user.sub } },
-        region: dto.regionId ? { connect: { id: dto.regionId } } : undefined,
-        commune: dto.communeId ? { connect: { id: dto.communeId } } : undefined,
+        city: dto.cityId ? { connect: { id: dto.cityId } } : undefined,
         category: dto.categoryId ? { connect: { id: dto.categoryId } } : undefined,
         prices: dto.prices?.length
           ? { create: dto.prices.map((p) => ({ name: p.name, price: p.price ?? 0 })) }
@@ -193,11 +191,8 @@ export class EventsService {
     if (dto.expirationDate !== undefined) {
       data.expirationDate = dto.expirationDate ? new Date(dto.expirationDate) : null;
     }
-    if (dto.regionId !== undefined) {
-      data.region = dto.regionId ? { connect: { id: dto.regionId } } : { disconnect: true };
-    }
-    if (dto.communeId !== undefined) {
-      data.commune = dto.communeId ? { connect: { id: dto.communeId } } : { disconnect: true };
+    if (dto.cityId !== undefined) {
+      data.city = dto.cityId ? { connect: { id: dto.cityId } } : { disconnect: true };
     }
     if (dto.categoryId !== undefined) {
       data.category = dto.categoryId ? { connect: { id: dto.categoryId } } : { disconnect: true };

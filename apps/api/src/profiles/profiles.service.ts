@@ -21,7 +21,7 @@ function profileInclude() {
             status: PublicationStatus.APPROVED,
             OR: [{ expirationDate: null }, { expirationDate: { gte: new Date() } }],
           },
-          include: { category: true, region: true, commune: true },
+          include: { category: true, city: { include: { state: { include: { country: true } } } } },
           orderBy: { createdAt: 'desc' as const },
           take: 20,
         },

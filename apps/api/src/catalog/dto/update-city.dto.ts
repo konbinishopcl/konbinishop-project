@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, MinLength } from 'class-validator';
 
-export class UpdateCommuneDto {
+export class UpdateCityDto {
   @ApiPropertyOptional({ example: 'Santiago' })
   @IsOptional()
   @IsString()
@@ -17,5 +17,5 @@ export class UpdateCommuneDto {
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @IsInt()
-  regionId?: number;
+  stateId?: number;
 }

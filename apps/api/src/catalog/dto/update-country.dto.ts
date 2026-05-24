@@ -1,14 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString, MinLength } from 'class-validator';
 
-export class UpdateRegionDto {
-  @ApiPropertyOptional({ example: 'Región Metropolitana' })
+export class UpdateCountryDto {
+  @ApiPropertyOptional({ example: 'Chile' })
   @IsOptional()
   @IsString()
   @MinLength(2)
   name?: string;
 
-  @ApiPropertyOptional({ example: 'region-metropolitana' })
+  @ApiPropertyOptional({ example: 'chile' })
   @IsOptional()
   @IsString()
   @MinLength(2)

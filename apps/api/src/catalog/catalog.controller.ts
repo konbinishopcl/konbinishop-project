@@ -12,10 +12,12 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CatalogService } from './catalog.service';
-import { CreateRegionDto } from './dto/create-region.dto';
-import { UpdateRegionDto } from './dto/update-region.dto';
-import { CreateCommuneDto } from './dto/create-commune.dto';
-import { UpdateCommuneDto } from './dto/update-commune.dto';
+import { CreateCountryDto } from './dto/create-country.dto';
+import { UpdateCountryDto } from './dto/update-country.dto';
+import { CreateStateDto } from './dto/create-state.dto';
+import { UpdateStateDto } from './dto/update-state.dto';
+import { CreateCityDto } from './dto/create-city.dto';
+import { UpdateCityDto } from './dto/update-city.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
@@ -24,97 +26,144 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 
-// ── Regions ──
+// ── Countries ──
 
-@ApiTags('regions')
-@Controller('regions')
-export class RegionsController {
+@ApiTags('countries')
+@Controller('countries')
+export class CountriesController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar regiones' })
+  @ApiOperation({ summary: 'Listar países' })
   findAll() {
-    return this.catalog.regions();
+    return this.catalog.findCountries();
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Ver una región con sus comunas' })
+  @ApiOperation({ summary: 'Ver un país con sus estados/regiones' })
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.catalog.findRegion(id);
+    return this.catalog.findCountry(id);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Crear una región (ADMIN+)' })
-  create(@Body() dto: CreateRegionDto) {
-    return this.catalog.createRegion(dto);
+  @ApiOperation({ summary: 'Crear un país (ADMIN+)' })
+  create(@Body() dto: CreateCountryDto) {
+    return this.catalog.createCountry(dto);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Editar una región (ADMIN+)' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRegionDto) {
-    return this.catalog.updateRegion(id, dto);
+  @ApiOperation({ summary: 'Editar un país (ADMIN+)' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCountryDto) {
+    return this.catalog.updateCountry(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Eliminar una región (ADMIN+)' })
+  @ApiOperation({ summary: 'Eliminar un país (ADMIN+)' })
   remove(@Param('id', ParseIntPipe) id: number) {
-    return this.catalog.removeRegion(id);
+    return this.catalog.removeCountry(id);
   }
 }
 
-// ── Communes ──
+// ── States ──
 
-@ApiTags('communes')
-@Controller('communes')
-export class CommunesController {
+@ApiTags('states')
+@Controller('states')
+export class StatesController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar comunas; filtro opcional ?region=<slug>' })
-  findAll(@Query('region') region?: string) {
-    return this.catalog.communes(region);
+  @ApiOperation({ summary: 'Listar estados/regiones; filtro opcional ?country=<slug>' })
+  findAll(@Query('country') country?: string) {
+    return this.catalog.findStates(country);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Ver una comuna' })
+  @ApiOperation({ summary: 'Ver un estado/región con sus ciudades' })
   findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.catalog.findCommune(id);
+    return this.catalog.findState(id);
   }
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Crear una comuna (ADMIN+)' })
-  create(@Body() dto: CreateCommuneDto) {
-    return this.catalog.createCommune(dto);
+  @ApiOperation({ summary: 'Crear un estado/región (ADMIN+)' })
+  create(@Body() dto: CreateStateDto) {
+    return this.catalog.createState(dto);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Editar una comuna (ADMIN+)' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCommuneDto) {
-    return this.catalog.updateCommune(id, dto);
+  @ApiOperation({ summary: 'Editar un estado/región (ADMIN+)' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateStateDto) {
+    return this.catalog.updateState(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Eliminar una comuna (ADMIN+)' })
+  @ApiOperation({ summary: 'Eliminar un estado/región (ADMIN+)' })
   remove(@Param('id', ParseIntPipe) id: number) {
-    return this.catalog.removeCommune(id);
+    return this.catalog.removeState(id);
+  }
+}
+
+// ── Cities ──
+
+@ApiTags('cities')
+@Controller('cities')
+export class CitiesController {
+  constructor(private readonly catalog: CatalogService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar ciudades/comunas; filtro opcional ?state=<slug>' })
+  findAll(@Query('state') state?: string) {
+    return this.catalog.findCities(state);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Ver una ciudad/comuna' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.findCity(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Crear una ciudad/comuna (ADMIN+)' })
+  create(@Body() dto: CreateCityDto) {
+    return this.catalog.createCity(dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Editar una ciudad/comuna (ADMIN+)' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCityDto) {
+    return this.catalog.updateCity(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar una ciudad/comuna (ADMIN+)' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.removeCity(id);
   }
 }
 

@@ -333,6 +333,11 @@ enum Role {
   AUTHENTICATED
 }
 
+enum OrgRole {
+  OWNER
+  MEMBER
+}
+
 model User {
   id           Int     @id @default(autoincrement())
   email        String  @unique
@@ -368,6 +373,11 @@ model User {
   orders         Order[]
   likes          Like[]
   profile        Profile?
+
+  // v2 Organizaciones — relaciones inversas
+  memberships    OrgMember[]     @relation("UserMemberships")  // orgs a las que este user pertenece
+  orgMembers     OrgMember[]     @relation("OrgMembers")        // miembros de este user si es ORGANIZATION
+  orgInvitations OrgInvitation[] @relation("OrgInvitations")    // invitaciones emitidas por este user si es ORGANIZATION
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -509,4 +519,36 @@ model AuditLog {
   @@index([createdAt])
   @@index([entity, action, createdAt])
   @@map("audit_logs")
+}
+
+// ─────────────────────── Organizaciones ──────────────────────────
+// Membresía explícita entre un User PERSON (userId) y un User ORGANIZATION (orgId).
+// El constraint user.type = 'ORGANIZATION' para orgId se enforza en service layer
+// (MySQL no soporta CHECK sobre campos de tablas relacionadas). Patrón polymorphic
+// self-referencial: ambos lados de la relación apuntan a User vía nombres distintos.
+
+model OrgMember {
+  userId    Int
+  orgId     Int
+  role      OrgRole  @default(MEMBER)
+  user      User     @relation("UserMemberships", fields: [userId], references: [id], onDelete: Cascade)
+  org       User     @relation("OrgMembers",      fields: [orgId],  references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, orgId])
+  @@index([orgId])
+  @@index([userId])
+}
+
+model OrgInvitation {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  email     String
+  orgId     Int
+  org       User     @relation("OrgInvitations", fields: [orgId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([token])
 }

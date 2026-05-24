@@ -480,7 +480,7 @@ Este formulario es idéntico al que aparece en `/cuenta/mis-articulos` — es el
 
 ##### Etapa 3 — Carrito (`/carrito`)
 
-Muestra los ítems seleccionados: evento, aviso, portada y/o artículo patrocinado. Para evento, aviso y portada el usuario elige el número de días de publicación (mínimo 10) — el selector no aparece para el artículo patrocinado, que es una publicación fija sin límite de días. El subtotal por ítem y el total se calculan en tiempo real.
+Muestra los ítems seleccionados: evento, aviso, portada y/o artículo patrocinado. Para aviso y portada el usuario elige el número de días de publicación (mínimo 10) — el selector no aparece para el evento con suscripción activa (duración fija: 45 días o hasta la fecha del evento), ni para el artículo patrocinado (publicación fija sin límite de días). El subtotal por ítem y el total se calculan en tiempo real.
 
 **Si el usuario tiene suscripción activa con créditos disponibles**, la línea del evento en el carrito muestra precio $0 con una etiqueta "Crédito de suscripción (X restantes este mes)" en vez del precio calculado. El selector de días desaparece — la duración es fija (45 días o hasta la fecha del evento). Si ya usó todos sus créditos del mes, el evento se cobra normalmente. El descuento en avisos y portadas para suscriptores se aplica automáticamente como línea de descuento.
 

@@ -391,6 +391,8 @@ Aparece en el sidebar únicamente cuando el usuario está operando en nombre de 
 - Cambiar rol Owner ↔ Member *(solo Owner)*
 - Eliminar miembro *(solo Owner)*. Un Owner no puede eliminarse si es el único Owner.
 
+**Transferencias pendientes** *(solo Owner)* — sección que muestra las solicitudes de transferencia de contenido recibidas (eventos, avisos, portadas, artículos que un miembro quiere mover a la org). Cada solicitud muestra: quién la envía, qué ítem es y de qué tipo. Acciones: **Aceptar** (el contenido pasa a ser de la org) o **Rechazar** (no cambia nada).
+
 **Danger Zone** *(solo Owner)* — eliminar la organización con lightbox de confirmación. Advierte que se eliminará todo el contenido asociado.
 
 ---
@@ -424,6 +426,8 @@ Lista de eventos creados por el usuario. Tabs con contador de ítems por estado:
 - **Rechazados** — muestra el motivo de rechazo
 - **Archivados** — eventos cuya publicación venció. Cada card tiene botón **"Renovar"** que lleva al carrito para elegir nuevos días y volver a publicar
 
+Cada ítem tiene una acción **"Transferir a organización"** — abre un selector con las organizaciones a las que pertenece el usuario. Al confirmar, se envía una solicitud de transferencia al Owner de la org. Hasta que sea aceptada, el ítem sigue siendo del usuario. Si es rechazada, no cambia nada.
+
 Empty state: CTA para crear el primer evento.
 
 > Las métricas (vistas, guardados, clicks) son una funcionalidad pendiente de diseñar. Actualmente solo se muestra el estado. Es una mejora prioritaria para retener a los organizadores que pagan.
@@ -434,7 +438,7 @@ Empty state: CTA para crear el primer evento.
 
 Lista de avisos. Tabs con contador: Todos · En revisión · Activos · Expirados · Rechazados · Baneados
 
-Acciones por ítem según estado: editar y eliminar si está en borrador o rechazado. Los expirados tienen botón **"Renovar"** igual que en mis-eventos. Botón "Crear aviso" en la parte superior — visible solo si hay cupo disponible (menos de 12 activos).
+Acciones por ítem según estado: editar y eliminar si está en borrador o rechazado. Los expirados tienen botón **"Renovar"** igual que en mis-eventos. Cada ítem tiene acción **"Transferir a organización"** con el mismo flujo que en mis-eventos. Botón "Crear aviso" en la parte superior — visible solo si hay cupo disponible (menos de 12 activos).
 
 Empty state según disponibilidad de cupo:
 
@@ -447,7 +451,7 @@ Empty state según disponibilidad de cupo:
 
 Lista de portadas con preview de imagen y fechas. Tabs con contador: Todos · En revisión · Activas · Expiradas · Rechazadas · Baneadas
 
-Los expirados tienen botón **"Renovar"**. Botón "Crear portada" en la parte superior — visible solo si hay cupo disponible (menos de 5 activas).
+Los expirados tienen botón **"Renovar"**. Cada ítem tiene acción **"Transferir a organización"** con el mismo flujo. Botón "Crear portada" en la parte superior — visible solo si hay cupo disponible (menos de 5 activas).
 
 Empty state según disponibilidad de cupo:
 
@@ -458,7 +462,7 @@ Empty state según disponibilidad de cupo:
 
 ##### `/cuenta/mis-articulos`
 
-Lista de artículos patrocinados encargados por el organizador a Konbini. Cada fila muestra el título, estado (en revisión / publicado / rechazado) y un link al artículo publicado si aplica. Botón "Solicitar artículo" en la parte superior.
+Lista de artículos patrocinados encargados por el organizador a Konbini. Cada fila muestra el título, estado (en revisión / publicado / rechazado) y un link al artículo publicado si aplica. Cada ítem tiene acción **"Transferir a organización"** con el mismo flujo. Botón "Solicitar artículo" en la parte superior.
 
 Empty state: CTA para solicitar el primer artículo patrocinado, con una breve explicación de qué es y para qué sirve.
 
@@ -766,6 +770,7 @@ Acciones según estado:
 - Publicado: Ver en sitio (link externo), **Banear** (con motivo).
 - Rechazado: opción de re-revisar.
 - Baneado: opción de restaurar.
+- Cualquier estado: **Transferir** — el admin puede mover el ítem a otra cuenta (personal u organización) para ayudar a usuarios que publicaron en el contexto equivocado. Abre un buscador de cuentas y confirma la transferencia directamente sin necesidad de aprobación.
 
 ---
 
@@ -779,7 +784,7 @@ Indicador de ocupación en el header de la tabla: **X / 12 avisos activos**.
 
 Estados posibles: Pendiente · Activo · Rechazado · Baneado · Expirado
 
-Acciones: Aprobar, Rechazar (con motivo), Banear, Restaurar.
+Acciones: Aprobar, Rechazar (con motivo), Banear, Restaurar, **Transferir** (mismo comportamiento que en eventos — buscador de cuentas, sin aprobación requerida).
 
 ---
 
@@ -793,7 +798,7 @@ Indicador de ocupación en el header de la tabla: **X / 5 portadas activas**.
 
 Estados posibles: Pendiente · Activo · Rechazado · Baneado · Expirado
 
-Acciones: Aprobar, Rechazar (con motivo), Banear, Restaurar.
+Acciones: Aprobar, Rechazar (con motivo), Banear, Restaurar, **Transferir**.
 
 ---
 
@@ -809,7 +814,7 @@ Al abrir un artículo para revisar o editar, se muestra un editor WYSIWYG con ba
 
 El editor incluye un botón de IA (ícono sparkle ✦) que sugiere una corrección del texto completo. Al activarlo se muestra un preview lado a lado del original vs. la versión corregida; el admin acepta (se guarda la nueva versión) o descarta (permanece el original). El original se preserva siempre independientemente de la acción tomada.
 
-Acciones: Aprobar, Rechazar con motivo legal, Banear, Editar.
+Acciones: Aprobar, Rechazar con motivo legal, Banear, Editar, **Transferir**.
 
 ---
 

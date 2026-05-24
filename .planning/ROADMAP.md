@@ -257,7 +257,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 
 | Phase | Name | Goal | Requirements |
 |-------|------|------|--------------|
-| 8 | 2/6 | In Progress|  |
+| 8 | 3/6 | In Progress|  |
 | 9 | Organizaciones y transferencias | Organizaciones con roles OWNER/MEMBER, middleware X-Org-Context, transferencia de contenido | ORG-01..05 |
 | 10 | Auth avanzado | 2FA obligatorio, Google OAuth con onboarding, change email/password | AUTH-01..04 |
 | 11 | Notificaciones y Settings | Sistema de mensajes internos, valores configurables desde DB | CFG-01..03 |
@@ -278,12 +278,12 @@ implementar ninguna otra fase.
 
 **Status:** 🔄 Planning (6 plans creados, ejecución pendiente)
 
-**Plans:** 2/6 plans executed
+**Plans:** 3/6 plans executed
 
 Plans:
 - [x] 08-01-PLAN.md — User v2 (SCH-01): type, handle, isVerified, twoFactorCode, twoFactorExpiry + agregar SCH-01..06 a REQUIREMENTS.md
 - [x] 08-02-PLAN.md — Geografía 3-nivel (SCH-02): Country/State/City + seeder Chile + reescritura catalog/events/profiles
-- [ ] 08-03-PLAN.md — Organizaciones (SCH-03): OrgMember, OrgInvitation, enum OrgRole
+- [x] 08-03-PLAN.md — Organizaciones (SCH-03): OrgMember, OrgInvitation, enum OrgRole
 - [ ] 08-04-PLAN.md — Sistemas core (SCH-04): Settings, Notification, SavedEvent, Subscription, Transfer + seed de 12 defaults
 - [ ] 08-05-PLAN.md — Category v2 + Orders v2 + Article v2 (SCH-05): Category metadata, ARTICLE en OrderItemType, Order.orgId, Article.status/userId
 - [ ] 08-06-PLAN.md — Servicios y CRM (SCH-06): ServiceRequest, ServiceOption, CrmEntry (NUEVO independiente), CrmNote — ContactMessage SIN CAMBIOS

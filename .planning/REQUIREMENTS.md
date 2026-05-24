@@ -142,7 +142,7 @@ administrador quedan visibles al público.
   `Region` y `Commune`. `Event.cityId` reemplaza `Event.regionId`/`Event.communeId`.
   Seeder con datos de Chile (1 país + 16 states + ~350 cities). Catalog module y DTOs
   actualizados; `pnpm tsc --noEmit` pasa.
-- [ ] **SCH-03**: Modelos `OrgMember` (userId, orgId, role: OWNER|MEMBER, unique
+- [x] **SCH-03**: Modelos `OrgMember` (userId, orgId, role: OWNER|MEMBER, unique
   (userId, orgId)) y `OrgInvitation` (token unique, email, orgId, expiresAt). El enum
   `OrgRole` se define en este plan.
 - [ ] **SCH-04**: Modelos `Settings` (key PK, value String), `Notification` (userId u

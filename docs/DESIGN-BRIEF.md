@@ -319,7 +319,8 @@ Panel personal transversal — lo usan todos los usuarios, incluyendo admins. La
 Links en orden, el ítem activo resaltado:
 
 - Mi perfil → `/cuenta`
-- Organizador → `/cuenta/organizador` *(aparece en el sidebar solo después del primer pago)*
+- Organizador → `/cuenta/organizador` *(solo en contexto personal, después del primer pago)*
+- Miembros → `/cuenta/miembros` *(solo en contexto de organización, reemplaza a Organizador)*
 - Mis organizaciones → `/cuenta/organizaciones` *(aparece siempre; si no tiene ninguna muestra CTA para crear la primera)*
 - Suscripción → `/cuenta/suscripcion` *(aparece siempre; si no tiene plan activo muestra CTA para suscribirse)*
 - Mis eventos → `/cuenta/mis-eventos`
@@ -375,20 +376,22 @@ Lista de organizaciones a las que pertenece el usuario — como Owner o como Mem
 
 Cada fila muestra: avatar de la organización, nombre, handle, rol del usuario en ella (Owner / Member) y botón para **Entrar** (activa el switcher de contexto a esa org).
 
-Botón **"Crear organización"** en la parte superior — disponible para cualquier usuario.
+Botón **"Crear organización"** en la parte superior — disponible para cualquier usuario. Al crear, se abre un formulario simple: nombre (requerido), handle/URL (requerido, único, validación en tiempo real) y avatar (opcional). El usuario que la crea queda automáticamente como Owner.
 
-**Crear organización** — formulario simple:
-- Nombre de la organización (requerido)
-- Handle / URL `/@handle` (requerido, único, validación en tiempo real)
-- Avatar (opcional)
+> Una organización es técnicamente un user con `type: ORGANIZATION`. Al hacer switch a ella, `/cuenta` muestra su perfil — misma vista, mismos campos que una cuenta personal. No hay páginas duplicadas.
 
-El usuario que crea la organización queda automáticamente como Owner.
+---
 
-**Gestión de la organización** — al hacer clic en una org de la lista se abre su panel de configuración:
+##### `/cuenta/miembros` *(solo visible en contexto de organización)*
 
-- Editar nombre, handle, avatar, banner, bio y redes sociales *(solo Owner)*
-- **Miembros** — lista de miembros con su rol. Acciones: invitar por email, cambiar rol Owner ↔ Member, eliminar miembro *(solo Owner)*. Un Owner no puede eliminarse a sí mismo si es el único Owner.
-- **Danger Zone** *(solo Owner)* — eliminar la organización con lightbox de confirmación. Advierte que se eliminará todo el contenido asociado.
+Aparece en el sidebar únicamente cuando el usuario está operando en nombre de una organización. No existe en la cuenta personal.
+
+- Lista de miembros con avatar, nombre, email y rol (Owner / Member)
+- **Invitar** — campo de email + botón. El invitado recibe un email con link para aceptar. Hasta aceptar aparece como "Pendiente".
+- Cambiar rol Owner ↔ Member *(solo Owner)*
+- Eliminar miembro *(solo Owner)*. Un Owner no puede eliminarse si es el único Owner.
+
+**Danger Zone** *(solo Owner)* — eliminar la organización con lightbox de confirmación. Advierte que se eliminará todo el contenido asociado.
 
 ---
 

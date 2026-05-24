@@ -732,3 +732,57 @@ model Transfer {
   @@index([fromUserId])
   @@index([itemType, itemId])
 }
+
+// ─────────────────────────── v2 Servicios y CRM ──────────────────────
+
+enum ServiceType {
+  PHOTOGRAPHY
+  CONTENT
+}
+
+enum CrmType {
+  CONTACT
+  PHOTOGRAPHY
+  CONTENT
+}
+
+enum CrmStage {
+  NEW
+  CONTACTED
+  NEGOTIATING
+  WON
+  LOST
+}
+
+// Opción de servicio (checkbox del formulario público de fotografía o content-creators).
+// CRUD en /services/photography/options y /services/content-creators/options (admin).
+model ServiceOption {
+  id        Int              @id @default(autoincrement())
+  type      ServiceType
+  label     String
+  active    Boolean          @default(true)
+  order     Int              @default(0)
+  requests  ServiceRequest[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([type, active])
+}
+
+// Solicitud pública de cotización (sin auth requerida).
+// Al crearse, el service layer de Phase 14 también creará una CrmEntry asociada
+// vía sourceType + sourceId. Las opciones marcadas en el form son many-to-many.
+model ServiceRequest {
+  id          Int             @id @default(autoincrement())
+  type        ServiceType
+  name        String
+  email       String
+  eventName   String?
+  eventDate   DateTime?       @db.Date
+  eventPlace  String?
+  options     ServiceOption[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([type, createdAt])
+}

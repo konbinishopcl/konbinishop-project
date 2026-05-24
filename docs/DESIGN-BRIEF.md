@@ -83,7 +83,7 @@ Estructura fija de arriba a abajo:
 3. **Avisos (Spots)** — franja de avisos pagados. Cada aviso tiene imagen y un CTA cuyo destino puede ser una URL externa, una URL interna, un email o un teléfono. El diseño del botón debe contemplar estos casos (ícono y texto varían según el tipo de enlace). **Los avisos deben tener el mismo tamaño de card que los Destacados** — son un producto pagado y deben tener la misma prominencia visual. Si hay cupos disponibles (menos de 12 avisos activos), los slots vacíos muestran una **card de venta** con diseño diferenciado (ej: borde punteado, tono apagado) y texto tipo "Tu aviso aquí".
 4. **Rails por categoría** — una sección horizontal por cada categoría que tenga al menos un evento, con hasta 6 cards y un botón "Ver todos".
 5. **Últimas noticias** — rail horizontal con 4-6 cards de artículos editoriales y un botón "Ver todas" que lleva a `/noticias`. Va al final del home: los eventos tienen prioridad, las noticias son el cierre para quienes quieren más contenido.
-6. **Fotografía para tu evento** — franja de venta del servicio de fotografía de Konbini. Aparece antes de "Últimos en unirse". Imagen de fondo con fotos de eventos reales, titular, descripción corta del servicio y CTA "Cotizar fotógrafo" que lleva a `/fotografia`.
+6. **Servicios para tu evento** — franja de venta en dos columnas antes de "Últimos en unirse". Columna izquierda: fotografía (imagen de fondo, titular, descripción corta, CTA "Cotizar fotógrafo" → `/fotografia`). Columna derecha: creadores de contenido (imagen de fondo, titular, descripción corta, CTA "Cotizar contenido" → `/creadores`). Ambas columnas tienen el mismo peso visual.
 7. **Últimos en unirse** — franja de cierre con avatares de los organizadores más recientes y un contador social ("Únete a +500 organizadores"). CTA hacia la página de precios. Funciona como prueba social para convertir visitantes en organizadores.
 
 Estados a diseñar: sin portadas activas (sección oculta), sin eventos publicados aún (estado de lanzamiento), cargando.
@@ -261,11 +261,21 @@ Contenido:
 
 #### 3.10 Fotografía `/fotografia`
 
-Landing de venta del servicio de fotografía de Konbini para eventos.
+Landing de venta del servicio de fotografía de Konbini para eventos. Debe vender el producto con fuerza — fotos de calidad, trabajo real, confianza.
 
-- **Hero con formulario de cotización** — imagen de fondo con fotos de eventos reales. Encima, el formulario de contacto básico con los campos: nombre del organizador, nombre del evento, fecha del evento, lugar, descripción breve de lo que necesitan y email de contacto. El botón de envío despacha la solicitud directamente a los admins (aparece en `/dashboard/photography`). El formulario está en el hero para maximizar conversión — el usuario no tiene que hacer scroll para cotizar.
+- **Hero con formulario de cotización** — imagen de fondo con fotos de eventos reales. Encima, el formulario con los campos: nombre del organizador, nombre del evento, fecha del evento, lugar, email de contacto y **checkboxes de servicios** (las opciones son editables desde `/dashboard/settings`). El botón de envío despacha la solicitud a los admins (aparece en `/dashboard/photography`). El formulario está en el hero para maximizar conversión.
 - **Galería de trabajos** — muestra fotos de eventos anteriores cubiertos por Konbini.
-- **Descripción del servicio** — qué incluye, tipos de cobertura disponibles, etc.
+- **Descripción del servicio** — propuesta de valor, por qué contratar a Konbini.
+
+---
+
+#### 3.11 Creadores de contenido `/creadores`
+
+Landing de venta del servicio de creadores de contenido de Konbini para eventos. Mismo estilo y estructura que la landing de fotografía, con contenido propio del servicio.
+
+- **Hero con formulario de cotización** — imagen/video de fondo con trabajos reales. Formulario con los mismos campos base que fotografía más **checkboxes de servicios** propios de este servicio (reels, aftermovie, cobertura en redes, stories en vivo, etc. — editables desde `/dashboard/settings`). La solicitud va a los admins (aparece en `/dashboard/content-creators`).
+- **Galería/showreel de trabajos** — videos o clips de coberturas anteriores.
+- **Descripción del servicio** — propuesta de valor.
 
 ---
 
@@ -504,7 +514,7 @@ Al pagar: redirige a la pasarela seleccionada. Al volver, hay dos pantallas dedi
 - **Éxito** — pantalla de confirmación con cinco elementos:
   1. **Resumen del pago** — detalle de los ítems recién comprados (evento, aviso, portada y/o artículo), monto total y estado ("tu contenido está en revisión")
   2. **Aviso de perfil de organizador** — mensaje que invita a completar o actualizar los datos del perfil público en `/cuenta` para que la audiencia los encuentre
-  3. **Fotografía para tu evento** — bloque que pregunta "¿Necesitas fotógrafo para tu evento?" con una descripción breve del servicio y CTA "Cotizar fotógrafo" que lleva a `/fotografia`. Aparece siempre, independiente de si el organizador ya contrató el servicio antes.
+  3. **Servicios para tu evento** — bloque en dos columnas: izquierda fotografía (descripción breve + CTA "Cotizar fotógrafo" → `/fotografia`) y derecha creadores de contenido (descripción breve + CTA "Cotizar contenido" → `/creadores`). Aparece siempre.
   4. **Formulario de satisfacción** — valoración de 5 estrellas + campo de texto opcional + botón enviar. Simple y rápido.
   5. **CTAs de salida** — dos opciones: "Ver mi evento" (preview del evento recién creado, visible solo para el dueño aunque esté en revisión) y "Ir al home"
 
@@ -660,7 +670,7 @@ Contenido:
 
 Área exclusiva para roles ADMIN y SUPER_ADMIN. Inaccesible para usuarios normales. Layout propio: sidebar izquierdo fijo con logo, grupos de navegación y usuario activo en el pie; topbar superior con título de sección y acciones contextuales. El sidebar distingue visualmente los ítems solo disponibles para SUPER_ADMIN.
 
-#### 3.19 Home `/dashboard`
+#### 3.21 Home `/dashboard`
 
 Vista general del sistema.
 
@@ -675,7 +685,7 @@ Vista general del sistema.
 
 ---
 
-#### 3.20 Eventos `/dashboard/events`
+#### 3.22 Eventos `/dashboard/events`
 
 Moderación de eventos enviados por organizadores.
 
@@ -694,7 +704,7 @@ Acciones según estado:
 
 ---
 
-#### 3.21 Avisos `/dashboard/spots`
+#### 3.23 Avisos `/dashboard/spots`
 
 Moderación de avisos publicitarios.
 
@@ -708,7 +718,7 @@ Acciones: Aprobar, Rechazar (con motivo), Banear, Restaurar.
 
 ---
 
-#### 3.22 Portadas `/dashboard/heroes`
+#### 3.24 Portadas `/dashboard/heroes`
 
 Moderación de portadas (hero banners del home).
 
@@ -722,7 +732,7 @@ Acciones: Aprobar, Rechazar (con motivo), Banear, Restaurar.
 
 ---
 
-#### 3.23 Artículos `/dashboard/articles`
+#### 3.25 Artículos `/dashboard/articles`
 
 Gestión y moderación de artículos patrocinados enviados por organizadores.
 
@@ -738,7 +748,7 @@ Acciones: Aprobar, Rechazar con motivo legal, Banear, Editar.
 
 ---
 
-#### 3.24 Usuarios `/dashboard/users` — Solo SUPER_ADMIN
+#### 3.26 Usuarios `/dashboard/users` — Solo SUPER_ADMIN
 
 Gestión de cuentas de la plataforma.
 
@@ -750,7 +760,7 @@ Acciones: Ver perfil público (si es organizador), cambiar rol, bannear/desbanea
 
 ---
 
-#### 3.25 Pagos & ventas `/dashboard/payments`
+#### 3.27 Pagos & ventas `/dashboard/payments`
 
 Historial de transacciones de la plataforma.
 
@@ -764,7 +774,7 @@ Acción: Exportar CSV.
 
 ---
 
-#### 3.26 Suscripciones `/dashboard/subscriptions`
+#### 3.28 Suscripciones `/dashboard/subscriptions`
 
 Gestión del plan mensual desde el panel de administración.
 
@@ -783,7 +793,7 @@ Configuración del plan (bloque separado en la misma página):
 
 ---
 
-#### 3.27 Mantenedores
+#### 3.29 Mantenedores
 
 Secciones CRUD para la información que alimenta los selectores del formulario de creación de eventos y otras partes del sistema. Todos los mantenedores protegen la eliminación si el registro tiene contenido asociado.
 
@@ -819,7 +829,7 @@ Los tres mantenedores geográficos funcionan en cascada en los formularios del s
 
 ---
 
-#### 3.28 Reportes `/dashboard/reports`
+#### 3.30 Reportes `/dashboard/reports`
 
 Reportes exportables de la plataforma.
 
@@ -831,7 +841,7 @@ Exportar en CSV.
 
 ---
 
-#### 3.29 Logs & auditoría `/dashboard/logs`
+#### 3.31 Logs & auditoría `/dashboard/logs`
 
 Historial completo de acciones administrativas. Solo lectura.
 
@@ -841,7 +851,7 @@ Filtros: admin responsable, tipo de acción, rango de fechas.
 
 ---
 
-#### 3.30 Contacto `/dashboard/contact`
+#### 3.32 Contacto `/dashboard/contact`
 
 Bandeja de mensajes recibidos desde el formulario de contacto del sitio público.
 
@@ -851,25 +861,35 @@ Acciones: abrir detalle, marcar como leído, archivar. La respuesta se hace fuer
 
 ---
 
-#### 3.31 Fotografía `/dashboard/photography`
+#### 3.33 Fotografía `/dashboard/photography`
 
 Bandeja de solicitudes de fotografía recibidas desde el formulario de `/fotografia` y desde el bloque en la thank you page.
 
-Cada solicitud muestra: nombre del organizador, nombre del evento, fecha del evento, lugar, descripción, email de contacto y un **badge de estado del pipeline** (igual que Contacto). El estado se actualiza desde el CRM (3.32) y se refleja aquí automáticamente.
+Cada solicitud muestra: nombre del organizador, nombre del evento, fecha del evento, lugar, servicios solicitados (checkboxes marcados), email de contacto y un **badge de estado del pipeline** (igual que Contacto). El estado se actualiza desde el CRM (3.33) y se refleja aquí automáticamente.
 
 Acciones: abrir detalle, archivar. La respuesta y coordinación se hace fuera de la plataforma (email externo).
 
 ---
 
-#### 3.32 CRM `/dashboard/crm`
+#### 3.34 Creadores de contenido `/dashboard/content-creators`
 
-Vista kanban única que centraliza todas las solicitudes entrantes — tanto de Contacto como de Fotografía. Es el lugar donde el equipo hace el seguimiento comercial sin necesitar una herramienta externa.
+Bandeja de solicitudes recibidas desde el formulario de `/creadores` y desde el bloque en la thank you page.
+
+Cada solicitud muestra: nombre del organizador, nombre del evento, fecha del evento, servicios solicitados (checkboxes marcados), email de contacto y **badge de estado del pipeline**. El estado se actualiza desde el CRM (3.33).
+
+Acciones: abrir detalle, archivar.
+
+---
+
+#### 3.35 CRM `/dashboard/crm`
+
+Vista kanban única que centraliza todas las solicitudes entrantes — Contacto, Fotografía y Creadores de contenido. Es el lugar donde el equipo hace el seguimiento comercial sin necesitar una herramienta externa.
 
 **Columnas del pipeline:**
 
 Nuevo · Contactado · En negociación · Cerrado ganado · Cerrado perdido
 
-Cada tarjeta muestra: nombre del contacto, tipo (badge **Contacto** o **Fotografía**), fecha de la solicitud y fecha del último movimiento.
+Cada tarjeta muestra: nombre del contacto, tipo (badge **Contacto**, **Fotografía** o **Creadores**), fecha de la solicitud y fecha del último movimiento.
 
 Al abrir una tarjeta se despliega el detalle completo con:
 
@@ -881,7 +901,7 @@ Las tarjetas se mueven entre columnas arrastrando (drag & drop). Mover una tarje
 
 ---
 
-#### 3.34 FAQ `/dashboard/faq`
+#### 3.36 FAQ `/dashboard/faq`
 
 Gestión del contenido de la sección de preguntas frecuentes del sitio público.
 
@@ -889,7 +909,7 @@ CRUD de pares pregunta/respuesta. Permite reordenar manualmente.
 
 ---
 
-#### 3.35 Configuración `/dashboard/settings`
+#### 3.37 Configuración `/dashboard/settings`
 
 ##### Precios y límites de Avisos
 
@@ -914,6 +934,14 @@ Mismo bloque para portadas:
 Valores por defecto al instalar: 15.000 CLP/día · mínimo 10 días · máximo 30 días · cupo 5.
 
 > Los indicadores de ocupación en `/dashboard/spots` (X / N avisos activos) y `/dashboard/heroes` (X / N portadas activas) reflejan el cupo configurado aquí. Los formularios de crear aviso y portada también usan los límites de días de esta sección.
+
+##### Servicios de fotografía
+
+Lista de opciones disponibles en el formulario de `/fotografia`. CRUD simple: agregar, editar y eliminar opciones. Cada opción es un checkbox que el organizador ve al cotizar. Ejemplo: "Cobertura completa del evento", "Sesión previa al evento", "Entrega en 48 horas", etc.
+
+##### Servicios de creadores de contenido
+
+Mismo CRUD para las opciones del formulario de `/creadores`. Ejemplo: "Reels para Instagram/TikTok", "Aftermovie", "Cobertura en vivo (stories)", "Video resumen", etc.
 
 ##### Textos legales
 

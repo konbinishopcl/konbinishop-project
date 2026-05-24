@@ -251,9 +251,7 @@ Contenido:
 
 - Propuesta de valor ("Llega a miles de fans geeks en Chile")
 - Explicación del modelo: el costo es por días de publicación, el precio varía según la categoría del evento
-- Comparación de planes — tabla o cards lado a lado con dos opciones:
-  - **Pay as you go** — pago por evento individual, sin compromiso
-  - **Plan mensual** — suscripción con 10 créditos de publicación por mes (45 días por evento), descuento en avisos y portadas, créditos no acumulables
+- Sección de suscripción mensual — presenta el plan como una opción para organizadores frecuentes: 10 eventos incluidos por mes (45 días c/u), descuento en avisos y portadas. CTA para suscribirse.
 - Productos disponibles: Publicación de evento / Aviso / Portada — qué es cada uno y para qué sirve
 - CTA principal: "Publicar mi evento"
 - Preguntas frecuentes de publicación

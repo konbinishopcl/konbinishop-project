@@ -47,7 +47,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 8 | Schema v2 | 🔄 Planning | 0/6 |
+| 8 | Schema v2 | 🔄 In Progress | 1/6 |
 | 9 | Organizaciones y transferencias | ⏳ Pending | 0/5 |
 | 10 | Auth avanzado | ⏳ Pending | 0/4 |
 | 11 | Notificaciones y Settings | ⏳ Pending | 0/3 |

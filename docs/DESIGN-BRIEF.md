@@ -376,7 +376,7 @@ Lista de organizaciones a las que pertenece el usuario — como Owner o como Mem
 
 Cada fila muestra: avatar de la organización, nombre, handle, rol del usuario en ella (Owner / Member) y botón para **Entrar** (activa el switcher de contexto a esa org).
 
-Botón **"Crear organización"** en la parte superior — disponible para cualquier usuario. Al crear, se abre un formulario simple: nombre (requerido), handle/URL (requerido, único, validación en tiempo real) y avatar (opcional). El usuario que la crea queda automáticamente como Owner.
+Botón **"Crear organización"** en la parte superior — disponible para cualquier usuario. Al crear, se abre un formulario con: nombre (requerido), handle/URL (requerido, único, validación en tiempo real), avatar (opcional) y descripción (opcional). La organización queda activa de inmediato — sin aprobación previa. El usuario que la crea queda automáticamente como Owner. El admin puede banearla posteriormente si hay abuso, igual que con cualquier otro contenido.
 
 > Una organización es técnicamente un user con `type: ORGANIZATION`. Al hacer switch a ella, `/cuenta` muestra su perfil — misma vista, mismos campos que una cuenta personal. No hay páginas duplicadas.
 
@@ -426,7 +426,10 @@ Lista de eventos creados por el usuario. Tabs con contador de ítems por estado:
 - **Rechazados** — muestra el motivo de rechazo
 - **Archivados** — eventos cuya publicación venció. Cada card tiene botón **"Renovar"** que lleva al carrito para elegir nuevos días y volver a publicar
 
-Cada ítem tiene una acción **"Transferir a organización"** — abre un selector con las organizaciones a las que pertenece el usuario. Al confirmar, se envía una solicitud de transferencia al Owner de la org. Hasta que sea aceptada, el ítem sigue siendo del usuario. Si es rechazada, no cambia nada.
+Cada ítem tiene una acción **"Transferir a organización"** — abre un selector con las organizaciones a las que pertenece el usuario. Dos casos:
+
+- **El usuario es Owner de la org destino** → la transferencia se aplica inmediatamente, sin aprobación.
+- **El usuario es Member** → se envía una solicitud al Owner. El Owner recibe un mensaje en `/cuenta/mensajes` y un email, ambos con botones Aceptar / Rechazar inline. Hasta que acepte, el ítem sigue a nombre del usuario. Si rechaza, no cambia nada.
 
 Empty state: CTA para crear el primer evento.
 
@@ -822,11 +825,11 @@ Acciones: Aprobar, Rechazar con motivo legal, Banear, Editar, **Transferir**.
 
 Gestión de cuentas de la plataforma.
 
-Tabla con columnas: avatar, nombre completo, username, email, rol, fecha de registro, estado.
+Tabla con columnas: avatar, nombre completo, username, email, tipo (Persona / Organización), rol, fecha de registro, estado.
 
-Filtros: rol (Admin / Organizador / Usuario), estado (Activo / Baneado), búsqueda.
+Filtros: tipo (Persona / Organización), rol (Admin / Usuario), estado (Activo / Baneado), búsqueda.
 
-Acciones: Ver perfil público (si es organizador), cambiar rol, bannear/desbanear, asignar o revocar badge Verificado al perfil de organizador.
+Acciones: Ver perfil público, cambiar rol, bannear/desbanear, asignar o revocar badge Verificado. Las organizaciones pueden banearse igual que una cuenta personal — al banear una org su perfil público desaparece y sus miembros no pueden operar en su nombre.
 
 ---
 

@@ -211,6 +211,7 @@ model Event {
   videos      EventVideo[]
   orderItems  OrderItem[]
   likes       Like[]
+  savedBy     SavedEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -378,6 +379,15 @@ model User {
   memberships    OrgMember[]     @relation("UserMemberships")  // orgs a las que este user pertenece
   orgMembers     OrgMember[]     @relation("OrgMembers")        // miembros de este user si es ORGANIZATION
   orgInvitations OrgInvitation[] @relation("OrgInvitations")    // invitaciones emitidas por este user si es ORGANIZATION
+
+  // v2 Core systems — relaciones inversas
+  notifications     Notification[] @relation("UserNotifications")
+  orgNotifications  Notification[] @relation("OrgNotifications")
+  savedEvents       SavedEvent[]
+  subscription      Subscription?  @relation("UserSubscription")
+  orgSubscription   Subscription?  @relation("OrgSubscription")
+  transfersFrom     Transfer[]     @relation("TransferFrom")
+  transfersTo       Transfer[]     @relation("TransferTo")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -551,4 +561,145 @@ model OrgInvitation {
 
   @@index([orgId])
   @@index([token])
+}
+
+// ─────────────────────────── v2 Core systems ────────────────────────────
+
+enum NotificationType {
+  EVENT_APPROVED
+  EVENT_REJECTED
+  EVENT_BANNED
+  SPOT_APPROVED
+  SPOT_REJECTED
+  SPOT_BANNED
+  HERO_APPROVED
+  HERO_REJECTED
+  HERO_BANNED
+  ARTICLE_APPROVED
+  ARTICLE_REJECTED
+  ARTICLE_BANNED
+  ORG_INVITATION
+  TRANSFER_REQUEST
+  TRANSFER_ACCEPTED
+  TRANSFER_REJECTED
+  SUBSCRIPTION_ACTIVATED
+  SUBSCRIPTION_CANCELLED
+  SYSTEM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED      // cancelada pero vigente hasta fin de ciclo
+  EXPIRED        // ciclo terminado sin renovación
+}
+
+enum TransferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  AUTO_ACCEPTED  // creada por OWNER de la org destino → no requiere aprobación
+  ADMIN_FORCED   // forzada por admin
+}
+
+enum TransferItemType {
+  EVENT
+  SPOT
+  HERO
+  ARTICLE
+}
+
+// Tabla key-value para configuración del sistema (precios, cupos, créditos).
+// Cast a número/boolean se hace en el service layer. El seeder mantiene los defaults.
+// En Phase 8 esta tabla EXISTE pero el código de aplicación sigue leyendo
+// de env vars hasta que Phase 11 los migre a leer de Settings.
+model Settings {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// Mensaje interno generado automáticamente por el sistema.
+// El destinatario puede ser un user PERSON (userId) o una org (orgId).
+// Exactamente uno de userId / orgId debe estar presente — validado en service layer.
+model Notification {
+  id        Int              @id @default(autoincrement())
+  type      NotificationType
+  title     String
+  body      String?          @db.Text
+  payload   Json             @default("{}")    // datos extra (ej: eventId, fromUserId)
+  read      Boolean          @default(false)
+
+  user      User?            @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int?
+  org       User?            @relation("OrgNotifications",  fields: [orgId],  references: [id], onDelete: Cascade)
+  orgId     Int?
+
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read])
+  @@index([orgId, read])
+  @@index([createdAt])
+}
+
+// Favoritos de eventos — un user puede guardar muchos eventos, sin duplicados.
+model SavedEvent {
+  userId    Int
+  eventId   Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@index([userId])
+  @@index([eventId])
+}
+
+// Suscripción mensual. Puede pertenecer a un user PERSON o a una org (XOR).
+// creditsUsed se resetea al inicio de cada ciclo; no se acumulan.
+model Subscription {
+  id              Int                @id @default(autoincrement())
+  status          SubscriptionStatus @default(ACTIVE)
+
+  user            User?              @relation("UserSubscription", fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int?               @unique  // máximo una sub activa por user
+  org             User?              @relation("OrgSubscription",  fields: [orgId],  references: [id], onDelete: Cascade)
+  orgId           Int?               @unique  // máximo una sub activa por org
+
+  cycleStart      DateTime
+  cycleEnd        DateTime
+  creditsUsed     Int                @default(0)
+  creditsTotal    Int                @default(10)  // copiado desde Settings.SUBSCRIPTION_CREDITS al activar
+
+  cancelledAt     DateTime?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@index([status])
+  @@index([cycleEnd])
+}
+
+// Transferencia polymorphic de un ítem (Event/Spot/Hero/Article) entre cuentas.
+// No hay FKs múltiples al ítem — itemType + itemId; la validación de existencia
+// se hace en service layer (patrón replicado de AuditLog).
+model Transfer {
+  id          Int              @id @default(autoincrement())
+  itemType    TransferItemType
+  itemId      Int
+
+  fromUser    User             @relation("TransferFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  fromUserId  Int
+  toOrg       User             @relation("TransferTo",   fields: [toOrgId],    references: [id], onDelete: Cascade)
+  toOrgId     Int
+
+  status      TransferStatus   @default(PENDING)
+  reason      String?          // motivo si REJECTED
+  resolvedBy  Int?             // userId del OWNER que aceptó/rechazó, o admin
+  resolvedAt  DateTime?
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([toOrgId, status])
+  @@index([fromUserId])
+  @@index([itemType, itemId])
 }

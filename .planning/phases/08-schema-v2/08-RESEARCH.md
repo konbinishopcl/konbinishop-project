@@ -12,6 +12,8 @@ Esta fase reemplaza el schema Prisma actual por el modelo de datos completo de v
 
 El blast radius de la migración es real pero manejable. Solo el módulo `catalog` (región/comuna) y el módulo `events` (regionId/communeId en DTOs y service) necesitan cambios de código inmediatos para que `tsc --noEmit` pase. Los módulos `spots`, `heroes`, `orders` y `payments` tienen referencias a env vars que **permanecen igual en código** — la migración de lógica a Settings es responsabilidad de la Phase 11, no de esta fase. Esta es una fase de schema puro: el código de aplicación no se toca más allá de lo mínimo para que compile.
 
+**Hallazgo crítico:** El modelo `Article` actual (schema.prisma líneas 64-76) no tiene `status: PublicationStatus` ni `userId` (dueño). Sin embargo, API-RULES.md especifica que el flujo de estados DRAFT→PENDING_PAYMENT→PENDING_MODERATION→APPROVED aplica a Event, Spot, Hero **y Article** (artículos patrocinados). El Plan 05 (SCH-05) debe incluir este campo o se necesita un Plan 07 adicional. Ver Open Question #6.
+
 La pregunta clave sobre datos de producción (¿hay organizers reales registrados?) no tiene respuesta en el repo — debe confirmarse con el usuario antes de decidir si la migración puede hacer `migrate reset` o necesita un script de data migration para los eventos con regionId/communeId.
 
 **Recomendación primaria:** Una migración Prisma por SCH-XX (6 archivos de migración separados). La granularidad de rollback justifica el ruido extra en el historial — son cambios de dominio distintos y separados es más fácil de revisar.
@@ -27,7 +29,7 @@ La pregunta clave sobre datos de producción (¿hay organizers reales registrado
 | SCH-02 | Country/State/City reemplaza Region/Commune. Seeder con datos Chile. | 46 referencias a regionId/communeId/Region/Commune en código fuente. 4 archivos TypeScript afectados: catalog.service.ts, catalog.controller.ts, events.service.ts, events/dto/. El seeder actual usa regionsData con 16 regiones + ~350 comunas — se convierte a 1 país + 16 states + comunas como cities. |
 | SCH-03 | OrgMember (userId, orgId, role: OWNER\|MEMBER) y OrgInvitation (token, expiry, email) | Patrón de join table con enum ya existente en el proyecto (OrderItemType). OrgMember necesita unique constraint en (userId, orgId). |
 | SCH-04 | Settings (key-value), Notification, SavedEvent, Subscription, Transfer | Settings: tabla de clave única + valor String con cast en código. Notification necesita userId + orgId? opcionales (mensajes a persona o a org). SavedEvent: unique (userId, eventId). Subscription: userId/orgId + ciclo + créditos. Transfer: polymorphic — itemType enum + itemId Int. |
-| SCH-05 | Category v2 (minDays, maxDays, icon, color, order) + OrderItemType agrega ARTICLE + Order agrega orgId | ARTICLE se agrega al enum OrderItemType existente. OrderItem necesita FK opcional articleId. @@unique([orderId, type]) actual ya cubre ARTICLE si se agrega al enum. Order necesita orgId? (nullable, FK a User con type=ORGANIZATION). |
+| SCH-05 | Category v2 (minDays, maxDays, icon, color, order) + OrderItemType agrega ARTICLE + Order agrega orgId | ARTICLE se agrega al enum OrderItemType existente. OrderItem necesita FK opcional articleId. @@unique([orderId, type]) actual ya cubre ARTICLE si se agrega al enum. Order necesita orgId? (nullable, FK a User con type=ORGANIZATION). **ADEMÁS:** Article necesita status: PublicationStatus + statusReason + userId — actualmente ausentes del schema. Ver Open Question #6. |
 | SCH-06 | ServiceRequest, ServiceOption, CrmNote + campos CRM en ContactMessage | ContactMessage actual: id, name, email, subject, message, read, createdAt. Se extiende con stage (enum CrmStage), type (enum CrmType), crmId (auto?). O bien: ContactMessage se convierte en fuente de entrada para un nuevo modelo CrmEntry unificado. Decisión arquitectónica abierta. |
 </phase_requirements>
 
@@ -72,6 +74,7 @@ pnpm prisma generate        # regenera el cliente
 ```
 
 ### Verificación de versión actual
+
 ```
 @prisma/client: 6.19.3 (confirmado en apps/api/package.json)
 prisma CLI: 6.19.3 (confirmado en apps/api/package.json)
@@ -187,7 +190,7 @@ Alternativa: usar `@@unique([key])` con id autoincrement. La primera opción es 
 
 - **Una única migración mega para todo SCH-01..06:** Dificulta el debug si falla a mitad. Preferir 6 migraciones.
 - **Borrar Region/Commune en la misma migración que crea Country/State/City:** El orden correcto en SCH-02 es (1) crear nuevas tablas, (2) actualizar FKs en Event, (3) drop tablas viejas. Si hay datos reales, entre (2) y (3) va un script de data migration.
-- **Mover la lógica env vars → Settings en esta fase:** Scope creep. Esta fase solo define el modelo `Settings` y lo sembrada con defaults. La integración en services va en Phase 11.
+- **Mover la lógica env vars → Settings en esta fase:** Scope creep. Esta fase solo define el modelo `Settings` y lo siembra con defaults. La integración en services va en Phase 11.
 - **Agregar `handle` a Profile en vez de User:** API-RULES.md confirma que el handle identifica a personas y organizaciones en el mismo namespace. Debe ir en User, no en Profile.
 
 ---
@@ -241,6 +244,16 @@ Alternativa: usar `@@unique([key])` con id autoincrement. La primera opción es 
 - **Recomendación del research:** 6 migraciones separadas (una por SCH-XX). Facilita el debug y el rollback manual si una migración falla en producción. En desarrollo, corren en secuencia sin problema.
 - **Decisión:** Planner confirma.
 
+### 6. Article.status — SCH-05 omite un campo obligatorio para el flujo de artículos patrocinados
+
+- **Hallazgo:** El modelo `Article` actual (schema.prisma líneas 64-76) no tiene `status: PublicationStatus` ni `statusReason` ni `userId` (dueño). Sin embargo, API-RULES.md especifica explícitamente: *"Aplica a Event, Spot, Hero y Article (artículos patrocinados)"* para el flujo de estados. Sin `status`, el tipo `ARTICLE` en `OrderItemType` no tiene sentido — no se puede poner un artículo en `PENDING_PAYMENT` ni `APPROVED`.
+- **Lo que falta en Article:** `status: PublicationStatus`, `statusReason: String?`, `userId: Int?` (dueño, para artículos patrocinados), `orgId: Int?` (dueño organizacional).
+- **Opciones para el planner:**
+  - (A) El Plan 05 (SCH-05) absorbe estos campos de Article además de Category v2 y Orders v2.
+  - (B) Se crea un Plan 07 adicional solo para Article v2 (sponsored article fields).
+- **Recomendación:** Opción A — los campos son simples (3-4 columnas) y la migración encaja naturalmente en SCH-05 que ya toca OrderItemType y el flujo de órdenes.
+- **Decisión:** Planner debe confirmar si Plan 05 absorbe Article.status o se añade un Plan 07.
+
 ---
 
 ## Common Pitfalls
@@ -286,6 +299,13 @@ Alternativa: usar `@@unique([key])` con id autoincrement. La primera opción es 
 **What goes wrong:** El constraint `@@unique([orderId, type])` en OrderItem permite solo un ítem de cada tipo por orden. Si en el futuro se necesitan múltiples artículos en una orden, el constraint es demasiado restrictivo.
 **Why it happens:** La regla de negocio actual es "un ítem por tipo por orden" — es intencional.
 **How to avoid:** Para SCH-05, mantener el constraint como está (un ARTICLE por orden). Si la regla cambia en fases posteriores, se migra el constraint entonces.
+
+### Pitfall 6: Order.orgId no tiene constraint de tipo — cualquier userId puede asignarse como orgId
+
+**What goes wrong:** `Order.orgId` es una FK a `User`, pero la DB no puede verificar que ese User tenga `type = ORGANIZATION`. Un bug en el servicio podría asignar el id de una persona como `orgId`.
+**Why it happens:** MySQL no soporta CHECK constraints sobre valores de FK relacionados con otro campo de la misma fila en otra tabla.
+**How to avoid:** La validación `user.type === 'ORGANIZATION'` debe hacerse en el service layer antes de crear/actualizar una Order con `orgId`. No hay mecanismo de DB para enforcearlo — es una responsabilidad del código de aplicación. Documentar como invariante en Phase 12 (Suscripciones y carrito v2).
+**Warning signs:** Órdenes con `orgId` apuntando a un usuario `PERSON`.
 
 ---
 
@@ -427,7 +447,7 @@ const settingsDefaults = [
 // upsert cada setting
 ```
 
-### SCH-05: Category v2
+### SCH-05: Category v2 + OrderItem con ARTICLE
 
 ```prisma
 model Category {
@@ -437,6 +457,49 @@ model Category {
   minDays  Int        @default(1)
   maxDays  Int        @default(30)
   order    Int        @default(0)
+}
+
+// OrderItemType agrega ARTICLE
+enum OrderItemType {
+  EVENT
+  SPOT
+  HERO
+  ARTICLE
+}
+
+model OrderItem {
+  // ... campos actuales se mantienen ...
+  event     Event?   @relation(fields: [eventId], references: [id])
+  eventId   Int?
+  spot      Spot?    @relation(fields: [spotId], references: [id])
+  spotId    Int?
+  hero      Hero?    @relation(fields: [heroId], references: [id])
+  heroId    Int?
+  article   Article? @relation(fields: [articleId], references: [id])  // NUEVO
+  articleId Int?                                                         // NUEVO
+
+  @@unique([orderId, type])
+  @@index([articleId])  // NUEVO
+}
+
+// Order gana orgId (nullable) para el contexto de organización
+model Order {
+  // ... campos actuales ...
+  orgId   Int?   // FK a User con type=ORGANIZATION — validado en service layer
+  org     User?  @relation("OrgOrders", fields: [orgId], references: [id])
+
+  @@index([orgId])  // NUEVO
+}
+
+// Article gana campos para artículos patrocinados
+// (si Plan 05 absorbe Open Question #6)
+model Article {
+  // ... campos actuales ...
+  status       PublicationStatus @default(DRAFT)  // NUEVO
+  statusReason String?                            // NUEVO
+  owner        User?   @relation("ArticleOwner", fields: [userId], references: [id])
+  userId       Int?                               // NUEVO — dueño del artículo patrocinado
+  orderItems   OrderItem[]                        // NUEVO
 }
 ```
 
@@ -476,19 +539,19 @@ model ServiceOption {
 }
 
 model ServiceRequest {
-  id         Int           @id @default(autoincrement())
-  type       ServiceType
-  name       String
-  email      String
-  eventName  String?
-  eventDate  DateTime?
-  eventPlace String?
-  options    ServiceOption[]
-  stage      CrmStage      @default(NEW)
+  id          Int           @id @default(autoincrement())
+  type        ServiceType
+  name        String
+  email       String
+  eventName   String?
+  eventDate   DateTime?
+  eventPlace  String?
+  options     ServiceOption[]
+  stage       CrmStage      @default(NEW)
   stageReason String?
-  notes      CrmNote[]
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
+  notes       CrmNote[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   @@index([type])
   @@index([stage])
@@ -508,7 +571,7 @@ model CrmNote {
   @@index([contactMessageId])
 }
 
-// Extensión de ContactMessage existente
+// Extensión de ContactMessage existente (Opción A)
 model ContactMessage {
   // ... campos actuales se mantienen ...
   stage  CrmStage  @default(NEW)
@@ -516,7 +579,7 @@ model ContactMessage {
 }
 ```
 
-**Nota:** Este ejemplo asume Opción A (extender ContactMessage). Si el planner elige Opción B (modelo CrmEntry), el schema cambia. Ver Open Question #3.
+**Nota:** El ejemplo SCH-06 asume Opción A (extender ContactMessage). Si el planner elige Opción B (modelo CrmEntry), el schema cambia. Ver Open Question #3.
 
 ---
 
@@ -565,6 +628,7 @@ Para una fase de schema puro, los tests son principalmente de integración con l
 | User sin type/handle | User con type: PERSON\|ORGANIZATION + handle único | Phase 8 (v2) | User único para personas y orgs; handle reemplaza Profile.slug como identificador público |
 | Env vars para precios (SPOT_PRICE_PER_DAY etc.) | Settings tabla en DB | Phase 8 schema / Phase 11 lógica | Admin puede cambiar precios sin reiniciar el servidor |
 | ContactMessage simple (6 campos) | ContactMessage extendida con CRM stage | Phase 8 (v2) | Integración al pipeline CRM unificado |
+| Article sin status ni dueño | Article con status: PublicationStatus + userId | Phase 8 (v2) | Habilita el flujo de artículos patrocinados con estados y ownership |
 
 **Deprecated/outdated después de esta fase:**
 - `Region` model: será dropeada en SCH-02
@@ -581,11 +645,11 @@ Para una fase de schema puro, los tests son principalmente de integración con l
 - `docs/API-RULES.md` — reglas de negocio y modelos requeridos para v2, verificado manualmente
 - `.planning/ROADMAP.md` — descripción de Phase 8 y SCH-01..06
 - `apps/api/prisma/seed.ts` — seeder actual con 16 regiones + ~350 comunas
-- `apps/api/src/catalog/catalog.service.ts`, `catalog.controller.ts` — blast radius de Region/Commune verificado con rg
+- `apps/api/src/catalog/catalog.service.ts`, `catalog.controller.ts` — blast radius de Region/Commune verificado con `rg`
 
 ### Secondary (MEDIUM confidence)
 
-- `apps/api/src/events/events.service.ts`, `events/dto/` — 6 referencias a regionId/communeId confirmadas con rg
+- `apps/api/src/events/events.service.ts`, `events/dto/` — 6 referencias a regionId/communeId confirmadas con `rg`
 - `apps/api/src/profiles/profiles.service.ts` — profileInclude() incluye `region: true, commune: true` — debe actualizarse en SCH-02
 - `.planning/STATE.md` — contexto histórico de decisiones de stack
 
@@ -599,7 +663,7 @@ Para una fase de schema puro, los tests son principalmente de integración con l
 
 **Confidence breakdown:**
 - Standard stack: HIGH — Prisma 6.19.3 confirmado en package.json
-- Blast radius (region/commune): HIGH — 46 referencias confirmadas con rg, archivos listados
+- Blast radius (region/commune): HIGH — 46 referencias confirmadas con `rg`, archivos listados
 - Architecture patterns: HIGH — basados en patrones ya existentes en el proyecto (OrderItem, AuditLog)
 - Open questions: HIGH — son genuinamente preguntas abiertas que el planner debe resolver, no incertidumbre de research
 

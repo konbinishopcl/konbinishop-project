@@ -13,27 +13,39 @@ datasource db {
 
 // ─────────────────────────── Geografía ───────────────────────────
 
-model Region {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  slug      String    @unique
-  communes  Commune[]
-  events    Event[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model Commune {
+model Country {
   id        Int      @id @default(autoincrement())
   name      String   @unique
   slug      String   @unique
-  region    Region?  @relation(fields: [regionId], references: [id])
-  regionId  Int?
+  states    State[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model State {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  country   Country  @relation(fields: [countryId], references: [id])
+  countryId Int
+  cities    City[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([countryId])
+}
+
+model City {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  state     State    @relation(fields: [stateId], references: [id])
+  stateId   Int
   events    Event[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([regionId])
+  @@index([stateId])
 }
 
 // ─────────────────────────── Taxonomía ───────────────────────────
@@ -186,10 +198,8 @@ model Event {
   rejectedById Int?
 
   // Relaciones
-  region     Region?    @relation(fields: [regionId], references: [id])
-  regionId   Int?
-  commune    Commune?   @relation(fields: [communeId], references: [id])
-  communeId  Int?
+  city       City?      @relation(fields: [cityId], references: [id])
+  cityId     Int?
   category   Category?  @relation(fields: [categoryId], references: [id])
   categoryId Int?
   articles   Article[]
@@ -205,8 +215,7 @@ model Event {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([regionId])
-  @@index([communeId])
+  @@index([cityId])
   @@index([userId])
   @@index([approvedById])
   @@index([rejectedById])

@@ -149,7 +149,7 @@ administrador quedan visibles al público.
   orgId, read, type, payload Json), `SavedEvent` (userId+eventId unique), `Subscription`
   (userId u orgId, status, cycle dates, credits), `Transfer` (itemType enum + itemId Int
   polymórfico, status, fromUserId, toOrgId).
-- [ ] **SCH-05**: `Category` extendida con `icon`, `color`, `minDays`, `maxDays`,
+- [x] **SCH-05**: `Category` extendida con `icon`, `color`, `minDays`, `maxDays`,
   `order`. Enum `OrderItemType` agrega `ARTICLE`. `OrderItem` agrega FK opcional
   `articleId`. `Order` agrega `orgId` (FK opcional a User type ORGANIZATION,
   validación en service layer). `Article` agrega `status: PublicationStatus`,

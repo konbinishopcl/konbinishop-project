@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-24T23:51:12.561Z"
+last_updated: "2026-05-24T23:56:24.151Z"
 progress:
   total_phases: 15
   completed_phases: 7
   total_plans: 25
-  completed_plans: 23
+  completed_plans: 24
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 8 — Schema v2 (planificando)
 **Overall Progress:** [████████--------] Phases 0–7 completas (v1) · Phases 8–14 pendientes (v2)
-**Last session:** 2026-05-24T23:51:12.555Z
+**Last session:** 2026-05-24T23:56:24.149Z
 
 ## Phase Summary
 
@@ -94,6 +94,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 08-02]: Jerarquía geográfica 3-nivel: Country → State → City. migrate reset (seed-only confirmado). query-events usa `state` en vez de `region`. Controller pattern: clase por recurso (@Controller('countries')) no @Get('countries') en un solo controller.
 - [Phase 08-03]: MySQL cannot enforce user.type=ORGANIZATION for OrgMember.orgId — enforcement is service-layer (Phase 9). OrgRole enum: OWNER/MEMBER. Migration: 20260524234414_sch03_organizations.
 - [Phase 08-04]: KEY #5 locked: env vars de precios permanecen en código en Phase 8; migración env→Settings es scope de Phase 11. Settings.upsert con update:{} — valor admin-modificado no se sobreescribe. Transfer polymorphic via itemType+itemId sin FKs múltiples (patrón AuditLog). Migration: 20260524234837_sch04_core_systems.
+- [Phase 08-05]: KEY #4 locked: Article.status absorbed in SCH-05; Pitfall #5: @@unique([orderId,type]) stays intact; Pitfall #6: Order.orgId enforcement is service-layer (MySQL cannot CHECK cross-row); UserOrders relation rename is schema-metadata-only (no DDL, no TS breaks)
 
 ## Quick Tasks Completed
 

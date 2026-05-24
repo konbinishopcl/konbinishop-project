@@ -134,7 +134,7 @@ administrador quedan visibles al público.
 
 ### Schema v2 (Phase 8)
 
-- [ ] **SCH-01**: Modelo `User` extendido con `type: UserType (PERSON|ORGANIZATION)`,
+- [x] **SCH-01**: Modelo `User` extendido con `type: UserType (PERSON|ORGANIZATION)`,
   `handle` (String unique global), `isVerified` (Boolean default false), `twoFactorCode`
   (String?), `twoFactorExpiry` (DateTime?). Migración Prisma aplicada y `prisma generate`
   regenera el cliente sin errores de tipo.

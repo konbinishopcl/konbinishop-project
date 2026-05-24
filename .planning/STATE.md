@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Plataforma completa
-status: in_progress
-last_updated: "2026-05-24T00:00:00.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-05-24T22:39:38.823Z"
 progress:
   total_phases: 15
-  completed_phases: 8
-  total_plans: 19
-  completed_plans: 19
+  completed_phases: 7
+  total_plans: 25
+  completed_plans: 20
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 8 — Schema v2 (planificando)
 **Overall Progress:** [████████--------] Phases 0–7 completas (v1) · Phases 8–14 pendientes (v2)
-**Last session:** 2026-05-24T00:00:00.000Z
+**Last session:** 2026-05-24T22:39:38.821Z
 
 ## Phase Summary
 
@@ -90,6 +90,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 07-01]: pnpm se usa para instalar deps en apps/api; npm falla por postinstall de @nestjs/cli que llama a husky
 - [Phase 07-01]: Enum AuditEntity usa SPOT y HERO (nombres de modelo Prisma) no AVISO/PORTADA (nombres comerciales UI) — más mantenible cuando la UI cambia
 - [Phase 07]: log() es síncrono (void) — fire-and-forget garantizado; e2e suite con describe.skip por DB en VPS; metadata requiere cast a Prisma.InputJsonValue
+- [Phase 08-01]: Profile permanece separado de User (no fusión). handle va en User para namespace global entre personas y organizaciones. Migración manual via SQL + migrate deploy por entorno no-interactivo.
 
 ## Quick Tasks Completed
 

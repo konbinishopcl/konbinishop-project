@@ -123,7 +123,7 @@ Variantes necesarias:
 - **Card horizontal** — vista alternativa en listados y búsqueda.
 - **Card compacta** — relacionados, sidebar.
 
-> La imagen de la card debe ser siempre el poster o banner subido por el organizador — no una composición gráfica ni texto decorativo.
+> Las cards deben mostrar imágenes reales del evento — no composiciones gráficas ni tipográficas en lugar de la imagen.
 
 Estados: guardado / no guardado, evento pasado, evento hoy.
 

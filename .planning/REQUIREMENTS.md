@@ -125,4 +125,41 @@ administrador quedan visibles al público.
 **Coverage:** v1 requirements (excluyendo AUTH ya completado): 29 — todos mapeados a fases ✓
 
 ---
+
+## v2 Requirements — Milestone "Plataforma completa"
+
+> v2 introduce cobro al organizador, organizaciones con membresías, 2FA + Google OAuth,
+> notificaciones internas, transferencias, servicios y CRM. El schema cambia
+> sustancialmente — esta sección documenta los requirements de cada fase.
+
+### Schema v2 (Phase 8)
+
+- [ ] **SCH-01**: Modelo `User` extendido con `type: UserType (PERSON|ORGANIZATION)`,
+  `handle` (String unique global), `isVerified` (Boolean default false), `twoFactorCode`
+  (String?), `twoFactorExpiry` (DateTime?). Migración Prisma aplicada y `prisma generate`
+  regenera el cliente sin errores de tipo.
+- [ ] **SCH-02**: Modelos `Country`, `State`, `City` (jerarquía 3-nivel) reemplazan
+  `Region` y `Commune`. `Event.cityId` reemplaza `Event.regionId`/`Event.communeId`.
+  Seeder con datos de Chile (1 país + 16 states + ~350 cities). Catalog module y DTOs
+  actualizados; `pnpm tsc --noEmit` pasa.
+- [ ] **SCH-03**: Modelos `OrgMember` (userId, orgId, role: OWNER|MEMBER, unique
+  (userId, orgId)) y `OrgInvitation` (token unique, email, orgId, expiresAt). El enum
+  `OrgRole` se define en este plan.
+- [ ] **SCH-04**: Modelos `Settings` (key PK, value String), `Notification` (userId u
+  orgId, read, type, payload Json), `SavedEvent` (userId+eventId unique), `Subscription`
+  (userId u orgId, status, cycle dates, credits), `Transfer` (itemType enum + itemId Int
+  polymórfico, status, fromUserId, toOrgId).
+- [ ] **SCH-05**: `Category` extendida con `icon`, `color`, `minDays`, `maxDays`,
+  `order`. Enum `OrderItemType` agrega `ARTICLE`. `OrderItem` agrega FK opcional
+  `articleId`. `Order` agrega `orgId` (FK opcional a User type ORGANIZATION,
+  validación en service layer). `Article` agrega `status: PublicationStatus`,
+  `statusReason: String?`, `userId: Int?` para artículos patrocinados.
+- [ ] **SCH-06**: Modelos `ServiceRequest` (type: ServiceType, name, email, eventName,
+  eventDate, eventPlace, stage: CrmStage), `ServiceOption` (type: ServiceType, label,
+  active, order), `CrmEntry` (modelo nuevo — pipeline unificado para CONTACT,
+  PHOTOGRAPHY, CONTENT con stage: CrmStage), `CrmNote` (FK a CrmEntry, autor, content).
+  `ContactMessage` se mantiene sin cambios para backwards compatibility (decisión D8-CRM
+  del RESEARCH: CrmEntry independiente, no extensión de ContactMessage).
+
+---
 *Requirements defined: 2026-03-23 · Re-aligned: 2026-05-20 after the stack migration*

@@ -267,6 +267,13 @@ Landing de venta del servicio de fotografía de Konbini para eventos. Debe vende
 - **Galería de trabajos** — muestra fotos de eventos anteriores cubiertos por Konbini.
 - **Descripción del servicio** — propuesta de valor, por qué contratar a Konbini.
 
+##### `/fotografia/gracias`
+
+Pantalla de confirmación tras enviar el formulario. No puede ser una página genérica y fome — debe ser visualmente atractiva y dejar al usuario con ganas de seguir en el sitio.
+
+- **Mensaje de confirmación** — tono cálido y con personalidad de marca ("Tu solicitud llegó, te contactamos pronto"). Puede incluir un elemento visual llamativo: una foto destacada, una animación sutil, etc.
+- **CTAs para seguir explorando** — al menos dos opciones: "Ver eventos próximos" (→ home o listado) y "Conocer nuestro trabajo" (→ sección de galería de la misma landing o portafolio). Opcionales: link a Instagram de Konbini, "Volver al inicio".
+
 ---
 
 #### 3.11 Creadores de contenido `/creadores`
@@ -276,6 +283,13 @@ Landing de venta del servicio de creadores de contenido de Konbini para eventos.
 - **Hero con formulario de cotización** — imagen/video de fondo con trabajos reales. Formulario con los mismos campos base que fotografía más **checkboxes de servicios** propios de este servicio (reels, aftermovie, cobertura en redes, stories en vivo, etc. — editables desde `/dashboard/settings`). La solicitud va a los admins (aparece en `/dashboard/content-creators`).
 - **Galería/showreel de trabajos** — videos o clips de coberturas anteriores.
 - **Descripción del servicio** — propuesta de valor.
+
+##### `/creadores/gracias`
+
+Mismo concepto que `/fotografia/gracias` — visualmente atractiva, con personalidad, sin ser genérica.
+
+- **Mensaje de confirmación** — tono entusiasta acorde al servicio ("¡Vamos a hacer algo increíble juntos!").
+- **CTAs para seguir explorando** — "Ver eventos próximos", "Ver nuestro trabajo" y/o link a redes sociales de Konbini.
 
 ---
 
@@ -575,7 +589,14 @@ Páginas incluidas:
 - **Preguntas frecuentes** — acordeón de preguntas y respuestas
 - **Términos y condiciones** — contenido gestionado por el admin
 - **Política de privacidad** — contenido gestionado por el admin
-- **Contacto** — formulario con nombre, email, asunto y mensaje
+- **Contacto** — formulario con nombre, email, asunto y mensaje. Al enviar redirige a `/contacto/gracias`.
+
+##### `/contacto/gracias`
+
+Misma filosofía que las otras dos — atractiva, con personalidad, no genérica.
+
+- **Mensaje de confirmación** — tono cercano ("Recibimos tu mensaje, te respondemos pronto").
+- **CTAs para seguir explorando** — "Ver eventos próximos", "Leer noticias" (→ `/noticias`), "Volver al inicio".
 
 El acceso a "Ayuda" va en el footer.
 

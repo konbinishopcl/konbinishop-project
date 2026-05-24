@@ -30,6 +30,23 @@ Konbini no vende entradas — conecta a personas con eventos y a organizadores c
 
 > No existe un rol "organizador" separado. Cualquier usuario registrado puede publicar eventos y contratar avisos o portadas. La diferencia entre un usuario que solo guarda eventos y uno que publica es de uso, no de rol.
 
+### Organizaciones
+
+Cualquier usuario puede crear una **Organización** — una cuenta de tipo especial (`type: ORGANIZATION`) que no tiene credenciales propias ni puede hacer login. Solo se accede a ella mediante un **switcher de contexto** en el avatar del header, disponible para los usuarios que pertenecen a al menos una organización.
+
+Una organización tiene su propio perfil público `/@handle`, su propio historial de pagos, su propia suscripción mensual y su propio carrito — completamente independientes de las cuentas personales de sus miembros.
+
+**Roles dentro de una organización:**
+
+| Rol | Permisos |
+| --- | --- |
+| **Owner** | Todo lo del Member + editar datos críticos (nombre, handle, avatar, banner) + eliminar la organización |
+| **Member** | Crear y editar borradores de eventos, avisos, portadas y artículos en nombre de la org. Ver todos los borradores del equipo. Agregar ítems al carrito compartido, completar el pago o eliminar ítems. |
+
+**Carrito compartido:** la organización tiene un único carrito visible para todos sus miembros. Cualquier miembro puede agregar ítems, pagar o eliminarlos — no hay un carrito por persona.
+
+**Notificaciones:** las aprobaciones, rechazos y comunicaciones de Konbini llegan al miembro que creó el contenido como destinatario principal, y al resto de miembros en copia — un solo email por evento, no uno por miembro.
+
 ### Modelo de negocio
 
 La publicación de un evento tiene costo, calculado en días de publicación × precio por categoría. Junto al evento, el organizador puede contratar opcionalmente:
@@ -303,6 +320,7 @@ Links en orden, el ítem activo resaltado:
 
 - Mi perfil → `/cuenta`
 - Organizador → `/cuenta/organizador` *(aparece en el sidebar solo después del primer pago)*
+- Mis organizaciones → `/cuenta/organizaciones` *(aparece siempre; si no tiene ninguna muestra CTA para crear la primera)*
 - Suscripción → `/cuenta/suscripcion` *(aparece siempre; si no tiene plan activo muestra CTA para suscribirse)*
 - Mis eventos → `/cuenta/mis-eventos`
 - Mis avisos → `/cuenta/mis-avisos`
@@ -348,6 +366,29 @@ Campos:
 - Redes sociales: Instagram, TikTok, Facebook, X, YouTube, Twitch, LinkedIn (opcionales)
 
 Link directo a `/@handle` para ver el perfil público (visible solo cuando tiene al menos un evento aprobado).
+
+---
+
+##### `/cuenta/organizaciones`
+
+Lista de organizaciones a las que pertenece el usuario — como Owner o como Member.
+
+Cada fila muestra: avatar de la organización, nombre, handle, rol del usuario en ella (Owner / Member) y botón para **Entrar** (activa el switcher de contexto a esa org).
+
+Botón **"Crear organización"** en la parte superior — disponible para cualquier usuario.
+
+**Crear organización** — formulario simple:
+- Nombre de la organización (requerido)
+- Handle / URL `/@handle` (requerido, único, validación en tiempo real)
+- Avatar (opcional)
+
+El usuario que crea la organización queda automáticamente como Owner.
+
+**Gestión de la organización** — al hacer clic en una org de la lista se abre su panel de configuración:
+
+- Editar nombre, handle, avatar, banner, bio y redes sociales *(solo Owner)*
+- **Miembros** — lista de miembros con su rol. Acciones: invitar por email, cambiar rol Owner ↔ Member, eliminar miembro *(solo Owner)*. Un Owner no puede eliminarse a sí mismo si es el único Owner.
+- **Danger Zone** *(solo Owner)* — eliminar la organización con lightbox de confirmación. Advierte que se eliminará todo el contenido asociado.
 
 ---
 
@@ -987,7 +1028,7 @@ La estructura del header ya está definida en el sitio actual. Solo se extiende 
 - **Noticias · About · Contacto** — secciones secundarias del sitio
 - **Iconos derecha** — buscador, toggle de tema (sin cambios)
 - **Campanita de notificaciones** — visible solo con sesión iniciada. Muestra un badge con el número de mensajes no leídos. Al hacer clic abre un dropdown con los últimos mensajes (aprobaciones, rechazos, avisos del sistema). Link "Ver todos" que lleva a `/cuenta/mensajes`.
-- **Ingresar** — visible solo sin sesión. Con sesión activa se reemplaza por el avatar del usuario con un dropdown: Mi cuenta, y Cerrar sesión.
+- **Ingresar** — visible solo sin sesión. Con sesión activa se reemplaza por el avatar del usuario con un dropdown: Mi cuenta y Cerrar sesión. Si el usuario pertenece a una o más organizaciones, el dropdown incluye un **switcher de contexto** — lista de organizaciones con su avatar y nombre. Al seleccionar una, el header refleja visualmente que se está operando en nombre de esa org (avatar y nombre de la org en vez del personal). Seleccionar "Cuenta personal" vuelve al contexto propio. El switcher es idéntico al de GitHub.
 - **+ Crear evento** — CTA principal destacado en color de acento (sin cambios)
 
 #### Navegación móvil

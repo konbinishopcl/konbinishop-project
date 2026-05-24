@@ -391,7 +391,7 @@ Aparece en el sidebar únicamente cuando el usuario está operando en nombre de 
 - Cambiar rol Owner ↔ Member *(solo Owner)*
 - Eliminar miembro *(solo Owner)*. Un Owner no puede eliminarse si es el único Owner.
 
-**Transferencias pendientes** *(solo Owner)* — sección que muestra las solicitudes de transferencia de contenido recibidas (eventos, avisos, portadas, artículos que un miembro quiere mover a la org). Cada solicitud muestra: quién la envía, qué ítem es y de qué tipo. Acciones: **Aceptar** (el contenido pasa a ser de la org) o **Rechazar** (no cambia nada).
+Las solicitudes de transferencia entrantes llegan al Owner como un mensaje en `/cuenta/mensajes` con botones **Aceptar** y **Rechazar** inline — sin necesidad de ir a otra página. Simultáneamente se envía un email al Owner con los mismos botones. Si acepta, el contenido pasa a nombre de la org. Si rechaza, no cambia nada.
 
 **Danger Zone** *(solo Owner)* — eliminar la organización con lightbox de confirmación. Advierte que se eliminará todo el contenido asociado.
 

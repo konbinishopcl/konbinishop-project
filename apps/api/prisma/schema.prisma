@@ -313,6 +313,11 @@ model OrderItem {
 // ──────────────────────────── Usuarios ───────────────────────────
 // Sistema de usuarios local (reemplaza a Neon Auth).
 
+enum UserType {
+  PERSON
+  ORGANIZATION
+}
+
 enum Role {
   SUPER_ADMIN
   ADMIN
@@ -331,6 +336,16 @@ model User {
   role         Role    @default(AUTHENTICATED)
   confirmed    Boolean @default(false)
   blocked      Boolean @default(false)
+
+  // v2: tipo de cuenta — PERSON con credenciales; ORGANIZATION sin login propio
+  type            UserType  @default(PERSON)
+  // v2: identificador público único global (personas y orgs comparten namespace)
+  handle          String?   @unique
+  // v2: badge Verificado — asignado/revocado solo por SUPER_ADMIN
+  isVerified      Boolean   @default(false)
+  // v2: 2FA por email — código de 6 dígitos + expiración (10 min recomendado)
+  twoFactorCode   String?
+  twoFactorExpiry DateTime?
 
   // Recuperación de contraseña: hash SHA-256 del token + su expiración.
   resetToken       String?

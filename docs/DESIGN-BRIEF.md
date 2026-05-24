@@ -117,15 +117,13 @@ Información a mostrar (jerarquía por definir con el diseñador):
 - Precio (gratis / de pago / ver entradas)
 - Botón "Guardar"
 
-**Imagen obligatoria:** La card siempre muestra el poster o banner del evento como imagen real. No se usan composiciones tipográficas, gradientes decorativos ni HTML como sustituto de la imagen. Si el organizador no subió imagen, se usa un placeholder genérico de Konbini (fondo neutro con logo). El diseñador debe definir cómo se ve ese placeholder.
-
 Variantes necesarias:
 
-- **Card estándar** — tamaño único para Destacados, rails por categoría y Avisos. **Todos los rails del home usan el mismo tamaño de card.** 6 por fila en desktop. Es la referencia de tamaño del sistema.
+- **Card grande** — usada en Destacados, Avisos y rails por categoría. Todas las cards del home deben tener el mismo tamaño — no existe una card más pequeña para las categorías.
 - **Card horizontal** — vista alternativa en listados y búsqueda.
 - **Card compacta** — relacionados, sidebar.
 
-> Las cards de los rails por categoría deben medir exactamente lo mismo que las de Destacados — misma altura, mismo ancho, misma estructura visual. No existe una "card pequeña" para el home.
+> La imagen de la card debe ser siempre el poster o banner subido por el organizador — no una composición gráfica ni texto decorativo.
 
 Estados: guardado / no guardado, evento pasado, evento hoy.
 

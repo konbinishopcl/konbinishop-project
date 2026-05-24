@@ -845,11 +845,9 @@ Filtros: admin responsable, tipo de acción, rango de fechas.
 
 Bandeja de mensajes recibidos desde el formulario de contacto del sitio público.
 
-Cada mensaje muestra: nombre, email, asunto, texto completo y fecha.
+Cada mensaje muestra: nombre, email, asunto, texto completo, fecha y un **badge de estado del pipeline** (Nuevo · Contactado · En negociación · Cerrado ganado · Cerrado perdido). El estado se actualiza desde el CRM (3.31) y se refleja aquí automáticamente.
 
-Estados: Nuevo · Leído · Archivado.
-
-Acciones: marcar como leído, archivar. La respuesta se hace fuera de la plataforma (email externo).
+Acciones: abrir detalle, marcar como leído, archivar. La respuesta se hace fuera de la plataforma (email externo).
 
 ---
 
@@ -857,15 +855,33 @@ Acciones: marcar como leído, archivar. La respuesta se hace fuera de la platafo
 
 Bandeja de solicitudes de fotografía recibidas desde el formulario de `/fotografia` y desde el bloque en la thank you page.
 
-Cada solicitud muestra: nombre del organizador, nombre del evento, fecha del evento, lugar, descripción y email de contacto.
+Cada solicitud muestra: nombre del organizador, nombre del evento, fecha del evento, lugar, descripción, email de contacto y un **badge de estado del pipeline** (igual que Contacto). El estado se actualiza desde el CRM (3.32) y se refleja aquí automáticamente.
 
-Estados: Nueva · En contacto · Cerrada.
-
-Acciones: cambiar estado, archivar. La respuesta y coordinación se hace fuera de la plataforma (email externo).
+Acciones: abrir detalle, archivar. La respuesta y coordinación se hace fuera de la plataforma (email externo).
 
 ---
 
-#### 3.32 FAQ `/dashboard/faq`
+#### 3.32 CRM `/dashboard/crm`
+
+Vista kanban única que centraliza todas las solicitudes entrantes — tanto de Contacto como de Fotografía. Es el lugar donde el equipo hace el seguimiento comercial sin necesitar una herramienta externa.
+
+**Columnas del pipeline:**
+
+Nuevo · Contactado · En negociación · Cerrado ganado · Cerrado perdido
+
+Cada tarjeta muestra: nombre del contacto, tipo (badge **Contacto** o **Fotografía**), fecha de la solicitud y fecha del último movimiento.
+
+Al abrir una tarjeta se despliega el detalle completo con:
+
+- Datos de la solicitud original
+- **Notas internas** — campo de texto libre donde el equipo registra llamadas, acuerdos y próximos pasos. Cada nota queda con timestamp y autor.
+- **Motivo de cierre** — requerido al mover a Cerrado perdido (ayuda a identificar patrones)
+
+Las tarjetas se mueven entre columnas arrastrando (drag & drop). Mover una tarjeta actualiza el badge de estado en las vistas de Contacto y Fotografía.
+
+---
+
+#### 3.34 FAQ `/dashboard/faq`
 
 Gestión del contenido de la sección de preguntas frecuentes del sitio público.
 
@@ -873,7 +889,7 @@ CRUD de pares pregunta/respuesta. Permite reordenar manualmente.
 
 ---
 
-#### 3.33 Configuración `/dashboard/settings`
+#### 3.35 Configuración `/dashboard/settings`
 
 ##### Precios y límites de Avisos
 

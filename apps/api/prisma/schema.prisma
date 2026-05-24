@@ -56,6 +56,14 @@ model Category {
   slug        String   @unique
   description String?
   pricePerDay Int      @default(1000)
+  // v2: metadatos visuales para el frontend
+  icon        String?            // lucide icon name, ej. "calendar"
+  color       String?            // hex (#FF6B00) o CSS class
+  // v2: rango permitido de días al publicar un evento de esta categoría
+  minDays     Int                @default(1)
+  maxDays     Int                @default(30)
+  // v2: ordenamiento manual en listados del frontend (0 = primero)
+  order       Int                @default(0)
   events      Event[]
   heroes      Hero[]
   createdAt   DateTime @default(now())

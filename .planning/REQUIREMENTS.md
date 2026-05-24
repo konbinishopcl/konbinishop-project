@@ -138,7 +138,7 @@ administrador quedan visibles al público.
   `handle` (String unique global), `isVerified` (Boolean default false), `twoFactorCode`
   (String?), `twoFactorExpiry` (DateTime?). Migración Prisma aplicada y `prisma generate`
   regenera el cliente sin errores de tipo.
-- [ ] **SCH-02**: Modelos `Country`, `State`, `City` (jerarquía 3-nivel) reemplazan
+- [x] **SCH-02**: Modelos `Country`, `State`, `City` (jerarquía 3-nivel) reemplazan
   `Region` y `Commune`. `Event.cityId` reemplaza `Event.regionId`/`Event.communeId`.
   Seeder con datos de Chile (1 país + 16 states + ~350 cities). Catalog module y DTOs
   actualizados; `pnpm tsc --noEmit` pasa.

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-24T22:39:38.823Z"
+last_updated: "2026-05-24T23:45:00.000Z"
 progress:
   total_phases: 15
   completed_phases: 7
   total_plans: 25
-  completed_plans: 20
+  completed_plans: 21
 ---
 
 # Project State
@@ -47,7 +47,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 8 | Schema v2 | 🔄 In Progress | 1/6 |
+| 8 | Schema v2 | 🔄 In Progress | 2/6 |
 | 9 | Organizaciones y transferencias | ⏳ Pending | 0/5 |
 | 10 | Auth avanzado | ⏳ Pending | 0/4 |
 | 11 | Notificaciones y Settings | ⏳ Pending | 0/3 |
@@ -91,6 +91,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 07-01]: Enum AuditEntity usa SPOT y HERO (nombres de modelo Prisma) no AVISO/PORTADA (nombres comerciales UI) — más mantenible cuando la UI cambia
 - [Phase 07]: log() es síncrono (void) — fire-and-forget garantizado; e2e suite con describe.skip por DB en VPS; metadata requiere cast a Prisma.InputJsonValue
 - [Phase 08-01]: Profile permanece separado de User (no fusión). handle va en User para namespace global entre personas y organizaciones. Migración manual via SQL + migrate deploy por entorno no-interactivo.
+- [Phase 08-02]: Jerarquía geográfica 3-nivel: Country → State → City. migrate reset (seed-only confirmado). query-events usa `state` en vez de `region`. Controller pattern: clase por recurso (@Controller('countries')) no @Get('countries') en un solo controller.
 
 ## Quick Tasks Completed
 
@@ -110,7 +111,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 ## Next Action
 
-**Phase 7 completada.** Todos los servicios (Events, Users, Spots, Heroes) instrumentados con `AuditService.log()`. El sistema de auditoría AUD-02 está completo. Próximo paso: Phase 8 o siguiente hito del roadmap.
+**Phase 8 Plan 02 completado.** Jerarquía geográfica v2 (Country/State/City) implementada. `pnpm tsc --noEmit` pasa. `pnpm prisma:seed` poblada con 1 país, 16 estados, 346 ciudades. Próximo: Plan 03 de Phase 8.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

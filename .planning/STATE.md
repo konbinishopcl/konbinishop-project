@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-24T23:45:38.264Z"
+last_updated: "2026-05-24T23:51:12.561Z"
 progress:
   total_phases: 15
   completed_phases: 7
   total_plans: 25
-  completed_plans: 22
+  completed_plans: 23
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 8 — Schema v2 (planificando)
 **Overall Progress:** [████████--------] Phases 0–7 completas (v1) · Phases 8–14 pendientes (v2)
-**Last session:** 2026-05-24T23:45:38.262Z
+**Last session:** 2026-05-24T23:51:12.555Z
 
 ## Phase Summary
 
@@ -47,7 +47,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 8 | Schema v2 | 🔄 In Progress | 2/6 |
+| 8 | Schema v2 | 🔄 In Progress | 4/6 |
 | 9 | Organizaciones y transferencias | ⏳ Pending | 0/5 |
 | 10 | Auth avanzado | ⏳ Pending | 0/4 |
 | 11 | Notificaciones y Settings | ⏳ Pending | 0/3 |
@@ -93,6 +93,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 08-01]: Profile permanece separado de User (no fusión). handle va en User para namespace global entre personas y organizaciones. Migración manual via SQL + migrate deploy por entorno no-interactivo.
 - [Phase 08-02]: Jerarquía geográfica 3-nivel: Country → State → City. migrate reset (seed-only confirmado). query-events usa `state` en vez de `region`. Controller pattern: clase por recurso (@Controller('countries')) no @Get('countries') en un solo controller.
 - [Phase 08-03]: MySQL cannot enforce user.type=ORGANIZATION for OrgMember.orgId — enforcement is service-layer (Phase 9). OrgRole enum: OWNER/MEMBER. Migration: 20260524234414_sch03_organizations.
+- [Phase 08-04]: KEY #5 locked: env vars de precios permanecen en código en Phase 8; migración env→Settings es scope de Phase 11. Settings.upsert con update:{} — valor admin-modificado no se sobreescribe. Transfer polymorphic via itemType+itemId sin FKs múltiples (patrón AuditLog). Migration: 20260524234837_sch04_core_systems.
 
 ## Quick Tasks Completed
 
@@ -112,7 +113,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 ## Next Action
 
-**Phase 8 Plan 02 completado.** Jerarquía geográfica v2 (Country/State/City) implementada. `pnpm tsc --noEmit` pasa. `pnpm prisma:seed` poblada con 1 país, 16 estados, 346 ciudades. Próximo: Plan 03 de Phase 8.
+**Phase 8 Plan 04 completado.** 5 modelos core v2 (Settings, Notification, SavedEvent, Subscription, Transfer) + 4 enums + 12 Settings defaults en seed. Migración sch04_core_systems aplicada. Próximo: Plan 05 de Phase 8.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

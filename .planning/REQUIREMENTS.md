@@ -145,7 +145,7 @@ administrador quedan visibles al público.
 - [x] **SCH-03**: Modelos `OrgMember` (userId, orgId, role: OWNER|MEMBER, unique
   (userId, orgId)) y `OrgInvitation` (token unique, email, orgId, expiresAt). El enum
   `OrgRole` se define en este plan.
-- [ ] **SCH-04**: Modelos `Settings` (key PK, value String), `Notification` (userId u
+- [x] **SCH-04**: Modelos `Settings` (key PK, value String), `Notification` (userId u
   orgId, read, type, payload Json), `SavedEvent` (userId+eventId unique), `Subscription`
   (userId u orgId, status, cycle dates, credits), `Transfer` (itemType enum + itemId Int
   polymórfico, status, fromUserId, toOrgId).

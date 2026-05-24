@@ -1,7 +1,7 @@
 /**
  * Seed de konbini-nest-api.
  * Idempotente: limpia todas las tablas y vuelve a poblar con datos de ejemplo.
- * Regiones y comunas: las 16 regiones de Chile completas (igual que el seeder de Strapi).
+ * Geografía: Chile como Country, 16 regiones como States, comunas como Cities.
  * Ejecutar: yarn prisma:seed
  */
 import { PrismaClient } from '@prisma/client';
@@ -167,44 +167,53 @@ async function main() {
   await prisma.article.deleteMany();
   await prisma.hero.deleteMany();
   await prisma.spot.deleteMany();
-  await prisma.commune.deleteMany();
+  // Geografía: City → State → Country
+  await prisma.city.deleteMany();
+  await prisma.state.deleteMany();
+  await prisma.country.deleteMany();
   await prisma.category.deleteMany();
   await prisma.tag.deleteMany();
-  await prisma.region.deleteMany();
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
-  // ── Regiones + comunas (las 16 regiones de Chile) ──
-  const seenCommuneSlug = new Set<string>();
-  for (const r of regionsData) {
-    const region = await prisma.region.create({
-      data: { name: r.region, slug: slugify(r.region) },
+  // ── Geografía: Chile como Country, regiones como States, comunas como Cities ──
+
+  // 1. País Chile
+  const chile = await prisma.country.upsert({
+    where: { slug: 'chile' },
+    update: {},
+    create: { name: 'Chile', slug: 'chile' },
+  });
+
+  // 2. States (16 regiones) y Cities (comunas)
+  for (const { region, communes } of regionsData) {
+    const stateSlug = slugify(region);
+    const state = await prisma.state.upsert({
+      where: { slug: stateSlug },
+      update: { name: region, countryId: chile.id },
+      create: { name: region, slug: stateSlug, countryId: chile.id },
     });
-    const communeRows = r.communes
-      .map((name) => ({ name, slug: slugify(name), regionId: region.id }))
-      .filter((c) => {
-        if (seenCommuneSlug.has(c.slug)) return false;
-        seenCommuneSlug.add(c.slug);
-        return true;
+
+    for (const communeName of communes) {
+      const citySlug = slugify(communeName);
+      await prisma.city.upsert({
+        where: { slug: citySlug },
+        update: { name: communeName, stateId: state.id },
+        create: { name: communeName, slug: citySlug, stateId: state.id },
       });
-    await prisma.commune.createMany({ data: communeRows });
+    }
   }
 
-  // Mapas slug -> registro, para referenciar regiones/comunas más abajo.
-  const regionBySlug = new Map(
-    (await prisma.region.findMany()).map((r) => [r.slug, r]),
+  const totalCities = regionsData.reduce((acc, r) => acc + r.communes.length, 0);
+  console.log(`✓ Geografía seeded: 1 country, ${regionsData.length} states, ${totalCities} cities`);
+
+  // Mapa slug -> registro de ciudad, para referenciar en eventos
+  const cityBySlug = new Map(
+    (await prisma.city.findMany()).map((c) => [c.slug, c]),
   );
-  const communeBySlug = new Map(
-    (await prisma.commune.findMany()).map((c) => [c.slug, c]),
-  );
-  const region = (slug: string) => {
-    const r = regionBySlug.get(slug);
-    if (!r) throw new Error(`Región no encontrada: ${slug}`);
-    return r;
-  };
-  const commune = (slug: string) => {
-    const c = communeBySlug.get(slug);
-    if (!c) throw new Error(`Comuna no encontrada: ${slug}`);
+  const city = (slug: string) => {
+    const c = cityBySlug.get(slug);
+    if (!c) throw new Error(`Ciudad no encontrada: ${slug}`);
     return c;
   };
 
@@ -387,8 +396,7 @@ async function main() {
     addressNumber: string;
     ticketUrl?: string;
     cats: string[];
-    regionSlug: string;
-    communeSlug: string;
+    citySlug: string;
     approved: boolean;
     prices: { name: string; price: number }[];
     dates: { date: string; startTime: string; endTime: string }[];
@@ -406,7 +414,7 @@ async function main() {
       expirationDate: '2026-11-15',
       address: 'Av. Matta', addressNumber: '890',
       ticketUrl: 'https://entradas.example.cl/konbini-live-fest',
-      cats: ['musica'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'santiago',
+      cats: ['musica'], citySlug: 'santiago',
       approved: true, img: 1,
       prices: [
         { name: 'Entrada general', price: 15000 },
@@ -424,7 +432,7 @@ async function main() {
       expirationDate: '2026-10-20',
       address: 'Barros Arana', addressNumber: '321',
       ticketUrl: 'https://entradas.example.cl/expo-anime-concepcion',
-      cats: ['anime', 'videojuegos'], regionSlug: 'region-del-biobio', communeSlug: 'concepcion',
+      cats: ['anime', 'videojuegos'], citySlug: 'concepcion',
       approved: true, img: 2,
       prices: [{ name: 'Entrada por día', price: 8000 }],
       dates: [
@@ -441,7 +449,7 @@ async function main() {
       expirationDate: '2026-09-13',
       address: 'Av. Providencia', addressNumber: '2594',
       ticketUrl: 'https://entradas.example.cl/festival-j-rock-santiago',
-      cats: ['musica'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'providencia',
+      cats: ['musica'], citySlug: 'providencia',
       approved: true, img: 3,
       prices: [{ name: 'Entrada general', price: 22000 }],
       dates: [{ date: '2026-09-12', startTime: '19:00', endTime: '23:00' }],
@@ -455,7 +463,7 @@ async function main() {
       expirationDate: '2026-08-23',
       address: 'Plaza Sotomayor', addressNumber: '233',
       ticketUrl: 'https://entradas.example.cl/convencion-cosplay-valparaiso',
-      cats: ['anime'], regionSlug: 'valparaiso', communeSlug: 'valparaiso',
+      cats: ['anime'], citySlug: 'valparaiso',
       approved: true, img: 4,
       prices: [
         { name: 'Entrada general', price: 12000 },
@@ -472,7 +480,7 @@ async function main() {
       expirationDate: '2026-07-27',
       address: 'Av. Apoquindo', addressNumber: '4500',
       ticketUrl: 'https://entradas.example.cl/esports-konbini-cup',
-      cats: ['videojuegos'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'las-condes',
+      cats: ['videojuegos'], citySlug: 'las-condes',
       approved: true, img: 5,
       prices: [{ name: 'Entrada general', price: 10000 }],
       dates: [
@@ -489,7 +497,7 @@ async function main() {
       expirationDate: '2026-10-04',
       address: 'Av. Matucana', addressNumber: '100',
       ticketUrl: 'https://entradas.example.cl/anime-sinfonico-en-vivo',
-      cats: ['musica', 'teatro'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'santiago',
+      cats: ['musica', 'teatro'], citySlug: 'santiago',
       approved: true, img: 6,
       prices: [
         { name: 'Platea', price: 28000 },
@@ -506,7 +514,7 @@ async function main() {
       expirationDate: '2026-09-28',
       address: 'Av. San Martín', addressNumber: '880',
       ticketUrl: 'https://entradas.example.cl/maraton-de-cine-animado',
-      cats: ['teatro'], regionSlug: 'valparaiso', communeSlug: 'vina-del-mar',
+      cats: ['teatro'], citySlug: 'vina-del-mar',
       approved: true, img: 7,
       prices: [{ name: 'Entrada', price: 6000 }],
       dates: [{ date: '2026-09-27', startTime: '14:00', endTime: '23:00' }],
@@ -519,7 +527,7 @@ async function main() {
       expirationDate: '2026-11-08',
       address: 'Av. Argentina', addressNumber: '1962',
       ticketUrl: 'https://entradas.example.cl/expo-manga-antofagasta',
-      cats: ['anime'], regionSlug: 'antofagasta', communeSlug: 'antofagasta',
+      cats: ['anime'], citySlug: 'antofagasta',
       approved: true, img: 8,
       prices: [{ name: 'Entrada por día', price: 7000 }],
       dates: [{ date: '2026-11-07', startTime: '10:00', endTime: '19:00' }],
@@ -533,7 +541,7 @@ async function main() {
       expirationDate: '2026-08-10',
       address: 'Av. Irarrázaval', addressNumber: '3700',
       ticketUrl: 'https://entradas.example.cl/feria-retro-gaming',
-      cats: ['videojuegos'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'nunoa',
+      cats: ['videojuegos'], citySlug: 'nunoa',
       approved: true, img: 9,
       prices: [{ name: 'Entrada general', price: 5000 }],
       dates: [{ date: '2026-08-09', startTime: '12:00', endTime: '20:00' }],
@@ -545,7 +553,7 @@ async function main() {
       about: 'Cocina temática, food trucks y stands de artistas.',
       expirationDate: '2026-12-07',
       address: 'Parque Bustamante', addressNumber: 's/n',
-      cats: ['gastronomia', 'anime'], regionSlug: 'region-metropolitana-de-santiago', communeSlug: 'santiago',
+      cats: ['gastronomia', 'anime'], citySlug: 'santiago',
       approved: true, img: 10,
       prices: [{ name: 'Acceso liberado', price: 0 }],
       dates: [{ date: '2026-12-06', startTime: '12:00', endTime: '22:00' }],
@@ -558,7 +566,7 @@ async function main() {
       expirationDate: '2026-09-20',
       address: 'Av. Francisco de Aguirre', addressNumber: '210',
       ticketUrl: 'https://entradas.example.cl/teatro-kabuki-contemporaneo',
-      cats: ['teatro'], regionSlug: 'coquimbo', communeSlug: 'la-serena',
+      cats: ['teatro'], citySlug: 'la-serena',
       approved: true, img: 11,
       prices: [{ name: 'Entrada general', price: 14000 }],
       dates: [{ date: '2026-09-19', startTime: '20:00', endTime: '22:00' }],
@@ -571,7 +579,7 @@ async function main() {
       expirationDate: '2026-11-22',
       address: 'Av. Alemania', addressNumber: '0671',
       ticketUrl: 'https://entradas.example.cl/encuentro-otaku-temuco',
-      cats: ['anime'], regionSlug: 'region-de-la-araucania', communeSlug: 'temuco',
+      cats: ['anime'], citySlug: 'temuco',
       approved: false, img: 12,
       prices: [{ name: 'Entrada general', price: 6000 }],
       dates: [{ date: '2026-11-21', startTime: '11:00', endTime: '20:00' }],
@@ -597,8 +605,7 @@ async function main() {
         status: ev.approved ? 'APPROVED' : 'PENDING_MODERATION',
         userId: organizer.id,
         approvedById: ev.approved ? admin.id : null,
-        regionId: region(ev.regionSlug).id,
-        communeId: commune(ev.communeSlug).id,
+        cityId: city(ev.citySlug).id,
         categoryId: catId[ev.cats[0]] ?? null,
         prices: { create: ev.prices },
         dates: {
@@ -716,8 +723,9 @@ escribiéndonos a hola@konbini.cl.`,
 
   // ── Conteo final ──
   const counts = {
-    regions: await prisma.region.count(),
-    communes: await prisma.commune.count(),
+    countries: await prisma.country.count(),
+    states: await prisma.state.count(),
+    cities: await prisma.city.count(),
     categories: await prisma.category.count(),
     tags: await prisma.tag.count(),
     articles: await prisma.article.count(),

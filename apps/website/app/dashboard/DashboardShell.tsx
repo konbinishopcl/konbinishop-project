@@ -8,45 +8,50 @@ import { useUser } from "@/components/providers";
 
 const ADMIN_NAV = [
   {
-    grp: "OPERACIÓN",
+    grp: "INICIO",
     items: [
-      { id: "home",      label: "Inicio",         ic: "◉", href: "/dashboard" },
-      { id: "events",    label: "Eventos",         ic: "▦", href: "/dashboard/eventos" },
-      { id: "articles",  label: "Artículos",       ic: "▤", href: "/dashboard/articulos" },
-      { id: "users",     label: "Usuarios",        ic: "◎", href: "/dashboard/usuarios" },
+      { label: "Vista general", ic: "◉", href: "/dashboard" },
     ],
   },
   {
-    grp: "COMERCIO",
+    grp: "MODERACIÓN",
     items: [
-      { id: "payments",  label: "Pagos",           ic: "$", href: "/dashboard/pagos" },
-      { id: "subs",      label: "Suscripciones",   ic: "★", href: "/dashboard/suscripciones" },
+      { label: "Eventos",   ic: "▦", href: "/dashboard/events" },
+      { label: "Avisos",    ic: "▰", href: "/dashboard/spots" },
+      { label: "Portadas",  ic: "▶", href: "/dashboard/heroes" },
+      { label: "Artículos", ic: "▤", href: "/dashboard/articles" },
     ],
   },
   {
-    grp: "MENSAJES",
+    grp: "COMERCIAL",
     items: [
-      { id: "contact",   label: "Contacto",        ic: "✉", href: "/dashboard/contacto" },
-      { id: "photo",     label: "Fotografía",      ic: "◐", href: "/dashboard/fotografia" },
-      { id: "creators",  label: "Creadores",       ic: "◑", href: "/dashboard/creadores" },
-      { id: "crm",       label: "CRM",             ic: "▣", href: "/dashboard/crm" },
+      { label: "Pagos & ventas",    ic: "$", href: "/dashboard/payments" },
+      { label: "Suscripciones",     ic: "★", href: "/dashboard/subscriptions" },
+      { label: "Contacto",          ic: "✉", href: "/dashboard/contact" },
+      { label: "Fotografía",        ic: "◐", href: "/dashboard/photography" },
+      { label: "Creadores",         ic: "◑", href: "/dashboard/content-creators" },
+      { label: "CRM",               ic: "▣", href: "/dashboard/crm" },
     ],
   },
   {
-    grp: "CATÁLOGO",
+    grp: "MANTENEDORES",
     items: [
-      { id: "categories",label: "Categorías",      ic: "#", href: "/dashboard/categorias" },
-      { id: "spots",     label: "Avisos",          ic: "▰", href: "/dashboard/avisos" },
-      { id: "heroes",    label: "Portadas",        ic: "▶", href: "/dashboard/portadas" },
-      { id: "faq",       label: "FAQ",             ic: "?", href: "/dashboard/faq" },
+      { label: "Categorías",        ic: "#", href: "/dashboard/categories" },
+      { label: "Tags",              ic: "#", href: "/dashboard/tags" },
+      { label: "Países",            ic: "⊕", href: "/dashboard/countries" },
+      { label: "Divisiones",        ic: "⊕", href: "/dashboard/states" },
+      { label: "Ciudades",          ic: "⊕", href: "/dashboard/cities" },
+      { label: "FAQ",               ic: "?", href: "/dashboard/faq" },
     ],
   },
   {
     grp: "SISTEMA",
+    superAdminOnly: true,
     items: [
-      { id: "reports",   label: "Reportes",        ic: "△", href: "/dashboard/reportes" },
-      { id: "logs",      label: "Logs",            ic: "≡", href: "/dashboard/logs" },
-      { id: "settings",  label: "Configuración",   ic: "⚙", href: "/dashboard/configuracion" },
+      { label: "Usuarios",          ic: "◎", href: "/dashboard/users",    superOnly: true },
+      { label: "Reportes",          ic: "△", href: "/dashboard/reports" },
+      { label: "Logs & auditoría",  ic: "≡", href: "/dashboard/logs" },
+      { label: "Configuración",     ic: "⚙", href: "/dashboard/settings" },
     ],
   },
 ];
@@ -55,10 +60,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user } = useUser();
 
-  // Determinar grupo activo
+  const isActive = (href: string) =>
+    href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
+
   const activeGroup = ADMIN_NAV.find((g) =>
-    g.items.some((i) => i.href === pathname || (i.href !== "/dashboard" && pathname.startsWith(i.href)))
-  )?.grp ?? ADMIN_NAV[0].grp;
+    g.items.some((i) => isActive(i.href))
+  )?.grp ?? "INICIO";
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
@@ -68,28 +75,26 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     return init;
   });
 
-  // Título de la sección activa
   const allItems = ADMIN_NAV.flatMap((g) => g.items);
-  const cur = allItems.find((i) => i.href === pathname || (i.href !== "/dashboard" && pathname.startsWith(i.href)))
-    ?? ADMIN_NAV[0].items[0];
+  const cur = allItems.find((i) => isActive(i.href)) ?? ADMIN_NAV[0].items[0];
+
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
   const initials = user
     ? [user.name?.split(" ")[0]?.[0], user.name?.split(" ")[1]?.[0]]
         .filter(Boolean).join("").toUpperCase() || "?"
     : "?";
 
-  const isActive = (href: string) =>
-    href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(href);
-
   return (
     <div className="admin-shell">
       <aside className="admin-side">
         <div className="brand-row">
           <Link href="/"><BrandMark /></Link>
-          <div className="role">ADMIN</div>
+          <div className="role">{isSuperAdmin ? "SUPER ADMIN" : "ADMIN"}</div>
         </div>
+
         <div className="scroll">
-          {ADMIN_NAV.map((g, gi) => (
+          {ADMIN_NAV.map((g) => (
             <div key={g.grp}>
               <button
                 className={`grp ${openGroups[g.grp] ? "open" : ""}`}
@@ -104,9 +109,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <div className={`grp-items ${!openGroups[g.grp] ? "closed" : ""}`}>
                 {g.items.map((i) => (
                   <Link
-                    key={i.id}
+                    key={i.href}
                     href={i.href}
-                    className={`nav-item ${isActive(i.href) ? "on" : ""}`}
+                    className={`nav-item${isActive(i.href) ? " on" : ""}${"superOnly" in i && i.superOnly ? " super" : ""}`}
                   >
                     <span style={{ width: 18, textAlign: "center", opacity: 0.7 }}>{i.ic}</span>
                     <span>{i.label}</span>
@@ -116,6 +121,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
           ))}
         </div>
+
         <div className="who">
           <div className="av">{initials}</div>
           <div>

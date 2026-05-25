@@ -1,4 +1,2 @@
 import FAQSection from "../sections/FAQSection";
-export default function Page() {
-  return <FAQSection />;
-}
+export default function Page() { return <FAQSection />; }

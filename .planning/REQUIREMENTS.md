@@ -227,5 +227,41 @@ administrador quedan visibles al público.
   `@UseGuards(JwtAuthGuard, OrgContextGuard)` de clase a método para permitir endpoints
   públicos de callback.
 
+### Servicios y CRM (Phase 14)
+
+- [ ] **SVC-01**: Endpoints públicos `POST /services/photography` y
+  `POST /services/content-creators` crean `ServiceRequest` con su `type` correspondiente
+  (PHOTOGRAPHY o CONTENT). Body con `name`, `email`, `eventName?`, `eventDate?`,
+  `eventPlace?`, `optionIds?: number[]` (many-to-many vía `options: { connect }`).
+  Respuesta `201 { id, type, name, email, createdAt }` (sin exponer datos sensibles).
+  `GET /services/photography/options` y `GET /services/content-creators/options`
+  devuelven solo opciones `active=true` ordenadas por `order` asc — **públicos sin auth**.
+- [ ] **SVC-02**: CRUD admin (`POST/PATCH/DELETE /services/photography/options` y
+  `/services/content-creators/options`) sobre `ServiceOption`. `PATCH` no permite
+  cambiar `type` post-creación. `DELETE` con `requests` vinculados marca `active=false`
+  (soft-delete) en lugar de borrar físicamente. `GET /services/photography` y
+  `GET /services/content-creators` (ADMIN+) listan solicitudes paginadas con las
+  opciones incluidas. Todos los endpoints de options + listados admin usan
+  `JwtAuthGuard + RolesGuard + @Roles('ADMIN','SUPER_ADMIN')`.
+- [ ] **SVC-03**: Módulo `crm` con pipeline unificado (CONTACT, PHOTOGRAPHY, CONTENT):
+  `GET /crm` (paginado, filtros `?type=`, `?stage=`, `?assignedTo=`),
+  `GET /crm/:id` (devuelve la entrada con notas y datos del source via
+  `sourceType + sourceId`), `PATCH /crm/:id/stage` (body `{ stage, stageReason? }` —
+  si `stage === 'LOST'`, `stageReason` es **requerido** o 400),
+  `POST /crm/:id/notes` y `GET /crm/:id/notes` (notas internas del equipo).
+  No existe `DELETE /crm/:id` — las entradas se conservan (mover a LOST). Todos los
+  endpoints ADMIN+.
+- [ ] **SVC-04**: `ContactService.create()` extendido para crear `ContactMessage` +
+  `CrmEntry` (type=CONTACT, sourceType=CONTACT, sourceId=contactMsg.id, stage=NEW)
+  en `prisma.$transaction` (callback form). El response del endpoint `POST /contact`
+  NO cambia (sigue devolviendo solo el `ContactMessage`) — backwards compatible. No
+  se importa `CrmModule` en `ContactModule` (se usa `PrismaService` directamente,
+  patrón D-19).
+- [ ] **SVC-05**: `ServicesService.createRequest()` extendido para crear
+  `ServiceRequest` + `CrmEntry` (type según `crmTypeMap[ServiceType]`,
+  sourceType=type, sourceId=serviceReq.id, stage=NEW) en `prisma.$transaction`
+  (callback form — `connect` de options many-to-many requiere callback, D-22). No
+  se importa `CrmModule` en `ServicesModule` (D-23).
+
 ---
 *Requirements defined: 2026-03-23 · Re-aligned: 2026-05-20 after the stack migration*

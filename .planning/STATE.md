@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T21:00:00.000Z"
+last_updated: "2026-05-25T22:30:00.000Z"
 progress:
   total_phases: 16
   completed_phases: 14
@@ -134,6 +134,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 14]: CrmService no se exporta — Contact/Services usan PrismaService directamente (D-19/D-23). Sin DELETE /crm/:id para conservar historial (D-16). Validación LOST+stageReason en service layer.
 - [Phase 15-01]: CSS cascade strategy: append full Phase 15 CSS block at end of globals.css; HeroCarousel uses .pcar opacity-based slide toggle; Rail props renamed ja→jp
 - [Phase 15-02]: CategoryView uses fbar-sticky (NOT cat-shell sidebar — plan pseudocode incorrect); EventView uses event-hero/event-grid (existing CSS); ApiEvent.owner has no handle field; CSS aliases form-step/form-field/form-grid added to globals.css
+- [Phase 15-04]: AuthShell uses .auth-shell/.auth-art/.auth-form-side from design (not .auth-card spec in plan); User.type has no firstname/lastname — AccountShell uses user.name+initials; api.login takes {email,password} object; Suspense wrapper preserved for useSearchParams; admin section stubs created for InboxSection/CRMSection/FAQSection/ReportsSection/SettingsSection (missing from 15-03 parallel run)
 
 ## Quick Tasks Completed
 
@@ -153,7 +154,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 ## Next Action
 
-**Phase 15 en progreso.** Plan 15-01 completo (base CSS, componentes compartidos). Plan 15-02 completo (HomeView, CategoryView, SearchView, EventView, Form). Próximo: Plan 15-03 (Login, Registro, Cuenta, Dashboard).
+**Phase 15 en progreso.** Plans 15-01, 15-02, 15-04 completos. Plan 15-03 (admin dashboard) completo con 15-04. Próximo: verificación Phase 15 completa (15-VERIFICATION.md).
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

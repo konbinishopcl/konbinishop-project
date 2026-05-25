@@ -507,13 +507,13 @@ sitio no tiene.
 
 **Status:** 🔄 Active
 
-**Plans:** 2/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 - [x] 15-01-PLAN.md — Tokens CSS + Componentes base (sonner, toggleTheme, Header, Footer, EventCard, Poster, Rail, HeroCarousel, icons) — Wave 1
 - [x] 15-02-PLAN.md — Vistas públicas existentes (Home, Category, Search, Event) en archivos separados page.tsx + View.tsx — Wave 2
-- [ ] 15-03-PLAN.md — Admin dashboard completo (demolición + AdminPage shell + 14 secciones + 6 modales preservando APIs reales) — Wave 3
-- [ ] 15-04-PLAN.md — Vistas de usuario (AuthShell + Login + Registro + AccountShell + 8 tabs de /cuenta/) — Wave 3 (paralelo con 15-03)
+- [x] 15-03-PLAN.md — Admin dashboard completo (demolición + AdminPage shell + 14 secciones + 6 modales preservando APIs reales) — Wave 3
+- [x] 15-04-PLAN.md — Vistas de usuario (AuthShell + Login + Registro + AccountShell + 8 tabs de /cuenta/) — Wave 3 (paralelo con 15-03)
 - [ ] 15-05-PLAN.md — Nuevas vistas (Noticias, Organizer, Servicios, Precios, Carrito, Crear/[kind], NotFound, etc.) — Wave 4
 
 **Canonical refs:**

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T14:13:31.411Z"
+last_updated: "2026-05-25T14:23:07.902Z"
 progress:
   total_phases: 15
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 40
-  completed_plans: 39
+  completed_plans: 40
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T14:13:31.409Z
+**Last session:** 2026-05-25T14:23:07.900Z
 
 ## Phase Summary
 
@@ -118,6 +118,9 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 12-02]: COM-02: days opcional en DTO con validación >=1 movida al service; ConfigService removido de OrdersService → SettingsService; ARTICLE branch en resolveItem con ARTICLE_PRICE desde Settings; SPOT_PRICE_PER_DAY y HERO_PRICE_PER_DAY también migrados a SettingsService
 - [Phase 12-suscripciones-y-carrito-v2]: Guards movidos de clase a método en SubscriptionsController para permitir callbacks públicos /subscriptions/confirm
 - [Phase 12-suscripciones-y-carrito-v2]: recipient tipado como discriminated union { orgId: number } | { userId: number } para evitar ambigüedad TS con Prisma nullable fields
+- [Phase 12-03]: Days cap for EVENT credit: Math.min(45, daysUntilCycleEnd, daysUntilEventExpiration?) — D-05 with 3 caps
+- [Phase 12-03]: Signal-via-zero (unitPrice===0 && subtotal===0) detects credited EVENT in activateOrderItems — no schema column needed
+- [Phase 12-03]: PaymentsService accesses sub via SubscriptionsService.getActiveForOwner (not direct Prisma query) for cross-module consistency
 
 ## Quick Tasks Completed
 

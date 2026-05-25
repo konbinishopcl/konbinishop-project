@@ -206,7 +206,7 @@ administrador quedan visibles al público.
   a `SettingsService` para todas las claves `*_MAX_DAYS` y `*_MAX_ACTIVE`. Seed agrega
   `ARTICLE_PRICE=5000` y `EVENT_MAX_DAYS=60` si no existen.
 
-- [ ] **COM-03**: Créditos de suscripción en carrito — al agregar un EVENT con suscripción
+- [x] **COM-03**: Créditos de suscripción en carrito — al agregar un EVENT con suscripción
   activa y `creditsUsed < creditsTotal`: `unitPrice = 0`, `days = Math.min(45,
   daysUntilCycleEnd, daysUntilEventExpiration)`, `subtotal = 0`. Si la sub está
   CANCELLED con `cycleEnd` futuro, los créditos siguen aplicando (D-09). Descuentos para

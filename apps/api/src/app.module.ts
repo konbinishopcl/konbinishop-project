@@ -30,6 +30,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { TransfersModule } from './transfers/transfers.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { SettingsModule } from './settings/settings.module';
     TransfersModule,
     NotificationsModule,
     SettingsModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [

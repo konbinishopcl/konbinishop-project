@@ -40,10 +40,7 @@ function LoginForm() {
 
   const goStep2 = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
-      toast.error("Ingresa tu email para continuar");
-      return;
-    }
+    if (!email.trim()) { toast.error("Ingresa tu email para continuar"); return; }
     setStep(2);
   };
 
@@ -56,7 +53,7 @@ function LoginForm() {
       toast.success("Bienvenido de vuelta");
       redirectAfterLogin(res.user.role);
     } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al iniciar sesión");
+      toast.error(ex instanceof Error ? ex.message : "Email o contraseña incorrectos");
     } finally {
       setBusy(false);
     }
@@ -65,7 +62,11 @@ function LoginForm() {
   return (
     <AuthShell
       title={step === 1 ? "Bienvenido de vuelta" : "Tu contraseña"}
-      subtitle={step === 1 ? "Ingresa con tu cuenta de Konbini para guardar eventos y publicar." : email ? `Para ${email}` : undefined}
+      subtitle={
+        step === 1
+          ? "Ingresa con tu cuenta de Konbini para guardar eventos y publicar."
+          : email ? `Para ${email}` : undefined
+      }
       step={step}
       of={2}
     >

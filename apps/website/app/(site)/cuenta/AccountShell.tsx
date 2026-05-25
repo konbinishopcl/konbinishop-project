@@ -6,14 +6,17 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/components/providers";
 
 const TABS = [
-  { id: "perfil",        href: "/cuenta/perfil",        label: "Perfil" },
-  { id: "organizaciones",href: "/cuenta/organizaciones", label: "Organizaciones" },
-  { id: "suscripcion",   href: "/cuenta/suscripcion",    label: "Suscripción" },
-  { id: "publicaciones", href: "/cuenta/publicaciones",  label: "Mis eventos" },
-  { id: "articulos",     href: "/cuenta/articulos",      label: "Artículos" },
-  { id: "favoritos",     href: "/cuenta/favoritos",      label: "Favoritos" },
-  { id: "mensajes",      href: "/cuenta/mensajes",       label: "Mensajes" },
-  { id: "pagos",         href: "/cuenta/pagos",          label: "Pagos" },
+  { id: "perfil",         href: "/cuenta/perfil",         label: "Perfil" },
+  { id: "organizador",    href: "/cuenta/organizador",    label: "Organizador" },
+  { id: "organizaciones", href: "/cuenta/organizaciones", label: "Organizaciones" },
+  { id: "suscripcion",    href: "/cuenta/suscripcion",    label: "Suscripción" },
+  { id: "publicaciones",  href: "/cuenta/publicaciones",  label: "Mis eventos" },
+  { id: "mis-avisos",     href: "/cuenta/mis-avisos",     label: "Mis avisos" },
+  { id: "mis-portadas",   href: "/cuenta/mis-portadas",   label: "Mis portadas" },
+  { id: "articulos",      href: "/cuenta/articulos",      label: "Artículos" },
+  { id: "favoritos",      href: "/cuenta/favoritos",      label: "Favoritos" },
+  { id: "mensajes",       href: "/cuenta/mensajes",       label: "Mensajes" },
+  { id: "pagos",          href: "/cuenta/pagos",          label: "Pagos" },
 ];
 
 export function AccountShell({ children }: { children: ReactNode }) {

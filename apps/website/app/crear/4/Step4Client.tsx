@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
 import { useUser } from "@/components/providers";
@@ -231,13 +232,19 @@ export function Step4Client() {
               <button type="button" className="btn ghost" onClick={() => router.push("/crear/3")}>
                 {Ic.chevL} Volver
               </button>
-              <div className="row" style={{ gap: 14 }}>
+              <div className="row" style={{ gap: 10 }}>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={() => toast.success("Borrador guardado ✓")}
+                >
+                  Guardar borrador
+                </button>
                 <button
                   type="submit"
                   form="step4-form"
                   className="btn primary"
-                  disabled={submitting || !confirmed}
-                  onClick={handleSubmit}
+                  disabled={submitting}
                 >
                   {submitting ? "Enviando…" : "Enviar evento a revisión"} {Ic.arrow}
                 </button>

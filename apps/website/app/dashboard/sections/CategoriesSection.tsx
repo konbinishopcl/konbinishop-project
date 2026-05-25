@@ -8,9 +8,46 @@ type CatForm = {
   name: string;
   slug: string;
   description: string;
+  pricePerDay: number | "";
+  minDays: number | "";
+  maxDays: number | "";
 };
 
-const emptyForm: CatForm = { name: "", slug: "", description: "" };
+const emptyForm: CatForm = {
+  name: "",
+  slug: "",
+  description: "",
+  pricePerDay: "",
+  minDays: "",
+  maxDays: "",
+};
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: "var(--surface-2)",
+  border: "1px solid var(--line)",
+  borderRadius: 8,
+  padding: "8px 12px",
+  fontSize: 13,
+  color: "var(--ink)",
+  outline: "none",
+  boxSizing: "border-box",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: 12,
+  fontFamily: "var(--font-mono)",
+  letterSpacing: ".1em",
+  textTransform: "uppercase",
+  color: "var(--ink-3)",
+  marginBottom: 4,
+};
+
+function formatPrice(price: number | undefined | null): string {
+  if (price == null) return "—";
+  return `$${price.toLocaleString("es-CL")}/día`;
+}
 
 export default function CategoriesSection() {
   const { token } = useUser();
@@ -19,6 +56,7 @@ export default function CategoriesSection() {
   const [form, setForm] = useState<CatForm>(emptyForm);
   const [editing, setEditing] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ApiCategory | null>(null);
 
   useEffect(() => {
     api
@@ -34,6 +72,9 @@ export default function CategoriesSection() {
       name: c.name ?? "",
       slug: c.slug,
       description: c.description ?? "",
+      pricePerDay: (c as any).pricePerDay ?? "",
+      minDays: (c as any).minDays ?? "",
+      maxDays: (c as any).maxDays ?? "",
     });
   };
 
@@ -41,6 +82,9 @@ export default function CategoriesSection() {
     setEditing(null);
     setForm(emptyForm);
   };
+
+  const setField = <K extends keyof CatForm>(key: K, val: CatForm[K]) =>
+    setForm((f) => ({ ...f, [key]: val }));
 
   const saveCategory = async () => {
     if (!token || !form.name.trim() || !form.slug.trim()) {
@@ -51,13 +95,21 @@ export default function CategoriesSection() {
     try {
       const method = editing ? "PATCH" : "POST";
       const url = editing ? `/api/categories/${editing}` : "/api/categories";
+      const body = {
+        name: form.name.trim(),
+        slug: form.slug.trim(),
+        description: form.description.trim(),
+        ...(form.pricePerDay !== "" ? { pricePerDay: Number(form.pricePerDay) } : {}),
+        ...(form.minDays !== "" ? { minDays: Number(form.minDays) } : {}),
+        ...(form.maxDays !== "" ? { maxDays: Number(form.maxDays) } : {}),
+      };
       const r = await fetch(url, {
         method,
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
       if (!r.ok) throw new Error("Error al guardar");
       const saved: ApiCategory = await r.json();
@@ -76,22 +128,22 @@ export default function CategoriesSection() {
     }
   };
 
-  const deleteCategory = async (id: number) => {
-    if (!token) return;
-    if (!window.confirm("¿Eliminar esta categoría?")) return;
+  const confirmDelete = async () => {
+    if (!token || !deleteTarget) return;
     setBusy(true);
     try {
-      const r = await fetch(`/api/categories/${id}`, {
+      const r = await fetch(`/api/categories/${deleteTarget.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) throw new Error("Error al eliminar");
-      setCategories((list) => list.filter((c) => c.id !== id));
+      setCategories((list) => list.filter((c) => c.id !== deleteTarget.id));
       toast.success("Categoría eliminada");
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "Error al eliminar");
     } finally {
       setBusy(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -103,18 +155,6 @@ export default function CategoriesSection() {
           <button
             className="btn primary sm"
             onClick={() => setEditing(0)}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "8px 14px",
-              background: "var(--accent)",
-              color: "var(--accent-ink)",
-              borderRadius: 999,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
           >
             + Nueva categoría
           </button>
@@ -126,99 +166,89 @@ export default function CategoriesSection() {
           <div className="ph">
             <h3>{editing === 0 ? "Nueva categoría" : "Editar categoría"}</h3>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+
+          {/* Row 1: name + slug */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
             <div>
-              <label style={{ display: "block", fontSize: 12, color: "var(--ink-3)", marginBottom: 4 }}>
-                NOMBRE
-              </label>
+              <label style={labelStyle}>Nombre</label>
               <input
-                style={{
-                  width: "100%",
-                  background: "var(--surface-2)",
-                  border: "1px solid var(--line)",
-                  borderRadius: 8,
-                  padding: "8px 12px",
-                  fontSize: 13,
-                  color: "var(--ink)",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
+                style={inputStyle}
                 value={form.name}
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                onChange={(e) => setField("name", e.target.value)}
                 placeholder="ej. Anime"
               />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: 12, color: "var(--ink-3)", marginBottom: 4 }}>
-                SLUG
-              </label>
+              <label style={labelStyle}>Slug</label>
               <input
-                style={{
-                  width: "100%",
-                  background: "var(--surface-2)",
-                  border: "1px solid var(--line)",
-                  borderRadius: 8,
-                  padding: "8px 12px",
-                  fontSize: 13,
-                  color: "var(--ink)",
-                  outline: "none",
-                  boxSizing: "border-box",
-                }}
+                style={inputStyle}
                 value={form.slug}
-                onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+                onChange={(e) => setField("slug", e.target.value)}
                 placeholder="ej. anime"
               />
             </div>
           </div>
-          <div style={{ marginTop: 12 }}>
-            <label style={{ display: "block", fontSize: 12, color: "var(--ink-3)", marginBottom: 4 }}>
-              DESCRIPCIÓN
-            </label>
+
+          {/* Row 2: description full-width */}
+          <div style={{ marginBottom: 12 }}>
+            <label style={labelStyle}>Descripción</label>
             <input
-              style={{
-                width: "100%",
-                background: "var(--surface-2)",
-                border: "1px solid var(--line)",
-                borderRadius: 8,
-                padding: "8px 12px",
-                fontSize: 13,
-                color: "var(--ink)",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
+              style={inputStyle}
               value={form.description}
-              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              onChange={(e) => setField("description", e.target.value)}
               placeholder="Descripción breve"
             />
           </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-            <button
-              onClick={cancelEdit}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 999,
-                background: "var(--surface)",
-                border: "1px solid var(--line)",
-                color: "var(--ink)",
-                fontSize: 13,
-                cursor: "pointer",
-              }}
-            >
+
+          {/* Row 3: pricing fields */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+            <div>
+              <label style={labelStyle}>Precio por día (CLP)</label>
+              <input
+                type="number"
+                min={0}
+                style={inputStyle}
+                value={form.pricePerDay}
+                onChange={(e) =>
+                  setField("pricePerDay", e.target.value === "" ? "" : Number(e.target.value))
+                }
+                placeholder="ej. 8000"
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Días mínimos</label>
+              <input
+                type="number"
+                min={1}
+                style={inputStyle}
+                value={form.minDays}
+                onChange={(e) =>
+                  setField("minDays", e.target.value === "" ? "" : Number(e.target.value))
+                }
+                placeholder="ej. 10"
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Días máximos</label>
+              <input
+                type="number"
+                min={1}
+                style={inputStyle}
+                value={form.maxDays}
+                onChange={(e) =>
+                  setField("maxDays", e.target.value === "" ? "" : Number(e.target.value))
+                }
+                placeholder="ej. 30"
+              />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 10 }}>
+            <button className="btn ghost sm" onClick={cancelEdit}>
               Cancelar
             </button>
-            <button
-              onClick={saveCategory}
-              disabled={busy}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 999,
-                background: "var(--accent)",
-                color: "var(--accent-ink)",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
+            <button className="btn primary sm" onClick={saveCategory} disabled={busy}>
               {busy ? "Guardando…" : editing === 0 ? "Crear" : "Actualizar"}
             </button>
           </div>
@@ -242,7 +272,8 @@ export default function CategoriesSection() {
                 <th>#</th>
                 <th>Nombre</th>
                 <th>Slug</th>
-                <th>Descripción</th>
+                <th>Precio / día</th>
+                <th>Eventos</th>
                 <th style={{ textAlign: "right" }}>Acciones</th>
               </tr>
             </thead>
@@ -256,21 +287,35 @@ export default function CategoriesSection() {
                   </td>
                   <td>
                     <strong style={{ fontSize: 13.5 }}>{c.name ?? "—"}</strong>
+                    {c.description && (
+                      <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>
+                        {c.description}
+                      </div>
+                    )}
                   </td>
                   <td>
                     <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink-3)" }}>
                       {c.slug}
                     </span>
                   </td>
-                  <td style={{ fontSize: 13, color: "var(--ink-2)" }}>{c.description ?? "—"}</td>
+                  <td>
+                    <span className="cell-price">
+                      {formatPrice((c as any).pricePerDay)}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
+                      {(c as any).eventCount ?? 0}
+                    </span>
+                  </td>
                   <td>
                     <div className="row-acts">
-                      <button onClick={() => startEdit(c)} style={{ color: "var(--ink-2)" }}>
+                      <button onClick={() => startEdit(c)}>
                         Editar
                       </button>
                       <button
-                        onClick={() => deleteCategory(c.id)}
-                        style={{ color: "var(--err)" }}
+                        className="bad"
+                        onClick={() => setDeleteTarget(c)}
                         disabled={busy}
                       >
                         Eliminar
@@ -283,6 +328,32 @@ export default function CategoriesSection() {
           </table>
         )}
       </div>
+
+      {/* Delete confirmation modal */}
+      {deleteTarget && (
+        <div className="confirm-bg" onClick={() => setDeleteTarget(null)}>
+          <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
+            <h3>Eliminar categoría</h3>
+            <p>
+              Esta accion eliminara la categoria <strong>{deleteTarget.name}</strong>. Los eventos asociados
+              perderan su categoria. Esta accion no se puede deshacer.
+            </p>
+            <div className="modal-acts">
+              <button className="btn ghost" onClick={() => setDeleteTarget(null)}>
+                Cancelar
+              </button>
+              <button
+                className="btn primary"
+                onClick={confirmDelete}
+                disabled={busy}
+                style={{ background: "var(--err)", color: "#fff" }}
+              >
+                {busy ? "Eliminando…" : "Eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

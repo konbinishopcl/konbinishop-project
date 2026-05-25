@@ -23,6 +23,9 @@ function RegistroForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [accept18, setAccept18] = useState(false);
+  const [acceptMarketing, setAcceptMarketing] = useState(false);
 
   const redirectAfterLogin = (role: string) =>
     router.push(role === "ADMIN" || role === "SUPER_ADMIN" ? "/dashboard" : returnTo);
@@ -64,6 +67,8 @@ function RegistroForm() {
       toast.error("Completa tu nombre y apellido");
       return;
     }
+    if (!acceptTerms) { toast.error("Debes aceptar los términos y condiciones"); return; }
+    if (!accept18) { toast.error("Debes confirmar que eres mayor de 18 años"); return; }
     setBusy(true);
     try {
       const res = await api.register({ email, password, firstname, lastname });
@@ -158,6 +163,20 @@ function RegistroForm() {
                 onChange={(e) => setConfirm(e.target.value)}
                 required
               />
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "18px 0" }}>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>
+                <input type="checkbox" checked={acceptTerms} onChange={e => setAcceptTerms(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
+                <span>Acepto los <Link href="/ayuda?tab=terms" target="_blank" style={{ color: "var(--accent)" }}>Términos y condiciones</Link> y la <Link href="/ayuda?tab=privacy" target="_blank" style={{ color: "var(--accent)" }}>Política de privacidad</Link> <span style={{ color: "var(--err)" }}>*</span></span>
+              </label>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>
+                <input type="checkbox" checked={accept18} onChange={e => setAccept18(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
+                <span>Confirmo que soy mayor de 18 años <span style={{ color: "var(--err)" }}>*</span></span>
+              </label>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>
+                <input type="checkbox" checked={acceptMarketing} onChange={e => setAcceptMarketing(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
+                <span style={{ color: "var(--ink-3)" }}>Quiero recibir noticias y promociones de Konbini (opcional)</span>
+              </label>
             </div>
             <button type="submit" className="btn primary block lg" disabled={busy}>
               {busy ? "Creando cuenta…" : "Crear cuenta →"}

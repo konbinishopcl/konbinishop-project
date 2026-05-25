@@ -6,8 +6,11 @@ import { Ic } from "./icons";
 import type { HeroSlide } from "@/lib/api";
 
 export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
+  const availableSlots = Math.max(0, 5 - slides.length);
+  const totalSlides = slides.length + (availableSlots > 0 ? 1 : 0);
+
   const [idx, setIdx] = useState(0);
-  const n = slides.length;
+  const n = totalSlides;
 
   // Auto-advance every 7 seconds — hooks BEFORE early return (Rules of Hooks)
   useEffect(() => {
@@ -33,7 +36,7 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
         </button>
       </div>
 
-      {/* Slides */}
+      {/* Slides reales */}
       {slides.map((s, i) => (
         <div key={i} className={`slide ${i === idx ? "on" : ""}`}>
           {/* Background image */}
@@ -86,9 +89,25 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
         </div>
       ))}
 
+      {/* Slide de venta */}
+      {availableSlots > 0 && (
+        <div className={`slide sell ${slides.length === idx ? "on" : ""}`}>
+          <div className="bg" />
+          <div className="body">
+            <div className="sell-badge">{availableSlots} {availableSlots === 1 ? "cupo disponible" : "cupos disponibles"}</div>
+            <div className="eyebrow-w">PORTADA · 表紙</div>
+            <h1>Tu portada<br /><em>aquí.</em></h1>
+            <p className="lead">Aparece en el carrusel principal del home. Máximo 5 portadas simultáneas — la escasez es parte del valor.</p>
+            <div>
+              <Link className="btn primary lg" href="/precios">Contratar portada →</Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dot indicators */}
       <div className="dots">
-        {slides.map((_, i) => (
+        {Array.from({ length: totalSlides }).map((_, i) => (
           <div
             key={i}
             className={`d ${i === idx ? "on" : ""}`}

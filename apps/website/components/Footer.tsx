@@ -21,8 +21,8 @@ export function Footer() {
           </p>
           <div className="row" style={{ marginTop: 18, gap: 10 }}>
             <a className="icon-btn" href="#" aria-label="Google">{Ic.google}</a>
-            <a className="icon-btn" href="#" aria-label="Instagram">{Ic.insta}</a>
-            <a className="icon-btn" href="#" aria-label="Facebook">{Ic.fb}</a>
+            <a className="icon-btn" href="https://instagram.com/konbinishop.cl" aria-label="Instagram" target="_blank" rel="noopener noreferrer">{Ic.insta}</a>
+            <a className="icon-btn" href="https://facebook.com/konbinishop" aria-label="Facebook" target="_blank" rel="noopener noreferrer">{Ic.fb}</a>
             <a className="icon-btn" href="#" aria-label="Apple">{Ic.apple}</a>
           </div>
         </div>
@@ -53,10 +53,10 @@ export function Footer() {
 
         <div className="foot-col">
           <h4>Comunidad</h4>
-          <a href="#">Instagram</a>
-          <a href="#">TikTok</a>
+          <a href="https://instagram.com/konbinishop.cl" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="https://tiktok.com/@konbinishop.cl" target="_blank" rel="noopener noreferrer">TikTok</a>
           <a href="#">Discord</a>
-          <a href="#">Newsletter</a>
+          <Link href="/ayuda?tab=contact">Newsletter</Link>
         </div>
       </div>
 

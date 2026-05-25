@@ -202,6 +202,10 @@ export const api = {
     request<AuthResponse>("/auth/register", { method: "POST", body: JSON.stringify(body) }),
   login: (body: { email: string; password: string }) =>
     request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  verifyTwoFa: (code: string, pendingToken: string) =>
+    request<AuthResponse>("/auth/2fa/verify", { method: "POST", body: JSON.stringify({ code }) }, pendingToken),
+  resendTwoFa: (pendingToken: string) =>
+    request<{ ok: boolean }>("/auth/2fa/resend", { method: "POST", body: JSON.stringify({}) }, pendingToken),
   googleAuth: (accessToken: string) =>
     request<AuthResponse>("/auth/google", { method: "POST", body: JSON.stringify({ accessToken }) }),
   googleOneTap: (credential: string) =>

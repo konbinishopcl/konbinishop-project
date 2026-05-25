@@ -131,8 +131,8 @@ export class AuthService {
       throw new UnauthorizedException('Email o contraseña incorrectos');
     }
     if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
-    await this.issueTwoFaCode(user);
-    return { pendingToken: this.sign2FaPending(user), twoFaRequired: true as const };
+    // 2FA desactivado temporalmente — reactivar antes de producción
+    return { token: this.sign(user), user: this.sanitize(user) };
   }
 
   /** Upsert de usuario Google: busca por googleId → email → crea nuevo. Retorna isNew=true solo si el usuario fue creado en esta llamada. */

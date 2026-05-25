@@ -16,12 +16,19 @@ type Props = {
 // Opciones de ordenado
 const SORT_OPTIONS = ["Relevancia", "Más recientes", "Precio: menor", "Precio: mayor"];
 
+const CITY_OPTIONS = ["Todas las ciudades", "Santiago", "Valparaíso", "Concepción", "Antofagasta", "Viña del Mar"];
+const FORMAT_OPTIONS = ["Todos", "Presencial", "Online"];
+
 export function CategoryView({ category, allCategories, items }: Props) {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [sort, setSort] = useState("Relevancia");
   const [openPop, setOpenPop] = useState<string | null>(null);
   const [filterPrice, setFilterPrice] = useState("Todos");
   const [filterQuick, setFilterQuick] = useState<string | null>(null);
+  const [filterCity, setFilterCity] = useState("Todas las ciudades");
+  const [filterFormat, setFilterFormat] = useState("Todos");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   // Filtrar items
   let filtered = [...items];
@@ -32,12 +39,30 @@ export function CategoryView({ category, allCategories, items }: Props) {
   if (sort === "Precio: menor") filtered.sort((a, b) => a.price - b.price);
   if (sort === "Precio: mayor") filtered.sort((a, b) => b.price - a.price);
 
+  const hasDateRange = dateFrom !== "" || dateTo !== "";
+
+  const formatDateRange = () => {
+    if (dateFrom && dateTo) return `${dateFrom} – ${dateTo}`;
+    if (dateFrom) return `Desde ${dateFrom}`;
+    if (dateTo) return `Hasta ${dateTo}`;
+    return "Fecha";
+  };
+
   const clearFilters = () => {
     setFilterPrice("Todos");
     setFilterQuick(null);
+    setFilterCity("Todas las ciudades");
+    setFilterFormat("Todos");
+    setDateFrom("");
+    setDateTo("");
   };
 
-  const activeCount = (filterPrice !== "Todos" ? 1 : 0) + (filterQuick ? 1 : 0);
+  const activeCount =
+    (filterPrice !== "Todos" ? 1 : 0) +
+    (filterQuick ? 1 : 0) +
+    (filterCity !== "Todas las ciudades" ? 1 : 0) +
+    (filterFormat !== "Todos" ? 1 : 0) +
+    (hasDateRange ? 1 : 0);
 
   return (
     <main className="container">
@@ -63,8 +88,9 @@ export function CategoryView({ category, allCategories, items }: Props) {
       {/* Sticky filter bar */}
       <div className="fbar-sticky">
         <div className="fbar-inner">
+          {/* Grupo 1: chips rápidos */}
           <div className="group">
-            {["Hoy", "Esta semana"].map((f) => (
+            {["Hoy", "Esta semana", "Este mes"].map((f) => (
               <button
                 key={f}
                 className={`sel ${filterQuick === f ? "on" : ""}`}
@@ -77,7 +103,63 @@ export function CategoryView({ category, allCategories, items }: Props) {
 
           <div className="vline" />
 
+          {/* Grupo 2: dropdowns de filtro */}
           <div className="group">
+            {/* Fecha */}
+            <div style={{ position: "relative" }}>
+              <button
+                className={`sel ${openPop === "date" ? "on" : ""} ${hasDateRange ? "on" : ""}`}
+                onClick={() => setOpenPop(openPop === "date" ? null : "date")}
+              >
+                {Ic.cal}
+                <strong style={{ fontWeight: 600, marginLeft: 6 }}>{formatDateRange()}</strong> {Ic.chev}
+              </button>
+              {openPop === "date" && (
+                <div className="menu" style={{ top: 44, left: 0, minWidth: 280, padding: 14 }} onMouseLeave={() => setOpenPop(null)}>
+                  <div style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 10, fontFamily: "var(--font-mono)", letterSpacing: ".08em" }}>SELECCIONA UN RANGO</div>
+                  <div className="grid-2" style={{ gap: 10 }}>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11, marginBottom: 4 }}>Desde</label>
+                      <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} />
+                    </div>
+                    <div className="field" style={{ margin: 0 }}>
+                      <label style={{ fontSize: 11, marginBottom: 4 }}>Hasta</label>
+                      <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} />
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                    <button className="btn ghost block" style={{ padding: "8px 12px", fontSize: 12 }} onClick={() => { setDateFrom(""); setDateTo(""); setOpenPop(null); }}>Limpiar</button>
+                    <button className="btn dark block" style={{ padding: "8px 12px", fontSize: 12 }} onClick={() => setOpenPop(null)}>Aplicar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Ciudad */}
+            <div style={{ position: "relative" }}>
+              <button
+                className={`sel ${openPop === "city" ? "on" : ""} ${filterCity !== "Todas las ciudades" ? "on" : ""}`}
+                onClick={() => setOpenPop(openPop === "city" ? null : "city")}
+              >
+                <strong style={{ fontWeight: 600 }}>{filterCity}</strong> {Ic.chev}
+              </button>
+              {openPop === "city" && (
+                <div className="menu" style={{ top: 44, left: 0, minWidth: 200 }} onMouseLeave={() => setOpenPop(null)}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", textTransform: "uppercase", padding: "8px 12px 4px" }}>Ciudad</div>
+                  {CITY_OPTIONS.map((o) => (
+                    <button
+                      key={o}
+                      onClick={() => { setFilterCity(o); setOpenPop(null); }}
+                      style={filterCity === o ? { background: "var(--surface-2)", color: "var(--ink)" } : undefined}
+                    >
+                      {filterCity === o && <span style={{ color: "var(--accent)", marginRight: 4 }}>✓</span>}
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Precio */}
             <div style={{ position: "relative" }}>
               <button
@@ -97,6 +179,31 @@ export function CategoryView({ category, allCategories, items }: Props) {
                       style={filterPrice === o ? { background: "var(--surface-2)", color: "var(--ink)" } : undefined}
                     >
                       {filterPrice === o && <span style={{ color: "var(--accent)", marginRight: 4 }}>✓</span>}
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Formato */}
+            <div style={{ position: "relative" }}>
+              <button
+                className={`sel ${openPop === "format" ? "on" : ""} ${filterFormat !== "Todos" ? "on" : ""}`}
+                onClick={() => setOpenPop(openPop === "format" ? null : "format")}
+              >
+                <strong style={{ fontWeight: 600 }}>{filterFormat}</strong> {Ic.chev}
+              </button>
+              {openPop === "format" && (
+                <div className="menu" style={{ top: 44, left: 0, minWidth: 180 }} onMouseLeave={() => setOpenPop(null)}>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", textTransform: "uppercase", padding: "8px 12px 4px" }}>Formato</div>
+                  {FORMAT_OPTIONS.map((o) => (
+                    <button
+                      key={o}
+                      onClick={() => { setFilterFormat(o); setOpenPop(null); }}
+                      style={filterFormat === o ? { background: "var(--surface-2)", color: "var(--ink)" } : undefined}
+                    >
+                      {filterFormat === o && <span style={{ color: "var(--accent)", marginRight: 4 }}>✓</span>}
                       {o}
                     </button>
                   ))}
@@ -207,9 +314,35 @@ export function CategoryView({ category, allCategories, items }: Props) {
         </div>
       )}
 
+      {/* Franja de avisos */}
+      <div style={{ margin: "48px 0 0" }}>
+        <div className="sec-head">
+          <div style={{ display: "flex", alignItems: "baseline" }}>
+            <h2>Avisos</h2>
+            <span className="ja">広告</span>
+          </div>
+          <Link className="more" href="/precios">Contratar aviso →</Link>
+        </div>
+        <div className="spots-grid">
+          {/* slots vacíos de muestra — en prod vendrían de la API */}
+          {[1,2,3,4].map(i => (
+            <div key={i} className="spot empty">
+              <div className="e-inner">
+                <div className="ic">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                </div>
+                <div className="h">Tu aviso aquí</div>
+                <div style={{ color: "var(--ink-3)", fontSize: 12, marginTop: 4 }}>desde $8.000/día</div>
+                <Link href="/precios" className="btn ghost" style={{ marginTop: 12, fontSize: 12, padding: "8px 14px" }}>Contratar</Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Otras categorías */}
       {allCategories.length > 1 && (
-        <div style={{ margin: "0 0 60px" }}>
+        <div style={{ margin: "48px 0 60px" }}>
           <div className="eyebrow" style={{ marginBottom: 12 }}>TAMBIÉN TE PUEDE INTERESAR</div>
           <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
             {allCategories

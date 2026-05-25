@@ -2,31 +2,34 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Ic } from "@/components/icons";
 import { useUser } from "@/components/providers";
 
 /* ─── SpotForm ───────────────────────────────────────────────────────────── */
 function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void }) {
   const { token } = useUser();
   const [busy, setBusy] = useState(false);
+  const [linkType, setLinkType] = useState<"url" | "internal" | "email" | "tel">("url");
   const [days, setDays] = useState(14);
-  const [form, setForm] = useState({ title: "", description: "", linkValue: "", buttonText: "" });
-  const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [linkValue, setLinkValue] = useState("");
+  const [buttonText, setButtonText] = useState("");
+
+  const linkPlaceholder = linkType === "url" ? "tu-sitio.cl/oferta" : linkType === "internal" ? "@cinepolis" : linkType === "email" ? "ventas@tu-sitio.cl" : "+56 9 1234 5678";
+  const linkPrefix = linkType === "url" ? "https://" : linkType === "internal" ? "konbini.cl/" : linkType === "email" ? "✉" : "☎";
+  const btnPlaceholder = linkType === "url" ? "Ver oferta" : linkType === "email" ? "Escribir" : linkType === "tel" ? "Llamar" : "Ver";
 
   const handleAdd = async () => {
-    if (!form.title.trim()) { toast.error("El título es requerido"); return; }
+    if (!title.trim()) { toast.error("El título es requerido"); return; }
+    if (!linkValue.trim()) { toast.error("El enlace del CTA es requerido"); return; }
     if (!token) { toast.error("Debes iniciar sesión"); return; }
     setBusy(true);
     try {
       const res = await fetch("/api/spots", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title.trim(),
-          description: form.description.trim() || undefined,
-          linkValue: form.linkValue.trim() || undefined,
-          buttonText: form.buttonText.trim() || undefined,
-          days,
-        }),
+        body: JSON.stringify({ title: title.trim(), description: description.trim() || undefined, linkType, linkValue: linkValue.trim(), buttonText: buttonText.trim() || undefined, days }),
       });
       if (!res.ok) throw new Error("Error al crear aviso");
       toast.success("Aviso agregado al carrito");
@@ -41,29 +44,61 @@ function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
   return (
     <div>
       <div className="field">
-        <label>Título del aviso</label>
-        <input type="text" placeholder="Ej: Konbini Fest 2025" value={form.title} onChange={(e) => set("title", e.target.value)} />
+        <label>Título del aviso <span style={{ color: "var(--err)" }}>*</span></label>
+        <input type="text" placeholder="Ej: Cosplay Premium Atelier — Descuento" value={title} onChange={e => setTitle(e.target.value)} />
+        <div className="help">Aparece en la card del aviso, máx 60 caracteres.</div>
       </div>
       <div className="field">
-        <label>Descripción <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(opcional)</span></label>
-        <textarea placeholder="Breve descripción del aviso" value={form.description} onChange={(e) => set("description", e.target.value)} style={{ minHeight: 80 }} />
+        <label>Descripción corta</label>
+        <input type="text" placeholder="Texto breve que acompaña al título" value={description} onChange={e => setDescription(e.target.value)} />
       </div>
-      <div className="grid-2">
-        <div className="field" style={{ margin: 0 }}>
-          <label>URL de destino</label>
-          <input type="url" placeholder="https://tu-evento.cl" value={form.linkValue} onChange={(e) => set("linkValue", e.target.value)} />
-        </div>
-        <div className="field" style={{ margin: 0 }}>
-          <label>Texto del botón</label>
-          <input type="text" placeholder="Ver evento" value={form.buttonText} onChange={(e) => set("buttonText", e.target.value)} />
+      <div className="field">
+        <label>Imagen del aviso <span style={{ color: "var(--err)" }}>*</span></label>
+        <div className="upload-box" style={{ aspectRatio: "4/5" }}>
+          <div className="ic">{Ic.upl}</div>
+          <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube una imagen</div>
+          <small>JPG / PNG · 1200×1500 mín · máx 5MB</small>
         </div>
       </div>
       <div className="field">
-        <label>Días de publicación: <strong>{days}</strong> días · ${(8000 * days).toLocaleString("es-CL")} CLP</label>
-        <input type="range" min={10} max={30} value={days} onChange={(e) => setDays(Number(e.target.value))} style={{ width: "100%" }} />
+        <label>Tipo de enlace del CTA <span style={{ color: "var(--err)" }}>*</span></label>
+        <div className="pill-pick">
+          <button type="button" className={linkType === "url" ? "on" : ""} onClick={() => setLinkType("url")}>URL externa</button>
+          <button type="button" className={linkType === "internal" ? "on" : ""} onClick={() => setLinkType("internal")}>URL interna</button>
+          <button type="button" className={linkType === "email" ? "on" : ""} onClick={() => setLinkType("email")}>Email</button>
+          <button type="button" className={linkType === "tel" ? "on" : ""} onClick={() => setLinkType("tel")}>Teléfono</button>
+        </div>
+      </div>
+      <div className="field">
+        <label>
+          {linkType === "url" ? "URL externa" : linkType === "internal" ? "Ruta interna" : linkType === "email" ? "Email" : "Teléfono"}
+          {" "}<span style={{ color: "var(--err)" }}>*</span>
+        </label>
+        <div className="input-prefix">
+          <span>{linkPrefix}</span>
+          <input
+            type={linkType === "email" ? "email" : linkType === "tel" ? "tel" : "text"}
+            placeholder={linkPlaceholder}
+            value={linkValue}
+            onChange={e => setLinkValue(e.target.value)}
+          />
+        </div>
+        <div className="help">El botón del aviso cambia su ícono y texto según el tipo de enlace.</div>
+      </div>
+      <div className="field">
+        <label>Texto del botón</label>
+        <input type="text" placeholder={btnPlaceholder} value={buttonText} onChange={e => setButtonText(e.target.value)} />
+      </div>
+      <div className="field">
+        <label>Días de publicación <span style={{ color: "var(--err)" }}>*</span></label>
+        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+          <input type="range" min={10} max={30} value={days} onChange={e => setDays(Number(e.target.value))} style={{ flex: 1 }} />
+          <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, minWidth: 80, textAlign: "right" }}>{days} días</div>
+        </div>
+        <div className="help">Mínimo 10, máximo 30 · $8.000 CLP / día → <strong>${(days * 8000).toLocaleString("es-CL")} CLP total</strong></div>
       </div>
       <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : "Agregar aviso al carrito →"}</button>
+        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : <>Agregar aviso al carrito {Ic.arrow}</>}</button>
         <button className="btn ghost" onClick={onCancel}>Cancelar</button>
       </div>
     </div>
@@ -75,26 +110,22 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
   const { token } = useUser();
   const [busy, setBusy] = useState(false);
   const [days, setDays] = useState(14);
-  const [form, setForm] = useState({ title: "", subtitle: "", lead: "", date: "", place: "", link: "" });
-  const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const [title, setTitle] = useState("");
+  const [subtitle, setSubtitle] = useState("");
+  const [lead, setLead] = useState("");
+  const [date, setDate] = useState("");
+  const [place, setPlace] = useState("");
+  const [link, setLink] = useState("");
 
   const handleAdd = async () => {
-    if (!form.title.trim()) { toast.error("El título es requerido"); return; }
+    if (!title.trim()) { toast.error("El título es requerido"); return; }
     if (!token) { toast.error("Debes iniciar sesión"); return; }
     setBusy(true);
     try {
       const res = await fetch("/api/heroes", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: form.title.trim(),
-          subtitle: form.subtitle.trim() || undefined,
-          lead: form.lead.trim() || undefined,
-          date: form.date.trim() || undefined,
-          place: form.place.trim() || undefined,
-          link: form.link.trim() || undefined,
-          days,
-        }),
+        body: JSON.stringify({ title: title.trim(), subtitle: subtitle.trim() || undefined, lead: lead.trim() || undefined, date: date.trim() || undefined, place: place.trim() || undefined, link: link.trim() || undefined, days }),
       });
       if (!res.ok) throw new Error("Error al crear portada");
       toast.success("Portada agregada al carrito");
@@ -108,40 +139,56 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
 
   return (
     <div>
+      <div className="field">
+        <label>Título principal <span style={{ color: "var(--err)" }}>*</span></label>
+        <input type="text" placeholder="Ej: Demon Slayer" value={title} onChange={e => setTitle(e.target.value)} />
+        <div className="help">La parte grande del título en el carrusel.</div>
+      </div>
+      <div className="field">
+        <label>Subtítulo en color de acento</label>
+        <input type="text" placeholder="Ej: Infinity Castle" value={subtitle} onChange={e => setSubtitle(e.target.value)} />
+        <div className="help">Se muestra en rojo bajo el título principal. Opcional.</div>
+      </div>
+      <div className="field">
+        <label>Descripción corta</label>
+        <textarea placeholder="2-3 líneas que acompañan al título" style={{ minHeight: 80 }} value={lead} onChange={e => setLead(e.target.value)} />
+      </div>
+      <div className="field">
+        <label>Imagen de fondo (pantalla completa) <span style={{ color: "var(--err)" }}>*</span></label>
+        <div className="upload-box" style={{ aspectRatio: "21/9" }}>
+          <div className="ic">{Ic.upl}</div>
+          <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube imagen horizontal</div>
+          <small>JPG · 2400×1080 mín · máx 8MB · sin texto</small>
+        </div>
+      </div>
       <div className="grid-2">
-        <div className="field" style={{ margin: 0 }}>
-          <label>Título</label>
-          <input type="text" placeholder="Konbini Fest" value={form.title} onChange={(e) => set("title", e.target.value)} />
+        <div className="field">
+          <label>Fecha a mostrar</label>
+          <input type="text" placeholder="9–12 MAY 2025" value={date} onChange={e => setDate(e.target.value)} />
         </div>
-        <div className="field" style={{ margin: 0 }}>
-          <label>Subtítulo <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(accent)</span></label>
-          <input type="text" placeholder="2025" value={form.subtitle} onChange={(e) => set("subtitle", e.target.value)} />
-        </div>
-      </div>
-      <div className="field">
-        <label>Lead / descripción corta</label>
-        <input type="text" placeholder="El evento más grande del año" value={form.lead} onChange={(e) => set("lead", e.target.value)} />
-      </div>
-      <div className="grid-2">
-        <div className="field" style={{ margin: 0 }}>
-          <label>Fecha</label>
-          <input type="text" placeholder="15 nov 2025" value={form.date} onChange={(e) => set("date", e.target.value)} />
-        </div>
-        <div className="field" style={{ margin: 0 }}>
-          <label>Lugar</label>
-          <input type="text" placeholder="Movistar Arena" value={form.place} onChange={(e) => set("place", e.target.value)} />
+        <div className="field">
+          <label>Lugar a mostrar</label>
+          <input type="text" placeholder="Estación Mapocho" value={place} onChange={e => setPlace(e.target.value)} />
         </div>
       </div>
       <div className="field">
-        <label>URL del evento</label>
-        <input type="url" placeholder="https://konbini.cl/evento/..." value={form.link} onChange={(e) => set("link", e.target.value)} />
+        <label>URL de destino al hacer clic</label>
+        <div className="input-prefix">
+          <span>https://</span>
+          <input type="text" placeholder="konbini.cl/evento/mi-evento" value={link} onChange={e => setLink(e.target.value)} />
+        </div>
+        <div className="help">Si no la pones, el carrusel solo muestra el banner sin link.</div>
       </div>
       <div className="field">
-        <label>Días de publicación: <strong>{days}</strong> días · ${(15000 * days).toLocaleString("es-CL")} CLP</label>
-        <input type="range" min={10} max={30} value={days} onChange={(e) => setDays(Number(e.target.value))} style={{ width: "100%" }} />
+        <label>Días de publicación <span style={{ color: "var(--err)" }}>*</span></label>
+        <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+          <input type="range" min={10} max={30} value={days} onChange={e => setDays(Number(e.target.value))} style={{ flex: 1 }} />
+          <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, minWidth: 80, textAlign: "right" }}>{days} días</div>
+        </div>
+        <div className="help">Mínimo 10, máximo 30 · $15.000 CLP / día → <strong>${(days * 15000).toLocaleString("es-CL")} CLP total</strong></div>
       </div>
       <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : "Agregar portada al carrito →"}</button>
+        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : <>Agregar portada al carrito {Ic.arrow}</>}</button>
         <button className="btn ghost" onClick={onCancel}>Cancelar</button>
       </div>
     </div>
@@ -152,18 +199,20 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
 function ArticleForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void }) {
   const { token } = useUser();
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ title: "", brief: "" });
-  const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
 
   const handleAdd = async () => {
-    if (!form.title.trim()) { toast.error("El título es requerido"); return; }
+    if (!title.trim()) { toast.error("El título es requerido"); return; }
+    if (!content.trim()) { toast.error("El contenido es requerido"); return; }
     if (!token) { toast.error("Debes iniciar sesión"); return; }
     setBusy(true);
     try {
       const res = await fetch("/api/articles", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ title: form.title.trim(), content: form.brief.trim() || undefined, isSponsored: true }),
+        body: JSON.stringify({ title: title.trim(), content: content.trim(), videoUrl: videoUrl.trim() || undefined, isSponsored: true }),
       });
       if (!res.ok) throw new Error("Error al crear artículo");
       toast.success("Artículo patrocinado agregado al carrito");
@@ -177,59 +226,81 @@ function ArticleForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => v
 
   return (
     <div>
-      <div className="field">
-        <label>Título del artículo</label>
-        <input type="text" placeholder="Konbini Fest 2025: todo lo que necesitas saber" value={form.title} onChange={(e) => set("title", e.target.value)} />
+      {/* Aviso editorial */}
+      <div style={{ background: "color-mix(in oklab, var(--accent-3) 8%, var(--surface-2))", border: "1px solid color-mix(in oklab, var(--accent-3) 30%, var(--line))", borderRadius: 12, padding: 14, marginBottom: 18, display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ width: 28, height: 28, borderRadius: 999, background: "var(--accent-3)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>i</div>
+        <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>
+          <strong style={{ color: "var(--ink)" }}>Konbini revisará el contenido antes de publicarlo.</strong> El texto puede sufrir cambios de redacción para alinearse al estilo editorial de Konbini.
+        </div>
       </div>
+
       <div className="field">
-        <label>Brief <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(opcional)</span></label>
-        <textarea placeholder="Cuéntanos el ángulo: artistas, actividades, público objetivo…" value={form.brief} onChange={(e) => set("brief", e.target.value)} style={{ minHeight: 120 }} />
+        <label>Título del artículo <span style={{ color: "var(--err)" }}>*</span></label>
+        <input type="text" placeholder="Ej: Anime Crunchyroll Fest 2025 llega a Santiago con artistas internacionales" value={title} onChange={e => setTitle(e.target.value)} />
       </div>
-      <p style={{ color: "var(--ink-3)", fontSize: 12, lineHeight: 1.55 }}>
-        Konbini revisa, edita y publica con su estilo editorial. El evento aparece destacado en el bloque de relacionados. Sin cupo limitado.
-      </p>
+
+      {/* WYSIWYG toolbar + textarea */}
+      <div className="field">
+        <label>Contenido <span style={{ color: "var(--err)" }}>*</span></label>
+        <div style={{ display: "flex", gap: 4, padding: 8, background: "var(--surface-2)", border: "1px solid var(--line)", borderBottom: 0, borderRadius: "10px 10px 0 0", flexWrap: "wrap" }}>
+          {[
+            { label: "B", style: { fontWeight: 700 } },
+            { label: "I", style: { fontStyle: "italic" } },
+            { label: "H1" },
+            { label: "H2" },
+            { label: "≡" },
+            { label: '"' },
+            { label: "🔗" },
+          ].map(btn => (
+            <button key={btn.label} type="button" className="sel" style={{ padding: "5px 10px", fontSize: 12, ...btn.style }}>{btn.label}</button>
+          ))}
+          <div style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)", padding: "5px 10px", letterSpacing: ".1em", alignSelf: "center" }}>MARKDOWN</div>
+        </div>
+        <textarea
+          placeholder={"Escribe el contenido. Puedes usar Markdown: **negrita**, *cursiva*, # títulos, > citas, etc."}
+          style={{ minHeight: 240, borderRadius: "0 0 10px 10px", borderTop: 0 }}
+          value={content}
+          onChange={e => setContent(e.target.value)}
+        />
+        <div className="help">El admin de Konbini puede editar el texto para alinearlo al estilo editorial.</div>
+      </div>
+
+      <div className="field">
+        <label>Imagen principal <span style={{ color: "var(--err)" }}>*</span></label>
+        <div className="upload-box" style={{ aspectRatio: "16/9" }}>
+          <div className="ic">{Ic.upl}</div>
+          <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Imagen destacada</div>
+          <small>JPG / PNG · 1600×900 mín · máx 5MB</small>
+        </div>
+      </div>
+
+      <div className="field">
+        <label>Video (YouTube)</label>
+        <div className="input-prefix">
+          <span>▶</span>
+          <input type="text" placeholder="https://youtube.com/watch?v=..." value={videoUrl} onChange={e => setVideoUrl(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="field">
+        <label>Galería de imágenes adicionales</label>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+          {[0, 1, 2, 3].map(i => (
+            <div key={i} className="upload-box" style={{ aspectRatio: "1/1", padding: 12 }}>
+              <div className="ic" style={{ width: 28, height: 28 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              </div>
+              <small style={{ fontSize: 10 }}>{i + 1}</small>
+            </div>
+          ))}
+        </div>
+        <div className="help">Hasta 8 imágenes adicionales · opcional.</div>
+      </div>
+
       <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : "Agregar artículo al carrito →"}</button>
+        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : <>Agregar artículo al carrito {Ic.arrow}</>}</button>
         <button className="btn ghost" onClick={onCancel}>Cancelar</button>
       </div>
-    </div>
-  );
-}
-
-/* ─── StepBody helper ────────────────────────────────────────────────────── */
-function StepBody({
-  priceInfo,
-  formContent,
-  onSkip,
-  skipLabel = "No, gracias — siguiente",
-}: {
-  priceInfo?: string;
-  formContent: (onCancel: () => void) => React.ReactNode;
-  onSkip: () => void;
-  skipLabel?: string;
-}) {
-  const [showForm, setShowForm] = useState(false);
-  return (
-    <div className="body">
-      {!showForm ? (
-        <>
-          {priceInfo && (
-            <div style={{ background: "var(--surface-2)", borderRadius: 12, padding: 16, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 600 }}>Precio</div>
-                <div style={{ color: "var(--ink-3)", fontSize: 12 }}>10 días mínimo, 30 máximo</div>
-              </div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>{priceInfo}</div>
-            </div>
-          )}
-          <div className="ups-cta-row">
-            <button className="btn primary" onClick={() => setShowForm(true)}>Sí, quiero agregarlo</button>
-            <button className="btn ghost" onClick={onSkip}>{skipLabel}</button>
-          </div>
-        </>
-      ) : (
-        formContent(() => setShowForm(false))
-      )}
     </div>
   );
 }
@@ -238,17 +309,17 @@ function StepBody({
 export function UpsellView() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const advance = () => setStep((s) => s + 1);
+  const [open, setOpen] = useState<{ spot?: boolean; hero?: boolean; article?: boolean }>({});
+
+  const advance = (n: number) => setStep(n + 1);
   const goCart = () => router.push("/carrito");
 
   return (
     <main className="ups-shell">
-      {/* Banner de éxito */}
+      {/* Banner éxito */}
       <div style={{ background: "color-mix(in oklab, var(--ok) 8%, var(--surface))", border: "1px solid color-mix(in oklab, var(--ok) 30%, var(--line))", borderRadius: "var(--r-xl)", padding: 28, marginBottom: 18, display: "flex", gap: 18, alignItems: "center" }}>
-        <div style={{ width: 56, height: 56, borderRadius: 999, background: "var(--ok)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 56px" }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+        <div style={{ width: 56, height: 56, borderRadius: 999, background: "var(--ok)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <div>
           <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, letterSpacing: "-.01em" }}>Tu evento está listo para publicar</div>
@@ -262,11 +333,22 @@ export function UpsellView() {
         <h2>¿Quieres agregar un aviso?</h2>
         <p className="av">Banner pagado en home y al final de todas las páginas de categoría. Cupo: 9 / 12 ocupados.</p>
         {step === 1 && (
-          <StepBody
-            priceInfo="$8.000 / día"
-            formContent={(onCancel) => <SpotForm onAdd={advance} onCancel={onCancel} />}
-            onSkip={advance}
-          />
+          <div className="body">
+            {!open.spot ? (
+              <>
+                <div style={{ background: "var(--surface-2)", borderRadius: 12, padding: 16, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div><div style={{ fontWeight: 600 }}>Precio</div><div style={{ color: "var(--ink-3)", fontSize: 12 }}>10 días mínimo, 30 máximo</div></div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>$8.000 / día</div>
+                </div>
+                <div className="ups-cta-row">
+                  <button className="btn primary" onClick={() => setOpen({ ...open, spot: true })}>Sí, agregar aviso</button>
+                  <button className="btn ghost" onClick={() => advance(1)}>No, gracias — siguiente</button>
+                </div>
+              </>
+            ) : (
+              <SpotForm onAdd={() => advance(1)} onCancel={() => setOpen({ ...open, spot: false })} />
+            )}
+          </div>
         )}
       </div>
 
@@ -276,11 +358,22 @@ export function UpsellView() {
         <h2>¿Quieres agregar una portada?</h2>
         <p className="av">Aparición en el carrusel principal del home. Cupo: 3 / 5 ocupados — escasez de verdad.</p>
         {step === 2 && (
-          <StepBody
-            priceInfo="$15.000 / día"
-            formContent={(onCancel) => <HeroForm onAdd={advance} onCancel={onCancel} />}
-            onSkip={advance}
-          />
+          <div className="body">
+            {!open.hero ? (
+              <>
+                <div style={{ background: "var(--surface-2)", borderRadius: 12, padding: 16, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div><div style={{ fontWeight: 600 }}>Precio</div><div style={{ color: "var(--ink-3)", fontSize: 12 }}>10 días mínimo, 30 máximo</div></div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>$15.000 / día</div>
+                </div>
+                <div className="ups-cta-row">
+                  <button className="btn primary" onClick={() => setOpen({ ...open, hero: true })}>Sí, agregar portada</button>
+                  <button className="btn ghost" onClick={() => advance(2)}>No, gracias — siguiente</button>
+                </div>
+              </>
+            ) : (
+              <HeroForm onAdd={() => advance(2)} onCancel={() => setOpen({ ...open, hero: false })} />
+            )}
+          </div>
         )}
       </div>
 
@@ -290,11 +383,16 @@ export function UpsellView() {
         <h2>¿Quieres un artículo patrocinado?</h2>
         <p className="av">Konbini revisa, edita y publica con su estilo editorial. El evento aparece destacado en el bloque de relacionados del artículo. Sin cupo limitado.</p>
         {step === 3 && (
-          <StepBody
-            formContent={(onCancel) => <ArticleForm onAdd={goCart} onCancel={onCancel} />}
-            onSkip={goCart}
-            skipLabel="No, gracias — ir al carrito"
-          />
+          <div className="body">
+            {!open.article ? (
+              <div className="ups-cta-row">
+                <button className="btn primary" onClick={() => setOpen({ ...open, article: true })}>Sí, agregar artículo</button>
+                <button className="btn ghost" onClick={goCart}>No, gracias — ir al carrito</button>
+              </div>
+            ) : (
+              <ArticleForm onAdd={goCart} onCancel={() => setOpen({ ...open, article: false })} />
+            )}
+          </div>
         )}
       </div>
     </main>

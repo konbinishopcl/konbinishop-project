@@ -1,6 +1,52 @@
 "use client";
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
+
+function SatisfactionForm() {
+  const [rating, setRating] = useState(0);
+  const [hover, setHover] = useState(0);
+  const [comment, setComment] = useState("");
+  const [sent, setSent] = useState(false);
+
+  if (sent) {
+    return (
+      <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-xl)", padding: 28, textAlign: "center", marginBottom: 18 }}>
+        <div style={{ fontSize: 13, color: "var(--ink-3)" }}>Gracias por tu feedback ✓</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-xl)", padding: 28, marginBottom: 18 }}>
+      <h3 style={{ fontFamily: "var(--font-display)", fontSize: 18, margin: "0 0 6px" }}>¿Cómo fue tu experiencia publicando?</h3>
+      <p style={{ color: "var(--ink-3)", fontSize: 13, margin: "0 0 16px" }}>Tu opinión nos ayuda a mejorar.</p>
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        {[1,2,3,4,5].map(s => (
+          <button
+            key={s}
+            onClick={() => setRating(s)}
+            onMouseEnter={() => setHover(s)}
+            onMouseLeave={() => setHover(0)}
+            style={{ fontSize: 28, background: "none", border: "none", cursor: "pointer", padding: 4, color: (hover || rating) >= s ? "var(--accent-2)" : "var(--line-2)", transition: "color .15s" }}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+      {rating > 0 && (
+        <>
+          <textarea
+            placeholder="Comentario opcional…"
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            style={{ width: "100%", minHeight: 80, marginBottom: 12, boxSizing: "border-box" }}
+          />
+          <button className="btn dark" onClick={() => setSent(true)}>Enviar →</button>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function CartExitoPage({
   searchParams,
@@ -91,6 +137,28 @@ export default function CartExitoPage({
           Completar mi perfil
         </Link>
       </div>
+
+      {/* Servicios */}
+      <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-xl)", padding: 32, marginBottom: 18 }}>
+        <div className="eyebrow" style={{ marginBottom: 12 }}>PARA TU EVENTO</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
+          <div style={{ background: "var(--surface-2)", borderRadius: "var(--r-lg)", padding: "20px 22px", border: "1px solid var(--line)" }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--accent)", marginBottom: 8 }}>FOTOGRAFÍA</div>
+            <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 18, marginBottom: 6 }}>Cobertura profesional</div>
+            <p style={{ color: "var(--ink-3)", fontSize: 13, lineHeight: 1.55, margin: "0 0 14px" }}>Fotógrafos especializados en eventos geek y otaku. Entrega en 48h.</p>
+            <Link href="/servicios/fotografia" className="btn ghost" style={{ fontSize: 13, padding: "9px 16px" }}>Cotizar fotógrafo →</Link>
+          </div>
+          <div style={{ background: "var(--surface-2)", borderRadius: "var(--r-lg)", padding: "20px 22px", border: "1px solid var(--line)" }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--accent)", marginBottom: 8 }}>CREADORES</div>
+            <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 18, marginBottom: 6 }}>Reels · Aftermovie · Stories</div>
+            <p style={{ color: "var(--ink-3)", fontSize: 13, lineHeight: 1.55, margin: "0 0 14px" }}>Contenido viral para Instagram y TikTok. Cobertura en vivo incluida.</p>
+            <Link href="/servicios/creadores" className="btn ghost" style={{ fontSize: 13, padding: "9px 16px" }}>Cotizar contenido →</Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Satisfacción */}
+      <SatisfactionForm />
 
       <div className="thanks-cta-row" style={{ marginTop: 32 }}>
         <Link href="/cuenta?tab=eventos" className="btn primary lg">

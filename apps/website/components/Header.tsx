@@ -190,6 +190,15 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
             {theme === "dark" ? Ic.sun : Ic.moon}
           </button>
 
+          {user && (
+            <button className="icon-btn" title="Notificaciones" onClick={() => router.push("/cuenta/mensajes")}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </button>
+          )}
+
           {!user ? (
             <>
               <Link
@@ -236,14 +245,34 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
                     </div>
                   </div>
 
-                  {/* Admin */}
+                  {/* Cambiar de cuenta */}
+                  <div style={{ padding: "4px 10px 2px", fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".18em", color: "var(--ink-3)", textTransform: "uppercase" }}>
+                    Cambiar de cuenta
+                  </div>
+                  <button style={{ background: "var(--surface-2)", color: "var(--ink)" }}>
+                    <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
+                      {user.initials}
+                    </span>
+                    <span style={{ flex: 1 }}>Cuenta personal</span>
+                    <span style={{ color: "var(--accent)" }}>✓</span>
+                  </button>
+                  <button onClick={() => { router.push("/cuenta/organizaciones"); setMenu(false); }} style={{ color: "var(--ink-3)", fontSize: 12 }}>
+                    <span style={{ width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    </span>
+                    <span>Crear organización</span>
+                  </button>
+                  {/* Admin — solo visible para admins, incluye su propio separador superior */}
                   {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
-                    <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>
-                      🛠 Panel de administración
-                    </button>
+                    <>
+                      <div style={{ height: 1, background: "var(--line)", margin: "6px 8px" }} />
+                      <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>
+                        🛠 Panel de administración
+                      </button>
+                    </>
                   )}
 
-                  {/* Separador */}
+                  {/* Separador antes de sección cuenta */}
                   <div style={{ height: 1, background: "var(--line)", margin: "6px 8px" }} />
 
                   {/* Cuenta */}

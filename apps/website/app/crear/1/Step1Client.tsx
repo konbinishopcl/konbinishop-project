@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { BrandMark } from "@/components/BrandMark";
@@ -258,9 +259,14 @@ export function Step1Client({ categories }: { categories: ApiCategory[] }) {
               <button type="button" className="btn ghost" disabled style={{ opacity: 0.3 }}>
                 {Ic.chevL} Volver
               </button>
-              <button type="submit" form="crear-form" className="btn primary">
-                Continuar {Ic.arrow}
-              </button>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button type="button" className="btn ghost" onClick={() => toast.success("Borrador guardado ✓")}>
+                  Guardar borrador
+                </button>
+                <button type="submit" form="crear-form" className="btn primary">
+                  Continuar {Ic.arrow}
+                </button>
+              </div>
             </div>
           </div>
         </div>

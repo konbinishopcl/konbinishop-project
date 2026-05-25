@@ -5,23 +5,6 @@ import { EventView } from "./EventView";
 
 export const dynamic = "force-dynamic";
 
-function clp(n: number): string {
-  return `$${n.toLocaleString("es-CL")}`;
-}
-
-function fmtDate(iso: string): { full: string; weekday: string } {
-  const d = new Date(iso);
-  return {
-    full: d.toLocaleDateString("es-CL", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
-    }),
-    weekday: d.toLocaleDateString("es-CL", { weekday: "long", timeZone: "UTC" }),
-  };
-}
-
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
@@ -69,13 +52,5 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
     .slice(0, 6)
     .map(toEventItem);
 
-  return (
-    <EventView
-      event={event}
-      related={related}
-      clpFn={clp}
-      fmtDateFn={fmtDate}
-      toEventItemFn={toEventItem}
-    />
-  );
+  return <EventView event={event} related={related} />;
 }

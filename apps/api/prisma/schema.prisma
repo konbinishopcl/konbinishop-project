@@ -393,6 +393,11 @@ model User {
   resetToken       String?
   resetTokenExpiry DateTime?
 
+  // v2: cambio de email — pendingEmail es el email nuevo a confirmar, token SHA-256, expira 24h
+  pendingEmail            String?
+  emailChangeToken        String?
+  emailChangeTokenExpiry  DateTime?
+
   events         Event[] @relation("EventOwner")
   approvedEvents Event[] @relation("EventApprover")
   rejectedEvents Event[] @relation("EventRejecter")

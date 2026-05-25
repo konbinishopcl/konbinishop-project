@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { EventCard } from "./EventCard";
-import { Ic } from "./icons";
 import type { EventItem } from "@/lib/data";
 
 export function Rail({
@@ -16,14 +15,14 @@ export function Rail({
 }) {
   return (
     <section className="rail">
-      <div className="rail-head">
-        <h2>
-          {title}
-          {jp && <span className="jp">{jp}</span>}
-        </h2>
+      <div className="sec-head">
+        <div style={{ display: "flex", alignItems: "baseline" }}>
+          <h2>{title}</h2>
+          {jp && <span className="ja">{jp}</span>}
+        </div>
         {hrefSeeAll && (
-          <Link href={hrefSeeAll} className="see-all">
-            Ver todos {Ic.arrow}
+          <Link href={hrefSeeAll} className="more">
+            Ver todos →
           </Link>
         )}
       </div>

@@ -83,11 +83,12 @@ function SpotsStrip({ spots }: { spots: ApiSpot[] }) {
 
   return (
     <section>
-      <div className="rail-head">
-        <h2 className="display">
-          Avisos <span className="jp">広告</span>
-        </h2>
-        <Link className="rail-more" href="/precios">
+      <div className="sec-head">
+        <div style={{ display: "flex", alignItems: "baseline" }}>
+          <h2>Avisos</h2>
+          <span className="ja">広告</span>
+        </div>
+        <Link className="more" href="/precios">
           Contratar aviso →
         </Link>
       </div>
@@ -132,11 +133,12 @@ function NewsRail({ articles }: { articles: ApiArticle[] }) {
   if (articles.length === 0) return null;
   return (
     <section>
-      <div className="rail-head">
-        <h2 className="display">
-          Últimas noticias <span className="jp">ニュース</span>
-        </h2>
-        <Link className="rail-more" href="/noticias">
+      <div className="sec-head">
+        <div style={{ display: "flex", alignItems: "baseline" }}>
+          <h2>Últimas noticias</h2>
+          <span className="ja">ニュース</span>
+        </div>
+        <Link className="more" href="/noticias">
           Ver todas →
         </Link>
       </div>

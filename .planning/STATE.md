@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T01:42:27.893Z"
+last_updated: "2026-05-25T01:47:14.732Z"
 progress:
   total_phases: 15
   completed_phases: 9
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T01:42:20.709Z
+**Last session:** 2026-05-25T01:47:14.730Z
 
 ## Phase Summary
 
@@ -105,6 +105,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 09-04]: Plantillas email de transferencia usan renderTemplate(MJML) para consistencia con las 10 plantillas existentes
 - [Phase 09-04]: null-check explícito en Event.userId / Article.userId antes del ownership check para mensaje de error claro
 - [Phase 10]: TwoFaUser exportado desde two-fa.guard.ts; TwoFaGuard no consulta DB; pendingToken 15min con twoFaPending:true; JwtAuthGuard rechaza tokens pending explícitamente
+- [Phase 10]: 10-02: onboardingToken 30min con onboardingPending:true; upsertGoogleUser devuelve isNew; countryId/acceptedTerms diferidos a Phase 13 (solo validación por ahora)
 
 ## Quick Tasks Completed
 

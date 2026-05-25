@@ -1,32 +1,35 @@
+import Link from "next/link";
 import { EventCard } from "./EventCard";
 import { Ic } from "./icons";
 import type { EventItem } from "@/lib/data";
 
 export function Rail({
   title,
-  ja,
+  jp,
+  hrefSeeAll,
   items,
-  landscape = false,
-  cols = 6,
 }: {
   title: string;
-  ja: string;
+  jp?: string;
+  hrefSeeAll?: string;
   items: EventItem[];
-  landscape?: boolean;
-  cols?: number;
 }) {
   return (
-    <section>
-      <div className="sec-head">
-        <div style={{ display: "flex", alignItems: "baseline" }}>
-          <h2>{title}</h2>
-          <span className="ja">{ja}</span>
-        </div>
-        <a className="more">Ver todos {Ic.arrow}</a>
+    <section className="rail">
+      <div className="rail-head">
+        <h2>
+          {title}
+          {jp && <span className="jp">{jp}</span>}
+        </h2>
+        {hrefSeeAll && (
+          <Link href={hrefSeeAll} className="see-all">
+            Ver todos {Ic.arrow}
+          </Link>
+        )}
       </div>
-      <div className={`card-grid ${cols === 4 ? "cols-4" : ""}`}>
-        {items.map((e, i) => (
-          <EventCard key={`${e.id}-${i}`} e={e} landscape={landscape} />
+      <div className="rail-track">
+        {items.slice(0, 4).map((e, i) => (
+          <EventCard key={`${e.id}-${i}`} e={e} />
         ))}
       </div>
     </section>

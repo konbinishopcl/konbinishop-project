@@ -30,13 +30,13 @@ export default async function HomePage() {
       <HeroBlock slides={heroSlides} />
 
       {destacados.length > 0 && (
-        <Rail title="Destacados" ja="注目の作品" items={destacados} />
+        <Rail title="Destacados" jp="注目の作品" items={destacados} hrefSeeAll="/busqueda" />
       )}
 
       {categories.map((c) => {
-        const items = events.filter((e) => e.catSlug === c.slug).slice(0, 6);
+        const items = events.filter((e) => e.catSlug === c.slug).slice(0, 4);
         return items.length > 0 ? (
-          <Rail key={c.id} title={c.name ?? "Categoría"} ja="" items={items} landscape />
+          <Rail key={c.id} title={c.name ?? "Categoría"} items={items} hrefSeeAll={`/categoria/${c.slug}`} />
         ) : null;
       })}
     </main>

@@ -433,12 +433,18 @@ Plans:
 
 **Goal:** Artículos patrocinados (flujo DRAFT→...→APPROVED igual que eventos), favoritos
 (guardar eventos), y perfil público con handle único y badge Verificado asignado por SUPER_ADMIN.
+Category v2 expone los 5 campos visuales/de-validación en el CRUD admin y se integra en el
+carrito para EVENT (minDays/maxDays por categoría).
 
-**Plans (estimado):**
-1. **Artículos patrocinados** — `POST /articles/sponsored`; estados PublicationStatus; flujo admin de aprobar/rechazar/banear artículos patrocinados.
-2. **Favoritos** — `POST/DELETE /events/:id/save`; `GET /users/me/saved-events`; campo `isSaved` en respuestas de eventos con sesión.
-3. **Perfil público v2** — `GET /users/:handle` (persona u org); `PATCH /users/me/organizer`; `PATCH /users/:id/verified` (SUPER_ADMIN only).
-4. **Category v2** — campos `minDays`, `maxDays`, `icon`, `color`, `order` en CRUD de categorías; integrar en validación de carrito.
+**Status:** 🔄 Planning (4 plans creados, ejecución pendiente)
+
+**Plans:** 4 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — Artículos patrocinados: POST /articles/sponsored + moderación admin (approve/reject/ban) + filtro público por status=APPROVED + campo isSponsored derivado + notificaciones ARTICLE_* (CNT-01) — Wave 1
+- [ ] 13-02-PLAN.md — Favoritos: POST/DELETE /events/:id/save + GET /users/me/saved-events + campo isSaved batch-injection (sin N+1) en findAll/findBySlug (CNT-02) — Wave 1
+- [ ] 13-03-PLAN.md — Perfil público v2: GET /users/:handle (público) + PATCH /users/me/organizer (bio+website) + PATCH /users/:id/verified (SUPER_ADMIN) (CNT-03) — Wave 2
+- [ ] 13-04-PLAN.md — Category v2: extender DTOs con icon/color/minDays/maxDays/order + integrar minDays/maxDays en OrdersService.addItem para EVENT sin crédito (CNT-04) — Wave 1
 
 **Requirements:**
 - CNT-01: Artículos patrocinados
@@ -451,6 +457,7 @@ Plans:
 - `POST /events/:id/save` → aparece en `GET /users/me/saved-events`
 - `GET /users/:handle` de una org → devuelve sus eventos aprobados
 - SUPER_ADMIN asigna `isVerified: true`; otro rol recibe 403
+- Categoría con maxDays=7 rechaza addItem EVENT con days=10
 
 ---
 

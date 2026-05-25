@@ -11,7 +11,10 @@ export class ServicesService {
   constructor(private readonly prisma: PrismaService) {}
 
   // SVC-01 (D-01, D-02). Devuelve solo {id, type, name, email, createdAt}.
+  // SVC-05 (D-21, D-22, D-23): ServiceRequest + CrmEntry en la misma transacción.
   async createRequest(dto: CreateServiceRequestDto, type: ServiceType) {
+    // D-22: callback form de $transaction — batch form (array) no soporta `connect` para many-to-many.
+    // D-23: usar PrismaService directamente (this.prisma) — sin importar CrmModule.
     const data: any = {
       type,
       name: dto.name,
@@ -23,10 +26,28 @@ export class ServicesService {
     if (dto.optionIds && dto.optionIds.length) {
       data.options = { connect: dto.optionIds.map((id) => ({ id })) };
     }
-    const req = await this.prisma.serviceRequest.create({
-      data,
-      select: { id: true, type: true, name: true, email: true, createdAt: true },
+
+    // D-21: ServiceRequest + CrmEntry en la misma transacción.
+    // D-21 LOCKED: usar crmTypeMap explícito aunque los valores sean iguales (D-21 lo especifica así).
+    const crmTypeMap = { PHOTOGRAPHY: 'PHOTOGRAPHY', CONTENT: 'CONTENT' } as const;
+    const req = await this.prisma.$transaction(async (tx) => {
+      const serviceReq = await tx.serviceRequest.create({
+        data,
+        select: { id: true, type: true, name: true, email: true, createdAt: true },
+      });
+      await tx.crmEntry.create({
+        data: {
+          type: crmTypeMap[type], // CrmType explícito via crmTypeMap (D-21)
+          stage: 'NEW',
+          sourceType: crmTypeMap[type],
+          sourceId: serviceReq.id,
+          contactName: dto.name,
+          contactEmail: dto.email,
+        },
+      });
+      return serviceReq;
     });
+
     return req;
   }
 

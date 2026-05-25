@@ -14,6 +14,8 @@ import { TwoFaGuard, type TwoFaUser } from './two-fa.guard';
 import { OnboardingGuard, type OnboardingUser } from './onboarding.guard';
 import { CurrentUser, type JwtUser } from './current-user.decorator';
 import { VerifyTwoFaDto } from './dto/verify-2fa.dto';
+import { ChangeEmailRequestDto } from './dto/change-email-request.dto';
+import { ChangeEmailConfirmDto } from './dto/change-email-confirm.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -94,5 +96,19 @@ export class AuthController {
   @ApiOperation({ summary: 'Cambiar contraseña del usuario autenticado' })
   changePassword(@Body() dto: ChangePasswordDto, @CurrentUser() user: JwtUser) {
     return this.auth.changePassword(user.sub, dto.currentPassword, dto.newPassword);
+  }
+
+  @Post('change-email/request')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Solicitar cambio de email — envía link de confirmación al nuevo email' })
+  requestEmailChange(@Body() dto: ChangeEmailRequestDto, @CurrentUser() user: JwtUser) {
+    return this.auth.requestEmailChange(user.sub, dto.newEmail);
+  }
+
+  @Post('change-email/confirm')
+  @ApiOperation({ summary: 'Confirmar cambio de email con el token recibido' })
+  confirmEmailChange(@Body() dto: ChangeEmailConfirmDto) {
+    return this.auth.confirmEmailChange(dto.token);
   }
 }

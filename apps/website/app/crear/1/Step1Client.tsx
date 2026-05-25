@@ -116,7 +116,7 @@ export function Step1Client({ categories }: { categories: ApiCategory[] }) {
           </div>
           <div className="step-num">PASO {PASO} / 03</div>
 
-          <form id="crear-form" onSubmit={handleSubmit(onDone)}>
+          <form id="crear-form" className="form-step" onSubmit={handleSubmit(onDone)}>
             <h1 className="step-title">Hola, {firstName}.<br />Cuéntanos sobre tu evento.</h1>
             <p className="step-lead">Esta información se mostrará en tu publicación. Podrás editarla antes de que se apruebe.</p>
 

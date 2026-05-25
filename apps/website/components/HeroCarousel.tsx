@@ -7,20 +7,19 @@ import type { HeroSlide } from "@/lib/api";
 
 export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
   const [idx, setIdx] = useState(0);
-
-  if (slides.length === 0) return null;
-
   const n = slides.length;
+
+  // Auto-advance every 7 seconds — hooks BEFORE early return (Rules of Hooks)
+  useEffect(() => {
+    if (n === 0) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % n), 7000);
+    return () => clearInterval(t);
+  }, [n]);
+
+  if (n === 0) return null;
+
   const next = () => setIdx((i) => (i + 1) % n);
   const prev = () => setIdx((i) => (i - 1 + n) % n);
-
-  // Auto-advance every 7 seconds
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    const t = setInterval(next, 7000);
-    return () => clearInterval(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <section className="pcar">

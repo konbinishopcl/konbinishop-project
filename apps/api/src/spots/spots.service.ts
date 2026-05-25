@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PublicationStatus } from '@prisma/client';
+import { PublicationStatus, UserType } from '@prisma/client';
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { MailService } from '../../services/mailgun/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateSpotDto } from './dto/create-spot.dto';
 import { UpdateSpotDto } from './dto/update-spot.dto';
@@ -22,6 +23,7 @@ export class SpotsService {
     private readonly config: ConfigService,
     private readonly mail: MailService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   private maxActive(): number {
@@ -117,13 +119,24 @@ export class SpotsService {
     const spot = await this.prisma.spot.update({
       where: { id },
       data: { status: PublicationStatus.APPROVED, statusReason: null },
-      include: { owner: { select: { email: true, firstname: true } } },
+      include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
     this.audit.log({ userId: actor.sub, action: 'APPROVE', entity: 'AVISO', entityId: id, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentApproved(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title)
         .catch(() => {});
+    }
+    if (spot.owner) {
+      const rcpt = spot.owner.type === UserType.ORGANIZATION
+        ? { orgId: spot.owner.id }
+        : { userId: spot.owner.id };
+      this.notifications.create({
+        type: 'SPOT_APPROVED',
+        title: `Tu aviso "${spot.title}" fue aprobado`,
+        payload: { spotId: id },
+        ...rcpt,
+      });
     }
     return spot;
   }
@@ -132,13 +145,25 @@ export class SpotsService {
     const spot = await this.prisma.spot.update({
       where: { id },
       data: { status: PublicationStatus.REJECTED, statusReason: reason },
-      include: { owner: { select: { email: true, firstname: true } } },
+      include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
     this.audit.log({ userId: actor.sub, action: 'REJECT', entity: 'AVISO', entityId: id, metadata: { reason }, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentRejected(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title, reason)
         .catch(() => {});
+    }
+    if (spot.owner) {
+      const rcpt = spot.owner.type === UserType.ORGANIZATION
+        ? { orgId: spot.owner.id }
+        : { userId: spot.owner.id };
+      this.notifications.create({
+        type: 'SPOT_REJECTED',
+        title: `Tu aviso "${spot.title}" fue rechazado`,
+        body: reason,
+        payload: { spotId: id, reason },
+        ...rcpt,
+      });
     }
     return spot;
   }
@@ -147,13 +172,25 @@ export class SpotsService {
     const spot = await this.prisma.spot.update({
       where: { id },
       data: { status: PublicationStatus.BANNED, statusReason: reason },
-      include: { owner: { select: { email: true, firstname: true } } },
+      include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
     this.audit.log({ userId: actor.sub, action: 'BAN', entity: 'AVISO', entityId: id, metadata: { reason }, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentBanned(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title, reason)
         .catch(() => {});
+    }
+    if (spot.owner) {
+      const rcpt = spot.owner.type === UserType.ORGANIZATION
+        ? { orgId: spot.owner.id }
+        : { userId: spot.owner.id };
+      this.notifications.create({
+        type: 'SPOT_BANNED',
+        title: `Tu aviso "${spot.title}" fue eliminado`,
+        body: reason,
+        payload: { spotId: id, reason },
+        ...rcpt,
+      });
     }
     return spot;
   }

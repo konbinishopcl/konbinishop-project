@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PublicationStatus } from '@prisma/client';
+import { PublicationStatus, UserType } from '@prisma/client';
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { MailService } from '../../services/mailgun/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
@@ -22,6 +23,7 @@ export class HeroesService {
     private readonly config: ConfigService,
     private readonly mail: MailService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   private pricePerDay(): number {
@@ -132,13 +134,24 @@ export class HeroesService {
     const hero = await this.prisma.hero.update({
       where: { id },
       data: { status: PublicationStatus.APPROVED, statusReason: null },
-      include: { owner: { select: { email: true, firstname: true } } },
+      include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
     this.audit.log({ userId: actor.sub, action: 'APPROVE', entity: 'PORTADA', entityId: id, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentApproved(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title)
         .catch(() => {});
+    }
+    if (hero.owner) {
+      const rcpt = hero.owner.type === UserType.ORGANIZATION
+        ? { orgId: hero.owner.id }
+        : { userId: hero.owner.id };
+      this.notifications.create({
+        type: 'HERO_APPROVED',
+        title: `Tu portada "${hero.title}" fue aprobada`,
+        payload: { heroId: id },
+        ...rcpt,
+      });
     }
     return hero;
   }
@@ -147,13 +160,25 @@ export class HeroesService {
     const hero = await this.prisma.hero.update({
       where: { id },
       data: { status: PublicationStatus.REJECTED, statusReason: reason },
-      include: { owner: { select: { email: true, firstname: true } } },
+      include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
     this.audit.log({ userId: actor.sub, action: 'REJECT', entity: 'PORTADA', entityId: id, metadata: { reason }, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentRejected(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title, reason)
         .catch(() => {});
+    }
+    if (hero.owner) {
+      const rcpt = hero.owner.type === UserType.ORGANIZATION
+        ? { orgId: hero.owner.id }
+        : { userId: hero.owner.id };
+      this.notifications.create({
+        type: 'HERO_REJECTED',
+        title: `Tu portada "${hero.title}" fue rechazada`,
+        body: reason,
+        payload: { heroId: id, reason },
+        ...rcpt,
+      });
     }
     return hero;
   }
@@ -162,13 +187,25 @@ export class HeroesService {
     const hero = await this.prisma.hero.update({
       where: { id },
       data: { status: PublicationStatus.BANNED, statusReason: reason },
-      include: { owner: { select: { email: true, firstname: true } } },
+      include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
     this.audit.log({ userId: actor.sub, action: 'BAN', entity: 'PORTADA', entityId: id, metadata: { reason }, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentBanned(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title, reason)
         .catch(() => {});
+    }
+    if (hero.owner) {
+      const rcpt = hero.owner.type === UserType.ORGANIZATION
+        ? { orgId: hero.owner.id }
+        : { userId: hero.owner.id };
+      this.notifications.create({
+        type: 'HERO_BANNED',
+        title: `Tu portada "${hero.title}" fue eliminada`,
+        body: reason,
+        payload: { heroId: id, reason },
+        ...rcpt,
+      });
     }
     return hero;
   }

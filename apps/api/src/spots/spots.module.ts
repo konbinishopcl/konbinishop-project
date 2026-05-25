@@ -3,9 +3,10 @@ import { SpotsController } from './spots.controller';
 import { SpotsService } from './spots.service';
 import { AuthModule } from '../auth/auth.module';
 import { AuditModule } from '../audit/audit.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [AuthModule, AuditModule], // provides JwtAuthGuard + AuditService
+  imports: [AuthModule, AuditModule, NotificationsModule], // provides JwtAuthGuard + AuditService + NotificationsService
   controllers: [SpotsController],
   providers: [SpotsService],
 })

@@ -1,10 +1,11 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, PublicationStatus } from '@prisma/client';
+import { Prisma, PublicationStatus, UserType } from '@prisma/client';
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { MailService } from '../../services/mailgun/mail.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -46,6 +47,7 @@ export class EventsService {
     private readonly config: ConfigService,
     private readonly mail: MailService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ─────────────────────── Lectura ───────────────────────
@@ -256,7 +258,7 @@ export class EventsService {
       },
       include: {
         ...EVENT_INCLUDE,
-        owner: { select: { email: true, firstname: true } },
+        owner: { select: { id: true, email: true, firstname: true, type: true } },
       },
     });
     this.audit.log({ userId: user.sub, action: 'APPROVE', entity: 'EVENT', entityId: id, req });
@@ -268,6 +270,17 @@ export class EventsService {
         event.title,
         `${frontendUrl}/eventos/${event.slug}`,
       );
+    }
+    if (event.owner) {
+      const rcpt = event.owner.type === UserType.ORGANIZATION
+        ? { orgId: event.owner.id }
+        : { userId: event.owner.id };
+      this.notifications.create({
+        type: 'EVENT_APPROVED',
+        title: `Tu evento "${event.title}" fue aprobado`,
+        payload: { eventId: id },
+        ...rcpt,
+      });
     }
     return event;
   }
@@ -283,7 +296,7 @@ export class EventsService {
       },
       include: {
         ...EVENT_INCLUDE,
-        owner: { select: { email: true, firstname: true } },
+        owner: { select: { id: true, email: true, firstname: true, type: true } },
       },
     });
     this.audit.log({ userId: user.sub, action: 'REJECT', entity: 'EVENT', entityId: id, metadata: { reason }, req });
@@ -294,6 +307,18 @@ export class EventsService {
         event.title,
         reason,
       );
+    }
+    if (event.owner) {
+      const rcpt = event.owner.type === UserType.ORGANIZATION
+        ? { orgId: event.owner.id }
+        : { userId: event.owner.id };
+      this.notifications.create({
+        type: 'EVENT_REJECTED',
+        title: `Tu evento "${event.title}" fue rechazado`,
+        body: reason,
+        payload: { eventId: id, reason },
+        ...rcpt,
+      });
     }
     return event;
   }
@@ -309,7 +334,7 @@ export class EventsService {
       },
       include: {
         ...EVENT_INCLUDE,
-        owner: { select: { email: true, firstname: true } },
+        owner: { select: { id: true, email: true, firstname: true, type: true } },
       },
     });
     this.audit.log({ userId: user.sub, action: 'BAN', entity: 'EVENT', entityId: id, metadata: { reason }, req });
@@ -322,6 +347,18 @@ export class EventsService {
           reason,
         )
         .catch(() => {});
+    }
+    if (event.owner) {
+      const rcpt = event.owner.type === UserType.ORGANIZATION
+        ? { orgId: event.owner.id }
+        : { userId: event.owner.id };
+      this.notifications.create({
+        type: 'EVENT_BANNED',
+        title: `Tu evento "${event.title}" fue eliminado`,
+        body: reason,
+        payload: { eventId: id, reason },
+        ...rcpt,
+      });
     }
     return event;
   }

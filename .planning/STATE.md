@@ -19,7 +19,7 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 13 — contenido-avanzado
+**Current focus:** Phase 14 — servicios-y-crm
 
 ## Current Status
 
@@ -52,8 +52,8 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 | 10 | Auth avanzado | ✅ Complete | 3/3 |
 | 11 | Notificaciones y Settings | ✅ Complete | 3/3 |
 | 12 | Suscripciones y carrito v2 | ✅ Complete | 4/4 |
-| 13 | Contenido avanzado | 🔄 In Progress | 0/4 |
-| 14 | Servicios y CRM | ⏳ Pending | 0/5 |
+| 13 | Contenido avanzado | ✅ Complete | 4/4 |
+| 14 | Servicios y CRM | 🔄 In Progress | 0/5 |
 
 ## Decisions
 

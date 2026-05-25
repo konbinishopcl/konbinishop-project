@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T15:26:28.935Z"
+last_updated: "2026-05-25T15:28:08.391Z"
 progress:
   total_phases: 15
   completed_phases: 12
   total_plans: 44
-  completed_plans: 41
+  completed_plans: 43
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 13 — Contenido avanzado
 **Overall Progress:** [████████░░] 87% (44/44 plans) · Phases 0–12 completas · Phases 13–14 pendientes (v2)
-**Last session:** 2026-05-25T15:26:28.933Z
+**Last session:** 2026-05-25T15:28:03.305Z
 
 ## Phase Summary
 
@@ -123,6 +123,8 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 12-03]: PaymentsService accesses sub via SubscriptionsService.getActiveForOwner (not direct Prisma query) for cross-module consistency
 - [Phase 13]: CatalogService usa data: dto (spread directo) — solo extender DTOs es suficiente para persistir campos v2 sin tocar el service
 - [Phase 13]: category.minDays/maxDays cap en EVENT: query liviana solo cuando type=EVENT && !hasCredit; Math.min(globalMax, categoryMaxDays) como effectiveMax
+- [Phase 13-contenido-avanzado]: isSaved injected via batch savedEvent.findMany — no N+1
+- [Phase 13-contenido-avanzado]: Favorites endpoints use JwtAuthGuard only (not OrgContextGuard) — personal to PERSON users
 
 ## Quick Tasks Completed
 

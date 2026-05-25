@@ -262,7 +262,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | 10 | 3/3 | Complete    | 2026-05-25 |
 | 11 | 3/3 | Complete    | 2026-05-25 |
 | 12 | 4/4 | Complete   | 2026-05-25 |
-| 13 | 1/4 | In Progress|  |
+| 13 | 3/4 | In Progress|  |
 | 14 | Servicios y CRM | Fotografía y creadores de contenido con opciones configurables, CRM pipeline unificado | SVC-01..05 |
 
 ---
@@ -438,11 +438,11 @@ carrito para EVENT (minDays/maxDays por categoría).
 
 **Status:** 🔄 Planning (4 plans creados, ejecución pendiente)
 
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
-- [ ] 13-01-PLAN.md — Artículos patrocinados: POST /articles/sponsored + moderación admin (approve/reject/ban) + filtro público por status=APPROVED + campo isSponsored derivado + notificaciones ARTICLE_* (CNT-01) — Wave 1
-- [ ] 13-02-PLAN.md — Favoritos: POST/DELETE /events/:id/save + GET /users/me/saved-events + campo isSaved batch-injection (sin N+1) en findAll/findBySlug (CNT-02) — Wave 1
+- [x] 13-01-PLAN.md — Artículos patrocinados: POST /articles/sponsored + moderación admin (approve/reject/ban) + filtro público por status=APPROVED + campo isSponsored derivado + notificaciones ARTICLE_* (CNT-01) — Wave 1
+- [x] 13-02-PLAN.md — Favoritos: POST/DELETE /events/:id/save + GET /users/me/saved-events + campo isSaved batch-injection (sin N+1) en findAll/findBySlug (CNT-02) — Wave 1
 - [ ] 13-03-PLAN.md — Perfil público v2: GET /users/:handle (público) + PATCH /users/me/organizer (bio+website) + PATCH /users/:id/verified (SUPER_ADMIN) (CNT-03) — Wave 2
 - [x] 13-04-PLAN.md — Category v2: extender DTOs con icon/color/minDays/maxDays/order + integrar minDays/maxDays en OrdersService.addItem para EVENT sin crédito (CNT-04) — Wave 1
 

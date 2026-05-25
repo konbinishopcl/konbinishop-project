@@ -58,9 +58,11 @@ export class EventsController {
   }
 
   @Get(':slug')
-  @ApiOperation({ summary: 'Detalle de un evento aprobado por slug' })
-  findOne(@Param('slug') slug: string) {
-    return this.events.findBySlug(slug);
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Detalle de un evento aprobado por slug; incluye isSaved si hay sesión' })
+  findOne(@Param('slug') slug: string, @CurrentUser() user: JwtUser | null) {
+    return this.events.findBySlug(slug, user);
   }
 
   // ── Mutaciones del organizador ──
@@ -149,5 +151,23 @@ export class EventsController {
   @ApiOperation({ summary: 'Quitar like de un evento' })
   unlike(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
     return this.likes.unlike('event', id, user);
+  }
+
+  // ── Favoritos ──
+
+  @Post(':id/save')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Guardar un evento en favoritos' })
+  save(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
+    return this.events.save(id, user.sub);
+  }
+
+  @Delete(':id/save')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Quitar un evento de favoritos' })
+  unsave(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
+    return this.events.unsave(id, user.sub);
   }
 }

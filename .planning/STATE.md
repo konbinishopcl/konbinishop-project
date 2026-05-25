@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: Plataforma completa
-status: complete
-last_updated: "2026-05-25T16:30:00.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-05-25T16:20:13.069Z"
 progress:
-  total_phases: 15
-  completed_phases: 15
+  total_phases: 16
+  completed_phases: 14
   total_plans: 48
   completed_plans: 48
 ---
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-25T16:30:00.000Z
+**Last session:** 2026-05-25T16:20:13.053Z
 
 ## Phase Summary
 

@@ -810,6 +810,10 @@
 .acc-nav button.on .ct { background: var(--accent); color: #fff; }
 .acc-nav .sep { height: 1px; background: var(--line); margin: 10px 4px; }
 .acc-nav button.logout { color: var(--err); }
+/* acc-tab: Link-based nav tabs in AccountShell — Plan 04 */
+.acc-tab { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: var(--ink-2); font-size: 14px; font-weight: 500; text-decoration: none; }
+.acc-tab:hover { background: var(--surface-2); color: var(--ink); }
+.acc-tab.on { background: var(--ink); color: var(--bg); }
 .acc-body h1 { font-family: var(--font-display); font-size: 44px; letter-spacing: -.025em; margin: 0 0 4px; }
 .acc-body .lead { color: var(--ink-3); margin: 0 0 24px; }
 .acc-section { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 28px; margin-bottom: 18px; }

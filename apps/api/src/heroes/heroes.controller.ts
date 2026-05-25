@@ -24,6 +24,9 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
 import { RejectEventDto } from '../events/dto/reject-event.dto';
+import { OrgContextGuard } from '../common/org-context/org-context.guard';
+import { OrgContext } from '../common/org-context/org-context.decorator';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 // Heroes: paid placements shown in the home hero carousel.
 @ApiTags('heroes')
@@ -44,19 +47,19 @@ export class HeroesController {
   }
 
   @Get('mine')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "List the current user's heroes (any status)" })
-  findMine(@CurrentUser() user: JwtUser) {
-    return this.heroes.findMine(user);
+  @ApiOperation({ summary: "List the current user's or org's heroes (any status)" })
+  findMine(@CurrentUser() user: JwtUser, @OrgContext() ctx: OrgContextDto | null) {
+    return this.heroes.findMine(user, ctx);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a hero in DRAFT — add to an order to pay and publish' })
-  create(@Body() dto: CreateHeroDto, @CurrentUser() user: JwtUser) {
-    return this.heroes.create(dto, user);
+  create(@Body() dto: CreateHeroDto, @CurrentUser() user: JwtUser, @OrgContext() ctx: OrgContextDto | null) {
+    return this.heroes.create(dto, user, ctx);
   }
 
   @Patch(':id')

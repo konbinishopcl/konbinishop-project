@@ -13,6 +13,7 @@ import { MailService } from '../../services/mailgun/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 @Injectable()
 export class HeroesService {
@@ -50,10 +51,11 @@ export class HeroesService {
     });
   }
 
-  /** Heroes owned by the current user (any status). */
-  findMine(user: JwtUser) {
+  /** Heroes owned by the current user or org (any status). */
+  findMine(user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const ownerId = orgContext?.orgId ?? user.sub;
     return this.prisma.hero.findMany({
-      where: { userId: user.sub },
+      where: { userId: ownerId },
       include: { category: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -73,7 +75,8 @@ export class HeroesService {
   }
 
   /** Crea un hero en DRAFT. Los días, monto y expiración se asignan al confirmar el pago. */
-  async create(dto: CreateHeroDto, user: JwtUser) {
+  async create(dto: CreateHeroDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const ownerId = orgContext?.orgId ?? user.sub;
     return this.prisma.hero.create({
       data: {
         title: dto.title,
@@ -84,7 +87,7 @@ export class HeroesService {
         place: dto.place,
         link: dto.link,
         category: dto.categoryId ? { connect: { id: dto.categoryId } } : undefined,
-        owner: { connect: { id: user.sub } },
+        owner: { connect: { id: ownerId } },
         status: PublicationStatus.DRAFT,
       },
       include: { category: true },

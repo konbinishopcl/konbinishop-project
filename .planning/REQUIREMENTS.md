@@ -122,6 +122,7 @@ administrador quedan visibles al público.
 | HARD-01..04 | Phase 6 | Pending |
 | AUD-01..04 | Phase 7 | Complete |
 | CFG-01..03 | Phase 11 | Pending |
+| COM-01..04 | Phase 12 | Pending |
 
 **Coverage:** v1 requirements (excluyendo AUTH ya completado): 29 — todos mapeados a fases ✓
 
@@ -184,6 +185,47 @@ administrador quedan visibles al público.
   migrados de `ConfigService.get()` a `SettingsService.getNum()` para todas las claves
   `SPOT_*` y `HERO_*`. Seed en `prisma/seed.ts` ya existe con las 8 claves requeridas
   (más 4 extras toleradas) — verificar sin duplicar.
+
+### Comercio: Suscripciones y Carrito v2 (Phase 12)
+
+- [ ] **COM-01**: Módulo `subscriptions` con CRUD: `POST /subscriptions` (crea Order
+  especial con item type=SUBSCRIPTION, reutiliza `GatewayFactory.initiate()`, devuelve
+  `redirectUrl` de Transbank, NO crea `Subscription` row aún), `GET /subscriptions/me`
+  (estado, créditos, ciclo del recipient según X-Org-Context), `DELETE /subscriptions/me`
+  (marca `cancelledAt`+`status=CANCELLED`, no termina el ciclo), `GET /subscriptions`
+  (ADMIN/SUPER_ADMIN, paginado, filtros por status). `SUBSCRIPTION` agregado al enum
+  `OrderItemType` (Prisma + DTO). `ARTICLE` agregado al enum DTO (Prisma ya lo tenía).
+  Re-suscripción soportada: sub CANCELLED/EXPIRED se borra antes de crear nueva (sortea
+  el `@unique` en `userId`/`orgId`). Conflict 409 si sub ACTIVE existe.
+
+- [ ] **COM-02**: Orders v2 — `OrderItemType.ARTICLE` operativo en carrito vía patrón
+  upsert (`@@unique([orderId, type])`): `unitPrice = ARTICLE_PRICE`, `days = 0` fijo,
+  `subtotal = unitPrice`. `AddItemDto.days` se vuelve opcional (`@IsOptional() @IsInt()
+  @Min(0)`) — para ARTICLE el service fuerza `days = 0`; para EVENT/SPOT/HERO el service
+  valida `days >= 1` y `days <= *_MAX_DAYS`. `OrdersService` migrado de `ConfigService`
+  a `SettingsService` para todas las claves `*_MAX_DAYS` y `*_MAX_ACTIVE`. Seed agrega
+  `ARTICLE_PRICE=5000` y `EVENT_MAX_DAYS=60` si no existen.
+
+- [ ] **COM-03**: Créditos de suscripción en carrito — al agregar un EVENT con suscripción
+  activa y `creditsUsed < creditsTotal`: `unitPrice = 0`, `days = Math.min(45,
+  daysUntilCycleEnd, daysUntilEventExpiration)`, `subtotal = 0`. Si la sub está
+  CANCELLED con `cycleEnd` futuro, los créditos siguen aplicando (D-09). Descuentos para
+  suscriptores en SPOT/HERO: `unitPrice = precioBase * (1 - SUBSCRIPTION_*_DISCOUNT/100)`
+  aplicado automáticamente al `addItem`. Al confirmar pago de un Order con EVENT cubierto
+  por crédito (`unitPrice=0 && subtotal=0`), `Subscription.creditsUsed` se incrementa en 1
+  dentro del mismo `prisma.$transaction` que activa los ítems.
+
+- [ ] **COM-04**: Pago de suscripción — callback dedicado `POST /subscriptions/confirm`
+  y `GET /subscriptions/confirm` (públicos, sin guards) que recibe el token de Transbank,
+  confirma el pago vía `GatewayFactory.confirm()`, y en un `prisma.$transaction` marca el
+  Order como PAID + crea la `Subscription` row (`status=ACTIVE`, `cycleStart=now`,
+  `cycleEnd=now+30d`, `creditsTotal=SUBSCRIPTION_CREDITS`, `creditsUsed=0`). Emite
+  `SUBSCRIPTION_ACTIVATED` notification fire-and-forget. Idempotente: callback duplicado
+  sobre Order ya PAID con Subscription existente devuelve URL de success sin duplicar.
+  Si Transbank rechaza el pago (`responseCode != 0`), Order pasa a FAILED y NO se crea
+  Subscription (D-03). El refactor de guards en `SubscriptionsController` mueve
+  `@UseGuards(JwtAuthGuard, OrgContextGuard)` de clase a método para permitir endpoints
+  públicos de callback.
 
 ---
 *Requirements defined: 2026-03-23 · Re-aligned: 2026-05-20 after the stack migration*

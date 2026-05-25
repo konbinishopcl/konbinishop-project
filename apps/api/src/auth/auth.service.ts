@@ -32,6 +32,30 @@ export class AuthService {
     return this.jwt.sign({ sub: user.id, email: user.email, role: user.role });
   }
 
+  /** Firma un JWT pendiente de 2FA (15 min) — solo válido para POST /auth/2fa/{verify,resend}. */
+  private sign2FaPending(user: User): string {
+    return this.jwt.sign(
+      { sub: user.id, email: user.email, twoFaPending: true },
+      { expiresIn: '15m' },
+    );
+  }
+
+  /** Genera un código de 6 dígitos, lo guarda hasheado (SHA-256, 10 min) y lo envía por email. */
+  private async issueTwoFaCode(user: User): Promise<void> {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        twoFactorCode: this.hashToken(code),
+        twoFactorExpiry: new Date(Date.now() + 10 * 60 * 1000),
+      },
+    });
+    await this.mail.sendTwoFactorCode(user.email, code);
+    if (process.env.NODE_ENV === 'development' && !this.config.get('MAILGUN_API_KEY')) {
+      this.logger.debug(`2FA code (dev only) for ${user.email}: ${code}`);
+    }
+  }
+
   /** Quita campos sensibles antes de devolver el usuario. */
   private sanitize(user: User) {
     const {
@@ -86,7 +110,8 @@ export class AuthService {
     const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
     await this.prisma.profile.create({ data: { userId: user.id, slug } });
     await this.mail.sendWelcome(user.email, user.firstname ?? user.email);
-    return { token: this.sign(user), user: this.sanitize(user) };
+    await this.issueTwoFaCode(user);
+    return { pendingToken: this.sign2FaPending(user), twoFaRequired: true as const };
   }
 
   async login(dto: LoginDto) {
@@ -95,7 +120,8 @@ export class AuthService {
       throw new UnauthorizedException('Email o contraseña incorrectos');
     }
     if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
-    return { token: this.sign(user), user: this.sanitize(user) };
+    await this.issueTwoFaCode(user);
+    return { pendingToken: this.sign2FaPending(user), twoFaRequired: true as const };
   }
 
   /** Upsert de usuario Google: busca por googleId → email → crea nuevo. */
@@ -213,6 +239,35 @@ export class AuthService {
         resetTokenExpiry: null,
       },
     });
+    return { ok: true };
+  }
+
+  /** Valida el código 2FA y emite el JWT definitivo. El payload viene del TwoFaGuard. */
+  async verifyTwoFa(userId: number, code: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException();
+    if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
+    if (
+      !user.twoFactorCode ||
+      !user.twoFactorExpiry ||
+      user.twoFactorExpiry < new Date() ||
+      user.twoFactorCode !== this.hashToken(code)
+    ) {
+      throw new UnauthorizedException('Código inválido o expirado');
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { twoFactorCode: null, twoFactorExpiry: null },
+    });
+    return { token: this.sign(user), user: this.sanitize(user) };
+  }
+
+  /** Reenvía un nuevo código 2FA al email del usuario pendiente. */
+  async resendTwoFa(userId: number) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException();
+    if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
+    await this.issueTwoFaCode(user);
     return { ok: true };
   }
 }

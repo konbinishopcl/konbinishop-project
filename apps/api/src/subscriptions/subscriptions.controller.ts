@@ -5,11 +5,14 @@ import {
   Get,
   Post,
   Query,
+  Redirect,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -26,11 +29,58 @@ import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { QuerySubscriptionsDto } from './dto/query-subscriptions.dto';
 
 @ApiTags('subscriptions')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard, OrgContextGuard)
 @Controller('subscriptions')
 export class SubscriptionsController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
+
+  // ── Callbacks públicos de Transbank (sin auth — llamados directamente por Transbank) ──
+
+  /**
+   * Callback POST de Transbank para suscripción — confirma el pago y redirige al frontend.
+   * Público: Transbank no envía JWT, solo token_ws o TBK_TOKEN.
+   */
+  @Post('confirm')
+  @Redirect()
+  @ApiOperation({
+    summary: 'Callback POST de Transbank para suscripción — confirma el pago y redirige al frontend',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        token_ws: { type: 'string', description: 'Token de pago exitoso' },
+        TBK_TOKEN: { type: 'string', description: 'Token de pago abortado por el usuario' },
+      },
+    },
+  })
+  async confirmPost(
+    @Body('token_ws') tokenWs?: string,
+    @Body('TBK_TOKEN') tbkToken?: string,
+  ) {
+    const url = await this.subscriptionsService.handleConfirmCallback(tokenWs, tbkToken);
+    return { url, statusCode: 302 };
+  }
+
+  /**
+   * Callback GET de Transbank para suscripción (timeout / flujo alternativo).
+   * Público: Transbank no envía JWT.
+   */
+  @Get('confirm')
+  @Redirect()
+  @ApiOperation({
+    summary: 'Callback GET de Transbank para suscripción (timeout / flujo alternativo)',
+  })
+  @ApiQuery({ name: 'token_ws', required: false })
+  @ApiQuery({ name: 'TBK_TOKEN', required: false })
+  async confirmGet(
+    @Query('token_ws') tokenWs?: string,
+    @Query('TBK_TOKEN') tbkToken?: string,
+  ) {
+    const url = await this.subscriptionsService.handleConfirmCallback(tokenWs, tbkToken);
+    return { url, statusCode: 302 };
+  }
+
+  // ── Endpoints autenticados ──
 
   /**
    * Inicia el flujo de suscripción. Crea una Order especial con item type=SUBSCRIPTION
@@ -38,6 +88,8 @@ export class SubscriptionsController {
    * Lanza 409 si ya existe una suscripción ACTIVE.
    */
   @Post()
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Iniciar suscripción — genera Order y devuelve redirectUrl de Transbank' })
   @ApiResponse({ status: 201, description: 'redirectUrl y externalId para redirigir al usuario' })
   @ApiResponse({ status: 409, description: 'Ya existe una suscripción activa' })
@@ -54,6 +106,8 @@ export class SubscriptionsController {
    * Si no hay suscripción, devuelve { active: false }.
    */
   @Get('me')
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Estado de la suscripción del usuario o de la org (X-Org-Context)' })
   @ApiResponse({ status: 200, description: '{ active: false } o datos completos del ciclo y créditos' })
   findMine(
@@ -68,6 +122,8 @@ export class SubscriptionsController {
    * El ciclo sigue vigente hasta cycleEnd (D-09).
    */
   @Delete('me')
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancelar suscripción — marca cancelledAt, sigue vigente hasta cycleEnd' })
   @ApiResponse({ status: 200, description: 'Suscripción marcada como cancelada' })
   @ApiResponse({ status: 400, description: 'La suscripción ya está cancelada' })
@@ -83,7 +139,8 @@ export class SubscriptionsController {
    * Lista paginada de todas las suscripciones. Solo ADMIN y SUPER_ADMIN.
    */
   @Get()
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard, OrgContextGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles('ADMIN' as Role, 'SUPER_ADMIN' as Role)
   @ApiOperation({ summary: 'Listar todas las suscripciones — solo ADMIN/SUPER_ADMIN, paginado' })
   @ApiResponse({ status: 200, description: 'Lista paginada de suscripciones con datos de usuario/org' })

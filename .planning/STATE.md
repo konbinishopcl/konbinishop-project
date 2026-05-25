@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T01:16:44.765Z"
+last_updated: "2026-05-25T01:42:27.893Z"
 progress:
   total_phases: 15
   completed_phases: 9
-  total_plans: 30
-  completed_plans: 30
+  total_plans: 33
+  completed_plans: 31
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 9 — Organizaciones y transferencias
+**Current focus:** Phase 10 — auth-avanzado
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T01:11:00.178Z
+**Last session:** 2026-05-25T01:42:20.709Z
 
 ## Phase Summary
 
@@ -104,6 +104,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 09-05]: ownerId = orgContext?.orgId ?? user.sub en create()/findMine() de events/spots/heroes; carrito Order identificado por (userId, orgId, DRAFT); ensureVisible() verifica membresía OrgMember cuando order.orgId != null; OrgContextGuard a nivel de clase en OrdersController
 - [Phase 09-04]: Plantillas email de transferencia usan renderTemplate(MJML) para consistencia con las 10 plantillas existentes
 - [Phase 09-04]: null-check explícito en Event.userId / Article.userId antes del ownership check para mensaje de error claro
+- [Phase 10]: TwoFaUser exportado desde two-fa.guard.ts; TwoFaGuard no consulta DB; pendingToken 15min con twoFaPending:true; JwtAuthGuard rechaza tokens pending explícitamente
 
 ## Quick Tasks Completed
 

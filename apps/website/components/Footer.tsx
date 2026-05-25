@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BrandMark } from "./BrandMark";
 import { Ic } from "./icons";
 
@@ -16,37 +17,52 @@ export function Footer() {
               maxWidth: "32ch",
             }}
           >
-            Todo lo que amas — anime, conciertos, ferias y conventions — en un solo lugar.
+            El medio geek de Chile · directorio de eventos y noticias otaku.
           </p>
           <div className="row" style={{ marginTop: 18, gap: 10 }}>
-            <a className="icon-btn" href="#">{Ic.ig}</a>
-            <a className="icon-btn" href="#">{Ic.tiktok}</a>
-            <a className="icon-btn" href="#">{Ic.x}</a>
-            <a className="icon-btn" href="#">{Ic.discord}</a>
+            <a className="icon-btn" href="#" aria-label="Google">{Ic.google}</a>
+            <a className="icon-btn" href="#" aria-label="Instagram">{Ic.insta}</a>
+            <a className="icon-btn" href="#" aria-label="Facebook">{Ic.fb}</a>
+            <a className="icon-btn" href="#" aria-label="Apple">{Ic.apple}</a>
           </div>
         </div>
+
         <div className="foot-col">
           <h4>Explora</h4>
-          <a>Cine</a><a>Conciertos</a><a>Convenciones</a><a>Ferias</a>
+          <Link href="/">Inicio</Link>
+          <Link href="/noticias">Noticias</Link>
+          <Link href="/busqueda">Buscar</Link>
+          <Link href="/nosotros">About</Link>
         </div>
+
         <div className="foot-col">
           <h4>Organiza</h4>
-          <a>Crear evento</a><a>Guía publicación</a><a>Pasarela de pago</a><a>Soporte</a>
+          <Link href="/precios">Publicar evento</Link>
+          <Link href="/servicios/fotografia">Fotografía</Link>
+          <Link href="/servicios/creadores">Creadores de contenido</Link>
+          <Link href="/ayuda">Soporte</Link>
         </div>
+
+        <div className="foot-col">
+          <h4>Ayuda</h4>
+          <Link href="/ayuda">Preguntas frecuentes</Link>
+          <Link href="/ayuda">Términos</Link>
+          <Link href="/ayuda">Privacidad</Link>
+          <Link href="/ayuda">Contacto</Link>
+        </div>
+
         <div className="foot-col">
           <h4>Comunidad</h4>
-          <a>Instagram</a><a>TikTok</a><a>Discord</a><a>Newsletter</a>
-        </div>
-        <div className="foot-col">
-          <h4>Legal</h4>
-          <a>Términos</a><a>Privacidad</a><a>Cookies</a><a>Copyright</a>
+          <a href="#">Instagram</a>
+          <a href="#">TikTok</a>
+          <a href="#">Discord</a>
+          <a href="#">Newsletter</a>
         </div>
       </div>
-      <div className="foot-bot-wrap">
-        <div className="container foot-bot">
-          <div>© 2025 KONBINI SHOP — コンビニショップ</div>
-          <div>v2.0 / SANTIAGO · CHILE</div>
-        </div>
+
+      <div className="container foot-bot">
+        <div>© 2026 KONBINI — コンビニ</div>
+        <div>v2.0 / SANTIAGO · CHILE</div>
       </div>
     </footer>
   );

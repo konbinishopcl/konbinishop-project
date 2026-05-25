@@ -16,6 +16,7 @@ import {
   transferAcceptedTemplate,
   transferRejectedTemplate,
   twoFactorCodeTemplate,
+  emailChangeTemplate,
 } from '../../utils/templates/mail.templates';
 
 @Injectable()
@@ -95,6 +96,11 @@ export class MailService {
 
   async sendTwoFactorCode(to: string, code: string): Promise<void> {
     const { subject, html } = twoFactorCodeTemplate(code);
+    await this.mailgun.send({ to, subject, html });
+  }
+
+  async sendEmailChangeConfirmation(to: string, confirmUrl: string): Promise<void> {
+    const { subject, html } = emailChangeTemplate(confirmUrl);
     await this.mailgun.send({ to, subject, html });
   }
 }

@@ -301,3 +301,16 @@ export function twoFactorCodeTemplate(code: string): { subject: string; html: st
     }),
   };
 }
+
+export function emailChangeTemplate(confirmUrl: string): { subject: string; html: string } {
+  return {
+    subject: 'Confirma tu nuevo email — Konbini',
+    html: renderTemplate({
+      title: 'Confirma tu nuevo email',
+      greeting: '¿Cambias de email?',
+      body: `Recibimos una solicitud para cambiar el email de tu cuenta de Konbini a esta dirección.<br/><br/>Haz clic en el botón de abajo para confirmar el cambio. Este enlace es válido por <strong>24 horas</strong>.<br/><br/>Si no solicitaste este cambio, ignora este correo — tu email actual seguirá siendo el válido.`,
+      ctaLabel: 'Confirmar nuevo email',
+      ctaUrl: confirmUrl,
+    }),
+  };
+}

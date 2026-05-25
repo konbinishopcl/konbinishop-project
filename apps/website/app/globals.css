@@ -1057,12 +1057,12 @@
 .admin-side .grp.open .chev { transform: rotate(90deg); }
 .admin-side .grp-items { display: flex; flex-direction: column; gap: 2px; padding-left: 0; }
 .admin-side .grp-items.closed { display: none; }
-.admin-side button.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--ink-2); font-size: 13.5px; font-weight: 500; text-align: left; }
-.admin-side button.nav-item:hover { background: var(--surface); color: var(--ink); }
-.admin-side button.nav-item.on { background: var(--ink); color: var(--bg); }
-.admin-side button.nav-item.super::after { content: "★"; margin-left: auto; color: var(--accent-2); font-size: 11px; }
-.admin-side button.nav-item .ct { margin-left: auto; background: var(--surface-2); color: var(--ink-2); padding: 1px 7px; border-radius: 999px; font-size: 10px; font-family: var(--font-mono); }
-.admin-side button.nav-item.on .ct { background: var(--bg); color: var(--ink); }
+.admin-side .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--ink-2); font-size: 13.5px; font-weight: 500; text-align: left; text-decoration: none; }
+.admin-side .nav-item:hover { background: var(--surface); color: var(--ink); }
+.admin-side .nav-item.on { background: var(--ink); color: var(--bg); }
+.admin-side .nav-item.super::after { content: "★"; margin-left: auto; color: var(--accent-2); font-size: 11px; }
+.admin-side .nav-item .ct { margin-left: auto; background: var(--surface-2); color: var(--ink-2); padding: 1px 7px; border-radius: 999px; font-size: 10px; font-family: var(--font-mono); }
+.admin-side .nav-item.on .ct { background: var(--bg); color: var(--ink); }
 .admin-side .who { flex-shrink: 0; padding: 14px 10px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; margin-top: 4px; }
 .admin-side .who .av { width: 36px; height: 36px; border-radius: 999px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; }
 .admin-side .who .nm { font-weight: 600; font-size: 13px; }

@@ -25,6 +25,7 @@ import { StatsModule } from './stats/stats.module';
 import { MailgunModule } from '../services/mailgun/mailgun.module';
 import { ApiKeyGuard } from './auth/api-key.guard';
 import { AuditModule } from './audit/audit.module';
+import { OrgContextModule } from './common/org-context/org-context.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AuditModule } from './audit/audit.module';
     PrismaModule,
     RedisModule,
     AuthModule,
+    OrgContextModule,
     UsersModule,
     EventsModule,
     CatalogModule,

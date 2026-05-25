@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T01:08:09.659Z"
+last_updated: "2026-05-25T01:09:26.805Z"
 progress:
   total_phases: 15
   completed_phases: 8
   total_plans: 30
-  completed_plans: 28
+  completed_plans: 29
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T01:08:09.656Z
+**Last session:** 2026-05-25T01:09:26.802Z
 
 ## Phase Summary
 
@@ -101,6 +101,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 09-01]: ORG_PUBLIC_SELECT via Prisma select en vez de post-query deletion; dto.name prioridad sobre dto.firstname en update; handlePrismaError() centraliza P2002; assertOrg() separado de assertOwnerOrAdmin()
 - [Phase 09]: token UUID plano en URL (no hash) — single-use 72h, aceptable para invitaciones de org
 - [Phase 09]: mail.sendOrgInvitation en try/catch fire-and-forget — fallo de email no revierte la invitación creada
+- [Phase 09-05]: ownerId = orgContext?.orgId ?? user.sub en create()/findMine() de events/spots/heroes; carrito Order identificado por (userId, orgId, DRAFT); ensureVisible() verifica membresía OrgMember cuando order.orgId != null; OrgContextGuard a nivel de clase en OrdersController
 
 ## Quick Tasks Completed
 

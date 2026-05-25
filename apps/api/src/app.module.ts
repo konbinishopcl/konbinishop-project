@@ -29,6 +29,7 @@ import { OrgContextModule } from './common/org-context/org-context.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { TransfersModule } from './transfers/transfers.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     OrganizationsModule,
     TransfersModule,
     NotificationsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [

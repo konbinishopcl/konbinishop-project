@@ -661,7 +661,7 @@ async function main() {
     { key: 'SPOT_PRICE_PER_DAY',          value: '8000' },
     { key: 'SPOT_MIN_DAYS',               value: '10' },
     { key: 'SPOT_MAX_DAYS',               value: '30' },
-    { key: 'SPOT_MAX_ACTIVE',             value: '12' },
+    { key: 'SPOT_MAX_ACTIVE',             value: '10' },
     { key: 'HERO_PRICE_PER_DAY',          value: '15000' },
     { key: 'HERO_MIN_DAYS',               value: '10' },
     { key: 'HERO_MAX_DAYS',               value: '30' },

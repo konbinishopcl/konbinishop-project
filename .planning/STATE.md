@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T04:17:26.099Z"
+last_updated: "2026-05-25T05:00:02.682Z"
 progress:
   total_phases: 15
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 36
-  completed_plans: 35
+  completed_plans: 36
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T04:17:26.094Z
+**Last session:** 2026-05-25T05:00:02.678Z
 
 ## Phase Summary
 
@@ -113,6 +113,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 11-02]: Recipient rule: User.type=ORGANIZATION → orgId, PERSON → userId — aplicado inline en Events/Spots/Heroes/Organizations
 - [Phase 11-02]: TRANSFER_REQUEST: 1 notif al orgId (no N a OWNERs individuales); AUTO_ACCEPTED y adminCreate() sin notificación
 - [Phase 11-02]: ARTICLE_* diferido a Phase 13; SUBSCRIPTION_* diferido a Phase 12
+- [Phase 11-03]: PUBLIC_PREFIXES=['SPOT_','HERO_'] hard-coded en SettingsService; getNum() lanza NotFoundException si clave falta; SPOT_MAX_ACTIVE=10 (decision bloqueada 11-CONTEXT.md)
 
 ## Quick Tasks Completed
 

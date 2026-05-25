@@ -260,7 +260,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | 8 | 6/6 | Complete    | 2026-05-25 |
 | 9 | 5/5 | Complete    | 2026-05-25 |
 | 10 | 3/3 | Complete    | 2026-05-25 |
-| 11 | 2/3 | In Progress|  |
+| 11 | 3/3 | Complete   | 2026-05-25 |
 | 12 | Suscripciones y carrito v2 | Plan mensual con créditos, carrito con org context y tipo ARTICLE | COM-01..04 |
 | 13 | Contenido avanzado | Artículos patrocinados, favoritos, perfil público con handle y badge Verificado | CNT-01..04 |
 | 14 | Servicios y CRM | Fotografía y creadores de contenido con opciones configurables, CRM pipeline unificado | SVC-01..05 |
@@ -380,12 +380,12 @@ Settings permite que el admin cambie precios sin tocar código ni reiniciar el s
 
 **Status:** 🔄 Planning (3 plans creados, ejecución pendiente)
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 11-01-PLAN.md — Módulo `notifications`: NotificationsModule + Service (create fire-and-forget) + 4 endpoints REST + documentar CFG-01..03 en REQUIREMENTS.md (CFG-01) — Wave 1
 - [x] 11-02-PLAN.md — Inyectar NotificationsModule en Events/Spots/Heroes/Organizations/Transfers y emitir notifications.create() en aprobar/rechazar/banear/invitar/transferir (CFG-02) — Wave 2
-- [ ] 11-03-PLAN.md — Módulo `settings` (admin GET/PATCH + público GET /public) + migrar SpotsService/HeroesService de ConfigService a SettingsService + verificar seed (CFG-03) — Wave 3
+- [x] 11-03-PLAN.md — Módulo `settings` (admin GET/PATCH + público GET /public) + migrar SpotsService/HeroesService de ConfigService a SettingsService + verificar seed (CFG-03) — Wave 3
 
 **Requirements:**
 - CFG-01: Módulo notifications

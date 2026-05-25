@@ -178,7 +178,7 @@ administrador quedan visibles al público.
   invitar miembro (ORG_INVITATION), y crear/aceptar/rechazar transferencia
   (TRANSFER_REQUEST/ACCEPTED/REJECTED). Recipient: si el dueño es `User.type=ORGANIZATION`
   → `orgId`, si no → `userId`.
-- [ ] **CFG-03**: Módulo `settings` con CRUD admin (`GET /settings`, `PATCH /settings`),
+- [x] **CFG-03**: Módulo `settings` con CRUD admin (`GET /settings`, `PATCH /settings`),
   endpoint público `GET /settings/public` que expone solo claves `SPOT_*` y `HERO_*`,
   y métodos internos `get/getNum/set/getPublic/getAll`. `SpotsService` y `HeroesService`
   migrados de `ConfigService.get()` a `SettingsService.getNum()` para todas las claves

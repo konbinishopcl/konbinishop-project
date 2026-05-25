@@ -240,3 +240,53 @@ export function orgInvitationTemplate(
     }),
   };
 }
+
+export function transferRequestTemplate(
+  orgName: string,
+  fromName: string,
+  itemType: string,
+  itemTitle: string,
+  dashboardUrl: string,
+): { subject: string; html: string } {
+  return {
+    subject: `Solicitud de transferencia: ${esc(itemTitle)}`,
+    html: renderTemplate({
+      title: 'Nueva solicitud de transferencia',
+      greeting: 'Nueva solicitud de transferencia',
+      body: `<strong>${esc(fromName)}</strong> quiere transferir el ${esc(itemType.toLowerCase())} <strong>"${esc(itemTitle)}"</strong> a tu organización <strong>${esc(orgName)}</strong>.`,
+      ctaLabel: 'Revisar en el dashboard',
+      ctaUrl: dashboardUrl,
+    }),
+  };
+}
+
+export function transferAcceptedTemplate(
+  toName: string,
+  orgName: string,
+  itemTitle: string,
+): { subject: string; html: string } {
+  return {
+    subject: `Tu transferencia fue aceptada`,
+    html: renderTemplate({
+      title: 'Transferencia aceptada',
+      greeting: `¡Buenas noticias, ${esc(toName)}!`,
+      body: `Tu transferencia de <strong>"${esc(itemTitle)}"</strong> a <strong>${esc(orgName)}</strong> fue aceptada.`,
+    }),
+  };
+}
+
+export function transferRejectedTemplate(
+  toName: string,
+  orgName: string,
+  itemTitle: string,
+  reason: string,
+): { subject: string; html: string } {
+  return {
+    subject: `Tu transferencia fue rechazada`,
+    html: renderTemplate({
+      title: 'Transferencia rechazada',
+      greeting: `Hola, ${esc(toName)}`,
+      body: `Tu transferencia de <strong>"${esc(itemTitle)}"</strong> a <strong>${esc(orgName)}</strong> fue rechazada.<br/><br/><strong>Motivo:</strong> ${esc(reason)}`,
+    }),
+  };
+}

@@ -4,13 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PublicationStatus, UserType } from '@prisma/client';
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { MailService } from '../../services/mailgun/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SettingsService } from '../settings/settings.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateHeroDto } from './dto/create-hero.dto';
 import { UpdateHeroDto } from './dto/update-hero.dto';
@@ -20,22 +20,22 @@ import type { OrgContextDto } from '../common/org-context/org-context.types';
 export class HeroesService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
+    private readonly settings: SettingsService,
     private readonly mail: MailService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
   ) {}
 
-  private pricePerDay(): number {
-    return Number(this.config.get('HERO_PRICE_PER_DAY')) || 15000;
+  private pricePerDay(): Promise<number> {
+    return this.settings.getNum('HERO_PRICE_PER_DAY');
   }
 
-  private maxActive(): number {
-    return Number(this.config.get('HERO_MAX_ACTIVE')) || 5;
+  private maxActive(): Promise<number> {
+    return this.settings.getNum('HERO_MAX_ACTIVE');
   }
 
-  private maxDays(): number {
-    return Number(this.config.get('HERO_MAX_DAYS')) || 30;
+  private maxDays(): Promise<number> {
+    return this.settings.getNum('HERO_MAX_DAYS');
   }
 
   private countActive(): Promise<number> {
@@ -65,14 +65,18 @@ export class HeroesService {
 
   /** Quota + pricing — for the UI to show availability before creating one. */
   async quota() {
-    const active = await this.countActive();
-    const max = this.maxActive();
+    const [active, max, pricePerDay, maxDays] = await Promise.all([
+      this.countActive(),
+      this.maxActive(),
+      this.pricePerDay(),
+      this.maxDays(),
+    ]);
     return {
       max,
       active,
       available: Math.max(0, max - active),
-      pricePerDay: this.pricePerDay(),
-      maxDays: this.maxDays(),
+      pricePerDay,
+      maxDays,
     };
   }
 
@@ -212,14 +216,15 @@ export class HeroesService {
 
   /** Valida que haya cupo disponible; lanza excepción si no. */
   async assertQuotaAvailable() {
-    if ((await this.countActive()) >= this.maxActive()) {
+    const [active, max] = await Promise.all([this.countActive(), this.maxActive()]);
+    if (active >= max) {
       throw new BadRequestException('No hay cupos disponibles para heroes en este momento');
     }
   }
 
   /** Valida que los días no superen el máximo permitido. */
-  assertMaxDays(days: number) {
-    const max = this.maxDays();
+  async assertMaxDays(days: number) {
+    const max = await this.maxDays();
     if (days > max) {
       throw new BadRequestException(`Un hero se puede publicar por un máximo de ${max} días`);
     }

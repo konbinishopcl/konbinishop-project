@@ -8,21 +8,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
 import { useUser } from "@/components/providers";
-import { api, imageUrl, type CreateEventInput } from "@/lib/api";
-import { useForm as useFormCtx, type ImageSlot, type FormValues } from "../FormContext";
+import { imageUrl } from "@/lib/api";
+import { useForm as useFormCtx, type ImageSlot } from "../FormContext";
 import { step3Schema, type Step3Values } from "../schemas";
 import { FieldError, noSpaces, urlChange, useHeadroom } from "../shared";
 
 const PASO = 3;
-
-// ─── Subida de imagen diferida ────────────────────────────────────────────────
-
-async function uploadSlot(slot: ImageSlot, token: string): Promise<string | undefined> {
-  if (!slot) return undefined;
-  if (slot.kind === "uploaded") return slot.url;
-  const { url } = await api.uploadImage(slot.file, token);
-  return url;
-}
 
 // ─── Uploader — imágenes en memoria hasta el submit ───────────────────────────
 
@@ -80,8 +71,8 @@ function ImageUploader({
 export function Step3Client() {
   const router   = useRouter();
   const pathname = usePathname();
-  const { user, token, ready } = useUser();
-  const { values, update, updateStep, resetForm } = useFormCtx();
+  const { user, ready } = useUser();
+  const { values, update, updateStep } = useFormCtx();
   const headerRef = useRef<HTMLElement>(null);
   useHeadroom(headerRef);
 
@@ -129,59 +120,11 @@ export function Step3Client() {
     update("gallery", [...values.gallery, { kind: "pending", file, preview: URL.createObjectURL(file) }]);
   };
 
-  // ── Estado de submit ───────────────────────────────────────────────────────
-  const [submitting,  setSubmitting]  = useState(false);
-  const [submitError, setSubmitError] = useState("");
-  const [done,        setDone]        = useState(false);
-
-  const onDone = async (d: Step3Values) => {
-    setSubmitError("");
-    setSubmitting(true);
-    try {
-      const [bannerUrl, posterUrl, galleryUrls] = await Promise.all([
-        uploadSlot(values.banner, token!),
-        uploadSlot(values.poster, token!),
-        Promise.all(values.gallery.map((g) => uploadSlot(g, token!))),
-      ]);
-
-      const web = values.web.trim().replace(/^https?:\/\//, "");
-
-      const payload: CreateEventInput = {
-        title:         values.title.trim(),
-        company:       values.company.trim() || undefined,
-        description:   values.desc.trim(),
-        about:         values.about.trim() || undefined,
-        address:       values.address.trim(),
-        addressNumber: values.addressNumber.trim(),
-        ticketUrl:     web ? `https://${web}` : undefined,
-        banner:        bannerUrl,
-        poster:        posterUrl,
-        gallery:       galleryUrls.filter((u): u is string => !!u).length
-                         ? galleryUrls.filter((u): u is string => !!u)
-                         : undefined,
-        regionId:    values.regionId  ? Number(values.regionId)  : undefined,
-        communeId:   values.communeId ? Number(values.communeId) : undefined,
-        categoryIds: values.categoryId ? [Number(values.categoryId)] : undefined,
-        prices:      values.free
-          ? []
-          : values.prices
-              .filter((p) => p.name.trim())
-              .map((p) => ({ name: p.name.trim(), price: Number(p.amount) || 0 })),
-        dates:       values.dates
-          .filter((dt) => dt.date)
-          .map((dt) => ({ date: dt.date, startTime: dt.start || undefined, endTime: dt.end || undefined })),
-        socialLinks: values.socials.filter((s) => s.trim()).map((s) => ({ link: s.trim() })),
-        videos:      d.videos.filter((v) => v.val.trim()).map((v) => ({ link: v.val.trim() })),
-      };
-
-      await api.createEvent(payload, token!);
-      resetForm();
-      setDone(true);
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "No se pudo publicar el evento");
-    } finally {
-      setSubmitting(false);
-    }
+  const onDone = (d: Step3Values) => {
+    updateStep({
+      videos: d.videos?.map((v) => v?.val ?? "") ?? [],
+    });
+    router.push("/crear/4");
   };
 
   // ── Guards ─────────────────────────────────────────────────────────────────
@@ -193,24 +136,6 @@ export function Step3Client() {
     );
   }
 
-  if (done) {
-    return (
-      <main className="container">
-        <div className="form-shell" style={{ textAlign: "center", padding: "64px 32px" }}>
-          <div className="step-num">EVENTO ENVIADO</div>
-          <h1 className="step-title" style={{ marginTop: 12 }}>Tu evento fue enviado a revisión.</h1>
-          <p className="step-lead" style={{ margin: "0 auto" }}>
-            Un administrador lo revisará antes de publicarlo. Te avisaremos cuando esté aprobado.
-          </p>
-          <div className="row" style={{ gap: 12, justifyContent: "center", marginTop: 24 }}>
-            <Link className="btn ghost" href="/">Volver al inicio</Link>
-            <Link className="btn primary" href="/cuenta">Ver mis eventos {Ic.arrow}</Link>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <main style={{ paddingTop: 64 }}>
@@ -218,7 +143,7 @@ export function Step3Client() {
         <div className="container row" style={{ justifyContent: "space-between" }}>
           <Link href="/"><BrandMark size={28} /></Link>
           <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>
-            PASO {PASO} DE 3
+            PASO {PASO} DE 4
           </span>
         </div>
       </header>
@@ -226,11 +151,11 @@ export function Step3Client() {
       <div className="container">
         <div className="form-shell">
           <div className="form-stepbar">
-            {[1, 2, 3].map((n) => (
+            {[1, 2, 3, 4].map((n) => (
               <div key={n} className={`seg ${n < PASO ? "done" : ""} ${n === PASO ? "curr" : ""}`} />
             ))}
           </div>
-          <div className="step-num">PASO {PASO} / 03</div>
+          <div className="step-num">PASO {PASO} / 04</div>
 
           <form id="crear-form" onSubmit={handleSubmit(onDone)}>
             <h1 className="step-title">Imágenes y video.</h1>
@@ -355,17 +280,13 @@ export function Step3Client() {
             </div>
           </form>
 
-          {submitError && (
-            <div style={{ color: "var(--err)", fontSize: 13, margin: "18px 0 0" }}>{submitError}</div>
-          )}
-
           <div className="form-foot">
             <div className="container">
               <button type="button" className="btn ghost" onClick={() => router.push("/crear/2")}>
                 {Ic.chevL} Volver
               </button>
-              <button type="submit" form="crear-form" className="btn primary" disabled={submitting}>
-                {submitting ? "Publicando…" : "Publicar evento"} {Ic.arrow}
+              <button type="submit" form="crear-form" className="btn primary">
+                Continuar {Ic.arrow}
               </button>
             </div>
           </div>

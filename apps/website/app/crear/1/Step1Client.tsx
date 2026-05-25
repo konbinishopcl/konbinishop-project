@@ -102,7 +102,7 @@ export function Step1Client({ categories }: { categories: ApiCategory[] }) {
         <div className="container row" style={{ justifyContent: "space-between" }}>
           <Link href="/"><BrandMark size={28} /></Link>
           <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>
-            PASO {PASO} DE 3
+            PASO {PASO} DE 4
           </span>
         </div>
       </header>
@@ -110,11 +110,11 @@ export function Step1Client({ categories }: { categories: ApiCategory[] }) {
       <div className="container">
         <div className="form-shell">
           <div className="form-stepbar">
-            {[1, 2, 3].map((n) => (
+            {[1, 2, 3, 4].map((n) => (
               <div key={n} className={`seg ${n < PASO ? "done" : ""} ${n === PASO ? "curr" : ""}`} />
             ))}
           </div>
-          <div className="step-num">PASO {PASO} / 03</div>
+          <div className="step-num">PASO {PASO} / 04</div>
 
           <form id="crear-form" className="form-step" onSubmit={handleSubmit(onDone)}>
             <h1 className="step-title">Hola, {firstName}.<br />Cuéntanos sobre tu evento.</h1>

@@ -263,7 +263,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | 11 | 3/3 | Complete    | 2026-05-25 |
 | 12 | 4/4 | Complete   | 2026-05-25 |
 | 13 | 4/4 | Complete   | 2026-05-25 |
-| 14 | 3/4 | In Progress|  |
+| 14 | 4/4 | Complete   | 2026-05-25 |
 
 ---
 
@@ -469,11 +469,11 @@ Contacto, Fotografía y Creadores.
 
 **Status:** 🔄 Planning (4 plans creados, ejecución pendiente)
 
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 14-01-PLAN.md — ServicesModule + CRUD admin de options + GET admin requests + documentar SVC-01..05 en REQUIREMENTS.md (SVC-01, SVC-02) — Wave 1
-- [ ] 14-02-PLAN.md — CrmModule con 5 endpoints ADMIN+ (list, findOne, updateStage, addNote, listNotes), polymorphic source resolution, LOST requiere stageReason (SVC-03) — Wave 1
+- [x] 14-02-PLAN.md — CrmModule con 5 endpoints ADMIN+ (list, findOne, updateStage, addNote, listNotes), polymorphic source resolution, LOST requiere stageReason (SVC-03) — Wave 1
 - [x] 14-03-PLAN.md — ContactService.create() extendido con creación dual transaccional ContactMessage + CrmEntry (callback form, sin importar CrmModule) (SVC-04) — Wave 2
 - [x] 14-04-PLAN.md — ServicesService.createRequest() refactor a $transaction callback con dual creation ServiceRequest + CrmEntry preservando many-to-many options.connect (SVC-05) — Wave 2
 

@@ -243,7 +243,7 @@ administrador quedan visibles al público.
   `GET /services/content-creators` (ADMIN+) listan solicitudes paginadas con las
   opciones incluidas. Todos los endpoints de options + listados admin usan
   `JwtAuthGuard + RolesGuard + @Roles('ADMIN','SUPER_ADMIN')`.
-- [ ] **SVC-03**: Módulo `crm` con pipeline unificado (CONTACT, PHOTOGRAPHY, CONTENT):
+- [x] **SVC-03**: Módulo `crm` con pipeline unificado (CONTACT, PHOTOGRAPHY, CONTENT):
   `GET /crm` (paginado, filtros `?type=`, `?stage=`, `?assignedTo=`),
   `GET /crm/:id` (devuelve la entrada con notas y datos del source via
   `sourceType + sourceId`), `PATCH /crm/:id/stage` (body `{ stage, stageReason? }` —

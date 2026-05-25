@@ -1,16 +1,24 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { OrgRole, Prisma, UserType } from '@prisma/client';
+import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
+import { MailService } from '../../services/mailgun/mail.service';
 import { AuditService } from '../audit/audit.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import { InviteMemberDto } from './dto/invite-member.dto';
+import { UpdateMemberRoleDto } from './dto/update-member-role.dto';
 
 // Campos públicos de una organización (sin datos sensibles de usuario)
 const ORG_PUBLIC_SELECT = {
@@ -33,9 +41,13 @@ const ORG_PUBLIC_SELECT = {
 
 @Injectable()
 export class OrganizationsService {
+  private readonly logger = new Logger(OrganizationsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   /**
@@ -180,6 +192,232 @@ export class OrganizationsService {
     });
 
     return { deleted: true };
+  }
+
+  // ─────────────────────── Membresías e invitaciones ───────────────────────
+
+  /**
+   * Lista todos los miembros de una organización.
+   * Solo accesible para miembros de la org o ADMIN+.
+   */
+  async listMembers(orgId: number, user: JwtUser) {
+    await this.assertOrg(orgId);
+
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    if (!isAdmin) {
+      const membership = await this.prisma.orgMember.findUnique({
+        where: { userId_orgId: { userId: user.sub, orgId } },
+      });
+      if (!membership) {
+        throw new ForbiddenException('No eres miembro de esta organización');
+      }
+    }
+
+    return this.prisma.orgMember.findMany({
+      where: { orgId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstname: true,
+            lastname: true,
+            handle: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  /**
+   * Invita a un usuario por email a la organización. Solo OWNER o ADMIN+.
+   * Genera token UUID con expiración de 72h y envía email vía Mailgun.
+   */
+  async inviteMember(orgId: number, dto: InviteMemberDto, user: JwtUser, req?: Request) {
+    await this.assertOrg(orgId);
+    await this.assertOwnerOrAdmin(orgId, user);
+
+    // Verificar que el email no pertenece a un miembro ya existente
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      select: { id: true },
+    });
+    if (existing) {
+      const isMember = await this.prisma.orgMember.findUnique({
+        where: { userId_orgId: { userId: existing.id, orgId } },
+      });
+      if (isMember) {
+        throw new ConflictException('Este usuario ya es miembro de la organización');
+      }
+    }
+
+    const token = randomUUID();
+    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000);
+
+    const invitation = await this.prisma.orgInvitation.create({
+      data: { token, email: dto.email, orgId, expiresAt },
+    });
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const inviteUrl = `${frontendUrl}/invitations/${token}`;
+
+    const org = await this.prisma.user.findUnique({
+      where: { id: orgId },
+      select: { firstname: true },
+    });
+
+    try {
+      await this.mail.sendOrgInvitation(dto.email, org?.firstname ?? 'Konbini', inviteUrl, 72);
+    } catch (err) {
+      this.logger.warn(`sendOrgInvitation falló para ${dto.email}: ${(err as Error).message}`);
+    }
+
+    this.audit.log({
+      userId: user.sub,
+      action: 'CREATE',
+      entity: 'USER',
+      entityId: orgId,
+      metadata: { invitation: dto.email },
+      req,
+    });
+
+    return { id: invitation.id, email: dto.email, expiresAt };
+  }
+
+  /**
+   * Acepta una invitación por token. Crea OrgMember y elimina la invitación
+   * en una transacción atómica.
+   */
+  async acceptInvitation(token: string, user: JwtUser, req?: Request) {
+    const invitation = await this.prisma.orgInvitation.findUnique({ where: { token } });
+
+    if (!invitation) {
+      throw new UnauthorizedException('Invitación inválida');
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      await this.prisma.orgInvitation.delete({ where: { id: invitation.id } });
+      throw new UnauthorizedException('Invitación expirada');
+    }
+
+    // Verificar que el email del invitado coincide con el usuario autenticado
+    const me = await this.prisma.user.findUnique({
+      where: { id: user.sub },
+      select: { email: true },
+    });
+
+    if (me?.email !== invitation.email) {
+      throw new ForbiddenException('Esta invitación es para otro email');
+    }
+
+    // Si ya es miembro, limpiar la invitación y devolver estado
+    const alreadyMember = await this.prisma.orgMember.findUnique({
+      where: { userId_orgId: { userId: user.sub, orgId: invitation.orgId } },
+    });
+    if (alreadyMember) {
+      await this.prisma.orgInvitation.delete({ where: { id: invitation.id } });
+      return { alreadyMember: true };
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.orgMember.create({
+        data: { userId: user.sub, orgId: invitation.orgId, role: OrgRole.MEMBER },
+      }),
+      this.prisma.orgInvitation.delete({ where: { id: invitation.id } }),
+    ]);
+
+    this.audit.log({
+      userId: user.sub,
+      action: 'CREATE',
+      entity: 'USER',
+      entityId: invitation.orgId,
+      metadata: { acceptedInvitation: invitation.id },
+      req,
+    });
+
+    return { orgId: invitation.orgId, role: 'MEMBER' };
+  }
+
+  /**
+   * Cambia el rol de un miembro. Solo OWNER o ADMIN+.
+   * No se puede degradar al único OWNER.
+   */
+  async changeMemberRole(orgId: number, memberUserId: number, dto: UpdateMemberRoleDto, user: JwtUser, req?: Request) {
+    await this.assertOrg(orgId);
+    await this.assertOwnerOrAdmin(orgId, user);
+
+    const member = await this.prisma.orgMember.findUnique({
+      where: { userId_orgId: { userId: memberUserId, orgId } },
+    });
+    if (!member) {
+      throw new NotFoundException('Miembro no encontrado en esta organización');
+    }
+
+    if (member.role === OrgRole.OWNER && dto.role === OrgRole.MEMBER) {
+      const ownerCount = await this.prisma.orgMember.count({
+        where: { orgId, role: OrgRole.OWNER },
+      });
+      if (ownerCount <= 1) {
+        throw new BadRequestException('No puedes degradar al único OWNER de la organización');
+      }
+    }
+
+    const updated = await this.prisma.orgMember.update({
+      where: { userId_orgId: { userId: memberUserId, orgId } },
+      data: { role: dto.role },
+    });
+
+    this.audit.log({
+      userId: user.sub,
+      action: 'UPDATE',
+      entity: 'USER',
+      entityId: orgId,
+      metadata: { memberUserId, newRole: dto.role },
+      req,
+    });
+
+    return updated;
+  }
+
+  /**
+   * Elimina a un miembro de la organización. Solo OWNER o ADMIN+.
+   * No se puede eliminar al único OWNER.
+   */
+  async removeMember(orgId: number, memberUserId: number, user: JwtUser, req?: Request) {
+    await this.assertOrg(orgId);
+    await this.assertOwnerOrAdmin(orgId, user);
+
+    const member = await this.prisma.orgMember.findUnique({
+      where: { userId_orgId: { userId: memberUserId, orgId } },
+    });
+    if (!member) {
+      throw new NotFoundException('Miembro no encontrado en esta organización');
+    }
+
+    if (member.role === OrgRole.OWNER) {
+      const ownerCount = await this.prisma.orgMember.count({
+        where: { orgId, role: OrgRole.OWNER },
+      });
+      if (ownerCount <= 1) {
+        throw new BadRequestException('No puedes eliminar al único OWNER de la organización');
+      }
+    }
+
+    await this.prisma.orgMember.delete({
+      where: { userId_orgId: { userId: memberUserId, orgId } },
+    });
+
+    this.audit.log({
+      userId: user.sub,
+      action: 'DELETE',
+      entity: 'USER',
+      entityId: orgId,
+      metadata: { memberUserId },
+      req,
+    });
+
+    return { removed: true };
   }
 
   // ─────────────────────── Helpers privados ───────────────────────

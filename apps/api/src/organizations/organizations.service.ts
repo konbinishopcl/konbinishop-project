@@ -14,6 +14,7 @@ import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { MailService } from '../../services/mailgun/mail.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -48,6 +49,7 @@ export class OrganizationsService {
     private readonly audit: AuditService,
     private readonly mail: MailService,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /**
@@ -271,6 +273,16 @@ export class OrganizationsService {
       await this.mail.sendOrgInvitation(dto.email, org?.firstname ?? 'Konbini', inviteUrl, 72);
     } catch (err) {
       this.logger.warn(`sendOrgInvitation falló para ${dto.email}: ${(err as Error).message}`);
+    }
+
+    if (existing) {
+      this.notifications.create({
+        type: 'ORG_INVITATION',
+        title: `${org?.firstname ?? 'Una organización'} te ha invitado a unirte`,
+        body: `Tienes 72 horas para aceptar la invitación.`,
+        payload: { orgId, invitationId: invitation.id, inviteUrl },
+        userId: existing.id,
+      });
     }
 
     this.audit.log({

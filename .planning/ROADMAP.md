@@ -507,21 +507,14 @@ sitio no tiene.
 
 **Status:** 🔄 Active
 
-**Plans (estimado):**
-1. **Tokens de diseño + componentes base** — Variables CSS del nuevo sistema (`--bg`, `--surface`,
-   `--accent`, tipografía Space Grotesk/Inter/JetBrains Mono), componentes actualizados:
-   `Header`, `Footer`, `BrandMark`, `EventCard`, `Poster`, `Rail`, `HeroCarousel`.
-2. **Vistas públicas existentes** — `HomePage`, `CategoryPage`, `SearchPage`, `EventPage`
-   actualizadas al nuevo diseño; separadas como componentes propios.
-3. **Admin dashboard completo** — `/dashboard/` rediseñado desde cero: `AdminPage` con
-   sidebar, secciones (events, articles, users, payments, CRM, settings, logs), modales de
-   aprobación/rechazo/editor.
-4. **Vistas de usuario** — Login/Auth page rediseñada; `AccountPage` expandida con todas las
-   pestañas (cuenta, eventos, suscripción, favoritos, mensajes, pagos, organizaciones);
-   organizer `DashboardPage` (mis publicaciones).
-5. **Nuevas vistas** — `NewsListPage`, `ArticlePage`, `OrganizerPage`, `PricingPage`,
-   `SvcLanding` (fotografía + creadores), `ThanksPage`, `CartPage/Success/Fail`,
-   `CreateProductPage`, `AboutPage`, `HelpPage`, `TagPage`, `NotFoundPage`.
+**Plans:** 5 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Tokens CSS + Componentes base (sonner, toggleTheme, Header, Footer, EventCard, Poster, Rail, HeroCarousel, icons) — Wave 1
+- [ ] 15-02-PLAN.md — Vistas públicas existentes (Home, Category, Search, Event) en archivos separados page.tsx + View.tsx — Wave 2
+- [ ] 15-03-PLAN.md — Admin dashboard completo (demolición + AdminPage shell + 14 secciones + 6 modales preservando APIs reales) — Wave 3
+- [ ] 15-04-PLAN.md — Vistas de usuario (AuthShell + Login + Registro + AccountShell + 8 tabs de /cuenta/) — Wave 3 (paralelo con 15-03)
+- [ ] 15-05-PLAN.md — Nuevas vistas (Noticias, Organizer, Servicios, Precios, Carrito, Crear/[kind], NotFound, etc.) — Wave 4
 
 **Canonical refs:**
 - `design/Konbini.html` — fuente única del rediseño completo

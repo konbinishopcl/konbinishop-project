@@ -258,7 +258,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | Phase | Name | Goal | Requirements |
 |-------|------|------|--------------|
 | 8 | 6/6 | Complete    | 2026-05-25 |
-| 9 | Organizaciones y transferencias | Organizaciones con roles OWNER/MEMBER, middleware X-Org-Context, transferencia de contenido | ORG-01..05 |
+| 9 | 1/5 | In Progress|  |
 | 10 | Auth avanzado | 2FA obligatorio, Google OAuth con onboarding, change email/password | AUTH-01..04 |
 | 11 | Notificaciones y Settings | Sistema de mensajes internos, valores configurables desde DB | CFG-01..03 |
 | 12 | Suscripciones y carrito v2 | Plan mensual con créditos, carrito con org context y tipo ARTICLE | COM-01..04 |
@@ -314,11 +314,11 @@ sus organizaciones.
 **Why second (in v2):** La mayoría de fases siguientes usan el contexto de org. El middleware
 X-Org-Context debe estar listo antes de que spots, heroes, eventos y pedidos lo consuman.
 
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
 - [ ] 09-01-PLAN.md — Módulo `organizations` CRUD (POST/GET/PATCH/DELETE /organizations) (ORG-02) — Wave 1
-- [ ] 09-02-PLAN.md — OrgContextGuard + decorator + tipo en common/org-context, módulo global (ORG-01) — Wave 1
+- [x] 09-02-PLAN.md — OrgContextGuard + decorator + tipo en common/org-context, módulo global (ORG-01) — Wave 1
 - [ ] 09-03-PLAN.md — Membresías e invitaciones (list, invite, accept, role, remove) + plantilla email (ORG-03) — Wave 2
 - [ ] 09-04-PLAN.md — Módulo `transfers` polimórfico + auto-aprobación OWNER + admin direct (ORG-04) — Wave 2
 - [ ] 09-05-PLAN.md — Integración orgContext en events, spots, heroes, orders services/controllers (ORG-05) — Wave 2

@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ServiceType } from '@prisma/client';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { CreateServiceRequestDto } from './dto/create-service-request.dto';
+import { CreateServiceOptionDto } from './dto/create-service-option.dto';
+import { UpdateServiceOptionDto } from './dto/update-service-option.dto';
+import { QueryServiceRequestsDto } from './dto/query-service-requests.dto';
 
 @Injectable()
 export class ServicesService {
@@ -34,5 +37,63 @@ export class ServicesService {
       orderBy: { order: 'asc' },
       select: { id: true, label: true, order: true },
     });
+  }
+
+  // SVC-02 (D-04): GET admin paginado con options incluidas.
+  async listRequests(type: ServiceType, query: QueryServiceRequestsDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.serviceRequest.findMany({
+        where: { type },
+        include: { options: { select: { id: true, label: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.serviceRequest.count({ where: { type } }),
+    ]);
+    return { items, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  // SVC-02 (D-06): CREATE option.
+  async createOption(dto: CreateServiceOptionDto, type: ServiceType) {
+    return this.prisma.serviceOption.create({
+      data: {
+        type,
+        label: dto.label,
+        active: dto.active ?? true,
+        order: dto.order ?? 0,
+      },
+    });
+  }
+
+  // SVC-02 (D-07): UPDATE option (no permite cambiar type).
+  async updateOption(id: number, dto: UpdateServiceOptionDto) {
+    const existing = await this.prisma.serviceOption.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Opción no encontrada');
+    return this.prisma.serviceOption.update({
+      where: { id },
+      data: {
+        ...(dto.label !== undefined && { label: dto.label }),
+        ...(dto.active !== undefined && { active: dto.active }),
+        ...(dto.order !== undefined && { order: dto.order }),
+      },
+    });
+  }
+
+  // SVC-02 (D-08): DELETE option — soft-delete si tiene requests vinculados.
+  async deleteOption(id: number) {
+    const existing = await this.prisma.serviceOption.findUnique({
+      where: { id },
+      include: { _count: { select: { requests: true } } },
+    });
+    if (!existing) throw new NotFoundException('Opción no encontrada');
+    if (existing._count.requests > 0) {
+      await this.prisma.serviceOption.update({ where: { id }, data: { active: false } });
+      return { softDeleted: true, requestsCount: existing._count.requests };
+    }
+    await this.prisma.serviceOption.delete({ where: { id } });
+    return { deleted: true };
   }
 }

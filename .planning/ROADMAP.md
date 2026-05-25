@@ -258,7 +258,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | Phase | Name | Goal | Requirements |
 |-------|------|------|--------------|
 | 8 | 6/6 | Complete    | 2026-05-25 |
-| 9 | 5/5 | Complete   | 2026-05-25 |
+| 9 | 5/5 | Complete    | 2026-05-25 |
 | 10 | Auth avanzado | 2FA obligatorio, Google OAuth con onboarding, change email/password | AUTH-01..04 |
 | 11 | Notificaciones y Settings | Sistema de mensajes internos, valores configurables desde DB | CFG-01..03 |
 | 12 | Suscripciones y carrito v2 | Plan mensual con créditos, carrito con org context y tipo ARTICLE | COM-01..04 |

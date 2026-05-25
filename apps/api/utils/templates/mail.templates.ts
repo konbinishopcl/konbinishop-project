@@ -223,3 +223,20 @@ export function paymentConfirmedTemplate(
     }),
   };
 }
+
+export function orgInvitationTemplate(
+  orgName: string,
+  inviteUrl: string,
+  expiresInHours: number,
+): { subject: string; html: string } {
+  return {
+    subject: `Invitación a unirte a ${esc(orgName)} en Konbini`,
+    html: renderTemplate({
+      title: `Invitación a ${esc(orgName)}`,
+      greeting: `Has sido invitado a ${esc(orgName)}`,
+      body: `Has recibido una invitación para unirte a <strong>${esc(orgName)}</strong> en Konbini.<br/><br/>Haz clic en el botón de abajo para aceptar la invitación. Este enlace expira en <strong>${expiresInHours} horas</strong>.<br/><br/>Si no esperabas esta invitación, puedes ignorar este correo de forma segura.`,
+      ctaLabel: 'Aceptar invitación',
+      ctaUrl: inviteUrl,
+    }),
+  };
+}

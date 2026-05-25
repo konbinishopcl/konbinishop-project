@@ -11,6 +11,7 @@ import {
   contentRejectedTemplate,
   contentBannedTemplate,
   paymentConfirmedTemplate,
+  orgInvitationTemplate,
 } from '../../utils/templates/mail.templates';
 
 @Injectable()
@@ -65,6 +66,11 @@ export class MailService {
 
   async sendPaymentConfirmed(to: string, name: string, orderId: number, amount: number): Promise<void> {
     const { subject, html } = paymentConfirmedTemplate(name, orderId, amount);
+    await this.mailgun.send({ to, subject, html });
+  }
+
+  async sendOrgInvitation(to: string, orgName: string, inviteUrl: string, expiresInHours = 72): Promise<void> {
+    const { subject, html } = orgInvitationTemplate(orgName, inviteUrl, expiresInHours);
     await this.mailgun.send({ to, subject, html });
   }
 }

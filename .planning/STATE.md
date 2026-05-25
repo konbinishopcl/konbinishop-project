@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T14:07:22.491Z"
+last_updated: "2026-05-25T14:11:45Z"
 progress:
   total_phases: 15
   completed_phases: 11
@@ -19,7 +19,7 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 11 — notificaciones-y-settings
+**Current focus:** Phase 12 — suscripciones-y-carrito-v2
 
 ## Current Status
 
@@ -51,7 +51,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 | 9 | Organizaciones y transferencias | ⏳ Pending | 0/5 |
 | 10 | Auth avanzado | ⏳ Pending | 0/4 |
 | 11 | Notificaciones y Settings | ⏳ Pending | 0/3 |
-| 12 | Suscripciones y carrito v2 | ⏳ Pending | 0/4 |
+| 12 | Suscripciones y carrito v2 | 🔄 In Progress | 2/4 |
 | 13 | Contenido avanzado | ⏳ Pending | 0/4 |
 | 14 | Servicios y CRM | ⏳ Pending | 0/5 |
 
@@ -115,6 +115,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 11-02]: ARTICLE_* diferido a Phase 13; SUBSCRIPTION_* diferido a Phase 12
 - [Phase 11-03]: PUBLIC_PREFIXES=['SPOT_','HERO_'] hard-coded en SettingsService; getNum() lanza NotFoundException si clave falta; SPOT_MAX_ACTIVE=10 (decision bloqueada 11-CONTEXT.md)
 - [Phase 12]: COM-01: SubscriptionsModule con CRUD + delete-then-create para re-suscripción + Subscription row NO se crea en POST (solo en /confirm callback)
+- [Phase 12-02]: COM-02: days opcional en DTO con validación >=1 movida al service; ConfigService removido de OrdersService → SettingsService; ARTICLE branch en resolveItem con ARTICLE_PRICE desde Settings; SPOT_PRICE_PER_DAY y HERO_PRICE_PER_DAY también migrados a SettingsService
 
 ## Quick Tasks Completed
 

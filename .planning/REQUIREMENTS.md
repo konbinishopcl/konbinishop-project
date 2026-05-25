@@ -198,7 +198,7 @@ administrador quedan visibles al público.
   Re-suscripción soportada: sub CANCELLED/EXPIRED se borra antes de crear nueva (sortea
   el `@unique` en `userId`/`orgId`). Conflict 409 si sub ACTIVE existe.
 
-- [ ] **COM-02**: Orders v2 — `OrderItemType.ARTICLE` operativo en carrito vía patrón
+- [x] **COM-02**: Orders v2 — `OrderItemType.ARTICLE` operativo en carrito vía patrón
   upsert (`@@unique([orderId, type])`): `unitPrice = ARTICLE_PRICE`, `days = 0` fijo,
   `subtotal = unitPrice`. `AddItemDto.days` se vuelve opcional (`@IsOptional() @IsInt()
   @Min(0)`) — para ARTICLE el service fuerza `days = 0`; para EVENT/SPOT/HERO el service

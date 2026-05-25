@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T22:30:00.000Z"
+last_updated: "2026-05-25T20:38:23.554Z"
 progress:
   total_phases: 16
-  completed_phases: 14
+  completed_phases: 15
   total_plans: 53
-  completed_plans: 50
+  completed_plans: 53
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-25T19:37:54.509Z
+**Last session:** 2026-05-25T20:38:23.552Z
 
 ## Phase Summary
 
@@ -54,6 +54,12 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 | 12 | Suscripciones y carrito v2 | ✅ Complete | 4/4 |
 | 13 | Contenido avanzado | ✅ Complete | 4/4 |
 | 14 | Servicios y CRM | ✅ Complete | 4/4 |
+
+### Rediseño UI ✅
+
+| Phase | Name | Status | Plans |
+|-------|------|--------|-------|
+| 15 | Rediseño UI — migración de vistas | ✅ Complete | 5/5 |
 
 ## Decisions
 
@@ -136,6 +142,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 15-02]: CategoryView uses fbar-sticky (NOT cat-shell sidebar — plan pseudocode incorrect); EventView uses event-hero/event-grid (existing CSS); ApiEvent.owner has no handle field; CSS aliases form-step/form-field/form-grid added to globals.css
 - [Phase 15-04]: AuthShell uses .auth-shell/.auth-art/.auth-form-side from design (not .auth-card spec in plan); User.type has no firstname/lastname — AccountShell uses user.name+initials; api.login takes {email,password} object; Suspense wrapper preserved for useSearchParams; admin section stubs created for InboxSection/CRMSection/FAQSection/ReportsSection/SettingsSection (missing from 15-03 parallel run)
 - [Phase 15-03]: Admin nav uses button+useRouter.push (CSS .admin-side button.nav-item); api.ts only has adminEvents/approveEvent/rejectEvent — other sections use fetch() directly; CRMSection uses mock data with /api/crm fallback; InboxSection receives kind prop routed by AdminPage
+- [Phase 15-05]: api.ts sin métodos articles/userByHandle — server pages usan fetch() directo con process.env.API_URL + API_KEY (NO TOCAR api.ts preservado)
 
 ## Quick Tasks Completed
 

@@ -314,12 +314,14 @@ sus organizaciones.
 **Why second (in v2):** La mayoría de fases siguientes usan el contexto de org. El middleware
 X-Org-Context debe estar listo antes de que spots, heroes, eventos y pedidos lo consuman.
 
-**Plans (estimado):**
-1. **Middleware OrgContext** — guard/interceptor que lee `X-Org-Context`, valida membresía y expone `req.orgContext`.
-2. **Módulo `organizations`** — CRUD de org (crear, leer, editar datos críticos, eliminar); `GET /organizations/:id/members`.
-3. **Membresías e invitaciones** — invite por email (token 72h), accept invitation, change role, remove member.
-4. **Módulo `transfers`** — crear transferencia, auto-approve si OWNER, queue si MEMBER; accept/reject por OWNER; admin direct transfer.
-5. **Integración en módulos existentes** — events, spots, heroes, orders: leer `req.orgContext` para asignar ownership correcto.
+**Plans:** 5 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — Módulo `organizations` CRUD (POST/GET/PATCH/DELETE /organizations) (ORG-02) — Wave 1
+- [ ] 09-02-PLAN.md — OrgContextGuard + decorator + tipo en common/org-context, módulo global (ORG-01) — Wave 1
+- [ ] 09-03-PLAN.md — Membresías e invitaciones (list, invite, accept, role, remove) + plantilla email (ORG-03) — Wave 2
+- [ ] 09-04-PLAN.md — Módulo `transfers` polimórfico + auto-aprobación OWNER + admin direct (ORG-04) — Wave 2
+- [ ] 09-05-PLAN.md — Integración orgContext en events, spots, heroes, orders services/controllers (ORG-05) — Wave 2
 
 **Requirements:**
 - ORG-01: Middleware X-Org-Context

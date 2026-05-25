@@ -3,6 +3,7 @@ import { CrmStage, CrmType } from '@prisma/client';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { QueryCrmDto } from './dto/query-crm.dto';
 import { UpdateCrmStageDto } from './dto/update-crm-stage.dto';
+import { CreateCrmNoteDto } from './dto/create-crm-note.dto';
 
 @Injectable()
 export class CrmService {
@@ -82,6 +83,29 @@ export class CrmService {
         stage: dto.stage,
         stageReason: dto.stageReason ?? null,
       },
+    });
+  }
+
+  // SVC-03 (D-14): POST /crm/:id/notes — authorId = actor.sub.
+  async addNote(crmEntryId: number, dto: CreateCrmNoteDto, authorId: number) {
+    const entry = await this.prisma.crmEntry.findUnique({ where: { id: crmEntryId } });
+    if (!entry) throw new NotFoundException('Entrada CRM no encontrada');
+    return this.prisma.crmNote.create({
+      data: {
+        content: dto.content,
+        authorId,
+        crmEntryId,
+      },
+    });
+  }
+
+  // SVC-03 (D-15): GET /crm/:id/notes — orden createdAt asc.
+  async listNotes(crmEntryId: number) {
+    const entry = await this.prisma.crmEntry.findUnique({ where: { id: crmEntryId } });
+    if (!entry) throw new NotFoundException('Entrada CRM no encontrada');
+    return this.prisma.crmNote.findMany({
+      where: { crmEntryId },
+      orderBy: { createdAt: 'asc' },
     });
   }
 }

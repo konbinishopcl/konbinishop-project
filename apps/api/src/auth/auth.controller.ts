@@ -9,7 +9,9 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleOneTapDto } from './dto/google-onetap.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { TwoFaGuard, type TwoFaUser } from './two-fa.guard';
 import { CurrentUser, type JwtUser } from './current-user.decorator';
+import { VerifyTwoFaDto } from './dto/verify-2fa.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -26,6 +28,22 @@ export class AuthController {
   @ApiOperation({ summary: 'Iniciar sesión y obtener un JWT' })
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);
+  }
+
+  @Post('2fa/verify')
+  @UseGuards(TwoFaGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Verificar código 2FA y obtener JWT definitivo' })
+  verifyTwoFa(@Body() dto: VerifyTwoFaDto, @CurrentUser() user: TwoFaUser) {
+    return this.auth.verifyTwoFa(user.sub, dto.code);
+  }
+
+  @Post('2fa/resend')
+  @UseGuards(TwoFaGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Reenviar código 2FA al email' })
+  resendTwoFa(@CurrentUser() user: TwoFaUser) {
+    return this.auth.resendTwoFa(user.sub);
   }
 
   @Post('google')

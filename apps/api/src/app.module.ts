@@ -27,6 +27,7 @@ import { ApiKeyGuard } from './auth/api-key.guard';
 import { AuditModule } from './audit/audit.module';
 import { OrgContextModule } from './common/org-context/org-context.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { TransfersModule } from './transfers/transfers.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
     MailgunModule,
     AuditModule,
     OrganizationsModule,
+    TransfersModule,
   ],
   controllers: [AppController],
   providers: [

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T04:07:50.305Z"
+last_updated: "2026-05-25T04:17:26.099Z"
 progress:
   total_phases: 15
   completed_phases: 10
   total_plans: 36
-  completed_plans: 34
+  completed_plans: 35
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T04:07:50.300Z
+**Last session:** 2026-05-25T04:17:26.094Z
 
 ## Phase Summary
 
@@ -110,6 +110,9 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 11-01]: NotificationsService.create() es void (no Promise<void>) — patrón idéntico a AuditService.log() para garantizar fire-and-forget
 - [Phase 11-01]: PATCH read-all declarado ANTES de :id/read — evita que ParseIntPipe intente parsear 'read-all' como Int
 - [Phase 11-01]: markRead devuelve 404 (no 403) cuando notificación es ajena — evita revelar existencia de IDs ajenos
+- [Phase 11-02]: Recipient rule: User.type=ORGANIZATION → orgId, PERSON → userId — aplicado inline en Events/Spots/Heroes/Organizations
+- [Phase 11-02]: TRANSFER_REQUEST: 1 notif al orgId (no N a OWNERs individuales); AUTO_ACCEPTED y adminCreate() sin notificación
+- [Phase 11-02]: ARTICLE_* diferido a Phase 13; SUBSCRIPTION_* diferido a Phase 12
 
 ## Quick Tasks Completed
 

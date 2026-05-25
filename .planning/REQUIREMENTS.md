@@ -171,7 +171,7 @@ administrador quedan visibles al público.
   `PATCH /notifications/:id/read`,
   `PATCH /notifications/read-all`.
   Validación: paginación `page>=1`, `limit<=50` (default 20).
-- [ ] **CFG-02**: Auto-notificaciones en módulos existentes —
+- [x] **CFG-02**: Auto-notificaciones en módulos existentes —
   `NotificationsModule` inyectado en `EventsModule`, `SpotsModule`, `HeroesModule`,
   `OrganizationsModule`, `TransfersModule`. Los services llaman a
   `notifications.create()` en aprobar/rechazar/banear (EVENT/SPOT/HERO),

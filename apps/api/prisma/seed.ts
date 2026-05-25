@@ -670,6 +670,8 @@ async function main() {
     { key: 'SUBSCRIPTION_CREDITS',        value: '10' },
     { key: 'SUBSCRIPTION_SPOT_DISCOUNT',  value: '20' },
     { key: 'SUBSCRIPTION_HERO_DISCOUNT',  value: '20' },
+    { key: 'EVENT_MAX_DAYS',              value: '60' },
+    { key: 'ARTICLE_PRICE',               value: '5000' },
   ];
 
   for (const setting of settingsDefaults) {

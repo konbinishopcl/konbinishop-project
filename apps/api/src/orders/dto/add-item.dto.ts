@@ -14,10 +14,15 @@ export class AddItemDto {
   @IsEnum(OrderItemType)
   type: OrderItemType;
 
-  @ApiProperty({ example: 15, minimum: 1, description: 'Días de publicación (máx. 60 evento / 30 spot / 30 hero)' })
+  @ApiPropertyOptional({
+    example: 15,
+    minimum: 0,
+    description: 'Días de publicación. Requerido (>=1) para EVENT/SPOT/HERO; ignorado para ARTICLE (forzado a 0).',
+  })
+  @IsOptional()
   @IsInt()
-  @Min(1)
-  days: number;
+  @Min(0)
+  days?: number;
 
   @ApiPropertyOptional({ example: 1, description: 'ID del evento (requerido cuando type = EVENT)' })
   @IsOptional()
@@ -33,4 +38,9 @@ export class AddItemDto {
   @IsOptional()
   @IsInt()
   heroId?: number;
+
+  @ApiPropertyOptional({ example: 5, description: 'ID del artículo en DRAFT (requerido cuando type = ARTICLE)' })
+  @IsOptional()
+  @IsInt()
+  articleId?: number;
 }

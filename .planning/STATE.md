@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T16:06:21.607Z"
+last_updated: "2026-05-25T16:06:42.061Z"
 progress:
   total_phases: 15
   completed_phases: 13
   total_plans: 48
-  completed_plans: 46
+  completed_plans: 47
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 13 — Contenido avanzado
 **Overall Progress:** [████████░░] 87% (44/44 plans) · Phases 0–12 completas · Phases 13–14 pendientes (v2)
-**Last session:** 2026-05-25T16:06:21.605Z
+**Last session:** 2026-05-25T16:06:42.059Z
 
 ## Phase Summary
 
@@ -130,6 +130,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 14-servicios-y-crm]: ServicesModule no importa CrmModule — integración CRM via PrismaService directo en plan 14-04 (patrón D-19/D-23)
 - [Phase 14-01]: deleteOption() soft-delete cuando requests._count > 0, hard-delete si no hay vinculados
 - [Phase 14-03]: D-18: prisma.$transaction callback form (no batch array) garantiza atomicidad ContactMessage + CrmEntry; D-19: ContactModule NO importa CrmModule — PrismaService directo; D-20: response POST /contact sigue siendo solo ContactMessage (backwards compatible)
+- [Phase 14-04]: D-22: $transaction callback form requerido para many-to-many connect; D-23: ServicesModule sin CrmModule; D-21: crmTypeMap explícito PHOTOGRAPHY/CONTENT as const
 
 ## Quick Tasks Completed
 

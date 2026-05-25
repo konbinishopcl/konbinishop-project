@@ -257,7 +257,7 @@ administrador quedan visibles al público.
   NO cambia (sigue devolviendo solo el `ContactMessage`) — backwards compatible. No
   se importa `CrmModule` en `ContactModule` (se usa `PrismaService` directamente,
   patrón D-19).
-- [ ] **SVC-05**: `ServicesService.createRequest()` extendido para crear
+- [x] **SVC-05**: `ServicesService.createRequest()` extendido para crear
   `ServiceRequest` + `CrmEntry` (type según `crmTypeMap[ServiceType]`,
   sourceType=type, sourceId=serviceReq.id, stage=NEW) en `prisma.$transaction`
   (callback form — `connect` de options many-to-many requiere callback, D-22). No

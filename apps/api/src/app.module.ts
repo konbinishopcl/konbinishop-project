@@ -32,6 +32,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { ServicesModule } from './services/services.module';
+import { CrmModule } from './crm/crm.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { ServicesModule } from './services/services.module';
     SettingsModule,
     SubscriptionsModule,
     ServicesModule,
+    CrmModule,
   ],
   controllers: [AppController],
   providers: [

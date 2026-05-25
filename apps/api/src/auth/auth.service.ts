@@ -70,6 +70,9 @@ export class AuthService {
       passwordHash: _p,
       resetToken: _t,
       resetTokenExpiry: _e,
+      pendingEmail: _pe,
+      emailChangeToken: _ect,
+      emailChangeTokenExpiry: _ecte,
       ...safe
     } = user;
     return safe;
@@ -317,5 +320,71 @@ export class AuthService {
     if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
 
     return { token: this.sign(user), user: this.sanitize(user) };
+  }
+
+  /**
+   * Paso 1 del cambio de email: genera token (24h) y lo envía al NUEVO email.
+   * El email actual no recibe nada hasta que se confirme.
+   */
+  async requestEmailChange(userId: number, newEmail: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException();
+    if (user.email === newEmail) {
+      throw new BadRequestException('El nuevo email es igual al actual');
+    }
+    const taken = await this.prisma.user.findUnique({ where: { email: newEmail } });
+    if (taken) {
+      throw new ConflictException('Ese email ya está en uso');
+    }
+    const token = randomBytes(32).toString('hex');
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        pendingEmail: newEmail,
+        emailChangeToken: this.hashToken(token),
+        emailChangeTokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      },
+    });
+    const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const confirmUrl = `${frontendUrl}/cambiar-email?token=${token}`;
+    await this.mail.sendEmailChangeConfirmation(newEmail, confirmUrl);
+    if (process.env.NODE_ENV === 'development' && !this.config.get('MAILGUN_API_KEY')) {
+      this.logger.debug(`Email change URL (dev only): ${confirmUrl}`);
+    }
+    return { ok: true };
+  }
+
+  /** Paso 2: valida el token, mueve pendingEmail → email y limpia los campos. */
+  async confirmEmailChange(token: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { emailChangeToken: this.hashToken(token) },
+    });
+    if (
+      !user ||
+      !user.emailChangeTokenExpiry ||
+      user.emailChangeTokenExpiry < new Date() ||
+      !user.pendingEmail
+    ) {
+      throw new BadRequestException('El enlace de cambio de email es inválido o expiró');
+    }
+    // Race condition: el pendingEmail puede haberse tomado entre request y confirm.
+    const taken = await this.prisma.user.findUnique({ where: { email: user.pendingEmail } });
+    if (taken && taken.id !== user.id) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { pendingEmail: null, emailChangeToken: null, emailChangeTokenExpiry: null },
+      });
+      throw new ConflictException('Ese email ya está en uso');
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        email: user.pendingEmail,
+        pendingEmail: null,
+        emailChangeToken: null,
+        emailChangeTokenExpiry: null,
+      },
+    });
+    return { ok: true };
   }
 }

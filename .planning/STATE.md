@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T01:01:16.529Z"
+last_updated: "2026-05-25T01:08:09.659Z"
 progress:
   total_phases: 15
   completed_phases: 8
   total_plans: 30
-  completed_plans: 27
+  completed_plans: 28
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T01:01:16.527Z
+**Last session:** 2026-05-25T01:08:09.656Z
 
 ## Phase Summary
 
@@ -99,6 +99,8 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 09-02]: OrgContextModule is @Global() standalone — avoids circular deps when transfers/events/spots import it
 - [Phase 09-02]: Guard allows pass-through when X-Org-Context absent (null = personal mode), enabling dual-mode endpoints
 - [Phase 09-01]: ORG_PUBLIC_SELECT via Prisma select en vez de post-query deletion; dto.name prioridad sobre dto.firstname en update; handlePrismaError() centraliza P2002; assertOrg() separado de assertOwnerOrAdmin()
+- [Phase 09]: token UUID plano en URL (no hash) — single-use 72h, aceptable para invitaciones de org
+- [Phase 09]: mail.sendOrgInvitation en try/catch fire-and-forget — fallo de email no revierte la invitación creada
 
 ## Quick Tasks Completed
 

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T15:35:01.567Z"
+last_updated: "2026-05-25T16:04:14.427Z"
 progress:
   total_phases: 15
   completed_phases: 13
-  total_plans: 44
-  completed_plans: 44
+  total_plans: 48
+  completed_plans: 45
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 13 — Contenido avanzado
 **Overall Progress:** [████████░░] 87% (44/44 plans) · Phases 0–12 completas · Phases 13–14 pendientes (v2)
-**Last session:** 2026-05-25T15:35:01.564Z
+**Last session:** 2026-05-25T16:04:14.425Z
 
 ## Phase Summary
 
@@ -127,6 +127,8 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 13-contenido-avanzado]: Favorites endpoints use JwtAuthGuard only (not OrgContextGuard) — personal to PERSON users
 - [Phase 13-01]: D-04 simplificación intencional: ARTICLE_* notifications use userId directly (Article has no orgId unlike Events/Spots/Heroes)
 - [Phase 13-contenido-avanzado]: profile.upsert con fallbackSlug=user-{userId} para crear Profile si no existe en PATCH /users/me/organizer
+- [Phase 14-servicios-y-crm]: ServicesModule no importa CrmModule — integración CRM via PrismaService directo en plan 14-04 (patrón D-19/D-23)
+- [Phase 14-01]: deleteOption() soft-delete cuando requests._count > 0, hard-delete si no hay vinculados
 
 ## Quick Tasks Completed
 

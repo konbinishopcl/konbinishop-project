@@ -229,14 +229,14 @@ administrador quedan visibles al público.
 
 ### Servicios y CRM (Phase 14)
 
-- [ ] **SVC-01**: Endpoints públicos `POST /services/photography` y
+- [x] **SVC-01**: Endpoints públicos `POST /services/photography` y
   `POST /services/content-creators` crean `ServiceRequest` con su `type` correspondiente
   (PHOTOGRAPHY o CONTENT). Body con `name`, `email`, `eventName?`, `eventDate?`,
   `eventPlace?`, `optionIds?: number[]` (many-to-many vía `options: { connect }`).
   Respuesta `201 { id, type, name, email, createdAt }` (sin exponer datos sensibles).
   `GET /services/photography/options` y `GET /services/content-creators/options`
   devuelven solo opciones `active=true` ordenadas por `order` asc — **públicos sin auth**.
-- [ ] **SVC-02**: CRUD admin (`POST/PATCH/DELETE /services/photography/options` y
+- [x] **SVC-02**: CRUD admin (`POST/PATCH/DELETE /services/photography/options` y
   `/services/content-creators/options`) sobre `ServiceOption`. `PATCH` no permite
   cambiar `type` post-creación. `DELETE` con `requests` vinculados marca `active=false`
   (soft-delete) en lugar de borrar físicamente. `GET /services/photography` y

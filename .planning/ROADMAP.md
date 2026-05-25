@@ -263,7 +263,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | 11 | 3/3 | Complete    | 2026-05-25 |
 | 12 | 4/4 | Complete   | 2026-05-25 |
 | 13 | 4/4 | Complete   | 2026-05-25 |
-| 14 | Servicios y CRM | Fotografía y creadores de contenido con opciones configurables, CRM pipeline unificado | SVC-01..05 |
+| 14 | 1/4 | In Progress|  |
 
 ---
 
@@ -467,12 +467,15 @@ Plans:
 configurables desde el dashboard), y CRM interno unificado con pipeline kanban para
 Contacto, Fotografía y Creadores.
 
-**Plans (estimado):**
-1. **Módulo `services`** — `POST /services/photography` y `POST /services/content-creators` (públicos); GET/PATCH admin; `GET /services/*/options` (público).
-2. **Service options CRUD** — `POST/PATCH/DELETE /services/photography/options` y equivalentes para content-creators (admin).
-3. **Módulo `crm`** — `GET /crm`, `PATCH /crm/:id/stage`, `POST /crm/:id/notes`, `GET /crm/:id/notes`; todos los tipos CONTACT/PHOTOGRAPHY/CONTENT en una sola vista.
-4. **Contact → CRM** — `POST /contact` crea entrada CRM con tipo CONTACT + estado NEW; `GET /contact` como alias de `GET /crm?type=CONTACT`.
-5. **Integración services → CRM** — cuando llega un form de fotografía o creadores, también se crea entrada CRM con tipo correspondiente.
+**Status:** 🔄 Planning (4 plans creados, ejecución pendiente)
+
+**Plans:** 1/4 plans executed
+
+Plans:
+- [x] 14-01-PLAN.md — ServicesModule + CRUD admin de options + GET admin requests + documentar SVC-01..05 en REQUIREMENTS.md (SVC-01, SVC-02) — Wave 1
+- [ ] 14-02-PLAN.md — CrmModule con 5 endpoints ADMIN+ (list, findOne, updateStage, addNote, listNotes), polymorphic source resolution, LOST requiere stageReason (SVC-03) — Wave 1
+- [ ] 14-03-PLAN.md — ContactService.create() extendido con creación dual transaccional ContactMessage + CrmEntry (callback form, sin importar CrmModule) (SVC-04) — Wave 2
+- [ ] 14-04-PLAN.md — ServicesService.createRequest() refactor a $transaction callback con dual creation ServiceRequest + CrmEntry preservando many-to-many options.connect (SVC-05) — Wave 2
 
 **Requirements:**
 - SVC-01: Services endpoints públicos (photography + content-creators)

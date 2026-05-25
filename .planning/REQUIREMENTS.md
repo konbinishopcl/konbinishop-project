@@ -251,7 +251,7 @@ administrador quedan visibles al público.
   `POST /crm/:id/notes` y `GET /crm/:id/notes` (notas internas del equipo).
   No existe `DELETE /crm/:id` — las entradas se conservan (mover a LOST). Todos los
   endpoints ADMIN+.
-- [ ] **SVC-04**: `ContactService.create()` extendido para crear `ContactMessage` +
+- [x] **SVC-04**: `ContactService.create()` extendido para crear `ContactMessage` +
   `CrmEntry` (type=CONTACT, sourceType=CONTACT, sourceId=contactMsg.id, stage=NEW)
   en `prisma.$transaction` (callback form). El response del endpoint `POST /contact`
   NO cambia (sigue devolviendo solo el `ContactMessage`) — backwards compatible. No

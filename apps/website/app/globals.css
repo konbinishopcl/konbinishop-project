@@ -502,7 +502,7 @@
   .foot-col a { display: block; padding: 6px 0; color: var(--ink-2); font-size: 14px; }
   .foot-col a:hover { color: var(--accent); }
   .foot-bot-wrap { border-top: 1px solid var(--line); margin-top: 40px; }
-  .foot-bot { display: flex; justify-content: space-between; padding-top: 30px; font-size: 12px; color: var(--ink-3); font-family: var(--font-mono); letter-spacing: .05em; }
+  .foot-bot { display: flex; justify-content: space-between; padding-top: 30px; border-top: 1px solid var(--line); margin-top: 40px; font-size: 12px; color: var(--ink-3); font-family: var(--font-mono); letter-spacing: .05em; }
 
   /* responsive (basic, prototype focused on desktop) */
   @media (max-width: 1100px) {
@@ -794,6 +794,9 @@
 .svc-gallery > div .pic { position: absolute; inset: 0; background-size: cover; background-position: center; transition: transform .4s ease; }
 .svc-gallery > div:hover .pic { transform: scale(1.05); }
 .svc-gallery > div.tall { grid-row: span 2; }
+.section-head { display: flex; justify-content: space-between; align-items: flex-end; margin: 0 0 22px; }
+.section-head .sh-title { font-family: var(--font-display); font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+.section-head .sh-ja { font-family: var(--font-jp); font-size: 16px; color: var(--ink-3); }
 
 /* ─────────── ACCOUNT ─────────── */
 .acc-shell { display: grid; grid-template-columns: 280px 1fr; gap: 36px; padding: 32px 0 80px; }

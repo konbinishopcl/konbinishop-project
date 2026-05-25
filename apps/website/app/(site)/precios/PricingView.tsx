@@ -67,7 +67,7 @@ export function PricingView() {
             <li>Cancela cuando quieras</li>
           </ul>
           <div className="cta-row">
-            <Link href="/cuenta?tab=subs" className="btn primary block">
+            <Link href="/cuenta/suscripcion" className="btn primary block">
               Suscribirme
             </Link>
           </div>

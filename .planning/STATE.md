@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T19:37:54.511Z"
+last_updated: "2026-05-25T21:00:00.000Z"
 progress:
   total_phases: 16
   completed_phases: 14
   total_plans: 53
-  completed_plans: 49
+  completed_plans: 50
 ---
 
 # Project State
@@ -133,6 +133,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 14-04]: D-22: $transaction callback form requerido para many-to-many connect; D-23: ServicesModule sin CrmModule; D-21: crmTypeMap explícito PHOTOGRAPHY/CONTENT as const
 - [Phase 14]: CrmService no se exporta — Contact/Services usan PrismaService directamente (D-19/D-23). Sin DELETE /crm/:id para conservar historial (D-16). Validación LOST+stageReason en service layer.
 - [Phase 15-01]: CSS cascade strategy: append full Phase 15 CSS block at end of globals.css; HeroCarousel uses .pcar opacity-based slide toggle; Rail props renamed ja→jp
+- [Phase 15-02]: CategoryView uses fbar-sticky (NOT cat-shell sidebar — plan pseudocode incorrect); EventView uses event-hero/event-grid (existing CSS); ApiEvent.owner has no handle field; CSS aliases form-step/form-field/form-grid added to globals.css
 
 ## Quick Tasks Completed
 
@@ -152,7 +153,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 ## Next Action
 
-**✅ Milestone v2 completado.** Phase 14 verificada (SVC-01..05, 5/5 requisitos, 12/12 truths). ServicesModule (photography + content-creators), CrmModule (pipeline kanban), Contact→CRM (transacción atómica), Services→CRM ($transaction callback + crmTypeMap explícito) implementados y verificados. Todas las fases 0–14 completas.
+**Phase 15 en progreso.** Plan 15-01 completo (base CSS, componentes compartidos). Plan 15-02 completo (HomeView, CategoryView, SearchView, EventView, Form). Próximo: Plan 15-03 (Login, Registro, Cuenta, Dashboard).
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

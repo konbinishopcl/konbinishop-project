@@ -121,6 +121,7 @@ administrador quedan visibles al público.
 | SRCH-01..05 | Phase 5 | Pending |
 | HARD-01..04 | Phase 6 | Pending |
 | AUD-01..04 | Phase 7 | Complete |
+| CFG-01..03 | Phase 11 | Pending |
 
 **Coverage:** v1 requirements (excluyendo AUTH ya completado): 29 — todos mapeados a fases ✓
 
@@ -160,6 +161,29 @@ administrador quedan visibles al público.
   PHOTOGRAPHY, CONTENT con stage: CrmStage), `CrmNote` (FK a CrmEntry, autor, content).
   `ContactMessage` se mantiene sin cambios para backwards compatibility (decisión D8-CRM
   del RESEARCH: CrmEntry independiente, no extensión de ContactMessage).
+
+### Notificaciones y Settings (Phase 11)
+
+- [ ] **CFG-01**: Módulo `notifications` con `NotificationService.create()` interno
+  (fire-and-forget void) y endpoints autenticados:
+  `GET /notifications` (paginado, soporta X-Org-Context),
+  `GET /notifications/unread-count`,
+  `PATCH /notifications/:id/read`,
+  `PATCH /notifications/read-all`.
+  Validación: paginación `page>=1`, `limit<=50` (default 20).
+- [ ] **CFG-02**: Auto-notificaciones en módulos existentes —
+  `NotificationsModule` inyectado en `EventsModule`, `SpotsModule`, `HeroesModule`,
+  `OrganizationsModule`, `TransfersModule`. Los services llaman a
+  `notifications.create()` en aprobar/rechazar/banear (EVENT/SPOT/HERO),
+  invitar miembro (ORG_INVITATION), y crear/aceptar/rechazar transferencia
+  (TRANSFER_REQUEST/ACCEPTED/REJECTED). Recipient: si el dueño es `User.type=ORGANIZATION`
+  → `orgId`, si no → `userId`.
+- [ ] **CFG-03**: Módulo `settings` con CRUD admin (`GET /settings`, `PATCH /settings`),
+  endpoint público `GET /settings/public` que expone solo claves `SPOT_*` y `HERO_*`,
+  y métodos internos `get/getNum/set/getPublic/getAll`. `SpotsService` y `HeroesService`
+  migrados de `ConfigService.get()` a `SettingsService.getNum()` para todas las claves
+  `SPOT_*` y `HERO_*`. Seed en `prisma/seed.ts` ya existe con las 8 claves requeridas
+  (más 4 extras toleradas) — verificar sin duplicar.
 
 ---
 *Requirements defined: 2026-03-23 · Re-aligned: 2026-05-20 after the stack migration*

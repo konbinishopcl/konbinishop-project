@@ -28,6 +28,7 @@ import { AuditModule } from './audit/audit.module';
 import { OrgContextModule } from './common/org-context/org-context.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { TransfersModule } from './transfers/transfers.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { TransfersModule } from './transfers/transfers.module';
     AuditModule,
     OrganizationsModule,
     TransfersModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [

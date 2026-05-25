@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-05-25T14:23:07.902Z"
+milestone: v2.0
+milestone_name: milestone-v2
+status: in_progress
+last_updated: "2026-05-25T16:00:00.000Z"
 progress:
   total_phases: 15
-  completed_phases: 12
-  total_plans: 40
-  completed_plans: 40
+  completed_phases: 13
+  total_plans: 44
+  completed_plans: 44
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 12 — suscripciones-y-carrito-v2
+**Current focus:** Phase 13 — contenido-avanzado
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa
-**Active Phase:** Phase 9 — Organizaciones y transferencias
-**Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T14:23:07.900Z
+**Active Phase:** Phase 13 — Contenido avanzado
+**Overall Progress:** [████████░░] 87% (44/44 plans) · Phases 0–12 completas · Phases 13–14 pendientes (v2)
+**Last session:** 2026-05-25T16:00:00.000Z
 
 ## Phase Summary
 
@@ -48,11 +48,11 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
 | 8 | Schema v2 | ✅ Complete | 6/6 |
-| 9 | Organizaciones y transferencias | ⏳ Pending | 0/5 |
-| 10 | Auth avanzado | ⏳ Pending | 0/4 |
-| 11 | Notificaciones y Settings | ⏳ Pending | 0/3 |
-| 12 | Suscripciones y carrito v2 | 🔄 In Progress | 2/4 |
-| 13 | Contenido avanzado | ⏳ Pending | 0/4 |
+| 9 | Organizaciones y transferencias | ✅ Complete | 5/5 |
+| 10 | Auth avanzado | ✅ Complete | 3/3 |
+| 11 | Notificaciones y Settings | ✅ Complete | 3/3 |
+| 12 | Suscripciones y carrito v2 | ✅ Complete | 4/4 |
+| 13 | Contenido avanzado | 🔄 In Progress | 0/4 |
 | 14 | Servicios y CRM | ⏳ Pending | 0/5 |
 
 ## Decisions
@@ -140,7 +140,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 ## Next Action
 
-**Phase 8 completada.** SCH-06 aplicado: ServiceOption, ServiceRequest, CrmEntry, CrmNote + 3 enums + migración sch06_services_crm. Phase gate: pnpm prisma validate + tsc --noEmit + prisma:seed todos exit 0. ContactMessage intocado (KEY DECISION #2). Próximo: Phase 9 — Organizaciones y transferencias.
+**Phase 12 completada.** COM-01..04 implementados: SubscriptionsModule CRUD, ARTICLE en carrito, créditos en carrito + descuentos SPOT/HERO para suscriptores, callback /subscriptions/confirm + notificación SUBSCRIPTION_ACTIVATED. Verificación 17/17 passed. Próximo: Phase 13 — Contenido avanzado (CNT-01..04).
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

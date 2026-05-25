@@ -10,5 +10,6 @@ import { NotificationsModule } from '../notifications/notifications.module';
   imports: [AuthModule, LikesModule, AuditModule, NotificationsModule],
   controllers: [EventsController],
   providers: [EventsService],
+  exports: [EventsService],
 })
 export class EventsModule {}

@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -30,6 +31,20 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Lista de usuarios recientes', schema: { example: [{ id: 1, firstname: 'Ana', lastname: 'García', profile: { avatar: '/uploads/avatar.jpg' } }] } })
   findRecent() {
     return this.users.findRecent();
+  }
+
+  @Get('me/saved-events')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Listar eventos guardados del usuario autenticado (paginado)' })
+  findSavedEvents(
+    @CurrentUser() user: JwtUser,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+  ) {
+    const p = page ? parseInt(page, 10) : 1;
+    const ps = pageSize ? parseInt(pageSize, 10) : 12;
+    return this.users.findSavedEventsForUser(user.sub, p, ps);
   }
 
   @Get()

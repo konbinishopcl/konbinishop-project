@@ -6,6 +6,7 @@ import { AuditService } from '../audit/audit.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { EventsService } from '../events/events.service';
 
 // Campos públicos del usuario (nunca exponemos passwordHash).
 const USER_SELECT = {
@@ -27,6 +28,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly events: EventsService,
   ) {}
 
   findAll() {
@@ -44,6 +46,10 @@ export class UsersService {
       orderBy: { createdAt: 'desc' },
       take: 10,
     });
+  }
+
+  findSavedEventsForUser(userId: number, page = 1, pageSize = 12) {
+    return this.events.findSavedByUser(userId, page, pageSize);
   }
 
   async create(dto: CreateUserDto) {

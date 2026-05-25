@@ -25,6 +25,9 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
 import { RejectEventDto } from '../events/dto/reject-event.dto';
+import { OrgContextGuard } from '../common/org-context/org-context.guard';
+import { OrgContext } from '../common/org-context/org-context.decorator';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 // Spots: paid ads shown among the event cards. No detail view.
 @ApiTags('spots')
@@ -45,19 +48,19 @@ export class SpotsController {
   }
 
   @Get('mine')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: "List the current user's spots (any status)" })
-  findMine(@CurrentUser() user: JwtUser) {
-    return this.spots.findMine(user);
+  @ApiOperation({ summary: "List the current user's or org's spots (any status)" })
+  findMine(@CurrentUser() user: JwtUser, @OrgContext() ctx: OrgContextDto | null) {
+    return this.spots.findMine(user, ctx);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a spot in DRAFT — add to an order to pay and publish' })
-  create(@Body() dto: CreateSpotDto, @CurrentUser() user: JwtUser) {
-    return this.spots.create(dto, user);
+  create(@Body() dto: CreateSpotDto, @CurrentUser() user: JwtUser, @OrgContext() ctx: OrgContextDto | null) {
+    return this.spots.create(dto, user, ctx);
   }
 
   @Patch(':id')

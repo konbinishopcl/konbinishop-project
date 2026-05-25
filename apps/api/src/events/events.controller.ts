@@ -24,6 +24,9 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
 import { LikesService } from '../likes/likes.service';
+import { OrgContextGuard } from '../common/org-context/org-context.guard';
+import { OrgContext } from '../common/org-context/org-context.decorator';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 @ApiTags('events')
 @Controller('events')
@@ -47,11 +50,11 @@ export class EventsController {
   }
 
   @Get('mine')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Listar los eventos del usuario actual' })
-  findMine(@CurrentUser() user: JwtUser) {
-    return this.events.findMine(user);
+  @ApiOperation({ summary: 'Listar los eventos del usuario actual o de la org' })
+  findMine(@CurrentUser() user: JwtUser, @OrgContext() ctx: OrgContextDto | null) {
+    return this.events.findMine(user, ctx);
   }
 
   @Get(':slug')
@@ -63,11 +66,11 @@ export class EventsController {
   // ── Mutaciones del organizador ──
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Crear un evento (queda pendiente de moderación)' })
-  create(@Body() dto: CreateEventDto, @CurrentUser() user: JwtUser, @Req() req: Request) {
-    return this.events.create(dto, user, req);
+  create(@Body() dto: CreateEventDto, @CurrentUser() user: JwtUser, @OrgContext() ctx: OrgContextDto | null, @Req() req: Request) {
+    return this.events.create(dto, user, ctx, req);
   }
 
   @Patch(':id')

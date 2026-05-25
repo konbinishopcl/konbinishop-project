@@ -13,6 +13,7 @@ import { MailService } from '../../services/mailgun/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateSpotDto } from './dto/create-spot.dto';
 import { UpdateSpotDto } from './dto/update-spot.dto';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 @Injectable()
 export class SpotsService {
@@ -65,16 +66,18 @@ export class SpotsService {
     });
   }
 
-  /** Spots del usuario actual (cualquier estado). */
-  findMine(user: JwtUser) {
+  /** Spots del usuario actual o de la org (cualquier estado). */
+  findMine(user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const ownerId = orgContext?.orgId ?? user.sub;
     return this.prisma.spot.findMany({
-      where: { userId: user.sub },
+      where: { userId: ownerId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
   /** Crea un spot en DRAFT. Los días y la expiración se asignan al confirmar el pago. */
-  create(dto: CreateSpotDto, user: JwtUser) {
+  create(dto: CreateSpotDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const ownerId = orgContext?.orgId ?? user.sub;
     return this.prisma.spot.create({
       data: {
         title: dto.title,
@@ -82,7 +85,7 @@ export class SpotsService {
         linkType: dto.linkType,
         linkValue: dto.linkValue,
         status: PublicationStatus.DRAFT,
-        owner: { connect: { id: user.sub } },
+        owner: { connect: { id: ownerId } },
       },
     });
   }

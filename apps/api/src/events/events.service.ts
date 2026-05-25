@@ -9,6 +9,7 @@ import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { QueryEventsDto, SortBy } from './dto/query-events.dto';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 /** Genera un slug url-safe: minúsculas, sin acentos, separado por guiones. */
 function slugify(text: string): string {
@@ -115,10 +116,11 @@ export class EventsService {
 
   // ─────────────────────── Listados privados ───────────────────────
 
-  /** Eventos del usuario autenticado (cualquier estado). */
-  findMine(user: JwtUser) {
+  /** Eventos del usuario autenticado o de la org (cualquier estado). */
+  findMine(user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const ownerId = orgContext?.orgId ?? user.sub;
     return this.prisma.event.findMany({
-      where: { userId: user.sub },
+      where: { userId: ownerId },
       include: EVENT_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
@@ -126,7 +128,8 @@ export class EventsService {
 
   // ─────────────────────── Creación ───────────────────────
 
-  async create(dto: CreateEventDto, user: JwtUser, req?: Request) {
+  async create(dto: CreateEventDto, user: JwtUser, orgContext: OrgContextDto | null = null, req?: Request) {
+    const ownerId = orgContext?.orgId ?? user.sub;
     const slug = await this.uniqueSlug(dto.title);
     const event = await this.prisma.event.create({
       data: {
@@ -142,7 +145,7 @@ export class EventsService {
         poster: dto.poster,
         gallery: dto.gallery ?? [],
         status: PublicationStatus.DRAFT,
-        owner: { connect: { id: user.sub } },
+        owner: { connect: { id: ownerId } },
         city: dto.cityId ? { connect: { id: dto.cityId } } : undefined,
         category: dto.categoryId ? { connect: { id: dto.categoryId } } : undefined,
         prices: dto.prices?.length
@@ -166,7 +169,7 @@ export class EventsService {
       },
       include: EVENT_INCLUDE,
     });
-    this.audit.log({ userId: user.sub, action: 'CREATE', entity: 'EVENT', entityId: event.id, req });
+    this.audit.log({ userId: user.sub, action: 'CREATE', entity: 'EVENT', entityId: event.id, metadata: { orgContext: orgContext?.orgId ?? null }, req });
     return event;
   }
 

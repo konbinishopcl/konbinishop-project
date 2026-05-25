@@ -279,6 +279,23 @@ export class SubscriptionsService {
   }
 
   /**
+   * Lee la suscripción "viva" del owner (userId si personal, orgId si org).
+   * Una sub CANCELLED con cycleEnd futuro sigue contando (D-09): cancelar
+   * no termina el ciclo, solo previene renovación.
+   * Devuelve null si no hay sub o si el ciclo expiró.
+   */
+  async getActiveForOwner(userId: number | null, orgId: number | null) {
+    const target = orgId ? { orgId } : { userId };
+    return this.prisma.subscription.findFirst({
+      where: {
+        ...target,
+        status: { in: ['ACTIVE', 'CANCELLED'] },
+        cycleEnd: { gte: new Date() },
+      },
+    });
+  }
+
+  /**
    * Lista paginada de suscripciones — solo para ADMIN/SUPER_ADMIN.
    * D-18
    */

@@ -7,10 +7,11 @@ import {
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { OrderStatus, PublicationStatus } from '@prisma/client';
+import { Prisma, OrderStatus, PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { MailService } from '../../services/mailgun/mail.service';
 import type { JwtUser } from '../auth/current-user.decorator';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { GatewayFactory } from './gateway.factory';
 import { GatewayType } from './dto/checkout.dto';
 import { OrderItemType } from '../orders/dto/add-item.dto';
@@ -24,6 +25,7 @@ export class PaymentsService {
     private readonly config: ConfigService,
     private readonly gatewayFactory: GatewayFactory,
     private readonly mail: MailService,
+    private readonly subscriptions: SubscriptionsService,
   ) {}
 
   /**
@@ -89,7 +91,7 @@ export class PaymentsService {
       include: {
         owner: { select: { email: true, firstname: true } },
         items: {
-          include: { event: true, spot: true, hero: true },
+          include: { event: true, spot: true, hero: true, article: true },
         },
       },
     });
@@ -123,7 +125,7 @@ export class PaymentsService {
       return `${frontendUrl}/checkout/failed?orderId=${order.id}&code=${confirmation.responseCode}`;
     }
 
-    // Pago exitoso → activar ítems
+    // Pago exitoso → activar ítems (incluye increment de creditsUsed si aplica)
     await this.activateOrderItems(order);
     await this.prisma.order.update({
       where: { id: order.id },
@@ -146,15 +148,26 @@ export class PaymentsService {
 
   // ── Activación de ítems al confirmar el pago ──
 
+  /**
+   * Activa los ítems de la orden dentro de una $transaction atómica.
+   * D-08: si hay ítems EVENT con unitPrice=0 && subtotal=0 (crédito aplicado),
+   * incrementa creditsUsed de la suscripción activa en la misma transacción.
+   * Accede a la sub vía SubscriptionsService.getActiveForOwner para coherencia
+   * cross-módulo (mismo patrón que OrdersService.getActiveSub).
+   */
   private async activateOrderItems(order: {
     id: number;
+    userId: number;
+    orgId: number | null;
     items: Array<{
       type: string;
       days: number;
       subtotal: number;
+      unitPrice: number;
       eventId: number | null;
       spotId: number | null;
       heroId: number | null;
+      articleId: number | null;
     }>;
   }) {
     const expirationDate = (days: number) => {
@@ -163,42 +176,82 @@ export class PaymentsService {
       return d;
     };
 
-    const updates = order.items.map((item) => {
-      if (item.type === OrderItemType.EVENT && item.eventId) {
-        return this.prisma.event.update({
-          where: { id: item.eventId },
-          data: {
-            status: PublicationStatus.PENDING_MODERATION,
-            expirationDate: expirationDate(item.days),
-          },
-        });
-      }
-      if (item.type === OrderItemType.SPOT && item.spotId) {
-        return this.prisma.spot.update({
-          where: { id: item.spotId },
-          data: {
-            status: PublicationStatus.PENDING_MODERATION,
-            days: item.days,
-            amount: item.subtotal,
-            expirationDate: expirationDate(item.days),
-          },
-        });
-      }
-      if (item.type === OrderItemType.HERO && item.heroId) {
-        return this.prisma.hero.update({
-          where: { id: item.heroId },
-          data: {
-            status: PublicationStatus.PENDING_MODERATION,
-            days: item.days,
-            amount: item.subtotal,
-            expirationDate: expirationDate(item.days),
-          },
-        });
-      }
-      return Promise.resolve();
-    });
+    const ops: Prisma.PrismaPromise<unknown>[] = [];
+    let creditConsumed = 0;
 
-    await Promise.all(updates);
+    for (const item of order.items) {
+      // Defensive guard: items SUBSCRIPTION no se activan aquí
+      // (van por /subscriptions/confirm — Plan 12-04)
+      if (item.type === OrderItemType.SUBSCRIPTION) continue;
+
+      if (item.type === OrderItemType.EVENT && item.eventId) {
+        ops.push(
+          this.prisma.event.update({
+            where: { id: item.eventId },
+            data: {
+              status: PublicationStatus.PENDING_MODERATION,
+              expirationDate: expirationDate(item.days),
+            },
+          }),
+        );
+        // D-08: si el EVENT fue cubierto por crédito (unitPrice=0 && subtotal=0), incrementar creditsUsed
+        if (item.unitPrice === 0 && item.subtotal === 0) {
+          creditConsumed += 1;
+        }
+      } else if (item.type === OrderItemType.SPOT && item.spotId) {
+        ops.push(
+          this.prisma.spot.update({
+            where: { id: item.spotId },
+            data: {
+              status: PublicationStatus.PENDING_MODERATION,
+              days: item.days,
+              amount: item.subtotal,
+              expirationDate: expirationDate(item.days),
+            },
+          }),
+        );
+      } else if (item.type === OrderItemType.HERO && item.heroId) {
+        ops.push(
+          this.prisma.hero.update({
+            where: { id: item.heroId },
+            data: {
+              status: PublicationStatus.PENDING_MODERATION,
+              days: item.days,
+              amount: item.subtotal,
+              expirationDate: expirationDate(item.days),
+            },
+          }),
+        );
+      } else if (item.type === OrderItemType.ARTICLE && item.articleId) {
+        ops.push(
+          this.prisma.article.update({
+            where: { id: item.articleId },
+            data: { status: PublicationStatus.PENDING_MODERATION },
+          }),
+        );
+      }
+    }
+
+    // D-08: añadir el incremento al transaction si aplica.
+    // Usa SubscriptionsService.getActiveForOwner para coherencia con OrdersService
+    // (mismo entry point cross-módulo a la sub viva — encapsula la regla CANCELLED+cycleEnd futuro).
+    if (creditConsumed > 0) {
+      const sub = await this.subscriptions.getActiveForOwner(
+        order.orgId ? null : order.userId,
+        order.orgId,
+      );
+      if (sub) {
+        ops.push(
+          this.prisma.subscription.update({
+            where: { id: sub.id },
+            data: { creditsUsed: { increment: creditConsumed } },
+          }),
+        );
+      }
+      // Si sub no existe ya (edge case: cycle expired entre add-to-cart y pay), saltamos increment
+    }
+
+    await this.prisma.$transaction(ops);
   }
 
   private async assertSpotQuota() {

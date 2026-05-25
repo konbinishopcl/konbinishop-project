@@ -10,6 +10,7 @@ import { OrderStatus, PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { SettingsService } from '../settings/settings.service';
+import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { AddItemDto, OrderItemType } from './dto/add-item.dto';
 import type { OrgContextDto } from '../common/org-context/org-context.types';
 
@@ -25,6 +26,7 @@ export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
+    private readonly subscriptions: SubscriptionsService,
   ) {}
 
   private async maxDays(type: OrderItemType): Promise<number> {
@@ -33,6 +35,16 @@ export class OrdersService {
     if (type === OrderItemType.SPOT) return this.settings.getNum('SPOT_MAX_DAYS');
     // ARTICLE y SUBSCRIPTION no tienen maxDays (precio fijo / 30 días fijos)
     return 0;
+  }
+
+  /**
+   * Helper privado para obtener la suscripción activa del contexto actual.
+   * Delega a SubscriptionsService.getActiveForOwner para consistencia cross-módulo.
+   */
+  private async getActiveSub(user: JwtUser, orgContext: OrgContextDto | null) {
+    const userId = orgContext ? null : user.sub;
+    const orgId = orgContext?.orgId ?? null;
+    return this.subscriptions.getActiveForOwner(userId, orgId);
   }
 
   /** Devuelve el borrador activo del usuario (o de la org); si no existe lo crea. */
@@ -71,14 +83,24 @@ export class OrdersService {
   async addItem(orderId: number, dto: AddItemDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
     const order = await this.ensureDraft(orderId, user, orgContext);
 
+    // D-05/D-06: para EVENT con crédito disponible, days es opcional (el frontend no lo envía).
+    // Detectamos el crédito antes de la validación de días para no bloquear el flujo.
+    const sub = await this.getActiveSub(user, orgContext);
+    const hasCredit = !!sub && sub.creditsUsed < sub.creditsTotal && dto.type === OrderItemType.EVENT;
+
     // Service-level validation: días requerido y >=1 para tipos por-día
-    const needsDays = dto.type === OrderItemType.EVENT || dto.type === OrderItemType.SPOT || dto.type === OrderItemType.HERO;
+    // EVENT con crédito activo exime de esta validación (days se calcula internamente).
+    const needsDays =
+      dto.type === OrderItemType.SPOT ||
+      dto.type === OrderItemType.HERO ||
+      (dto.type === OrderItemType.EVENT && !hasCredit);
+
     if (needsDays && (dto.days === undefined || dto.days < 1)) {
       throw new BadRequestException(`days es requerido y debe ser >= 1 para ítems de tipo ${dto.type}`);
     }
 
     const maxDays = await this.maxDays(dto.type);
-    if (maxDays > 0 && dto.days! > maxDays) {
+    if (maxDays > 0 && dto.days !== undefined && dto.days > maxDays) {
       throw new BadRequestException(`Máximo ${maxDays} días para ${dto.type.toLowerCase()}`);
     }
 
@@ -86,8 +108,31 @@ export class OrdersService {
     if (dto.type === OrderItemType.SPOT) await this.assertSpotQuota();
     if (dto.type === OrderItemType.HERO) await this.assertHeroQuota();
 
-    const { unitPrice, eventId, spotId, heroId, articleId } = await this.resolveItem(dto, user, orgContext);
-    const days = dto.type === OrderItemType.ARTICLE ? 0 : (dto.days ?? 0);
+    const { unitPrice, eventId, spotId, heroId, articleId, creditApplied } = await this.resolveItem(dto, user, orgContext, sub);
+
+    let days: number;
+    if (creditApplied) {
+      // D-05: días = min(45, daysUntilCycleEnd, daysUntilEventExpiration?)
+      const today = new Date();
+      const daysUntilCycleEnd = Math.max(1, Math.floor((sub!.cycleEnd.getTime() - today.getTime()) / 86_400_000));
+
+      // Cargar event.expirationDate para el cap por evento (puede ser null)
+      const eventForCap = await this.prisma.event.findUnique({
+        where: { id: eventId! },
+        select: { expirationDate: true },
+      });
+      const caps: number[] = [45, daysUntilCycleEnd];
+      if (eventForCap?.expirationDate) {
+        const daysUntilEvent = Math.max(1, Math.floor((eventForCap.expirationDate.getTime() - today.getTime()) / 86_400_000));
+        caps.push(daysUntilEvent);
+      }
+      days = Math.min(...caps);
+    } else if (dto.type === OrderItemType.ARTICLE) {
+      days = 0;
+    } else {
+      days = dto.days!; // garantizado por validación service-level
+    }
+
     const subtotal = dto.type === OrderItemType.ARTICLE ? unitPrice : days * unitPrice;
 
     await this.prisma.orderItem.upsert({
@@ -117,7 +162,12 @@ export class OrdersService {
 
   // ── Helpers privados ──
 
-  private async resolveItem(dto: AddItemDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
+  private async resolveItem(
+    dto: AddItemDto,
+    user: JwtUser,
+    orgContext: OrgContextDto | null = null,
+    preloadedSub?: Awaited<ReturnType<typeof this.getActiveSub>> | null,
+  ) {
     const ownerId = orgContext?.orgId ?? user.sub;
 
     if (dto.type === OrderItemType.ARTICLE) {
@@ -129,7 +179,7 @@ export class OrdersService {
         throw new BadRequestException('Solo se pueden agregar artículos en estado DRAFT al carrito');
       }
       const unitPrice = await this.settings.getNum('ARTICLE_PRICE');
-      return { unitPrice, eventId: null, spotId: null, heroId: null, articleId: dto.articleId };
+      return { unitPrice, eventId: null, spotId: null, heroId: null, articleId: dto.articleId, creditApplied: false };
     }
 
     if (dto.type === OrderItemType.SPOT) {
@@ -140,8 +190,15 @@ export class OrdersService {
       if (spot.status !== PublicationStatus.DRAFT) {
         throw new BadRequestException('Solo se pueden agregar spots en estado DRAFT al carrito');
       }
-      const unitPrice = await this.settings.getNum('SPOT_PRICE_PER_DAY');
-      return { unitPrice, eventId: null, spotId: dto.spotId, heroId: null, articleId: null };
+      // D-07: descuento para suscriptores en SPOT
+      const basePrice = await this.settings.getNum('SPOT_PRICE_PER_DAY');
+      const sub = preloadedSub !== undefined ? preloadedSub : await this.getActiveSub(user, orgContext);
+      let unitPrice = basePrice;
+      if (sub) {
+        const discount = await this.settings.getNum('SUBSCRIPTION_SPOT_DISCOUNT');
+        unitPrice = Math.round(basePrice * (1 - discount / 100));
+      }
+      return { unitPrice, eventId: null, spotId: dto.spotId, heroId: null, articleId: null, creditApplied: false };
     }
 
     if (dto.type === OrderItemType.HERO) {
@@ -152,8 +209,15 @@ export class OrdersService {
       if (hero.status !== PublicationStatus.DRAFT) {
         throw new BadRequestException('Solo se pueden agregar heroes en estado DRAFT al carrito');
       }
-      const unitPrice = await this.settings.getNum('HERO_PRICE_PER_DAY');
-      return { unitPrice, eventId: null, spotId: null, heroId: dto.heroId, articleId: null };
+      // D-07: descuento para suscriptores en HERO
+      const basePrice = await this.settings.getNum('HERO_PRICE_PER_DAY');
+      const sub = preloadedSub !== undefined ? preloadedSub : await this.getActiveSub(user, orgContext);
+      let unitPrice = basePrice;
+      if (sub) {
+        const discount = await this.settings.getNum('SUBSCRIPTION_HERO_DISCOUNT');
+        unitPrice = Math.round(basePrice * (1 - discount / 100));
+      }
+      return { unitPrice, eventId: null, spotId: null, heroId: dto.heroId, articleId: null, creditApplied: false };
     }
 
     // EVENT
@@ -167,8 +231,27 @@ export class OrdersService {
     if (event.status !== PublicationStatus.DRAFT) {
       throw new BadRequestException('Solo se pueden agregar eventos en estado DRAFT al carrito');
     }
+
+    // D-05/D-06: detectar sub activa con crédito disponible
+    const sub = preloadedSub !== undefined ? preloadedSub : await this.getActiveSub(user, orgContext);
+    const hasCredit = sub && sub.creditsUsed < sub.creditsTotal;
+
+    if (hasCredit) {
+      // D-05: crédito auto-aplicado, unitPrice = 0, subtotal = 0
+      // days se calcula en addItem con Math.min(45, daysUntilCycleEnd, daysUntilEventExpiration?)
+      return {
+        unitPrice: 0,
+        eventId: dto.eventId,
+        spotId: null,
+        heroId: null,
+        articleId: null,
+        creditApplied: true,
+      };
+    }
+
+    // D-06: sin crédito → cobro normal
     const unitPrice = event.category?.pricePerDay ?? 0;
-    return { unitPrice, eventId: dto.eventId, spotId: null, heroId: null, articleId: null };
+    return { unitPrice, eventId: dto.eventId, spotId: null, heroId: null, articleId: null, creditApplied: false };
   }
 
   private async assertSpotQuota() {

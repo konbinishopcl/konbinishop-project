@@ -260,7 +260,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | 8 | 6/6 | Complete    | 2026-05-25 |
 | 9 | 5/5 | Complete    | 2026-05-25 |
 | 10 | 3/3 | Complete    | 2026-05-25 |
-| 11 | 3/3 | Complete   | 2026-05-25 |
+| 11 | 3/3 | Complete    | 2026-05-25 |
 | 12 | Suscripciones y carrito v2 | Plan mensual con créditos, carrito con org context y tipo ARTICLE | COM-01..04 |
 | 13 | Contenido avanzado | Artículos patrocinados, favoritos, perfil público con handle y badge Verificado | CNT-01..04 |
 | 14 | Servicios y CRM | Fotografía y creadores de contenido con opciones configurables, CRM pipeline unificado | SVC-01..05 |

@@ -22,11 +22,15 @@ export class JwtAuthGuard implements CanActivate {
     if (!header?.startsWith('Bearer ')) {
       throw new UnauthorizedException();
     }
-    let payload: { sub: number };
+    let payload: { sub: number; twoFaPending?: boolean; onboardingPending?: boolean };
     try {
       payload = this.jwt.verify(header.slice(7));
     } catch {
       throw new UnauthorizedException();
+    }
+    // Rechazar tokens de estados intermedios — solo JWTs definitivos acceden a endpoints normales
+    if (payload.twoFaPending || payload.onboardingPending) {
+      throw new UnauthorizedException('Token pendiente no válido para esta operación');
     }
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },

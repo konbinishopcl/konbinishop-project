@@ -290,3 +290,14 @@ export function transferRejectedTemplate(
     }),
   };
 }
+
+export function twoFactorCodeTemplate(code: string): { subject: string; html: string } {
+  return {
+    subject: 'Tu código de verificación — Konbini',
+    html: renderTemplate({
+      title: 'Código de verificación',
+      greeting: 'Tu código de verificación',
+      body: `Usa el siguiente código para completar el inicio de sesión en Konbini:<br/><br/><div style="font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;background:#f4f4f4;padding:20px;border-radius:8px;color:#1a1a2e">${esc(code)}</div><br/>Este código es válido por <strong>10 minutos</strong>. Si no lo solicitaste, ignora este correo.`,
+    }),
+  };
+}

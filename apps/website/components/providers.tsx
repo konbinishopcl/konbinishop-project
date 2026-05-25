@@ -9,7 +9,7 @@ import type { User } from "@/lib/data";
 type Theme = "dark" | "light";
 
 /* ───────────────── theme ───────────────── */
-const ThemeCtx = createContext<{ theme: Theme; setTheme: (t: Theme) => void } | null>(null);
+const ThemeCtx = createContext<{ theme: Theme; setTheme: (t: Theme) => void; toggleTheme: () => void } | null>(null);
 
 function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark");
@@ -24,7 +24,9 @@ function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("kb-theme", theme);
   }, [theme]);
 
-  return <ThemeCtx.Provider value={{ theme, setTheme }}>{children}</ThemeCtx.Provider>;
+  const toggleTheme = () => setTheme(theme === "dark" ? "light" : "dark");
+
+  return <ThemeCtx.Provider value={{ theme, setTheme, toggleTheme }}>{children}</ThemeCtx.Provider>;
 }
 
 export function useTheme() {

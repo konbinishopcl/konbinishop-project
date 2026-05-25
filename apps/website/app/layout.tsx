@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Providers } from "@/components/providers";
+import { Toaster } from "sonner";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://konbini.cl";
@@ -74,6 +75,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
         <Providers>{children}</Providers>
+        <Toaster position="bottom-right" richColors theme="dark" />
       </body>
     </html>
   );

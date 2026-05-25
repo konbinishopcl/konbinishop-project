@@ -135,6 +135,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 15-01]: CSS cascade strategy: append full Phase 15 CSS block at end of globals.css; HeroCarousel uses .pcar opacity-based slide toggle; Rail props renamed ja→jp
 - [Phase 15-02]: CategoryView uses fbar-sticky (NOT cat-shell sidebar — plan pseudocode incorrect); EventView uses event-hero/event-grid (existing CSS); ApiEvent.owner has no handle field; CSS aliases form-step/form-field/form-grid added to globals.css
 - [Phase 15-04]: AuthShell uses .auth-shell/.auth-art/.auth-form-side from design (not .auth-card spec in plan); User.type has no firstname/lastname — AccountShell uses user.name+initials; api.login takes {email,password} object; Suspense wrapper preserved for useSearchParams; admin section stubs created for InboxSection/CRMSection/FAQSection/ReportsSection/SettingsSection (missing from 15-03 parallel run)
+- [Phase 15-03]: Admin nav uses button+useRouter.push (CSS .admin-side button.nav-item); api.ts only has adminEvents/approveEvent/rejectEvent — other sections use fetch() directly; CRMSection uses mock data with /api/crm fallback; InboxSection receives kind prop routed by AdminPage
 
 ## Quick Tasks Completed
 

@@ -4,24 +4,31 @@ import { OrdersService } from './orders.service';
 import { AddItemDto, OrderItemType } from './dto/add-item.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
+import { OrgContextGuard } from '../common/org-context/org-context.guard';
+import { OrgContext } from '../common/org-context/org-context.decorator';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 @ApiTags('orders')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, OrgContextGuard)
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly orders: OrdersService) {}
 
   @Get('draft')
-  @ApiOperation({ summary: 'Obtener o crear el carrito (DRAFT) del usuario actual' })
-  getDraft(@CurrentUser() user: JwtUser) {
-    return this.orders.getOrCreateDraft(user);
+  @ApiOperation({ summary: 'Obtener o crear el carrito (DRAFT) del usuario actual o de la org' })
+  getDraft(@CurrentUser() user: JwtUser, @OrgContext() ctx: OrgContextDto | null) {
+    return this.orders.getOrCreateDraft(user, ctx);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Ver una orden por ID' })
-  findOne(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
-    return this.orders.findOne(id, user);
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtUser,
+    @OrgContext() ctx: OrgContextDto | null,
+  ) {
+    return this.orders.findOne(id, user, ctx);
   }
 
   @Put(':id/items')
@@ -30,8 +37,9 @@ export class OrdersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AddItemDto,
     @CurrentUser() user: JwtUser,
+    @OrgContext() ctx: OrgContextDto | null,
   ) {
-    return this.orders.addItem(id, dto, user);
+    return this.orders.addItem(id, dto, user, ctx);
   }
 
   @Delete(':id/items/:type')
@@ -41,7 +49,8 @@ export class OrdersController {
     @Param('id', ParseIntPipe) id: number,
     @Param('type') type: OrderItemType,
     @CurrentUser() user: JwtUser,
+    @OrgContext() ctx: OrgContextDto | null,
   ) {
-    return this.orders.removeItem(id, type, user);
+    return this.orders.removeItem(id, type, user, ctx);
   }
 }

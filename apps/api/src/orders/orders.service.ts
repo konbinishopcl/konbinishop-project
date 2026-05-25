@@ -11,6 +11,7 @@ import { OrderStatus, PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { AddItemDto, OrderItemType } from './dto/add-item.dto';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 const ITEM_INCLUDE = {
   event: { include: { category: true } },
@@ -31,23 +32,41 @@ export class OrdersService {
     return Number(this.config.get('SPOT_MAX_DAYS')) || 30;
   }
 
-  /** Devuelve el borrador activo del usuario; si no existe lo crea. */
-  async getOrCreateDraft(user: JwtUser) {
+  /** Devuelve el borrador activo del usuario (o de la org); si no existe lo crea. */
+  async getOrCreateDraft(user: JwtUser, orgContext: OrgContextDto | null = null) {
+    // Pitfall #6: validar que el orgId apunta a un User con type=ORGANIZATION
+    if (orgContext) {
+      const org = await this.prisma.user.findUnique({
+        where: { id: orgContext.orgId },
+        select: { type: true },
+      });
+      if (!org || org.type !== 'ORGANIZATION') {
+        throw new BadRequestException('orgContext.orgId no apunta a una organización');
+      }
+    }
+
     const existing = await this.prisma.order.findFirst({
-      where: { userId: user.sub, status: OrderStatus.DRAFT },
+      where: {
+        userId: user.sub,
+        orgId: orgContext?.orgId ?? null,
+        status: OrderStatus.DRAFT,
+      },
       include: { items: { include: ITEM_INCLUDE } },
     });
     if (existing) return existing;
 
     return this.prisma.order.create({
-      data: { owner: { connect: { id: user.sub } } },
+      data: {
+        owner: { connect: { id: user.sub } },
+        ...(orgContext && { org: { connect: { id: orgContext.orgId } } }),
+      },
       include: { items: { include: ITEM_INCLUDE } },
     });
   }
 
   /** Agrega o reemplaza un ítem en el carrito. Valida cuota al momento de agregar. */
-  async addItem(orderId: number, dto: AddItemDto, user: JwtUser) {
-    const order = await this.ensureDraft(orderId, user);
+  async addItem(orderId: number, dto: AddItemDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const order = await this.ensureDraft(orderId, user, orgContext);
 
     const maxDays = this.maxDays(dto.type);
     if (dto.days > maxDays) {
@@ -58,7 +77,7 @@ export class OrdersService {
     if (dto.type === OrderItemType.SPOT) await this.assertSpotQuota();
     if (dto.type === OrderItemType.HERO) await this.assertHeroQuota();
 
-    const { unitPrice, eventId, spotId, heroId } = await this.resolveItem(dto, user);
+    const { unitPrice, eventId, spotId, heroId } = await this.resolveItem(dto, user, orgContext);
     const subtotal = dto.days * unitPrice;
 
     await this.prisma.orderItem.upsert({
@@ -71,8 +90,8 @@ export class OrdersService {
   }
 
   /** Quita un ítem del carrito por tipo. */
-  async removeItem(orderId: number, type: OrderItemType, user: JwtUser) {
-    const order = await this.ensureDraft(orderId, user);
+  async removeItem(orderId: number, type: OrderItemType, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const order = await this.ensureDraft(orderId, user, orgContext);
     const item = await this.prisma.orderItem.findUnique({
       where: { orderId_type: { orderId: order.id, type } },
     });
@@ -82,18 +101,20 @@ export class OrdersService {
   }
 
   /** Consulta el carrito. */
-  findOne(orderId: number, user: JwtUser) {
-    return this.ensureVisible(orderId, user);
+  findOne(orderId: number, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    return this.ensureVisible(orderId, user, orgContext);
   }
 
   // ── Helpers privados ──
 
-  private async resolveItem(dto: AddItemDto, user: JwtUser) {
+  private async resolveItem(dto: AddItemDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const ownerId = orgContext?.orgId ?? user.sub;
+
     if (dto.type === OrderItemType.SPOT) {
       if (!dto.spotId) throw new BadRequestException('spotId es requerido para ítems de tipo SPOT');
       const spot = await this.prisma.spot.findUnique({ where: { id: dto.spotId } });
       if (!spot) throw new NotFoundException('Spot no encontrado');
-      if (spot.userId !== user.sub) throw new ForbiddenException('Este spot no te pertenece');
+      if (spot.userId !== ownerId) throw new ForbiddenException('Este spot no pertenece al contexto actual');
       if (spot.status !== PublicationStatus.DRAFT) {
         throw new BadRequestException('Solo se pueden agregar spots en estado DRAFT al carrito');
       }
@@ -104,7 +125,7 @@ export class OrdersService {
       if (!dto.heroId) throw new BadRequestException('heroId es requerido para ítems de tipo HERO');
       const hero = await this.prisma.hero.findUnique({ where: { id: dto.heroId } });
       if (!hero) throw new NotFoundException('Hero no encontrado');
-      if (hero.userId !== user.sub) throw new ForbiddenException('Este hero no te pertenece');
+      if (hero.userId !== ownerId) throw new ForbiddenException('Este hero no pertenece al contexto actual');
       if (hero.status !== PublicationStatus.DRAFT) {
         throw new BadRequestException('Solo se pueden agregar heroes en estado DRAFT al carrito');
       }
@@ -118,7 +139,7 @@ export class OrdersService {
       include: { category: true },
     });
     if (!event) throw new NotFoundException('Evento no encontrado');
-    if (event.userId !== user.sub) throw new ForbiddenException('Este evento no te pertenece');
+    if (event.userId !== ownerId) throw new ForbiddenException('Este evento no pertenece al contexto actual');
     if (event.status !== PublicationStatus.DRAFT) {
       throw new BadRequestException('Solo se pueden agregar eventos en estado DRAFT al carrito');
     }
@@ -156,22 +177,34 @@ export class OrdersService {
     });
   }
 
-  private async ensureDraft(orderId: number, user: JwtUser) {
-    const order = await this.ensureVisible(orderId, user);
+  private async ensureDraft(orderId: number, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const order = await this.ensureVisible(orderId, user, orgContext);
     if (order.status !== OrderStatus.DRAFT) {
       throw new BadRequestException('Solo se pueden modificar órdenes en estado DRAFT');
     }
     return order;
   }
 
-  private async ensureVisible(orderId: number, user: JwtUser) {
+  private async ensureVisible(orderId: number, user: JwtUser, orgContext: OrgContextDto | null = null) {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: { items: { include: ITEM_INCLUDE } },
     });
     if (!order) throw new NotFoundException('Orden no encontrada');
     const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
-    if (!isAdmin && order.userId !== user.sub) throw new ForbiddenException('No tienes acceso a esta orden');
+    if (isAdmin) return order;
+
+    if (order.orgId !== null) {
+      // Orden de organización: verificar que el caller es miembro de esa org
+      const member = await this.prisma.orgMember.findUnique({
+        where: { userId_orgId: { userId: user.sub, orgId: order.orgId } },
+      });
+      if (!member) throw new ForbiddenException('No tienes acceso a esta orden');
+    } else {
+      // Orden personal: verificar que el caller es el dueño
+      if (order.userId !== user.sub) throw new ForbiddenException('No tienes acceso a esta orden');
+    }
+
     return order;
   }
 }

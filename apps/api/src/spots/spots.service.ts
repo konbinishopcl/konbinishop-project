@@ -4,13 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { PublicationStatus, UserType } from '@prisma/client';
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
 import { MailService } from '../../services/mailgun/mail.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { SettingsService } from '../settings/settings.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateSpotDto } from './dto/create-spot.dto';
 import { UpdateSpotDto } from './dto/update-spot.dto';
@@ -20,22 +20,22 @@ import type { OrgContextDto } from '../common/org-context/org-context.types';
 export class SpotsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
+    private readonly settings: SettingsService,
     private readonly mail: MailService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
   ) {}
 
-  private maxActive(): number {
-    return Number(this.config.get('SPOT_MAX_ACTIVE')) || 10;
+  private maxActive(): Promise<number> {
+    return this.settings.getNum('SPOT_MAX_ACTIVE');
   }
 
-  private maxDays(): number {
-    return Number(this.config.get('SPOT_MAX_DAYS')) || 30;
+  private maxDays(): Promise<number> {
+    return this.settings.getNum('SPOT_MAX_DAYS');
   }
 
-  private pricePerDay(): number {
-    return Number(this.config.get('SPOT_PRICE_PER_DAY')) || 8000;
+  private pricePerDay(): Promise<number> {
+    return this.settings.getNum('SPOT_PRICE_PER_DAY');
   }
 
   private countActive(): Promise<number> {
@@ -46,14 +46,18 @@ export class SpotsService {
 
   /** Quota + pricing — para que el frontend muestre disponibilidad antes de crear. */
   async quota() {
-    const active = await this.countActive();
-    const max = this.maxActive();
+    const [active, max, pricePerDay, maxDays] = await Promise.all([
+      this.countActive(),
+      this.maxActive(),
+      this.pricePerDay(),
+      this.maxDays(),
+    ]);
     return {
       max,
       active,
       available: Math.max(0, max - active),
-      pricePerDay: this.pricePerDay(),
-      maxDays: this.maxDays(),
+      pricePerDay,
+      maxDays,
     };
   }
 
@@ -197,14 +201,15 @@ export class SpotsService {
 
   /** Valida que haya cupo disponible; lanza excepción si no. */
   async assertQuotaAvailable() {
-    if ((await this.countActive()) >= this.maxActive()) {
+    const [active, max] = await Promise.all([this.countActive(), this.maxActive()]);
+    if (active >= max) {
       throw new BadRequestException('No hay cupos disponibles para spots en este momento');
     }
   }
 
   /** Valida que los días no superen el máximo permitido. */
-  assertMaxDays(days: number) {
-    const max = this.maxDays();
+  async assertMaxDays(days: number) {
+    const max = await this.maxDays();
     if (days > max) {
       throw new BadRequestException(`Un spot se puede publicar por un máximo de ${max} días`);
     }

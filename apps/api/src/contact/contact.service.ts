@@ -13,12 +13,27 @@ export class ContactService {
   ) {}
 
   async create(dto: CreateContactDto) {
-    const msg = await this.prisma.contactMessage.create({ data: dto });
+    // D-18: ContactMessage + CrmEntry en la misma transacción (callback form).
+    // D-19: usar PrismaService directamente — no se importa CrmModule.
+    const msg = await this.prisma.$transaction(async (tx) => {
+      const contactMsg = await tx.contactMessage.create({ data: dto });
+      await tx.crmEntry.create({
+        data: {
+          type: 'CONTACT',
+          stage: 'NEW',
+          sourceType: 'CONTACT',
+          sourceId: contactMsg.id,
+          contactName: dto.name,
+          contactEmail: dto.email,
+        },
+      });
+      return contactMsg;
+    });
 
-    // Email de confirmación al remitente
+    // Email de confirmación al remitente (sin tocar)
     await this.mail.sendContactReceived(dto.email, dto.name).catch(() => {});
 
-    // Notificación a los emails configurados en CONTACT_NOTIFY_EMAILS
+    // Notificación a los emails configurados en CONTACT_NOTIFY_EMAILS (sin tocar)
     const raw = this.config.get<string>('CONTACT_NOTIFY_EMAILS', '');
     const recipients = raw.split(',').map((e) => e.trim()).filter(Boolean);
     if (recipients.length) {
@@ -27,6 +42,7 @@ export class ContactService {
         .catch(() => {});
     }
 
+    // D-20: retornar solo el ContactMessage — no exponer la CrmEntry al remitente.
     return msg;
   }
 

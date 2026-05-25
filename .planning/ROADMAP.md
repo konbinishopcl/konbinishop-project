@@ -257,7 +257,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 
 | Phase | Name | Goal | Requirements |
 |-------|------|------|--------------|
-| 8 | 6/6 | Complete   | 2026-05-25 |
+| 8 | 6/6 | Complete    | 2026-05-25 |
 | 9 | Organizaciones y transferencias | Organizaciones con roles OWNER/MEMBER, middleware X-Org-Context, transferencia de contenido | ORG-01..05 |
 | 10 | Auth avanzado | 2FA obligatorio, Google OAuth con onboarding, change email/password | AUTH-01..04 |
 | 11 | Notificaciones y Settings | Sistema de mensajes internos, valores configurables desde DB | CFG-01..03 |

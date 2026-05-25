@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, PublicationStatus, UserType } from '@prisma/client';
 import type { Request } from 'express';
@@ -99,10 +99,21 @@ export class EventsService {
       this.prisma.event.count({ where }),
     ]);
 
+    if (user?.sub && items.length > 0) {
+      const ids = items.map(e => e.id);
+      const saved = await this.prisma.savedEvent.findMany({
+        where: { userId: user.sub, eventId: { in: ids } },
+        select: { eventId: true },
+      });
+      const savedSet = new Set(saved.map(s => s.eventId));
+      const itemsWithSaved = items.map(e => ({ ...e, isSaved: savedSet.has(e.id) }));
+      return { items: itemsWithSaved, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+    }
+
     return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }
 
-  async findBySlug(slug: string) {
+  async findBySlug(slug: string, user?: JwtUser | null) {
     const event = await this.prisma.event.findUnique({
       where: { slug },
       include: EVENT_INCLUDE,
@@ -112,6 +123,12 @@ export class EventsService {
     }
     if (event.expirationDate && event.expirationDate < new Date()) {
       throw new NotFoundException('Evento no encontrado');
+    }
+    if (user?.sub) {
+      const saved = await this.prisma.savedEvent.findUnique({
+        where: { userId_eventId: { userId: user.sub, eventId: event.id } },
+      });
+      return { ...event, isSaved: saved !== null };
     }
     return event;
   }
@@ -126,6 +143,46 @@ export class EventsService {
       include: EVENT_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  // ─────────────────────── Favoritos ───────────────────────
+
+  async save(eventId: number, userId: number) {
+    await this.ensure(eventId);
+    try {
+      await this.prisma.savedEvent.create({ data: { userId, eventId } });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('Evento ya guardado');
+      }
+      throw err;
+    }
+    return { saved: true };
+  }
+
+  async unsave(eventId: number, userId: number) {
+    const existing = await this.prisma.savedEvent.findUnique({
+      where: { userId_eventId: { userId, eventId } },
+    });
+    if (!existing) throw new NotFoundException('Evento no estaba guardado');
+    await this.prisma.savedEvent.delete({ where: { userId_eventId: { userId, eventId } } });
+    return { unsaved: true };
+  }
+
+  async findSavedByUser(userId: number, page = 1, pageSize = 12) {
+    pageSize = Math.min(pageSize, 50);
+    const [savedRows, total] = await this.prisma.$transaction([
+      this.prisma.savedEvent.findMany({
+        where: { userId },
+        include: { event: { include: EVENT_INCLUDE } },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.savedEvent.count({ where: { userId } }),
+    ]);
+    const items = savedRows.map(s => ({ ...s.event, isSaved: true }));
+    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }
 
   // ─────────────────────── Creación ───────────────────────

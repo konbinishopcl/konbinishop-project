@@ -188,7 +188,7 @@ administrador quedan visibles al público.
 
 ### Comercio: Suscripciones y Carrito v2 (Phase 12)
 
-- [ ] **COM-01**: Módulo `subscriptions` con CRUD: `POST /subscriptions` (crea Order
+- [x] **COM-01**: Módulo `subscriptions` con CRUD: `POST /subscriptions` (crea Order
   especial con item type=SUBSCRIPTION, reutiliza `GatewayFactory.initiate()`, devuelve
   `redirectUrl` de Transbank, NO crea `Subscription` row aún), `GET /subscriptions/me`
   (estado, créditos, ciclo del recipient según X-Org-Context), `DELETE /subscriptions/me`

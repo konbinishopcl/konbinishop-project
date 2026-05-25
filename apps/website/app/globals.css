@@ -1006,6 +1006,11 @@
 .otp-row { display: flex; gap: 10px; margin-bottom: 22px; }
 .otp-row input { flex: 1; aspect-ratio: 1; max-width: 56px; padding: 0; text-align: center; font-family: var(--font-mono); font-size: 24px; font-weight: 700; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
 .otp-row input:focus { outline: 0; border-color: var(--accent); background: var(--surface); }
+/* auth-card / auth-hero / auth-form / auth-brand — Plan 04 additions */
+.auth-card { width: 100%; max-width: 420px; }
+.auth-brand { /* branding handled inside auth-art */ }
+.auth-hero { margin-bottom: 4px; }
+.auth-form { /* form content */ }
 
 /* ─────────── 404 / EXPIRED / TAG ─────────── */
 .err-shell { padding: 80px 24px; text-align: center; max-width: 720px; margin: 0 auto; }

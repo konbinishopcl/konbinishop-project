@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T01:58:37.469Z"
+last_updated: "2026-05-25T04:07:50.305Z"
 progress:
   total_phases: 15
   completed_phases: 10
-  total_plans: 33
-  completed_plans: 33
+  total_plans: 36
+  completed_plans: 34
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 10 — auth-avanzado
+**Current focus:** Phase 11 — notificaciones-y-settings
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T01:52:24.876Z
+**Last session:** 2026-05-25T04:07:50.300Z
 
 ## Phase Summary
 
@@ -107,6 +107,9 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 10]: TwoFaUser exportado desde two-fa.guard.ts; TwoFaGuard no consulta DB; pendingToken 15min con twoFaPending:true; JwtAuthGuard rechaza tokens pending explícitamente
 - [Phase 10]: 10-02: onboardingToken 30min con onboardingPending:true; upsertGoogleUser devuelve isNew; countryId/acceptedTerms diferidos a Phase 13 (solo validación por ahora)
 - [Phase 10-03]: pendingEmail sin @unique — validación en service layer; confirm sin JwtAuthGuard — token como prueba de propiedad del nuevo email; sanitize() actualizado para excluir los 3 campos de email change
+- [Phase 11-01]: NotificationsService.create() es void (no Promise<void>) — patrón idéntico a AuditService.log() para garantizar fire-and-forget
+- [Phase 11-01]: PATCH read-all declarado ANTES de :id/read — evita que ParseIntPipe intente parsear 'read-all' como Int
+- [Phase 11-01]: markRead devuelve 404 (no 403) cuando notificación es ajena — evita revelar existencia de IDs ajenos
 
 ## Quick Tasks Completed
 

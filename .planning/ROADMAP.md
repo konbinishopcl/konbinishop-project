@@ -260,7 +260,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | 8 | 6/6 | Complete    | 2026-05-25 |
 | 9 | 5/5 | Complete    | 2026-05-25 |
 | 10 | 3/3 | Complete    | 2026-05-25 |
-| 11 | Notificaciones y Settings | Sistema de mensajes internos, valores configurables desde DB | CFG-01..03 |
+| 11 | 1/3 | In Progress|  |
 | 12 | Suscripciones y carrito v2 | Plan mensual con créditos, carrito con org context y tipo ARTICLE | COM-01..04 |
 | 13 | Contenido avanzado | Artículos patrocinados, favoritos, perfil público con handle y badge Verificado | CNT-01..04 |
 | 14 | Servicios y CRM | Fotografía y creadores de contenido con opciones configurables, CRM pipeline unificado | SVC-01..05 |
@@ -378,10 +378,14 @@ del sistema (precios, cupos, créditos de suscripción).
 **Why:** Notificaciones son el mecanismo de comunicación entre el sistema y el usuario.
 Settings permite que el admin cambie precios sin tocar código ni reiniciar el servidor.
 
-**Plans (estimado):**
-1. **Módulo `notifications`** — `NotificationService.create()` interno; endpoints GET, PATCH read, PATCH read-all, GET unread-count.
-2. **Auto-notificaciones** — inyectar NotificationService en events, spots, heroes, organizations, transfers para generar notificaciones en los eventos relevantes.
-3. **Módulo `settings`** — seed inicial de todos los defaults; `GET /settings` (admin), `PATCH /settings` (admin), `GET /settings/public` (público); integrar en Spots/Heroes para leer precio/cupo desde DB en vez de env.
+**Status:** 🔄 Planning (3 plans creados, ejecución pendiente)
+
+**Plans:** 1/3 plans executed
+
+Plans:
+- [x] 11-01-PLAN.md — Módulo `notifications`: NotificationsModule + Service (create fire-and-forget) + 4 endpoints REST + documentar CFG-01..03 en REQUIREMENTS.md (CFG-01) — Wave 1
+- [ ] 11-02-PLAN.md — Inyectar NotificationsModule en Events/Spots/Heroes/Organizations/Transfers y emitir notifications.create() en aprobar/rechazar/banear/invitar/transferir (CFG-02) — Wave 2
+- [ ] 11-03-PLAN.md — Módulo `settings` (admin GET/PATCH + público GET /public) + migrar SpotsService/HeroesService de ConfigService a SettingsService + verificar seed (CFG-03) — Wave 3
 
 **Requirements:**
 - CFG-01: Módulo notifications

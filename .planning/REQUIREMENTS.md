@@ -164,7 +164,7 @@ administrador quedan visibles al público.
 
 ### Notificaciones y Settings (Phase 11)
 
-- [ ] **CFG-01**: Módulo `notifications` con `NotificationService.create()` interno
+- [x] **CFG-01**: Módulo `notifications` con `NotificationService.create()` interno
   (fire-and-forget void) y endpoints autenticados:
   `GET /notifications` (paginado, soporta X-Org-Context),
   `GET /notifications/unread-count`,

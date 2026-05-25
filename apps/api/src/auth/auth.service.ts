@@ -40,6 +40,14 @@ export class AuthService {
     );
   }
 
+  /** Firma un JWT pendiente de onboarding Google (30 min) — solo válido para POST /auth/google/onboarding. */
+  private signOnboardingPending(user: User): string {
+    return this.jwt.sign(
+      { sub: user.id, email: user.email, onboardingPending: true },
+      { expiresIn: '30m' },
+    );
+  }
+
   /** Genera un código de 6 dígitos, lo guarda hasheado (SHA-256, 10 min) y lo envía por email. */
   private async issueTwoFaCode(user: User): Promise<void> {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -124,23 +132,36 @@ export class AuthService {
     return { pendingToken: this.sign2FaPending(user), twoFaRequired: true as const };
   }
 
-  /** Upsert de usuario Google: busca por googleId → email → crea nuevo. */
-  private async upsertGoogleUser(googleId: string, email: string, givenName?: string, familyName?: string): Promise<User> {
+  /** Upsert de usuario Google: busca por googleId → email → crea nuevo. Retorna isNew=true solo si el usuario fue creado en esta llamada. */
+  private async upsertGoogleUser(
+    googleId: string,
+    email: string,
+    givenName?: string,
+    familyName?: string,
+  ): Promise<{ user: User; isNew: boolean }> {
     let user = await this.prisma.user.findUnique({ where: { googleId } });
-    if (!user) {
-      user = await this.prisma.user.findUnique({ where: { email } });
-      if (user) {
-        user = await this.prisma.user.update({ where: { id: user.id }, data: { googleId } });
-      } else {
-        user = await this.prisma.user.create({
-          data: { email, googleId, firstname: givenName ?? null, lastname: familyName ?? null, role: 'AUTHENTICATED', confirmed: true },
-        });
-        const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
-        await this.prisma.profile.create({ data: { userId: user.id, slug } });
-        await this.mail.sendWelcome(user.email, user.firstname ?? user.email);
-      }
+    if (user) return { user, isNew: false };
+
+    user = await this.prisma.user.findUnique({ where: { email } });
+    if (user) {
+      user = await this.prisma.user.update({ where: { id: user.id }, data: { googleId } });
+      return { user, isNew: false };
     }
-    return user;
+
+    user = await this.prisma.user.create({
+      data: {
+        email,
+        googleId,
+        firstname: givenName ?? null,
+        lastname: familyName ?? null,
+        role: 'AUTHENTICATED',
+        confirmed: true,
+      },
+    });
+    const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
+    await this.prisma.profile.create({ data: { userId: user.id, slug } });
+    await this.mail.sendWelcome(user.email, user.firstname ?? user.email);
+    return { user, isNew: true };
   }
 
   async googleAuth(accessToken: string) {
@@ -155,8 +176,11 @@ export class AuthService {
     if (!payload.email_verified) throw new UnauthorizedException('El email de Google no está verificado');
     if (!payload.email) throw new UnauthorizedException('Google no proporcionó un email');
 
-    const user = await this.upsertGoogleUser(payload.sub, payload.email, payload.given_name, payload.family_name);
+    const { user, isNew } = await this.upsertGoogleUser(payload.sub, payload.email, payload.given_name, payload.family_name);
     if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
+    if (isNew) {
+      return { onboardingToken: this.signOnboardingPending(user), onboardingRequired: true as const };
+    }
     return { token: this.sign(user), user: this.sanitize(user) };
   }
 
@@ -173,8 +197,11 @@ export class AuthService {
       throw new UnauthorizedException('Credencial de Google inválida');
     }
 
-    const user = await this.upsertGoogleUser(sub, email, givenName, familyName);
+    const { user, isNew } = await this.upsertGoogleUser(sub, email, givenName, familyName);
     if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
+    if (isNew) {
+      return { onboardingToken: this.signOnboardingPending(user), onboardingRequired: true as const };
+    }
     return { token: this.sign(user), user: this.sanitize(user) };
   }
 
@@ -269,5 +296,26 @@ export class AuthService {
     if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
     await this.issueTwoFaCode(user);
     return { ok: true };
+  }
+
+  /**
+   * Completa el onboarding de un usuario Google nuevo: valida país y T&C, emite JWT definitivo.
+   * El userId viene del OnboardingGuard (claim onboardingPending del JWT).
+   *
+   * TODO Phase 13: persistir countryId y acceptedTerms en el modelo User (requiere migración).
+   * Por ahora solo se valida la entrada y se emite el JWT — el frontend asume completitud.
+   */
+  async googleOnboarding(userId: number, countryId: number, acceptedTerms: boolean) {
+    if (acceptedTerms !== true) {
+      throw new BadRequestException('Debes aceptar los Términos y Condiciones');
+    }
+    const country = await this.prisma.country.findUnique({ where: { id: countryId } });
+    if (!country) throw new BadRequestException('País no válido');
+
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException();
+    if (user.blocked) throw new UnauthorizedException('Tu cuenta está bloqueada');
+
+    return { token: this.sign(user), user: this.sanitize(user) };
   }
 }

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-24T23:56:24.151Z"
+last_updated: "2026-05-25T00:02:22.024Z"
 progress:
   total_phases: 15
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 25
-  completed_plans: 24
+  completed_plans: 25
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 8 — Schema v2
+**Current focus:** Phase 9 — Organizaciones y transferencias
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa
-**Active Phase:** Phase 8 — Schema v2 (planificando)
-**Overall Progress:** [████████--------] Phases 0–7 completas (v1) · Phases 8–14 pendientes (v2)
-**Last session:** 2026-05-24T23:56:24.149Z
+**Active Phase:** Phase 9 — Organizaciones y transferencias
+**Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
+**Last session:** 2026-05-25T00:02:22.022Z
 
 ## Phase Summary
 
@@ -47,7 +47,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
-| 8 | Schema v2 | 🔄 In Progress | 4/6 |
+| 8 | Schema v2 | ✅ Complete | 6/6 |
 | 9 | Organizaciones y transferencias | ⏳ Pending | 0/5 |
 | 10 | Auth avanzado | ⏳ Pending | 0/4 |
 | 11 | Notificaciones y Settings | ⏳ Pending | 0/3 |
@@ -95,6 +95,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 08-03]: MySQL cannot enforce user.type=ORGANIZATION for OrgMember.orgId — enforcement is service-layer (Phase 9). OrgRole enum: OWNER/MEMBER. Migration: 20260524234414_sch03_organizations.
 - [Phase 08-04]: KEY #5 locked: env vars de precios permanecen en código en Phase 8; migración env→Settings es scope de Phase 11. Settings.upsert con update:{} — valor admin-modificado no se sobreescribe. Transfer polymorphic via itemType+itemId sin FKs múltiples (patrón AuditLog). Migration: 20260524234837_sch04_core_systems.
 - [Phase 08-05]: KEY #4 locked: Article.status absorbed in SCH-05; Pitfall #5: @@unique([orderId,type]) stays intact; Pitfall #6: Order.orgId enforcement is service-layer (MySQL cannot CHECK cross-row); UserOrders relation rename is schema-metadata-only (no DDL, no TS breaks)
+- [Phase 08-06]: KEY DECISION #2 LOCKED: CrmEntry es modelo independiente de ContactMessage. El service layer de Phase 14 crea ContactMessage + CrmEntry en transacción al recibir POST /contact. ServiceRequest NO tiene status — el pipeline vive en CrmEntry.stage.
 
 ## Quick Tasks Completed
 
@@ -114,7 +115,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 ## Next Action
 
-**Phase 8 Plan 04 completado.** 5 modelos core v2 (Settings, Notification, SavedEvent, Subscription, Transfer) + 4 enums + 12 Settings defaults en seed. Migración sch04_core_systems aplicada. Próximo: Plan 05 de Phase 8.
+**Phase 8 completada.** SCH-06 aplicado: ServiceOption, ServiceRequest, CrmEntry, CrmNote + 3 enums + migración sch06_services_crm. Phase gate: pnpm prisma validate + tsc --noEmit + prisma:seed todos exit 0. ContactMessage intocado (KEY DECISION #2). Próximo: Phase 9 — Organizaciones y transferencias.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

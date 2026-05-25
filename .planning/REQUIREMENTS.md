@@ -154,7 +154,7 @@ administrador quedan visibles al público.
   `articleId`. `Order` agrega `orgId` (FK opcional a User type ORGANIZATION,
   validación en service layer). `Article` agrega `status: PublicationStatus`,
   `statusReason: String?`, `userId: Int?` para artículos patrocinados.
-- [ ] **SCH-06**: Modelos `ServiceRequest` (type: ServiceType, name, email, eventName,
+- [x] **SCH-06**: Modelos `ServiceRequest` (type: ServiceType, name, email, eventName,
   eventDate, eventPlace, stage: CrmStage), `ServiceOption` (type: ServiceType, label,
   active, order), `CrmEntry` (modelo nuevo — pipeline unificado para CONTACT,
   PHOTOGRAPHY, CONTENT con stage: CrmStage), `CrmNote` (FK a CrmEntry, autor, content).

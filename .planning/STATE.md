@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0
-milestone_name: milestone-v2
-status: in_progress
-last_updated: "2026-05-25T16:00:00.000Z"
+milestone: v1.0
+milestone_name: milestone
+status: unknown
+last_updated: "2026-05-25T15:26:28.935Z"
 progress:
   total_phases: 15
-  completed_phases: 13
+  completed_phases: 12
   total_plans: 44
-  completed_plans: 44
+  completed_plans: 41
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 13 — Contenido avanzado
 **Overall Progress:** [████████░░] 87% (44/44 plans) · Phases 0–12 completas · Phases 13–14 pendientes (v2)
-**Last session:** 2026-05-25T16:00:00.000Z
+**Last session:** 2026-05-25T15:26:28.933Z
 
 ## Phase Summary
 
@@ -121,6 +121,8 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 12-03]: Days cap for EVENT credit: Math.min(45, daysUntilCycleEnd, daysUntilEventExpiration?) — D-05 with 3 caps
 - [Phase 12-03]: Signal-via-zero (unitPrice===0 && subtotal===0) detects credited EVENT in activateOrderItems — no schema column needed
 - [Phase 12-03]: PaymentsService accesses sub via SubscriptionsService.getActiveForOwner (not direct Prisma query) for cross-module consistency
+- [Phase 13]: CatalogService usa data: dto (spread directo) — solo extender DTOs es suficiente para persistir campos v2 sin tocar el service
+- [Phase 13]: category.minDays/maxDays cap en EVENT: query liviana solo cuando type=EVENT && !hasCredit; Math.min(globalMax, categoryMaxDays) como effectiveMax
 
 ## Quick Tasks Completed
 

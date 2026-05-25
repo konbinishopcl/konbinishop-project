@@ -95,13 +95,38 @@ export class OrdersService {
       dto.type === OrderItemType.HERO ||
       (dto.type === OrderItemType.EVENT && !hasCredit);
 
+    // CNT-04 D-17: para EVENT sin crédito, cargar category para usar category.minDays/maxDays
+    let categoryMinDays: number | null = null;
+    let categoryMaxDays: number | null = null;
+    if (dto.type === OrderItemType.EVENT && !hasCredit && dto.eventId) {
+      const eventForCap = await this.prisma.event.findUnique({
+        where: { id: dto.eventId },
+        select: { category: { select: { minDays: true, maxDays: true } } },
+      });
+      categoryMinDays = eventForCap?.category?.minDays ?? null;
+      categoryMaxDays = eventForCap?.category?.maxDays ?? null;
+    }
+
     if (needsDays && (dto.days === undefined || dto.days < 1)) {
       throw new BadRequestException(`days es requerido y debe ser >= 1 para ítems de tipo ${dto.type}`);
     }
 
-    const maxDays = await this.maxDays(dto.type);
-    if (maxDays > 0 && dto.days !== undefined && dto.days > maxDays) {
-      throw new BadRequestException(`Máximo ${maxDays} días para ${dto.type.toLowerCase()}`);
+    // CNT-04 D-17: para EVENT sin crédito, cap = min(category.maxDays, EVENT_MAX_DAYS global)
+    // Para SPOT/HERO el global aplica solo (no hay category cap por ahora)
+    const globalMax = await this.maxDays(dto.type);
+    let effectiveMax = globalMax;
+    if (dto.type === OrderItemType.EVENT && !hasCredit && categoryMaxDays !== null) {
+      effectiveMax = Math.min(globalMax, categoryMaxDays);
+    }
+    if (effectiveMax > 0 && dto.days !== undefined && dto.days > effectiveMax) {
+      throw new BadRequestException(`Máximo ${effectiveMax} días para ${dto.type.toLowerCase()}`);
+    }
+
+    // CNT-04 D-17: minDays solo aplica a EVENT sin crédito
+    if (dto.type === OrderItemType.EVENT && !hasCredit && categoryMinDays !== null && categoryMinDays > 1) {
+      if (dto.days !== undefined && dto.days < categoryMinDays) {
+        throw new BadRequestException(`Mínimo ${categoryMinDays} días para esta categoría de evento`);
+      }
     }
 
     // Validar cuota al agregar (no solo en checkout)

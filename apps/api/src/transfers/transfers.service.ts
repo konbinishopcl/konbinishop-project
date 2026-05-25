@@ -10,6 +10,7 @@ import { Prisma, Transfer, TransferItemType, TransferStatus } from '@prisma/clie
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import type { OrgContextDto } from '../common/org-context/org-context.types';
 import { MailService } from '../../services/mailgun/mail.service';
@@ -31,6 +32,7 @@ export class TransfersService {
     private readonly mail: MailService,
     private readonly audit: AuditService,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ─────────────────────── Endpoints de usuario ───────────────────────
@@ -90,7 +92,7 @@ export class TransfersService {
       return t;
     });
 
-    // 6. Si PENDING → notificar a todos los OWNERs de la org
+    // 6. Si PENDING → notificar a todos los OWNERs de la org (email) + 1 notificación interna al orgId
     if (!isOwner) {
       const owners = await this.prisma.orgMember.findMany({
         where: { orgId: dto.targetOrgId, role: 'OWNER' },
@@ -111,7 +113,23 @@ export class TransfersService {
             .catch(() => {});
         }
       }
+
+      // UNA notificación al orgId — cualquier OWNER la verá vía X-Org-Context
+      this.notifications.create({
+        type: 'TRANSFER_REQUEST',
+        title: `Nueva solicitud de transferencia recibida`,
+        body: `${user.email} quiere transferir "${item.title}" a tu organización.`,
+        payload: {
+          transferId: transfer.id,
+          itemType: dto.itemType,
+          itemId: dto.itemId,
+          fromUserId: user.sub,
+        },
+        orgId: dto.targetOrgId,
+      });
     }
+    // NOTA: transferencias AUTO_ACCEPTED (caller=OWNER) NO emiten notificación —
+    // no hay nada que avisar, la decisión la tomó el mismo OWNER al crear.
 
     // 7. Auditoría
     this.audit.log({
@@ -159,7 +177,18 @@ export class TransfersService {
       return t;
     });
 
-    // Notificar al fromUser
+    // Notificar al fromUser (notificación interna + email)
+    this.notifications.create({
+      type: 'TRANSFER_ACCEPTED',
+      title: `Tu transferencia fue aceptada`,
+      payload: {
+        transferId: transfer.id,
+        itemType: transfer.itemType,
+        itemId: transfer.itemId,
+        toOrgId: transfer.toOrgId,
+      },
+      userId: transfer.fromUserId,
+    });
     await this.notifyFromUser(transfer, 'accepted');
 
     this.audit.log({
@@ -197,7 +226,20 @@ export class TransfersService {
       },
     });
 
-    // Notificar al fromUser
+    // Notificar al fromUser (notificación interna + email)
+    this.notifications.create({
+      type: 'TRANSFER_REJECTED',
+      title: `Tu transferencia fue rechazada`,
+      body: dto.reason,
+      payload: {
+        transferId: transfer.id,
+        itemType: transfer.itemType,
+        itemId: transfer.itemId,
+        toOrgId: transfer.toOrgId,
+        reason: dto.reason,
+      },
+      userId: transfer.fromUserId,
+    });
     await this.notifyFromUser(transfer, 'rejected', dto.reason);
 
     this.audit.log({

@@ -8,8 +8,10 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { GoogleAuthDto } from './dto/google-auth.dto';
 import { GoogleOneTapDto } from './dto/google-onetap.dto';
+import { GoogleOnboardingDto } from './dto/google-onboarding.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { TwoFaGuard, type TwoFaUser } from './two-fa.guard';
+import { OnboardingGuard, type OnboardingUser } from './onboarding.guard';
 import { CurrentUser, type JwtUser } from './current-user.decorator';
 import { VerifyTwoFaDto } from './dto/verify-2fa.dto';
 
@@ -56,6 +58,14 @@ export class AuthController {
   @ApiOperation({ summary: 'Autenticar con Google One Tap (ID token)' })
   googleOneTap(@Body() dto: GoogleOneTapDto) {
     return this.auth.googleOneTap(dto.credential);
+  }
+
+  @Post('google/onboarding')
+  @UseGuards(OnboardingGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Completar onboarding de usuario Google nuevo (país + T&C)' })
+  googleOnboarding(@Body() dto: GoogleOnboardingDto, @CurrentUser() user: OnboardingUser) {
+    return this.auth.googleOnboarding(user.sub, dto.countryId, dto.acceptedTerms);
   }
 
   @Post('forgot-password')

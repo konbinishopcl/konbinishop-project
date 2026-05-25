@@ -786,3 +786,53 @@ model ServiceRequest {
 
   @@index([type, createdAt])
 }
+
+// Pipeline CRM unificado para Contacto, Fotografía y Creadores de contenido.
+// Patrón polymorphic: sourceType + sourceId apuntan a ContactMessage (CONTACT)
+// o a ServiceRequest (PHOTOGRAPHY|CONTENT). Sin FKs múltiples — la validación
+// de que sourceId existe en la tabla correspondiente se hace en el service layer
+// (patrón replicado de AuditLog y Transfer).
+//
+// Decisión locked KEY #2: CrmEntry es un modelo independiente. ContactMessage
+// SE MANTIENE SIN CAMBIOS para backwards compatibility con el endpoint /contact
+// ya existente. Al recibir POST /contact, Phase 14 creará el ContactMessage + un
+// CrmEntry con sourceType=CONTACT, sourceId=contactMessage.id.
+model CrmEntry {
+  id          Int       @id @default(autoincrement())
+  type        CrmType
+  stage       CrmStage  @default(NEW)
+  stageReason String?               // requerido si stage=LOST (validación service layer)
+
+  // Polymorphic source — apunta a ContactMessage o ServiceRequest según `type`.
+  sourceType  CrmType                // duplica `type` para queries directas por origen
+  sourceId    Int                    // id en la tabla correspondiente
+
+  // Snapshot de datos de contacto (denormalizado para listados rápidos del kanban)
+  contactName  String
+  contactEmail String
+
+  assignedTo   Int?                  // userId del admin asignado (opcional)
+  notes        CrmNote[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([stage, type])
+  @@index([sourceType, sourceId])
+  @@index([assignedTo])
+  @@index([createdAt])
+}
+
+// Nota interna del equipo comercial sobre una entrada de CRM.
+// El autor es el userId del admin que la escribió (puede ser null si el admin se eliminó).
+model CrmNote {
+  id         Int      @id @default(autoincrement())
+  content    String   @db.Text
+  authorId   Int?                                                   // userId del admin (null si eliminado)
+  crmEntry   CrmEntry @relation(fields: [crmEntryId], references: [id], onDelete: Cascade)
+  crmEntryId Int
+  createdAt  DateTime @default(now())
+
+  @@index([crmEntryId, createdAt])
+  @@index([authorId])
+}

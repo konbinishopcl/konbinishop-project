@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-05-25T16:09:16.665Z"
+milestone: v2.0
+milestone_name: Plataforma completa
+status: complete
+last_updated: "2026-05-25T16:30:00.000Z"
 progress:
   total_phases: 15
-  completed_phases: 14
+  completed_phases: 15
   total_plans: 48
   completed_plans: 48
 ---
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 14 — servicios-y-crm
+**Current focus:** ✅ Milestone v2 completo
 
 ## Current Status
 
-**Milestone:** v2 — Plataforma completa
-**Active Phase:** Phase 13 — Contenido avanzado
-**Overall Progress:** [████████░░] 87% (44/44 plans) · Phases 0–12 completas · Phases 13–14 pendientes (v2)
-**Last session:** 2026-05-25T16:09:16.663Z
+**Milestone:** v2 — Plataforma completa ✅
+**Active Phase:** —
+**Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
+**Last session:** 2026-05-25T16:30:00.000Z
 
 ## Phase Summary
 
@@ -43,7 +43,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 | 6 | Hardening para producción | ✅ Complete | 3/3 |
 | 7 | Sistema de auditoría | ✅ Complete | 5/5 |
 
-### Milestone v2 — Plataforma completa 🔄
+### Milestone v2 — Plataforma completa ✅
 
 | Phase | Name | Status | Plans |
 |-------|------|--------|-------|
@@ -53,7 +53,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 | 11 | Notificaciones y Settings | ✅ Complete | 3/3 |
 | 12 | Suscripciones y carrito v2 | ✅ Complete | 4/4 |
 | 13 | Contenido avanzado | ✅ Complete | 4/4 |
-| 14 | Servicios y CRM | 🔄 In Progress | 0/5 |
+| 14 | Servicios y CRM | ✅ Complete | 4/4 |
 
 ## Decisions
 
@@ -151,7 +151,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 ## Next Action
 
-**Phase 12 completada.** COM-01..04 implementados: SubscriptionsModule CRUD, ARTICLE en carrito, créditos en carrito + descuentos SPOT/HERO para suscriptores, callback /subscriptions/confirm + notificación SUBSCRIPTION_ACTIVATED. Verificación 17/17 passed. Próximo: Phase 13 — Contenido avanzado (CNT-01..04).
+**✅ Milestone v2 completado.** Phase 14 verificada (SVC-01..05, 5/5 requisitos, 12/12 truths). ServicesModule (photography + content-creators), CrmModule (pipeline kanban), Contact→CRM (transacción atómica), Services→CRM ($transaction callback + crmTypeMap explícito) implementados y verificados. Todas las fases 0–14 completas.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

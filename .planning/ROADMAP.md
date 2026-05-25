@@ -493,6 +493,48 @@ Plans:
 
 ---
 
+## Phase 15: Rediseño UI — migración de vistas
+
+**Goal:** Actualizar todas las vistas del website al nuevo diseño (`design/Konbini.html`):
+actualizar vistas existentes con los nuevos estilos, layout e interacciones; rediseñar
+completamente el panel admin; e incorporar las vistas nuevas del diseño que aún no existen
+en el sitio. Sin cambios de API ni lógica — solo capa de presentación.
+
+**Why now:** El diseño fue actualizado con un rediseño completo y todas las vistas deben
+reflejarlo. El admin cambió completamente de estructura. Hay páginas nuevas (noticias, perfil
+de organizador, precios, servicios, cuenta expandida, carrito) que el diseño define pero el
+sitio no tiene.
+
+**Status:** 🔄 Active
+
+**Plans (estimado):**
+1. **Tokens de diseño + componentes base** — Variables CSS del nuevo sistema (`--bg`, `--surface`,
+   `--accent`, tipografía Space Grotesk/Inter/JetBrains Mono), componentes actualizados:
+   `Header`, `Footer`, `BrandMark`, `EventCard`, `Poster`, `Rail`, `HeroCarousel`.
+2. **Vistas públicas existentes** — `HomePage`, `CategoryPage`, `SearchPage`, `EventPage`
+   actualizadas al nuevo diseño; separadas como componentes propios.
+3. **Admin dashboard completo** — `/dashboard/` rediseñado desde cero: `AdminPage` con
+   sidebar, secciones (events, articles, users, payments, CRM, settings, logs), modales de
+   aprobación/rechazo/editor.
+4. **Vistas de usuario** — Login/Auth page rediseñada; `AccountPage` expandida con todas las
+   pestañas (cuenta, eventos, suscripción, favoritos, mensajes, pagos, organizaciones);
+   organizer `DashboardPage` (mis publicaciones).
+5. **Nuevas vistas** — `NewsListPage`, `ArticlePage`, `OrganizerPage`, `PricingPage`,
+   `SvcLanding` (fotografía + creadores), `ThanksPage`, `CartPage/Success/Fail`,
+   `CreateProductPage`, `AboutPage`, `HelpPage`, `TagPage`, `NotFoundPage`.
+
+**Canonical refs:**
+- `design/Konbini.html` — fuente única del rediseño completo
+
+**UAT:**
+- El sitio renderiza con el nuevo sistema de colores y tipografía
+- Cada vista vive en su propio archivo (no componentes monolíticos)
+- El admin `/dashboard/` tiene la nueva estructura con sidebar y secciones
+- Todas las vistas del diseño tienen su equivalente en el sitio
+- No se rompen integraciones API existentes
+
+---
+
 ## Dependencies (Milestone v2)
 
 ```
@@ -503,4 +545,5 @@ Phase 11 (Notificaciones)     → Phase 9, 10, 12, 13 — los eventos generan no
 Phase 12 (Suscripciones)      → Phase 8 — Subscription model
 Phase 13 (Contenido avanzado) → Phase 8, 11 (isSaved requiere sesión)
 Phase 14 (Servicios y CRM)    → Phase 8 (ServiceRequest model)
+Phase 15 (Rediseño UI)        → independiente — solo capa de presentación
 ```

@@ -31,6 +31,7 @@ import { TransfersModule } from './transfers/transfers.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { SettingsModule } from './settings/settings.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { ServicesModule } from './services/services.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
     NotificationsModule,
     SettingsModule,
     SubscriptionsModule,
+    ServicesModule,
   ],
   controllers: [AppController],
   providers: [

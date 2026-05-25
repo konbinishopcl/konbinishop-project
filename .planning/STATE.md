@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T14:11:45Z"
+last_updated: "2026-05-25T14:13:31.411Z"
 progress:
   total_phases: 15
   completed_phases: 11
   total_plans: 40
-  completed_plans: 37
+  completed_plans: 39
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 **Milestone:** v2 — Plataforma completa
 **Active Phase:** Phase 9 — Organizaciones y transferencias
 **Overall Progress:** [██████████] 100% (25/25 plans) · Phases 0–8 completas · Phases 9–14 pendientes (v2)
-**Last session:** 2026-05-25T14:07:22.489Z
+**Last session:** 2026-05-25T14:13:31.409Z
 
 ## Phase Summary
 
@@ -116,6 +116,8 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 11-03]: PUBLIC_PREFIXES=['SPOT_','HERO_'] hard-coded en SettingsService; getNum() lanza NotFoundException si clave falta; SPOT_MAX_ACTIVE=10 (decision bloqueada 11-CONTEXT.md)
 - [Phase 12]: COM-01: SubscriptionsModule con CRUD + delete-then-create para re-suscripción + Subscription row NO se crea en POST (solo en /confirm callback)
 - [Phase 12-02]: COM-02: days opcional en DTO con validación >=1 movida al service; ConfigService removido de OrdersService → SettingsService; ARTICLE branch en resolveItem con ARTICLE_PRICE desde Settings; SPOT_PRICE_PER_DAY y HERO_PRICE_PER_DAY también migrados a SettingsService
+- [Phase 12-suscripciones-y-carrito-v2]: Guards movidos de clase a método en SubscriptionsController para permitir callbacks públicos /subscriptions/confirm
+- [Phase 12-suscripciones-y-carrito-v2]: recipient tipado como discriminated union { orgId: number } | { userId: number } para evitar ambigüedad TS con Prisma nullable fields
 
 ## Quick Tasks Completed
 

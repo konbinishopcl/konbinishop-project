@@ -261,7 +261,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 | 9 | 5/5 | Complete    | 2026-05-25 |
 | 10 | 3/3 | Complete    | 2026-05-25 |
 | 11 | 3/3 | Complete    | 2026-05-25 |
-| 12 | 1/4 | In Progress|  |
+| 12 | 3/4 | In Progress|  |
 | 13 | Contenido avanzado | Artículos patrocinados, favoritos, perfil público con handle y badge Verificado | CNT-01..04 |
 | 14 | Servicios y CRM | Fotografía y creadores de contenido con opciones configurables, CRM pipeline unificado | SVC-01..05 |
 
@@ -407,13 +407,13 @@ suscriptores, y carrito actualizado con contexto de org, tipo ARTICLE y lógica 
 
 **Status:** 🔄 Planning (4 plans creados, ejecución pendiente)
 
-**Plans:** 1/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 - [x] 12-01-PLAN.md — SubscriptionsModule core: POST/GET-me/DELETE-me/GET-admin + Order especial + migración SUBSCRIPTION en OrderItemType (Prisma + DTO) (COM-01) — Wave 1
-- [ ] 12-02-PLAN.md — Orders v2: branch ARTICLE en resolveItem + migración OrdersService ConfigService→SettingsService + seed ARTICLE_PRICE/EVENT_MAX_DAYS (COM-02) — Wave 1
+- [x] 12-02-PLAN.md — Orders v2: branch ARTICLE en resolveItem + migración OrdersService ConfigService→SettingsService + seed ARTICLE_PRICE/EVENT_MAX_DAYS (COM-02) — Wave 1
 - [ ] 12-03-PLAN.md — Créditos en carrito: aplicar crédito EVENT + descuentos SPOT/HERO en resolveItem + refactor PaymentsService a $transaction con increment creditsUsed (COM-03) — Wave 2
-- [ ] 12-04-PLAN.md — Pago suscripción: endpoint /subscriptions/confirm (GET+POST) + crear Subscription post-pago + notification SUBSCRIPTION_ACTIVATED + idempotencia (COM-04) — Wave 2
+- [x] 12-04-PLAN.md — Pago suscripción: endpoint /subscriptions/confirm (GET+POST) + crear Subscription post-pago + notification SUBSCRIPTION_ACTIVATED + idempotencia (COM-04) — Wave 2
 
 **Requirements:**
 - COM-01: Subscriptions CRUD

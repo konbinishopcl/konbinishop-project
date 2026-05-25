@@ -215,7 +215,7 @@ administrador quedan visibles al público.
   por crédito (`unitPrice=0 && subtotal=0`), `Subscription.creditsUsed` se incrementa en 1
   dentro del mismo `prisma.$transaction` que activa los ítems.
 
-- [ ] **COM-04**: Pago de suscripción — callback dedicado `POST /subscriptions/confirm`
+- [x] **COM-04**: Pago de suscripción — callback dedicado `POST /subscriptions/confirm`
   y `GET /subscriptions/confirm` (públicos, sin guards) que recibe el token de Transbank,
   confirma el pago vía `GatewayFactory.confirm()`, y en un `prisma.$transaction` marca el
   Order como PAID + crea la `Subscription` row (`status=ACTIVE`, `cycleStart=now`,

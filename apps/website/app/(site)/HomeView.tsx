@@ -154,39 +154,21 @@ function ServicesStrip() {
   return (
     <div className="svcs">
       <Link href="/servicios/fotografia" className="svc">
-        <div className="pic" style={{ background: "linear-gradient(135deg, #1a0a0a 0%, #3d1515 100%)" }} />
+        <div className="pic poster-art pa-7" />
         <div className="b">
           <div className="e">SERVICIO KONBINI</div>
-          <div className="h">
-            Fotografía
-            <br />
-            profesional
-          </div>
+          <div className="h">Fotografía<br />profesional</div>
           <div className="d">Cubrimos tu evento con cámara, luces y entrega rápida.</div>
-          <span className="cta">
-            Cotizar fotógrafo{" "}
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </span>
+          <span className="cta">Cotizar fotógrafo →</span>
         </div>
       </Link>
       <Link href="/servicios/creadores" className="svc">
-        <div className="pic" style={{ background: "linear-gradient(135deg, #0a0a1a 0%, #151540 100%)" }} />
+        <div className="pic poster-art pa-8" />
         <div className="b">
           <div className="e">SERVICIO KONBINI</div>
-          <div className="h">
-            Creadores de
-            <br />
-            contenido
-          </div>
+          <div className="h">Creadores de<br />contenido</div>
           <div className="d">Reels, aftermovie y cobertura en redes para amplificar tu evento.</div>
-          <span className="cta">
-            Cotizar contenido{" "}
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </span>
+          <span className="cta">Cotizar contenido →</span>
         </div>
       </Link>
     </div>

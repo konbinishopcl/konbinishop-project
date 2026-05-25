@@ -218,57 +218,52 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
                 <div
                   className="menu"
                   onMouseLeave={() => setMenu(false)}
-                  style={{ minWidth: 240 }}
+                  style={{ minWidth: 280 }}
                 >
+                  {/* Operando como */}
                   <div className="hdr">
-                    <div className="nm">{user.name}</div>
-                    <div className="em">{user.email}</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".18em", color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 6 }}>
+                      Operando como
+                    </div>
+                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
+                        {user.initials}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="nm">{user.name}</div>
+                        <div className="em" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Admin */}
                   {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
-                    <button
-                      onClick={() => {
-                        router.push("/dashboard");
-                        setMenu(false);
-                      }}
-                    >
+                    <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>
                       🛠 Panel de administración
                     </button>
                   )}
-                  <button
-                    onClick={() => {
-                      router.push("/cuenta");
-                      setMenu(false);
-                    }}
-                  >
+
+                  {/* Separador */}
+                  <div style={{ height: 1, background: "var(--line)", margin: "6px 8px" }} />
+
+                  {/* Cuenta */}
+                  <button onClick={() => { router.push("/cuenta/perfil"); setMenu(false); }}>
                     👤 Mi cuenta
                   </button>
-                  <button
-                    onClick={() => {
-                      router.push("/cuenta");
-                      setMenu(false);
-                    }}
-                  >
+                  <button onClick={() => { router.push("/cuenta/publicaciones"); setMenu(false); }}>
                     📋 Mis eventos
                   </button>
-                  <button
-                    onClick={() => {
-                      router.push("/cuenta");
-                      setMenu(false);
-                    }}
-                  >
+                  <button onClick={() => { router.push("/cuenta/suscripcion"); setMenu(false); }}>
+                    ✦ Suscripción
+                  </button>
+                  <button onClick={() => { router.push("/cuenta/favoritos"); setMenu(false); }}>
                     ♡ Favoritos
                   </button>
-                  <div
-                    style={{ height: 1, background: "var(--line)", margin: "6px 8px" }}
-                  />
-                  <button
-                    className="danger"
-                    onClick={() => {
-                      logout();
-                      setMenu(false);
-                      router.push("/");
-                    }}
-                  >
+
+                  {/* Separador */}
+                  <div style={{ height: 1, background: "var(--line)", margin: "6px 8px" }} />
+
+                  <button className="danger" onClick={() => { logout(); setMenu(false); router.push("/"); }}>
                     ↩ Cerrar sesión
                   </button>
                 </div>

@@ -1345,7 +1345,7 @@
 
 /* ─────────── RAIL (Phase 15) ─────────── */
 .rail { margin: 0 0 56px; }
-.rail-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.rail-head { display: flex; justify-content: space-between; align-items: flex-end; margin: 48px 0 18px; }
 .rail-head h2 { font-family: var(--font-display); font-size: 32px; font-weight: 700; letter-spacing: -.02em; margin: 0; }
 .rail-head h2 .jp { font-family: var(--font-jp); color: var(--ink-3); font-size: 18px; margin-left: 10px; }
 .rail-head .see-all { font-size: 13px; color: var(--ink-3); display: inline-flex; align-items: center; gap: 5px; }

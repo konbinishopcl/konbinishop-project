@@ -259,7 +259,7 @@ Phase 6 (Hardening)     — al final, sobre la superficie completa
 |-------|------|------|--------------|
 | 8 | 6/6 | Complete    | 2026-05-25 |
 | 9 | 5/5 | Complete    | 2026-05-25 |
-| 10 | 2/3 | In Progress|  |
+| 10 | 3/3 | Complete   | 2026-05-25 |
 | 11 | Notificaciones y Settings | Sistema de mensajes internos, valores configurables desde DB | CFG-01..03 |
 | 12 | Suscripciones y carrito v2 | Plan mensual con créditos, carrito con org context y tipo ARTICLE | COM-01..04 |
 | 13 | Contenido avanzado | Artículos patrocinados, favoritos, perfil público con handle y badge Verificado | CNT-01..04 |

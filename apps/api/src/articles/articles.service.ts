@@ -1,9 +1,19 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Prisma, PublicationStatus } from '@prisma/client';
 import { PrismaService } from '../../utils/prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import type { JwtUser } from '../auth/current-user.decorator';
+import type { OrgContextDto } from '../common/org-context/org-context.types';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
+import { CreateSponsoredArticleDto } from './dto/create-sponsored-article.dto';
 
 function slugify(text: string): string {
   return text
@@ -15,17 +25,27 @@ function slugify(text: string): string {
     .replace(/\s+/g, '-');
 }
 
-const ARTICLE_INCLUDE = { tags: true, _count: { select: { likes: true } } } as const;
+const ARTICLE_INCLUDE = {
+  tags: true,
+  _count: { select: { likes: true } },
+} as const;
 
 @Injectable()
 export class ArticlesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
-  async findAll(query: QueryArticlesDto = {}) {
+  async findAll(query: QueryArticlesDto = {}, user?: JwtUser | null) {
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
     const page = query.page ?? 1;
     const pageSize = Math.min(query.pageSize ?? 12, 50);
 
     const where: Prisma.ArticleWhereInput = {
+      // Público: solo APPROVED. Admin: todos los estados (o filtrado por ?status=)
+      ...(!isAdmin && { status: PublicationStatus.APPROVED }),
+      ...(isAdmin && query.status !== undefined && { status: query.status }),
       ...(query.q && { OR: [{ title: { contains: query.q } }, { excerpt: { contains: query.q } }] }),
       ...(query.tag && { tags: { some: { slug: query.tag } } }),
     };
@@ -41,26 +61,38 @@ export class ArticlesService {
       this.prisma.article.count({ where }),
     ]);
 
-    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
+    return {
+      items: items.map((a) => ({ ...a, isSponsored: a.userId !== null })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 
-  async findBySlug(slug: string) {
+  async findBySlug(slug: string, user?: JwtUser | null) {
     const article = await this.prisma.article.findUnique({ where: { slug }, include: ARTICLE_INCLUDE });
     if (!article) throw new NotFoundException('Artículo no encontrado');
-    return article;
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+    // Seguridad: visitantes públicos no pueden leer artículos que no estén APPROVED
+    if (!isAdmin && article.status !== PublicationStatus.APPROVED) {
+      throw new NotFoundException('Artículo no encontrado');
+    }
+    return { ...article, isSponsored: article.userId !== null };
   }
 
   async findById(id: number) {
     const article = await this.prisma.article.findUnique({ where: { id }, include: ARTICLE_INCLUDE });
     if (!article) throw new NotFoundException('Artículo no encontrado');
-    return article;
+    // NO gate de status — findById se usa internamente (approve/reject/ban requieren ver todos los estados)
+    return { ...article, isSponsored: article.userId !== null };
   }
 
   async create(dto: CreateArticleDto) {
     const slug = dto.slug ?? slugify(dto.title);
     const existing = await this.prisma.article.findUnique({ where: { slug } });
     if (existing) throw new ConflictException(`Ya existe un artículo con el slug "${slug}"`);
-    return this.prisma.article.create({
+    const article = await this.prisma.article.create({
       data: {
         title: dto.title,
         slug,
@@ -71,6 +103,7 @@ export class ArticlesService {
       },
       include: ARTICLE_INCLUDE,
     });
+    return { ...article, isSponsored: article.userId !== null };
   }
 
   async update(id: number, dto: UpdateArticleDto) {
@@ -79,7 +112,7 @@ export class ArticlesService {
       const conflict = await this.prisma.article.findFirst({ where: { slug: dto.slug, NOT: { id } } });
       if (conflict) throw new ConflictException(`Ya existe un artículo con el slug "${dto.slug}"`);
     }
-    return this.prisma.article.update({
+    const article = await this.prisma.article.update({
       where: { id },
       data: {
         ...(dto.title !== undefined && { title: dto.title }),
@@ -91,11 +124,120 @@ export class ArticlesService {
       },
       include: ARTICLE_INCLUDE,
     });
+    return { ...article, isSponsored: article.userId !== null };
   }
 
   async remove(id: number) {
     await this.findById(id);
     await this.prisma.article.delete({ where: { id } });
     return { deleted: true };
+  }
+
+  // ─────────────────────── Artículos patrocinados ───────────────────────
+
+  /**
+   * Crea un artículo patrocinado con status=DRAFT.
+   * El organizador autenticado (o su org) es el owner.
+   * La transición DRAFT→PENDING_MODERATION ocurre en el pago (Phase 12-03 activateOrderItems).
+   */
+  async createSponsored(dto: CreateSponsoredArticleDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const ownerId = orgContext?.orgId ?? user.sub;
+    const slug = dto.slug ?? slugify(dto.title);
+    const existing = await this.prisma.article.findUnique({ where: { slug } });
+    if (existing) throw new ConflictException(`Ya existe un artículo con el slug "${slug}"`);
+
+    const article = await this.prisma.article.create({
+      data: {
+        title: dto.title,
+        slug,
+        excerpt: dto.excerpt,
+        content: dto.content,
+        image: dto.image,
+        status: PublicationStatus.DRAFT,
+        owner: { connect: { id: ownerId } },
+        tags: dto.tagIds?.length ? { connect: dto.tagIds.map((id) => ({ id })) } : undefined,
+        events: dto.eventId ? { connect: { id: dto.eventId } } : undefined,
+      },
+      include: ARTICLE_INCLUDE,
+    });
+    return { ...article, isSponsored: true };
+  }
+
+  // ─────────────────────── Moderación (ADMIN+) ───────────────────────
+
+  /**
+   * Aprueba un artículo patrocinado (userId != null).
+   * D-04: simplificación intencional — siempre notificar al userId del artículo,
+   * sin verificar User.type. Diferente al patrón Events/Spots/Heroes a propósito
+   * (Article no tiene campo orgId, solo userId).
+   */
+  async approve(id: number, user: JwtUser) {
+    const article = await this.findById(id);
+    if (article.userId === null) {
+      throw new BadRequestException('Solo artículos patrocinados pueden ser moderados');
+    }
+    const updated = await this.prisma.article.update({
+      where: { id },
+      data: { status: PublicationStatus.APPROVED, statusReason: null },
+      include: ARTICLE_INCLUDE,
+    });
+    // D-04: siempre al userId del artículo
+    this.notifications.create({
+      type: 'ARTICLE_APPROVED',
+      title: `Tu artículo "${article.title}" fue aprobado`,
+      payload: { articleId: id },
+      userId: article.userId,
+    });
+    return { ...updated, isSponsored: updated.userId !== null };
+  }
+
+  /**
+   * Rechaza un artículo patrocinado con motivo.
+   * D-04: simplificación intencional — ver approve().
+   */
+  async reject(id: number, reason: string, user: JwtUser) {
+    const article = await this.findById(id);
+    if (article.userId === null) {
+      throw new BadRequestException('Solo artículos patrocinados pueden ser moderados');
+    }
+    const updated = await this.prisma.article.update({
+      where: { id },
+      data: { status: PublicationStatus.REJECTED, statusReason: reason },
+      include: ARTICLE_INCLUDE,
+    });
+    // D-04: siempre al userId del artículo
+    this.notifications.create({
+      type: 'ARTICLE_REJECTED',
+      title: `Tu artículo "${article.title}" fue rechazado`,
+      body: reason,
+      payload: { articleId: id, reason },
+      userId: article.userId,
+    });
+    return { ...updated, isSponsored: updated.userId !== null };
+  }
+
+  /**
+   * Banea un artículo patrocinado con motivo.
+   * D-04: simplificación intencional — ver approve().
+   */
+  async ban(id: number, reason: string, user: JwtUser) {
+    const article = await this.findById(id);
+    if (article.userId === null) {
+      throw new BadRequestException('Solo artículos patrocinados pueden ser moderados');
+    }
+    const updated = await this.prisma.article.update({
+      where: { id },
+      data: { status: PublicationStatus.BANNED, statusReason: reason },
+      include: ARTICLE_INCLUDE,
+    });
+    // D-04: siempre al userId del artículo
+    this.notifications.create({
+      type: 'ARTICLE_BANNED',
+      title: `Tu artículo "${article.title}" fue eliminado`,
+      body: reason,
+      payload: { articleId: id, reason },
+      userId: article.userId,
+    });
+    return { ...updated, isSponsored: updated.userId !== null };
   }
 }

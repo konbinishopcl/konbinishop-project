@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { PublicationStatus } from '@prisma/client';
 
 export class QueryArticlesDto {
   @ApiPropertyOptional({ description: 'Búsqueda por texto en título o extracto' })
@@ -26,4 +27,9 @@ export class QueryArticlesDto {
   @IsInt()
   @Min(1)
   pageSize?: number;
+
+  @ApiPropertyOptional({ enum: PublicationStatus, description: 'Filtro de estado (solo admin)' })
+  @IsOptional()
+  @IsEnum(PublicationStatus)
+  status?: PublicationStatus;
 }

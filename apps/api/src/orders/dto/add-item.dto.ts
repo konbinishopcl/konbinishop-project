@@ -5,6 +5,8 @@ export enum OrderItemType {
   EVENT = 'EVENT',
   SPOT = 'SPOT',
   HERO = 'HERO',
+  ARTICLE = 'ARTICLE',
+  SUBSCRIPTION = 'SUBSCRIPTION',
 }
 
 export class AddItemDto {

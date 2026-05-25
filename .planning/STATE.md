@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T16:20:13.069Z"
+last_updated: "2026-05-25T19:37:54.511Z"
 progress:
   total_phases: 16
   completed_phases: 14
-  total_plans: 48
-  completed_plans: 48
+  total_plans: 53
+  completed_plans: 49
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** ✅ Milestone v2 completo
+**Current focus:** Phase 15
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-25T16:20:13.053Z
+**Last session:** 2026-05-25T19:37:54.509Z
 
 ## Phase Summary
 
@@ -132,6 +132,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 14-03]: D-18: prisma.$transaction callback form (no batch array) garantiza atomicidad ContactMessage + CrmEntry; D-19: ContactModule NO importa CrmModule — PrismaService directo; D-20: response POST /contact sigue siendo solo ContactMessage (backwards compatible)
 - [Phase 14-04]: D-22: $transaction callback form requerido para many-to-many connect; D-23: ServicesModule sin CrmModule; D-21: crmTypeMap explícito PHOTOGRAPHY/CONTENT as const
 - [Phase 14]: CrmService no se exporta — Contact/Services usan PrismaService directamente (D-19/D-23). Sin DELETE /crm/:id para conservar historial (D-16). Validación LOST+stageReason en service layer.
+- [Phase 15-01]: CSS cascade strategy: append full Phase 15 CSS block at end of globals.css; HeroCarousel uses .pcar opacity-based slide toggle; Rail props renamed ja→jp
 
 ## Quick Tasks Completed
 

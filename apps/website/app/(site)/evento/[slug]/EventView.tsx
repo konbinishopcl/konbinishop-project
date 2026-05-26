@@ -310,6 +310,21 @@ export function EventView({ event, related }: Props) {
               </a>
             )}
 
+            <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+              <button
+                className="btn ghost"
+                style={saved
+                  ? { flex: 1, background: "color-mix(in oklab, var(--accent) 12%, transparent)", color: "var(--accent)", borderColor: "var(--accent)" }
+                  : { flex: 1 }
+                }
+                onClick={handleSave}
+              >
+                {Ic.heart} {saved ? "Guardado" : "Guardar"}
+              </button>
+              <button className="btn ghost" style={{ flex: 1 }} onClick={handleShareClick}>
+                {Ic.share} Compartir
+              </button>
+            </div>
           </div>
 
           {/* Fechas */}

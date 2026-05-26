@@ -19,14 +19,20 @@ const PIPELINE_STAGES: PipelineStage[] = [
 ];
 
 const STAGE_STYLE: Record<PipelineStage, { color: string; bg: string }> = {
-  Nuevo:             { color: "var(--ink-3)",   bg: "var(--surface-2)" },
-  Contactado:        { color: "var(--warn)",     bg: "color-mix(in oklab, var(--warn) 12%, transparent)" },
-  "En negociación":  { color: "var(--accent)",   bg: "color-mix(in oklab, var(--accent) 12%, transparent)" },
-  "Cerrado ganado":  { color: "var(--ok)",       bg: "color-mix(in oklab, var(--ok) 12%, transparent)" },
-  "Cerrado perdido": { color: "var(--err)",      bg: "color-mix(in oklab, var(--err) 12%, transparent)" },
+  Nuevo:             { color: "var(--ink-3)",  bg: "var(--surface-2)" },
+  Contactado:        { color: "#eab308",        bg: "color-mix(in oklab, #eab308 12%, transparent)" },
+  "En negociación":  { color: "var(--accent)", bg: "color-mix(in oklab, var(--accent) 12%, transparent)" },
+  "Cerrado ganado":  { color: "var(--ok)",     bg: "color-mix(in oklab, var(--ok) 12%, transparent)" },
+  "Cerrado perdido": { color: "var(--err)",    bg: "color-mix(in oklab, var(--err) 12%, transparent)" },
 };
 
 type LeadType = "Contacto" | "Fotografía" | "Creadores";
+
+const TYPE_COLOR: Record<LeadType, string> = {
+  Contacto:  "#6366f1",
+  Fotografía: "#f43f5e",
+  Creadores: "#22c55e",
+};
 
 type CRMLead = {
   id: number;
@@ -34,10 +40,24 @@ type CRMLead = {
   email?: string;
   company?: string;
   event?: string;
+  eventDate?: string;
+  location?: string;
+  services?: string;
   stage: PipelineStage;
   type: LeadType;
   requestDate: string;
   lastMoved: string;
+  originalData?: Record<string, string>;
+};
+
+type Note = { text: string; timestamp: string; author: string };
+
+type ModalState = {
+  lead: CRMLead;
+  targetStage: PipelineStage;
+  motivo: string;
+  notes: Note[];
+  noteInput: string;
 };
 
 const MOCK_LEADS: CRMLead[] = [
@@ -46,6 +66,7 @@ const MOCK_LEADS: CRMLead[] = [
     name: "Anime Events CL",
     email: "info@animeevents.cl",
     event: "AniCon Santiago 2025",
+    eventDate: "15 JUN 2025",
     stage: "Nuevo",
     type: "Contacto",
     requestDate: "10 MAY 2025",
@@ -56,6 +77,9 @@ const MOCK_LEADS: CRMLead[] = [
     name: "Cosplay Atelier",
     email: "info@cosplay.cl",
     company: "Cosplay Atelier",
+    event: "AniCon Santiago 2025",
+    location: "Centro Cultural Gabriela Mistral",
+    services: "Cobertura completa, Edición básica",
     stage: "Nuevo",
     type: "Fotografía",
     requestDate: "8 MAY 2025",
@@ -63,15 +87,6 @@ const MOCK_LEADS: CRMLead[] = [
   },
   {
     id: 3,
-    name: "Jorge Maturana",
-    email: "jm@email.cl",
-    stage: "Contactado",
-    type: "Fotografía",
-    requestDate: "5 MAY 2025",
-    lastMoved: "9 MAY 2025",
-  },
-  {
-    id: 4,
     name: "K-Pop Fest",
     email: "admin@kpopfest.cl",
     event: "K-Pop Summer Fest",
@@ -81,10 +96,24 @@ const MOCK_LEADS: CRMLead[] = [
     lastMoved: "7 MAY 2025",
   },
   {
+    id: 4,
+    name: "Jorge Maturana",
+    email: "jm@email.cl",
+    event: "FanExpo Chile",
+    location: "Espacio Riesco",
+    services: "Reels para Instagram/TikTok, Video resumen",
+    stage: "Contactado",
+    type: "Creadores",
+    requestDate: "5 MAY 2025",
+    lastMoved: "9 MAY 2025",
+  },
+  {
     id: 5,
     name: "CineClub Santiago",
     email: "admin@cineclub.cl",
     company: "CineClub Santiago",
+    event: "Noche de Cine Asiático",
+    services: "Aftermovie, Cobertura en vivo",
     stage: "En negociación",
     type: "Creadores",
     requestDate: "25 ABR 2025",
@@ -94,7 +123,7 @@ const MOCK_LEADS: CRMLead[] = [
     id: 6,
     name: "Konbini Ediciones",
     email: "info@konbini-ed.cl",
-    company: "Konbini Ediciones",
+    event: "Lanzamiento Manga Vol.12",
     stage: "En negociación",
     type: "Contacto",
     requestDate: "20 ABR 2025",
@@ -104,6 +133,9 @@ const MOCK_LEADS: CRMLead[] = [
     id: 7,
     name: "María Pérez",
     email: "maria@email.cl",
+    event: "Boda Temática Anime",
+    location: "Casa de Eventos El Peumo",
+    services: "Cobertura completa, Galería digital privada",
     stage: "Cerrado ganado",
     type: "Fotografía",
     requestDate: "10 ABR 2025",
@@ -114,6 +146,8 @@ const MOCK_LEADS: CRMLead[] = [
     name: "AnimeShop CL",
     email: "tienda@animeshop.cl",
     company: "AnimeShop CL",
+    event: "Opening Tienda Providencia",
+    services: "Reels para Instagram/TikTok",
     stage: "Cerrado ganado",
     type: "Creadores",
     requestDate: "5 ABR 2025",
@@ -123,6 +157,9 @@ const MOCK_LEADS: CRMLead[] = [
     id: 9,
     name: "Rodrigo Silva",
     email: "rsilva@email.cl",
+    event: "GamingFest 2025",
+    location: "Movistar Arena",
+    services: "Entrega en 48 horas",
     stage: "Cerrado perdido",
     type: "Fotografía",
     requestDate: "1 ABR 2025",
@@ -130,23 +167,8 @@ const MOCK_LEADS: CRMLead[] = [
   },
 ];
 
-type Note = { text: string; timestamp: string };
-
-type ModalState = {
-  lead: CRMLead;
-  targetStage: PipelineStage;
-  motivo: string;
-  notes: Note[];
-  noteInput: string;
-};
-
-const TYPE_LABELS: Record<LeadType, string> = {
-  Contacto:  "Contacto",
-  Fotografía: "Fotografía",
-  Creadores: "Creadores",
-};
-
 function TypeBadge({ type }: { type: LeadType }) {
+  const color = TYPE_COLOR[type];
   return (
     <span
       style={{
@@ -155,20 +177,19 @@ function TypeBadge({ type }: { type: LeadType }) {
         fontSize: 9,
         padding: "2px 7px",
         borderRadius: 999,
-        background: "var(--surface-2)",
-        border: "1px solid var(--line)",
-        color: "var(--ink-3)",
+        background: `color-mix(in oklab, ${color} 14%, transparent)`,
+        border: `1px solid color-mix(in oklab, ${color} 40%, transparent)`,
+        color,
         letterSpacing: ".06em",
         textTransform: "uppercase",
       }}
     >
-      {TYPE_LABELS[type]}
+      {type}
     </span>
   );
 }
 
 function StageDot({ stage }: { stage: PipelineStage }) {
-  const { color } = STAGE_STYLE[stage];
   return (
     <span
       style={{
@@ -176,7 +197,7 @@ function StageDot({ stage }: { stage: PipelineStage }) {
         width: 8,
         height: 8,
         borderRadius: "50%",
-        background: color,
+        background: STAGE_STYLE[stage].color,
         flexShrink: 0,
       }}
     />
@@ -201,13 +222,7 @@ export default function CRMSection() {
   }, [token]);
 
   function openModal(lead: CRMLead) {
-    setModal({
-      lead,
-      targetStage: lead.stage,
-      motivo: "",
-      notes: [],
-      noteInput: "",
-    });
+    setModal({ lead, targetStage: lead.stage, motivo: "", notes: [], noteInput: "" });
   }
 
   function closeModal() {
@@ -219,6 +234,7 @@ export default function CRMSection() {
     const note: Note = {
       text: modal.noteInput.trim(),
       timestamp: new Date().toLocaleString("es-CL"),
+      author: "Admin",
     };
     setModal((m) => m ? { ...m, notes: [...m.notes, note], noteInput: "" } : m);
   }
@@ -230,23 +246,16 @@ export default function CRMSection() {
       toast.error("Debes ingresar el motivo de cierre.");
       return;
     }
-    const today = new Date().toLocaleDateString("es-CL", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    const today = new Date().toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" });
     setLeads((list) =>
-      list.map((l) =>
-        l.id === lead.id ? { ...l, stage: targetStage, lastMoved: today } : l,
-      ),
+      list.map((l) => l.id === lead.id ? { ...l, stage: targetStage, lastMoved: today } : l),
     );
     toast.success(`${lead.name} movido a ${targetStage}`);
     closeModal();
   }
 
   const canSave =
-    modal &&
-    (modal.targetStage !== "Cerrado perdido" || modal.motivo.trim().length > 0);
+    modal && (modal.targetStage !== "Cerrado perdido" || modal.motivo.trim().length > 0);
 
   return (
     <>
@@ -269,20 +278,14 @@ export default function CRMSection() {
               </div>
               <div className="k-body">
                 {stageLeads.map((lead) => (
-                  <div
-                    key={lead.id}
-                    className="k-card"
-                    onClick={() => openModal(lead)}
-                  >
+                  <div key={lead.id} className="k-card" onClick={() => openModal(lead)}>
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 6, marginBottom: 4 }}>
                       <div className="k-title" style={{ margin: 0 }}>{lead.name}</div>
                       <StageDot stage={lead.stage} />
                     </div>
                     {lead.email && <div className="k-meta">{lead.email}</div>}
                     {(lead.company || lead.event) && (
-                      <div className="k-meta" style={{ marginTop: 2 }}>
-                        {lead.company ?? lead.event}
-                      </div>
+                      <div className="k-meta" style={{ marginTop: 2 }}>{lead.company ?? lead.event}</div>
                     )}
                     <div style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                       <TypeBadge type={lead.type} />
@@ -317,32 +320,20 @@ export default function CRMSection() {
         })}
       </div>
 
-      {/* Lead detail modal */}
       {modal && (
         <div className="confirm-bg" onClick={closeModal}>
-          <div
-            className="confirm-card"
-            style={{ maxWidth: 520 }}
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="confirm-card" style={{ maxWidth: 540 }} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
               <div>
-                <h3 style={{ margin: "0 0 4px" }}>{modal.lead.name}</h3>
+                <h3 style={{ margin: "0 0 6px" }}>{modal.lead.name}</h3>
                 <TypeBadge type={modal.lead.type} />
               </div>
               <button
                 onClick={closeModal}
-                style={{
-                  background: "none",
-                  color: "var(--ink-3)",
-                  cursor: "pointer",
-                  fontSize: 20,
-                  lineHeight: 1,
-                  flexShrink: 0,
-                }}
+                style={{ background: "none", color: "var(--ink-3)", cursor: "pointer", fontSize: 20, lineHeight: 1, flexShrink: 0 }}
               >
-                x
+                ×
               </button>
             </div>
 
@@ -356,27 +347,10 @@ export default function CRMSection() {
                 marginBottom: 16,
               }}
             >
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  letterSpacing: ".15em",
-                  color: "var(--ink-3)",
-                  marginBottom: 10,
-                  textTransform: "uppercase",
-                }}
-              >
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 10, textTransform: "uppercase" }}>
                 Datos de la solicitud
               </div>
-              <dl
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "auto 1fr",
-                  gap: "6px 14px",
-                  fontSize: 13,
-                  margin: 0,
-                }}
-              >
+              <dl style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 14px", fontSize: 13, margin: 0 }}>
                 {modal.lead.email && (
                   <>
                     <dt style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}>Email</dt>
@@ -395,6 +369,24 @@ export default function CRMSection() {
                     <dd style={{ margin: 0 }}>{modal.lead.event}</dd>
                   </>
                 )}
+                {modal.lead.eventDate && (
+                  <>
+                    <dt style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}>Fecha evento</dt>
+                    <dd style={{ margin: 0 }}>{modal.lead.eventDate}</dd>
+                  </>
+                )}
+                {modal.lead.location && (
+                  <>
+                    <dt style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}>Lugar</dt>
+                    <dd style={{ margin: 0 }}>{modal.lead.location}</dd>
+                  </>
+                )}
+                {modal.lead.services && (
+                  <>
+                    <dt style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}>Servicios</dt>
+                    <dd style={{ margin: 0 }}>{modal.lead.services}</dd>
+                  </>
+                )}
                 <dt style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}>Solicitud</dt>
                 <dd style={{ margin: 0 }}>{modal.lead.requestDate}</dd>
                 <dt style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}>Etapa actual</dt>
@@ -407,43 +399,16 @@ export default function CRMSection() {
 
             {/* Notes */}
             <div style={{ marginBottom: 16 }}>
-              <div
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  letterSpacing: ".15em",
-                  color: "var(--ink-3)",
-                  marginBottom: 8,
-                  textTransform: "uppercase",
-                }}
-              >
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 8, textTransform: "uppercase" }}>
                 Notas internas
               </div>
               {modal.notes.length > 0 && (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 6,
-                    marginBottom: 10,
-                    maxHeight: 140,
-                    overflowY: "auto",
-                  }}
-                >
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10, maxHeight: 140, overflowY: "auto" }}>
                   {modal.notes.map((n, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        background: "var(--surface-2)",
-                        border: "1px solid var(--line)",
-                        borderRadius: 8,
-                        padding: "8px 12px",
-                        fontSize: 13,
-                      }}
-                    >
+                    <div key={i} style={{ background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: 8, padding: "8px 12px", fontSize: 13 }}>
                       <div style={{ color: "var(--ink-2)", lineHeight: 1.5 }}>{n.text}</div>
                       <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)", marginTop: 4 }}>
-                        {n.timestamp}
+                        {n.author} · {n.timestamp}
                       </div>
                     </div>
                   ))}
@@ -466,58 +431,42 @@ export default function CRMSection() {
               </div>
             </div>
 
-            {/* Move to stage */}
+            {/* Move to stage — buttons */}
             <div style={{ marginBottom: 16 }}>
-              <label
-                style={{
-                  display: "block",
-                  fontFamily: "var(--font-mono)",
-                  fontSize: 10,
-                  letterSpacing: ".15em",
-                  color: "var(--ink-3)",
-                  marginBottom: 8,
-                  textTransform: "uppercase",
-                }}
-              >
-                Mover a
-              </label>
-              <select
-                value={modal.targetStage}
-                onChange={(e) =>
-                  setModal((m) => m ? { ...m, targetStage: e.target.value as PipelineStage, motivo: "" } : m)
-                }
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: 8,
-                  background: "var(--surface-2)",
-                  border: "1px solid var(--line)",
-                  fontSize: 13,
-                  color: "var(--ink)",
-                  outline: "none",
-                  cursor: "pointer",
-                }}
-              >
-                {PIPELINE_STAGES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 10, textTransform: "uppercase" }}>
+                Mover a columna
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {PIPELINE_STAGES.map((s) => {
+                  const st = STAGE_STYLE[s];
+                  const isSelected = modal.targetStage === s;
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setModal((m) => m ? { ...m, targetStage: s, motivo: "" } : m)}
+                      style={{
+                        padding: "6px 14px",
+                        borderRadius: 999,
+                        fontSize: 12,
+                        fontWeight: isSelected ? 700 : 500,
+                        cursor: "pointer",
+                        background: isSelected ? st.bg : "var(--surface-2)",
+                        color: isSelected ? st.color : "var(--ink-3)",
+                        border: `1px solid ${isSelected ? st.color : "var(--line)"}`,
+                        transition: "all .15s",
+                      }}
+                    >
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Close reason (only when Cerrado perdido) */}
+            {/* Close reason */}
             {modal.targetStage === "Cerrado perdido" && (
               <div style={{ marginBottom: 16 }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: 10,
-                    letterSpacing: ".15em",
-                    color: "var(--err)",
-                    marginBottom: 8,
-                    textTransform: "uppercase",
-                  }}
-                >
+                <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--err)", marginBottom: 8, textTransform: "uppercase" }}>
                   Motivo de cierre (requerido)
                 </label>
                 <textarea
@@ -529,11 +478,8 @@ export default function CRMSection() {
               </div>
             )}
 
-            {/* Actions */}
             <div className="modal-acts">
-              <button className="btn ghost" onClick={closeModal}>
-                Cancelar
-              </button>
+              <button className="btn ghost" onClick={closeModal}>Cancelar</button>
               <button
                 className="btn primary"
                 onClick={saveModal}

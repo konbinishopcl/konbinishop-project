@@ -1,26 +1,7 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
-import { toast } from "sonner";
-import { useUser } from "@/components/providers";
-import { api, imageUrl, type ApiEvent } from "@/lib/api";
+import { useEffect, useState } from "react";
 
-// ── Types ────────────────────────────────────────────────────────
-
-type Spot = {
-  id: number;
-  title: string;
-  description?: string | null;
-  image?: string | null;
-  status?: string;
-};
-
-type Hero = {
-  id: number;
-  title: string;
-  titleAccent?: string | null;
-  image?: string | null;
-  status?: string;
-};
+// ── Types ─────────────────────────────────────────────────────────
 
 type ActivityItem = {
   initials: string;
@@ -28,11 +9,34 @@ type ActivityItem = {
   time: string;
 };
 
-// ── Constants ────────────────────────────────────────────────────
+type ReviewRow = {
+  id: number;
+  title: string;
+};
+
+type CatRow = {
+  name: string;
+  count: number;
+};
+
+// ── Mock data ──────────────────────────────────────────────────────
 
 const MESES_SHORT = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
-const REVENUE_DATA = [42, 51, 38, 60, 72, 65, 80, 90, 75, 88, 110, 142];
+const REVENUE_12 = [42, 51, 38, 60, 72, 65, 80, 90, 75, 88, 110, 142];
+
+const MOCK_EVENTS_PENDING: ReviewRow[] = [
+  { id: 1, title: "Anime Crunchyroll Fest 2025" },
+  { id: 2, title: "RetroGaming Santiago" },
+  { id: 3, title: "Feria del Libro Providencia" },
+];
+
+const MOCK_SPOTS_PENDING: ReviewRow[] = [
+  { id: 1, title: "Banner Cinépolis Verano" },
+  { id: 2, title: "Promo Catan Chile" },
+];
+
+const MOCK_HEROES_PENDING: ReviewRow[] = [];
 
 const MOCK_ACTIVITY: ActivityItem[] = [
   { initials: "CT", txt: "Camila T. aprobó Anime Crunchyroll Fest", time: "hace 5 min" },
@@ -42,317 +46,158 @@ const MOCK_ACTIVITY: ActivityItem[] = [
   { initials: "CT", txt: "Camila T. respondió contacto de María Pérez", time: "hace 4 h" },
 ];
 
-// ── Helpers ──────────────────────────────────────────────────────
+const MOCK_CATEGORIES: CatRow[] = [
+  { name: "Música", count: 34 },
+  { name: "Tecnología", count: 28 },
+  { name: "Gastronomía", count: 22 },
+  { name: "Arte", count: 19 },
+  { name: "Deportes", count: 15 },
+  { name: "Entretenimiento", count: 12 },
+  { name: "Cultura", count: 9 },
+];
 
-function isPending(status?: string): boolean {
-  return status !== "ACTIVE" && status !== "REJECTED";
+// ── Period options ─────────────────────────────────────────────────
+
+type Period = "12" | "6" | "3";
+
+const PERIOD_OPTIONS: { label: string; value: Period }[] = [
+  { label: "Este año", value: "12" },
+  { label: "Últimos 6 meses", value: "6" },
+  { label: "Últimos 3 meses", value: "3" },
+];
+
+// ── Helpers ────────────────────────────────────────────────────────
+
+function buildChartData(period: Period): { values: number[]; labels: string[] } {
+  const now = new Date();
+  const currentMonthIdx = now.getMonth();
+  const count = parseInt(period, 10);
+
+  // Build ordered arrays ending at current month
+  const orderedValues: number[] = [];
+  const orderedLabels: string[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const idx = (currentMonthIdx - i + 12) % 12;
+    orderedValues.push(REVENUE_12[idx]);
+    orderedLabels.push(MESES_SHORT[idx]);
+  }
+  return { values: orderedValues, labels: orderedLabels };
 }
 
-// ── Sub-components ───────────────────────────────────────────────
+// ── Sub-components ─────────────────────────────────────────────────
 
-function ReviewItem({
+function ReviewPanel({
   title,
-  subtitle,
-  thumb,
-  onApprove,
-  onReject,
+  items,
 }: {
   title: string;
-  subtitle?: string;
-  thumb?: string | null;
-  onApprove: () => void;
-  onReject: () => void;
+  items: ReviewRow[];
 }) {
+  const [list, setList] = useState<ReviewRow[]>(items);
+
+  const approve = (id: number) => setList((prev) => prev.filter((r) => r.id !== id));
+  const reject = (id: number) => setList((prev) => prev.filter((r) => r.id !== id));
+
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        padding: "11px 0",
-        borderBottom: "1px solid var(--line)",
-      }}
-    >
-      <div
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 8,
-          background: "var(--surface-2)",
-          border: "1px solid var(--line)",
-          flexShrink: 0,
-          overflow: "hidden",
-          position: "relative",
-        }}
-      >
-        {thumb ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageUrl(thumb)}
-            alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : null}
+    <div className="panel">
+      <div className="ph">
+        <h3>{title}</h3>
+        <span
+          className={`stat ${list.length > 0 ? "rev" : "pub"}`}
+          style={{ fontSize: 11 }}
+        >
+          <span className="dot" />
+          {list.length} pendientes
+        </span>
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
+
+      {list.length === 0 ? (
         <div
           style={{
-            fontWeight: 600,
-            fontSize: 13,
-            lineHeight: 1.3,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            padding: "28px 0",
+            textAlign: "center",
+            color: "var(--ink-3)",
+            fontSize: 12,
+            fontFamily: "var(--font-mono)",
           }}
         >
-          {title}
+          Sin pendientes
         </div>
-        {subtitle ? (
+      ) : (
+        list.slice(0, 5).map((row) => (
           <div
+            key={row.id}
             style={{
-              color: "var(--ink-3)",
-              fontSize: 11,
-              fontFamily: "var(--font-mono)",
-              marginTop: 2,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "11px 0",
+              borderBottom: "1px solid var(--line)",
             }}
           >
-            {subtitle}
+            <div
+              style={{
+                flex: 1,
+                fontSize: 13,
+                fontWeight: 600,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {row.title}
+            </div>
+            <div className="row-acts">
+              <button
+                className="ok"
+                onClick={() => approve(row.id)}
+                style={{ color: "var(--ok)", fontSize: 12, padding: "0 10px", height: 28 }}
+              >
+                Aprobar
+              </button>
+              <button
+                className="bad"
+                onClick={() => reject(row.id)}
+                style={{ color: "var(--err)", fontSize: 12, padding: "0 10px", height: 28 }}
+              >
+                Rechazar
+              </button>
+            </div>
           </div>
-        ) : null}
-      </div>
-      <div className="row-acts">
-        <button className="ok" onClick={onApprove} title="Aprobar">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </button>
-        <button className="bad" onClick={onReject} title="Rechazar">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      </div>
+        ))
+      )}
     </div>
   );
 }
 
-function EmptyQueue({ label }: { label: string }) {
-  return (
-    <div style={{ padding: "28px 0", textAlign: "center", color: "var(--ink-3)", fontSize: 12, fontFamily: "var(--font-mono)" }}>
-      Sin {label} pendientes
-    </div>
-  );
-}
-
-// ── Main component ───────────────────────────────────────────────
+// ── Main component ─────────────────────────────────────────────────
 
 export default function HomeSection() {
-  const { token } = useUser();
+  const [eventsPublished, setEventsPublished] = useState<number | null>(null);
+  const [period, setPeriod] = useState<Period>("12");
 
-  const [events, setEvents] = useState<ApiEvent[]>([]);
-  const [spots, setSpots] = useState<Spot[]>([]);
-  const [heroes, setHeroes] = useState<Hero[]>([]);
-  const [loadingEvents, setLoadingEvents] = useState(true);
-  const [loadingSpots, setLoadingSpots] = useState(true);
-  const [loadingHeroes, setLoadingHeroes] = useState(true);
-
-  // ── Data fetching ──────────────────────────────────────────────
-
+  // Optional: try to load real published events count
   useEffect(() => {
-    if (!token) return;
-
-    api
-      .adminEvents(token, { pageSize: 100 })
-      .then((r) => setEvents(r.items))
-      .catch(() => toast.error("Error al cargar eventos"))
-      .finally(() => setLoadingEvents(false));
-
-    fetch("/api/spots/admin", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("/api/events?pageSize=1")
       .then(async (r) => {
-        if (!r.ok) throw new Error("Error al cargar avisos");
+        if (!r.ok) return;
         const data = await r.json();
-        setSpots(Array.isArray(data) ? data : (data.items ?? []));
+        if (typeof data.total === "number") setEventsPublished(data.total);
       })
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Error al cargar avisos"))
-      .finally(() => setLoadingSpots(false));
-
-    fetch("/api/heroes/admin", { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (r) => {
-        if (!r.ok) throw new Error("Error al cargar portadas");
-        const data = await r.json();
-        setHeroes(Array.isArray(data) ? data : (data.items ?? []));
-      })
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Error al cargar portadas"))
-      .finally(() => setLoadingHeroes(false));
-  }, [token]);
-
-  // ── Derived counts ─────────────────────────────────────────────
-
-  const publishedEvents = events.filter((e) => e.isApproved && !e.isRejected).length;
-  const pendingEvents = events.filter((e) => !e.isApproved && !e.isRejected);
-  const activeSpots = spots.filter((s) => s.status === "ACTIVE").length;
-  const pendingSpots = spots.filter((s) => isPending(s.status));
-  const activeHeroes = heroes.filter((h) => h.status === "ACTIVE").length;
-  const pendingHeroes = heroes.filter((h) => isPending(h.status));
-
-  // ── Category distribution ──────────────────────────────────────
-
-  const catRows = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const e of events) {
-      if (e.category) {
-        const nm = e.category.name ?? e.category.slug;
-        map.set(nm, (map.get(nm) ?? 0) + 1);
-      }
-    }
-    return [...map.entries()]
-      .map(([nm, n]) => ({ nm, n }))
-      .sort((a, b) => b.n - a.n)
-      .slice(0, 7);
-  }, [events]);
-  const maxCat = Math.max(1, ...catRows.map((c) => c.n));
-
-  // ── Revenue chart (mock) ───────────────────────────────────────
-  const revenueMax = Math.max(...REVENUE_DATA);
-  const currentMonthIdx = new Date().getMonth();
-  // Rearrange so chart starts from oldest and ends on current month
-  const revenueOrdered = [
-    ...REVENUE_DATA.slice(currentMonthIdx + 1),
-    ...REVENUE_DATA.slice(0, currentMonthIdx + 1),
-  ];
-  const monthLabels = [
-    ...MESES_SHORT.slice(currentMonthIdx + 1),
-    ...MESES_SHORT.slice(0, currentMonthIdx + 1),
-  ];
-
-  // ── Actions: events ───────────────────────────────────────────
-
-  const approveEvent = async (id: number) => {
-    if (!token) return;
-    try {
-      await api.approveEvent(id, token);
-      setEvents((list) =>
-        list.map((e) => (e.id === id ? { ...e, isApproved: true } : e))
-      );
-      toast.success("Evento aprobado");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al aprobar evento");
-    }
-  };
-
-  const rejectEvent = async (id: number) => {
-    if (!token) return;
-    const reason = window.prompt("Motivo del rechazo:");
-    if (!reason || reason.trim().length < 3) {
-      if (reason !== null) toast.error("Motivo mínimo 3 caracteres");
-      return;
-    }
-    try {
-      await api.rejectEvent(id, reason.trim(), token);
-      setEvents((list) =>
-        list.map((e) => (e.id === id ? { ...e, isRejected: true } : e))
-      );
-      toast.success("Evento rechazado");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al rechazar evento");
-    }
-  };
-
-  // ── Actions: spots ────────────────────────────────────────────
-
-  const approveSpot = async (id: number) => {
-    if (!token) return;
-    try {
-      const r = await fetch(`/api/spots/${id}/approve`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
+      .catch(() => {
+        // fall back to mock
       });
-      if (!r.ok) throw new Error("Error al aprobar");
-      setSpots((list) =>
-        list.map((s) => (s.id === id ? { ...s, status: "ACTIVE" } : s))
-      );
-      toast.success("Aviso aprobado");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al aprobar aviso");
-    }
-  };
+  }, []);
 
-  const rejectSpot = async (id: number) => {
-    if (!token) return;
-    const reason = window.prompt("Motivo del rechazo:");
-    if (!reason || reason.trim().length < 3) {
-      if (reason !== null) toast.error("Motivo mínimo 3 caracteres");
-      return;
-    }
-    try {
-      const r = await fetch(`/api/spots/${id}/reject`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
-      if (!r.ok) throw new Error("Error al rechazar");
-      setSpots((list) =>
-        list.map((s) => (s.id === id ? { ...s, status: "REJECTED" } : s))
-      );
-      toast.success("Aviso rechazado");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al rechazar aviso");
-    }
-  };
+  const { values: chartValues, labels: chartLabels } = buildChartData(period);
+  const chartMax = Math.max(...chartValues);
 
-  // ── Actions: heroes ───────────────────────────────────────────
-
-  const approveHero = async (id: number) => {
-    if (!token) return;
-    try {
-      const r = await fetch(`/api/heroes/${id}/approve`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!r.ok) throw new Error("Error al aprobar");
-      setHeroes((list) =>
-        list.map((h) => (h.id === id ? { ...h, status: "ACTIVE" } : h))
-      );
-      toast.success("Portada aprobada");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al aprobar portada");
-    }
-  };
-
-  const rejectHero = async (id: number) => {
-    if (!token) return;
-    const reason = window.prompt("Motivo del rechazo:");
-    if (!reason || reason.trim().length < 3) {
-      if (reason !== null) toast.error("Motivo mínimo 3 caracteres");
-      return;
-    }
-    try {
-      const r = await fetch(`/api/heroes/${id}/reject`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
-      if (!r.ok) throw new Error("Error al rechazar");
-      setHeroes((list) =>
-        list.map((h) => (h.id === id ? { ...h, status: "REJECTED" } : h))
-      );
-      toast.success("Portada rechazada");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al rechazar portada");
-    }
-  };
-
-  // ── Render ────────────────────────────────────────────────────
+  const maxCat = Math.max(1, ...MOCK_CATEGORIES.map((c) => c.count));
 
   return (
     <>
-      {/* ── KPI Grid (4 cols, 7 KPIs → row 1: 4, row 2: 3) ── */}
+      {/* ── KPI Grid ── */}
       <div className="kpi-grid">
-        {/* Row 1 */}
         <div className="kpi">
           <div className="l">Ingresos del mes</div>
           <div className="v">$3.8M</div>
@@ -360,31 +205,23 @@ export default function HomeSection() {
         </div>
         <div className="kpi">
           <div className="l">Eventos publicados</div>
-          <div className="v">{loadingEvents ? "--" : publishedEvents}</div>
+          <div className="v">{eventsPublished ?? 142}</div>
           <div className="d up">activos en plataforma</div>
         </div>
         <div className="kpi">
-          <div className="l">Eventos en revision</div>
-          <div className="v">{loadingEvents ? "--" : pendingEvents.length}</div>
-          <div className={`d ${pendingEvents.length > 0 ? "" : "up"}`}>
-            {pendingEvents.length > 0 ? "pendientes de revision" : "al dia"}
-          </div>
+          <div className="l">Eventos en revisión</div>
+          <div className="v">{MOCK_EVENTS_PENDING.length}</div>
+          <div className="d">pendientes de revisión</div>
         </div>
         <div className="kpi">
           <div className="l">Avisos activos</div>
-          <div className="v">{loadingSpots ? "--" : activeSpots}</div>
-          <div className="d">
-            {loadingSpots ? "--" : `${pendingSpots.length} en revision`}
-          </div>
+          <div className="v">38</div>
+          <div className="d up">+5 este mes</div>
         </div>
-
-        {/* Row 2 */}
         <div className="kpi">
           <div className="l">Portadas activas</div>
-          <div className="v">{loadingHeroes ? "--" : activeHeroes}</div>
-          <div className="d">
-            {loadingHeroes ? "--" : `${pendingHeroes.length} en revision`}
-          </div>
+          <div className="v">12</div>
+          <div className="d up">en rotación</div>
         </div>
         <div className="kpi">
           <div className="l">Usuarios registrados</div>
@@ -411,30 +248,31 @@ export default function HomeSection() {
         <div className="panel">
           <div className="ph">
             <h3>Ingresos mensuales</h3>
-            <div
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 11,
-                color: "var(--ink-3)",
-                letterSpacing: ".1em",
-              }}
-            >
-              ULTIMOS 12 MESES (MOCK)
+            <div style={{ display: "flex", gap: 6 }}>
+              {PERIOD_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  className={`sel${period === opt.value ? " on" : ""}`}
+                  onClick={() => setPeriod(opt.value)}
+                  style={{ fontSize: 11, padding: "5px 11px" }}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
           <div
             className="chart"
-            style={{ overflowX: "auto" }}
             role="img"
-            aria-label="Grafico de ingresos mensuales"
+            aria-label="Gráfico de ingresos mensuales"
           >
-            {revenueOrdered.map((v, i) => (
+            {chartValues.map((v, i) => (
               <div
                 key={i}
                 className="bar"
-                style={{ height: `${Math.round((v / revenueMax) * 100)}%` }}
+                style={{ height: `${Math.round((v / chartMax) * 100)}%` }}
               >
-                <span className="lbl">{monthLabels[i]}</span>
+                <span className="lbl">{chartLabels[i]}</span>
               </div>
             ))}
           </div>
@@ -443,224 +281,44 @@ export default function HomeSection() {
         {/* Category distribution */}
         <div className="panel">
           <div className="ph">
-            <h3>Por categoria</h3>
+            <h3>Por categoría</h3>
           </div>
-          {loadingEvents ? (
-            <div
-              style={{
-                color: "var(--ink-3)",
-                fontSize: 13,
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              Cargando...
-            </div>
-          ) : catRows.length === 0 ? (
-            <div style={{ color: "var(--ink-3)", fontSize: 13 }}>Sin datos.</div>
-          ) : (
-            catRows.map((c) => (
-              <div key={c.nm} className="cat-bar">
-                <div className="name">{c.nm}</div>
-                <div className="track">
-                  <div style={{ width: `${Math.round((c.n / maxCat) * 100)}%` }} />
-                </div>
-                <div className="v">{c.n} evt</div>
+          {MOCK_CATEGORIES.map((c) => (
+            <div key={c.name} className="cat-bar">
+              <div className="name">{c.name}</div>
+              <div className="track">
+                <div style={{ width: `${Math.round((c.count / maxCat) * 100)}%` }} />
               </div>
-            ))
-          )}
+              <div className="v">{c.count} evt</div>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* ── Review queue: 3 panels side by side ── */}
-      <div className="section-head">
-        <h2>Cola de revision</h2>
+      <div className="section-head" style={{ marginBottom: 20 }}>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: 20, margin: 0, letterSpacing: "-.01em" }}>
+          Cola de revisión
+        </h2>
       </div>
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
           gap: 18,
-          marginBottom: 18,
+          marginBottom: 24,
         }}
       >
-        {/* Eventos panel */}
-        <div className="panel">
-          <div className="ph">
-            <h3>Eventos</h3>
-            <span
-              className={`stat ${pendingEvents.length > 0 ? "rev" : "pub"}`}
-              style={{ fontSize: 11 }}
-            >
-              <span className="dot" />
-              {loadingEvents ? "--" : `${pendingEvents.length} pendientes`}
-            </span>
-          </div>
-          {loadingEvents ? (
-            <div
-              style={{
-                padding: "28px 0",
-                textAlign: "center",
-                color: "var(--ink-3)",
-                fontSize: 12,
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              Cargando...
-            </div>
-          ) : pendingEvents.length === 0 ? (
-            <EmptyQueue label="eventos" />
-          ) : (
-            <>
-              {pendingEvents.slice(0, 5).map((e) => (
-                <ReviewItem
-                  key={e.id}
-                  title={e.title}
-                  subtitle={`${e.category?.name ?? "Sin categoria"} · ${e.commune?.name ?? e.address}`}
-                  thumb={e.poster ?? e.banner}
-                  onApprove={() => approveEvent(e.id)}
-                  onReject={() => rejectEvent(e.id)}
-                />
-              ))}
-              {pendingEvents.length > 5 && (
-                <div
-                  style={{
-                    paddingTop: 10,
-                    fontSize: 11,
-                    color: "var(--ink-3)",
-                    fontFamily: "var(--font-mono)",
-                    textAlign: "center",
-                  }}
-                >
-                  +{pendingEvents.length - 5} mas en la cola
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Avisos panel */}
-        <div className="panel">
-          <div className="ph">
-            <h3>Avisos</h3>
-            <span
-              className={`stat ${pendingSpots.length > 0 ? "rev" : "pub"}`}
-              style={{ fontSize: 11 }}
-            >
-              <span className="dot" />
-              {loadingSpots ? "--" : `${pendingSpots.length} pendientes`}
-            </span>
-          </div>
-          {loadingSpots ? (
-            <div
-              style={{
-                padding: "28px 0",
-                textAlign: "center",
-                color: "var(--ink-3)",
-                fontSize: 12,
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              Cargando...
-            </div>
-          ) : pendingSpots.length === 0 ? (
-            <EmptyQueue label="avisos" />
-          ) : (
-            <>
-              {pendingSpots.slice(0, 5).map((s) => (
-                <ReviewItem
-                  key={s.id}
-                  title={s.title}
-                  subtitle={s.description ?? undefined}
-                  thumb={s.image}
-                  onApprove={() => approveSpot(s.id)}
-                  onReject={() => rejectSpot(s.id)}
-                />
-              ))}
-              {pendingSpots.length > 5 && (
-                <div
-                  style={{
-                    paddingTop: 10,
-                    fontSize: 11,
-                    color: "var(--ink-3)",
-                    fontFamily: "var(--font-mono)",
-                    textAlign: "center",
-                  }}
-                >
-                  +{pendingSpots.length - 5} mas en la cola
-                </div>
-              )}
-            </>
-          )}
-        </div>
-
-        {/* Portadas panel */}
-        <div className="panel">
-          <div className="ph">
-            <h3>Portadas</h3>
-            <span
-              className={`stat ${pendingHeroes.length > 0 ? "rev" : "pub"}`}
-              style={{ fontSize: 11 }}
-            >
-              <span className="dot" />
-              {loadingHeroes ? "--" : `${pendingHeroes.length} pendientes`}
-            </span>
-          </div>
-          {loadingHeroes ? (
-            <div
-              style={{
-                padding: "28px 0",
-                textAlign: "center",
-                color: "var(--ink-3)",
-                fontSize: 12,
-                fontFamily: "var(--font-mono)",
-              }}
-            >
-              Cargando...
-            </div>
-          ) : pendingHeroes.length === 0 ? (
-            <EmptyQueue label="portadas" />
-          ) : (
-            <>
-              {pendingHeroes.slice(0, 5).map((h) => (
-                <ReviewItem
-                  key={h.id}
-                  title={h.titleAccent ? `${h.title} ${h.titleAccent}` : h.title}
-                  thumb={h.image}
-                  onApprove={() => approveHero(h.id)}
-                  onReject={() => rejectHero(h.id)}
-                />
-              ))}
-              {pendingHeroes.length > 5 && (
-                <div
-                  style={{
-                    paddingTop: 10,
-                    fontSize: 11,
-                    color: "var(--ink-3)",
-                    fontFamily: "var(--font-mono)",
-                    textAlign: "center",
-                  }}
-                >
-                  +{pendingHeroes.length - 5} mas en la cola
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        <ReviewPanel title="Eventos" items={MOCK_EVENTS_PENDING} />
+        <ReviewPanel title="Avisos" items={MOCK_SPOTS_PENDING} />
+        <ReviewPanel title="Portadas" items={MOCK_HEROES_PENDING} />
       </div>
 
       {/* ── Activity feed ── */}
-      <div className="section-head">
-        <h2>Actividad reciente</h2>
-        <span
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 11,
-            color: "var(--ink-3)",
-            letterSpacing: ".1em",
-          }}
-        >
-          MOCK
-        </span>
+      <div className="section-head" style={{ marginBottom: 20 }}>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: 20, margin: 0, letterSpacing: "-.01em" }}>
+          Actividad reciente
+        </h2>
       </div>
       <div className="panel">
         {MOCK_ACTIVITY.map((a, i) => (
@@ -670,8 +328,7 @@ export default function HomeSection() {
               display: "flex",
               gap: 12,
               padding: "12px 0",
-              borderBottom:
-                i < MOCK_ACTIVITY.length - 1 ? "1px solid var(--line)" : "0",
+              borderBottom: i < MOCK_ACTIVITY.length - 1 ? "1px solid var(--line)" : "none",
               fontSize: 13,
             }}
           >
@@ -688,7 +345,7 @@ export default function HomeSection() {
                 justifyContent: "center",
                 fontWeight: 700,
                 fontSize: 10,
-                flex: "0 0 30px",
+                flexShrink: 0,
                 letterSpacing: ".04em",
               }}
             >

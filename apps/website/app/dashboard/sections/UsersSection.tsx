@@ -1,44 +1,112 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
-import { type ApiUser } from "@/lib/api";
 
-// Extend ApiUser with optional fields the backend may return
-type ExtUser = ApiUser & {
-  handle?: string | null;
-  username?: string | null;
-  verified?: boolean;
-  createdAt?: string | null;
+type UserRole = "USER" | "ADMIN" | "SUPER_ADMIN";
+type UserType = "persona" | "org";
+
+type MockUser = {
+  id: number;
+  firstname: string;
+  lastname: string;
+  handle: string;
+  email: string;
+  type: UserType;
+  role: UserRole;
+  createdAt: string;
+  blocked: boolean;
+  verified: boolean;
 };
 
-type TypeFilter = "all" | "persona" | "org";
-type RoleFilter = "all" | "USER" | "ADMIN" | "SUPER_ADMIN";
-type StateFilter = "all" | "active" | "banned";
-
-const ROLE_LABEL: Record<string, string> = {
+const ROLE_LABEL: Record<UserRole, string> = {
   USER: "Usuario",
   ADMIN: "Admin",
   SUPER_ADMIN: "Super Admin",
 };
 
-function initials(u: ExtUser): string {
-  const name = [u.firstname, u.lastname].filter(Boolean).join(" ");
-  if (!name) return u.email[0].toUpperCase();
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+const ROLE_CLASS: Record<UserRole, string> = {
+  USER: "arc",
+  ADMIN: "rev",
+  SUPER_ADMIN: "pub",
+};
+
+const MOCK_USERS: MockUser[] = [
+  {
+    id: 1,
+    firstname: "María",
+    lastname: "González",
+    handle: "mariagonzalez",
+    email: "maria@konbini.cl",
+    type: "persona",
+    role: "SUPER_ADMIN",
+    createdAt: "2024-01-15T10:00:00Z",
+    blocked: false,
+    verified: true,
+  },
+  {
+    id: 2,
+    firstname: "Festival",
+    lastname: "Stgo",
+    handle: "festivalsantiago",
+    email: "hola@festivalsantiago.cl",
+    type: "org",
+    role: "ADMIN",
+    createdAt: "2024-03-22T14:30:00Z",
+    blocked: false,
+    verified: true,
+  },
+  {
+    id: 3,
+    firstname: "Carlos",
+    lastname: "Muñoz",
+    handle: "cmuñoz",
+    email: "carlos@gmail.com",
+    type: "persona",
+    role: "USER",
+    createdAt: "2024-06-10T09:15:00Z",
+    blocked: false,
+    verified: false,
+  },
+  {
+    id: 4,
+    firstname: "Cultura",
+    lastname: "Independiente",
+    handle: "culturaindependiente",
+    email: "info@culturaind.cl",
+    type: "org",
+    role: "USER",
+    createdAt: "2024-08-05T16:00:00Z",
+    blocked: true,
+    verified: false,
+  },
+  {
+    id: 5,
+    firstname: "Javiera",
+    lastname: "Lagos",
+    handle: "javieralagos",
+    email: "jlagos@ejemplo.cl",
+    type: "persona",
+    role: "USER",
+    createdAt: "2025-01-20T11:45:00Z",
+    blocked: false,
+    verified: false,
+  },
+];
+
+type TypeFilter = "all" | UserType;
+type RoleFilter = "all" | UserRole;
+type StateFilter = "all" | "active" | "banned";
+
+function initials(u: MockUser): string {
+  return [u.firstname[0], u.lastname[0]].join("").toUpperCase();
 }
 
-function fullName(u: ExtUser): string {
-  return [u.firstname, u.lastname].filter(Boolean).join(" ") || "—";
+function fullName(u: MockUser): string {
+  return `${u.firstname} ${u.lastname}`;
 }
 
-function formatDate(iso?: string | null): string {
-  if (!iso) return "—";
+function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("es-CL", {
     day: "numeric",
     month: "short",
@@ -46,91 +114,41 @@ function formatDate(iso?: string | null): string {
   });
 }
 
-// ── Ban confirm modal ───────────────────────────────────────────────────────
-function BanModal({
-  user,
-  token,
-  onClose,
-  onDone,
-}: {
-  user: ExtUser;
-  token: string;
-  onClose: () => void;
-  onDone: (id: number) => void;
-}) {
-  const [busy, setBusy] = useState(false);
-
-  const handleBan = async () => {
-    setBusy(true);
-    try {
-      const r = await fetch(`/api/users/${user.id}/ban`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!r.ok) throw new Error("No se pudo banear al usuario");
-      onDone(user.id);
-      toast.success(`${fullName(user)} baneado`);
-      onClose();
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "No se pudo banear al usuario");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="confirm-card">
-        <h3>Banear usuario</h3>
-        <p>
-          Esta acción bloqueará el acceso de <strong>{fullName(user)}</strong> ({user.email}).
-          Podrás revertirlo en cualquier momento.
-        </p>
-        <div className="modal-acts">
-          <button
-            className="btn"
-            onClick={handleBan}
-            disabled={busy}
-            style={{ flex: 1, background: "var(--err)", color: "#fff" }}
-          >
-            {busy ? "Baneando…" : "Confirmar ban"}
-          </button>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+function avatarColor(u: MockUser): string {
+  const palette = [
+    "#6366f1", "#8b5cf6", "#ec4899", "#f59e0b",
+    "#10b981", "#3b82f6", "#ef4444", "#14b8a6",
+  ];
+  return palette[(u.email.charCodeAt(0) + u.id) % palette.length];
 }
 
-// ── Role change confirm modal ───────────────────────────────────────────────
-function RoleModal({
+// ── Role confirm modal ──────────────────────────────────────────────────────
+function RoleConfirmModal({
   user,
   newRole,
   token,
   onClose,
   onDone,
 }: {
-  user: ExtUser;
-  newRole: string;
+  user: MockUser;
+  newRole: UserRole;
   token: string;
   onClose: () => void;
-  onDone: (id: number, role: string) => void;
+  onDone: (id: number, role: UserRole) => void;
 }) {
   const [busy, setBusy] = useState(false);
 
   const handleChange = async () => {
     setBusy(true);
     try {
-      const r = await fetch(`/api/users/${user.id}/role`, {
+      const r = await fetch(`/api/users/${user.id}`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
       });
       if (!r.ok) throw new Error("No se pudo cambiar el rol");
       onDone(user.id, newRole);
-      toast.success(`Rol actualizado a ${ROLE_LABEL[newRole] ?? newRole}`);
+      toast.success(`Rol actualizado a ${ROLE_LABEL[newRole]}`);
       onClose();
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "No se pudo cambiar el rol");
@@ -144,12 +162,16 @@ function RoleModal({
       <div className="confirm-card">
         <h3>Cambiar rol</h3>
         <p>
-          Estás a punto de elevar a <strong>{fullName(user)}</strong> al rol de{" "}
-          <strong>{ROLE_LABEL[newRole] ?? newRole}</strong>. Esta acción otorga permisos
-          administrativos.
+          Estás a punto de cambiar el rol de <strong>{fullName(user)}</strong> a{" "}
+          <strong>{ROLE_LABEL[newRole]}</strong>. ¿Confirmas?
         </p>
         <div className="modal-acts">
-          <button className="btn primary" onClick={handleChange} disabled={busy} style={{ flex: 1 }}>
+          <button
+            className="btn primary"
+            onClick={handleChange}
+            disabled={busy}
+            style={{ flex: 1 }}
+          >
             {busy ? "Guardando…" : "Confirmar cambio"}
           </button>
           <button className="btn ghost" onClick={onClose} disabled={busy}>
@@ -164,44 +186,34 @@ function RoleModal({
 // ── Main section ────────────────────────────────────────────────────────────
 export default function UsersSection() {
   const { token, user: me } = useUser();
-  const [users, setUsers] = useState<ExtUser[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  // Solo SUPER_ADMIN
+  if (me && me.role !== "SUPER_ADMIN") {
+    return (
+      <div className="empty">
+        <div className="ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+        </div>
+        <h3>Acceso restringido</h3>
+        <p>Esta sección es solo para Super Admins.</p>
+      </div>
+    );
+  }
+
+  const [users, setUsers] = useState<MockUser[]>(MOCK_USERS);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [stateFilter, setStateFilter] = useState<StateFilter>("all");
   const [busyId, setBusyId] = useState<number | null>(null);
-
-  // Modal state
-  const [banTarget, setBanTarget] = useState<ExtUser | null>(null);
-  const [roleTarget, setRoleTarget] = useState<{ user: ExtUser; role: string } | null>(null);
-
-  useEffect(() => {
-    if (!token) return;
-    fetch("/api/users/admin", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (r) => {
-        if (!r.ok) throw new Error("Error al cargar usuarios");
-        const data = await r.json();
-        setUsers(Array.isArray(data) ? data : (data.items ?? []));
-      })
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Error al cargar usuarios"))
-      .finally(() => setLoading(false));
-  }, [token]);
-
-  const counts = {
-    all: users.length,
-    active: users.filter((u) => !u.blocked).length,
-    banned: users.filter((u) => u.blocked).length,
-    persona: users.filter((u) => !u.isCompany).length,
-    org: users.filter((u) => u.isCompany).length,
-  };
+  const [roleTarget, setRoleTarget] = useState<{ user: MockUser; role: UserRole } | null>(null);
 
   const filtered = useMemo(() => {
     let res = users;
-    if (typeFilter === "persona") res = res.filter((u) => !u.isCompany);
-    else if (typeFilter === "org") res = res.filter((u) => u.isCompany);
+    if (typeFilter !== "all") res = res.filter((u) => u.type === typeFilter);
     if (roleFilter !== "all") res = res.filter((u) => u.role === roleFilter);
     if (stateFilter === "active") res = res.filter((u) => !u.blocked);
     else if (stateFilter === "banned") res = res.filter((u) => u.blocked);
@@ -211,60 +223,41 @@ export default function UsersSection() {
         (u) =>
           fullName(u).toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q) ||
-          (u.handle ?? "").toLowerCase().includes(q) ||
-          (u.username ?? "").toLowerCase().includes(q),
+          u.handle.toLowerCase().includes(q),
       );
     }
     return res;
   }, [users, typeFilter, roleFilter, stateFilter, search]);
 
-  const patch = (id: number, fields: Partial<ExtUser>) =>
+  const patch = (id: number, fields: Partial<MockUser>) =>
     setUsers((list) => list.map((x) => (x.id === id ? { ...x, ...fields } : x)));
 
-  const handleRoleSelect = (u: ExtUser, newRole: string) => {
-    if (!token) return;
-    if (newRole === u.role) return;
-    // Require confirmation when elevating to admin roles
-    const isElevation = newRole === "ADMIN" || newRole === "SUPER_ADMIN";
-    if (isElevation) {
-      setRoleTarget({ user: u, role: newRole });
-    } else {
-      // Downgrade directly without confirm
-      setBusyId(u.id);
-      fetch(`/api/users/${u.id}/role`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
-      })
-        .then(async (r) => {
-          if (!r.ok) throw new Error("No se pudo cambiar el rol");
-          patch(u.id, { role: newRole as ExtUser["role"] });
-          toast.success(`Rol actualizado a ${ROLE_LABEL[newRole] ?? newRole}`);
-        })
-        .catch((ex) => toast.error(ex instanceof Error ? ex.message : "No se pudo cambiar el rol"))
-        .finally(() => setBusyId(null));
-    }
+  const handleRoleSelect = (u: MockUser, newRole: UserRole) => {
+    if (!token || newRole === u.role) return;
+    setRoleTarget({ user: u, role: newRole });
   };
 
-  const handleRestore = async (u: ExtUser) => {
+  const handleToggleBan = async (u: MockUser) => {
     if (!token) return;
     setBusyId(u.id);
+    const newBlocked = !u.blocked;
     try {
-      const r = await fetch(`/api/users/${u.id}/restore`, {
+      const r = await fetch(`/api/users/${u.id}`, {
         method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ blocked: newBlocked }),
       });
-      if (!r.ok) throw new Error("No se pudo restaurar al usuario");
-      patch(u.id, { blocked: false });
-      toast.success(`${fullName(u)} restaurado`);
+      if (!r.ok) throw new Error("No se pudo actualizar el estado");
+      patch(u.id, { blocked: newBlocked });
+      toast.success(newBlocked ? `${fullName(u)} baneado` : `${fullName(u)} desbaneado`);
     } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "No se pudo restaurar al usuario");
+      toast.error(ex instanceof Error ? ex.message : "No se pudo actualizar el estado");
     } finally {
       setBusyId(null);
     }
   };
 
-  const handleToggleVerified = async (u: ExtUser) => {
+  const handleToggleVerified = async (u: MockUser) => {
     if (!token) return;
     setBusyId(u.id);
     const newVerified = !u.verified;
@@ -284,23 +277,24 @@ export default function UsersSection() {
     }
   };
 
-  // Avatar color derived from initials deterministically
-  function avatarColor(u: ExtUser): string {
-    const palette = [
-      "#6366f1", "#8b5cf6", "#ec4899", "#f59e0b",
-      "#10b981", "#3b82f6", "#ef4444", "#14b8a6",
-    ];
-    const code = (u.email.charCodeAt(0) + (u.id ?? 0)) % palette.length;
-    return palette[code];
-  }
-
   return (
     <>
       <div className="filterbar">
         {/* Search */}
         <div className="search-shell" style={{ flex: 1 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ink-3)", flexShrink: 0 }}>
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: "var(--ink-3)", flexShrink: 0 }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             placeholder="Buscar por nombre, email o handle…"
@@ -310,55 +304,66 @@ export default function UsersSection() {
           {search && (
             <button
               onClick={() => setSearch("")}
-              style={{ background: "none", border: "none", color: "var(--ink-3)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 0 }}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--ink-3)",
+                cursor: "pointer",
+                fontSize: 16,
+                lineHeight: 1,
+                padding: 0,
+              }}
             >
               ×
             </button>
           )}
         </div>
-        {/* Type filter */}
+        {/* Tipo */}
         <select
           className="sel"
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value as TypeFilter)}
         >
-          <option value="all">Todos ({counts.all})</option>
-          <option value="persona">Persona ({counts.persona})</option>
-          <option value="org">Organización ({counts.org})</option>
+          <option value="all">Todos</option>
+          <option value="persona">Persona</option>
+          <option value="org">Organización</option>
         </select>
-        {/* Role filter */}
+        {/* Rol */}
         <select
           className="sel"
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
         >
           <option value="all">Todos los roles</option>
-          <option value="USER">Usuario</option>
           <option value="ADMIN">Admin</option>
-          <option value="SUPER_ADMIN">Super Admin</option>
+          <option value="USER">Usuario</option>
         </select>
-        {/* State filter */}
+        {/* Estado */}
         <select
           className="sel"
           value={stateFilter}
           onChange={(e) => setStateFilter(e.target.value as StateFilter)}
         >
-          <option value="all">Activos y baneados</option>
-          <option value="active">Activo ({counts.active})</option>
-          <option value="banned">Baneado ({counts.banned})</option>
+          <option value="all">Todos</option>
+          <option value="active">Activo</option>
+          <option value="banned">Baneado</option>
         </select>
       </div>
 
       <div className="table-wrap">
-        {loading ? (
-          <div className="empty">
-            <h3>Cargando usuarios…</h3>
-          </div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="empty">
             <div className="ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="9" cy="7" r="4" /><path d="M3 21v-2a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7v2" />
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <circle cx="9" cy="7" r="4" />
+                <path d="M3 21v-2a7 7 0 0 1 7-7h4a7 7 0 0 1 7 7v2" />
               </svg>
             </div>
             <h3>Sin resultados</h3>
@@ -368,7 +373,8 @@ export default function UsersSection() {
           <table className="evt">
             <thead>
               <tr>
-                <th>Usuario</th>
+                <th>Nombre completo</th>
+                <th>@Handle</th>
                 <th>Email</th>
                 <th>Tipo</th>
                 <th>Rol</th>
@@ -380,11 +386,9 @@ export default function UsersSection() {
             <tbody>
               {filtered.map((u) => {
                 const isBusy = busyId === u.id;
-                const handle = u.handle ?? u.username;
-                const isSelf = me?.id === u.id;
                 return (
                   <tr key={u.id}>
-                    {/* Avatar + nombre */}
+                    {/* Avatar + nombre completo */}
                     <td>
                       <div className="cell-evt">
                         <div
@@ -404,53 +408,40 @@ export default function UsersSection() {
                         >
                           {initials(u)}
                         </div>
-                        <div>
-                          <div className="ti" style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                            {fullName(u)}
-                            {u.verified && (
-                              <span
-                                title="Verificado"
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  width: 16,
-                                  height: 16,
-                                  borderRadius: 999,
-                                  background: "var(--ok)",
-                                  color: "#fff",
-                                  fontSize: 9,
-                                  fontWeight: 700,
-                                  flexShrink: 0,
-                                }}
-                              >
-                                ✓
-                              </span>
-                            )}
-                          </div>
-                          <div className="mt">
-                            {handle ? `@${handle}` : `#${u.id}`}
-                            {isSelf && (
-                              <span style={{ marginLeft: 6, color: "var(--accent)", fontWeight: 600 }}>
-                                (tú)
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                        <div className="ti">{fullName(u)}</div>
                       </div>
+                    </td>
+                    {/* @Handle */}
+                    <td>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-mono)",
+                          fontSize: 12,
+                          color: "var(--ink-2)",
+                        }}
+                      >
+                        @{u.handle}
+                      </span>
                     </td>
                     {/* Email */}
                     <td>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{u.email}</span>
+                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
+                        {u.email}
+                      </span>
                     </td>
-                    {/* Tipo */}
-                    <td>{u.isCompany ? "Organización" : "Persona"}</td>
-                    {/* Rol */}
+                    {/* Tipo chip */}
+                    <td>
+                      <div className={`stat ${u.type === "org" ? "rev" : "arc"}`}>
+                        <span className="dot" />
+                        {u.type === "org" ? "Organización" : "Persona"}
+                      </div>
+                    </td>
+                    {/* Rol — inline select (Usuario / Admin only) con confirm modal */}
                     <td>
                       <select
-                        value={u.role}
-                        disabled={isBusy || isSelf}
-                        onChange={(e) => handleRoleSelect(u, e.target.value)}
+                        value={u.role === "SUPER_ADMIN" ? "SUPER_ADMIN" : u.role}
+                        disabled={isBusy || u.role === "SUPER_ADMIN"}
+                        onChange={(e) => handleRoleSelect(u, e.target.value as UserRole)}
                         style={{
                           background: "var(--surface-2)",
                           border: "1px solid var(--line)",
@@ -459,22 +450,24 @@ export default function UsersSection() {
                           fontSize: 11,
                           fontFamily: "var(--font-mono)",
                           color: "var(--ink-2)",
-                          cursor: isSelf ? "not-allowed" : "pointer",
+                          cursor: u.role === "SUPER_ADMIN" ? "default" : "pointer",
                           outline: "none",
                         }}
                       >
                         <option value="USER">Usuario</option>
                         <option value="ADMIN">Admin</option>
-                        <option value="SUPER_ADMIN">Super Admin</option>
+                        {u.role === "SUPER_ADMIN" && (
+                          <option value="SUPER_ADMIN">Super Admin</option>
+                        )}
                       </select>
                     </td>
-                    {/* Fecha registro */}
+                    {/* Fecha de registro */}
                     <td>
                       <div className="cell-date">
                         <div className="d">{formatDate(u.createdAt)}</div>
                       </div>
                     </td>
-                    {/* Estado */}
+                    {/* Estado chip */}
                     <td>
                       <div className={`stat ${u.blocked ? "rej" : "pub"}`}>
                         <span className="dot" />
@@ -485,20 +478,14 @@ export default function UsersSection() {
                     <td>
                       <div className="row-acts">
                         {/* Ver perfil */}
-                        {handle ? (
-                          <a
-                            href={`/@${handle}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn ghost sm"
-                          >
-                            Ver perfil
-                          </a>
-                        ) : (
-                          <button disabled title="Sin handle" style={{ opacity: 0.4 }}>
-                            Ver perfil
-                          </button>
-                        )}
+                        <a
+                          href={`/@${u.handle}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn ghost sm"
+                        >
+                          Ver perfil
+                        </a>
                         {/* Verificado toggle */}
                         <button
                           onClick={() => handleToggleVerified(u)}
@@ -511,26 +498,14 @@ export default function UsersSection() {
                         >
                           {u.verified ? "Verificado" : "Verificar"}
                         </button>
-                        {/* Ban / Restaurar */}
-                        {!isSelf && (
-                          u.blocked ? (
-                            <button
-                              className="ok"
-                              onClick={() => handleRestore(u)}
-                              disabled={isBusy}
-                            >
-                              Restaurar
-                            </button>
-                          ) : (
-                            <button
-                              className="bad"
-                              onClick={() => setBanTarget(u)}
-                              disabled={isBusy}
-                            >
-                              Banear
-                            </button>
-                          )
-                        )}
+                        {/* Banear / Desbanear */}
+                        <button
+                          className={u.blocked ? "ok" : "bad"}
+                          onClick={() => handleToggleBan(u)}
+                          disabled={isBusy}
+                        >
+                          {u.blocked ? "Desbanear" : "Banear"}
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -541,24 +516,14 @@ export default function UsersSection() {
         )}
       </div>
 
-      {/* Ban modal */}
-      {banTarget && token && (
-        <BanModal
-          user={banTarget}
-          token={token}
-          onClose={() => setBanTarget(null)}
-          onDone={(id) => patch(id, { blocked: true })}
-        />
-      )}
-
-      {/* Role elevation confirm */}
+      {/* Role confirm modal */}
       {roleTarget && token && (
-        <RoleModal
+        <RoleConfirmModal
           user={roleTarget.user}
           newRole={roleTarget.role}
           token={token}
           onClose={() => setRoleTarget(null)}
-          onDone={(id, role) => patch(id, { role: role as ExtUser["role"] })}
+          onDone={(id, role) => patch(id, { role })}
         />
       )}
     </>

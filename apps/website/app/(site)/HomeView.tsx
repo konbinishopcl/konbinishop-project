@@ -156,7 +156,7 @@ function ServicesStrip() {
   return (
     <div className="svcs">
       <Link href="/servicios/fotografia" className="svc">
-        <div className="pic poster-art pa-7" />
+        <div className="pic" style={{ backgroundImage: "url('/images/svc/foto.jpg')" }} />
         <div className="b">
           <div className="e">SERVICIO KONBINI</div>
           <div className="h">Fotografía<br />profesional</div>
@@ -165,7 +165,7 @@ function ServicesStrip() {
         </div>
       </Link>
       <Link href="/servicios/creadores" className="svc">
-        <div className="pic poster-art pa-8" />
+        <div className="pic" style={{ backgroundImage: "url('/images/svc/creadores.jpg')" }} />
         <div className="b">
           <div className="e">SERVICIO KONBINI</div>
           <div className="h">Creadores de<br />contenido</div>

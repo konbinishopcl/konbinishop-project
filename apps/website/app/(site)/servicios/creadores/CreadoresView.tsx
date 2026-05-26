@@ -103,13 +103,7 @@ export function CreadoresView({ options }: CreadoresViewProps) {
     <main className="container">
       <div className="svc-hero">
         <div className="svc-hero-pic">
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(135deg, #0a1a2a, #102040)",
-            }}
-          />
+          <div className="pic" style={{ backgroundImage: "url('/images/svc/creadores-hero.jpg')" }} />
           <div className="hb">
             <div className="e">CREADORES · 動画</div>
             <h1>Contenido{"\n"}que se viraliza.</h1>

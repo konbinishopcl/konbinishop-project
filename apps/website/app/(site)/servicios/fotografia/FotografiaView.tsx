@@ -103,13 +103,7 @@ export function FotografiaView({ options }: FotografiaViewProps) {
     <main className="container">
       <div className="svc-hero">
         <div className="svc-hero-pic">
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(135deg, #1a0a0a, #3a1020)",
-            }}
-          />
+          <div className="pic" style={{ backgroundImage: "url('/images/svc/foto-hero.jpg')" }} />
           <div className="hb">
             <div className="e">FOTOGRAFÍA · 写真</div>
             <h1>Capturamos{"\n"}tu evento.</h1>

@@ -95,11 +95,14 @@ export function EventView({ event, related }: Props) {
       {/* Hero */}
       <div className="event-hero">
         {heroImage && (
-          <img
-            src={heroImage}
-            alt=""
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.55 }}
-          />
+          <>
+            <img
+              src={heroImage}
+              alt=""
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 45%, transparent 100%)" }} />
+          </>
         )}
         <div className="haze" />
         <div className="grain" />

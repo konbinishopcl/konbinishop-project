@@ -1,2 +1,2 @@
-import CategoriesSection from "../sections/CategoriesSection";
-export default function Page() { return <CategoriesSection />; }
+import SimpleCRUDSection from "../sections/SimpleCRUDSection";
+export default function Page() { return <SimpleCRUDSection kind="states" />; }

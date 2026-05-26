@@ -1,277 +1,185 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useUser } from "@/components/providers";
 
-type FAQItem = { id: number; question: string; answer: string; order: number };
-
-const MOCK_FAQS: FAQItem[] = [
-  { id: 1, question: "¿Cómo publico un evento?",           answer: "Para publicar un evento, debes crear una cuenta de organizador, completar el formulario de creación y esperar la aprobación del equipo Konbini.",    order: 1 },
-  { id: 2, question: "¿Cuánto cuesta publicar un evento?", answer: "Cada publicación consume 1 crédito. Los créditos se obtienen con el plan de suscripción mensual.",                                                     order: 2 },
-  { id: 3, question: "¿Cuánto demora la aprobación?",      answer: "Revisamos todas las publicaciones en un plazo máximo de 24 horas hábiles.",                                                                           order: 3 },
-  { id: 4, question: "¿Qué es un aviso (spot)?",           answer: "Un aviso es un banner publicitario que aparece en la sección de inicio y en páginas de categoría.",                                                   order: 4 },
+const FAQS: [string, string][] = [
+  [
+    "¿Cómo publico un evento?",
+    "Crea una cuenta gratuita, pulsa '＋ Crear evento' y completa el formulario. Un admin lo revisa y aprueba en menos de 24 h.",
+  ],
+  [
+    "¿Cuánto cuesta publicar?",
+    "Depende de la categoría — desde $4.990 CLP / día. Revisa la tabla de precios en la sección Categorías.",
+  ],
+  [
+    "¿Qué incluye la suscripción mensual?",
+    "10 créditos de publicación al mes, sin comisión extra, acceso a estadísticas y soporte prioritario.",
+  ],
+  [
+    "¿Cuándo se publica mi evento?",
+    "Tras enviarlo entra a revisión. Un admin lo aprueba en menos de 24 h hábiles. Recibirás un email de confirmación.",
+  ],
 ];
 
+type Field = {
+  k: string;
+  label: string;
+  required?: boolean;
+  type?: string;
+  placeholder?: string;
+};
+
+function AdminFormModal({
+  title,
+  fields,
+  initial = {} as Record<string, string>,
+  onClose,
+  onSave,
+}: {
+  title: string;
+  fields: Field[];
+  initial?: Record<string, string>;
+  onClose: () => void;
+  onSave: (data: Record<string, string>) => void;
+}) {
+  const [data, setData] = useState<Record<string, string>>(initial);
+  const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
+        <h3 className="h">{title}</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
+          {fields.map((f) => (
+            <div key={f.k} className="field" style={{ margin: 0 }}>
+              <label>
+                {f.label}
+                {f.required && <span style={{ color: "var(--err)" }}> *</span>}
+              </label>
+              {f.type === "textarea" ? (
+                <textarea
+                  value={data[f.k] || ""}
+                  onChange={(e) => set(f.k, e.target.value)}
+                  placeholder={f.placeholder}
+                />
+              ) : (
+                <input
+                  type={f.type || "text"}
+                  value={data[f.k] || ""}
+                  onChange={(e) => set(f.k, e.target.value)}
+                  placeholder={f.placeholder}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="row-act">
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn dark" onClick={() => { onSave(data); onClose(); }}>Guardar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmDialog({
+  title,
+  message,
+  confirmLabel,
+  onConfirm,
+  onClose,
+}: {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
+        <h3 className="h">{title}</h3>
+        <p className="p">{message}</p>
+        <div className="row-act">
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button
+            className="btn primary"
+            style={{ background: "var(--err)" }}
+            onClick={() => { onConfirm(); onClose(); }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const FIELDS: Field[] = [
+  { k: "q", label: "Pregunta",  required: true, placeholder: "¿Cómo publico un evento?" },
+  { k: "a", label: "Respuesta", required: true, type: "textarea", placeholder: "Escribe la respuesta completa..." },
+];
+
+type ModalState =
+  | { type: "create" }
+  | { type: "edit";   item: { q: string; a: string } }
+  | { type: "delete"; item: { q: string } };
+
 export default function FAQSection() {
-  const { token } = useUser();
-  const [faqs, setFaqs] = useState<FAQItem[]>(MOCK_FAQS);
-  const [editing, setEditing] = useState<number | null>(null);
-  const [form, setForm] = useState({ question: "", answer: "" });
-  const [busy, setBusy] = useState(false);
-
-  // Load from API, fall back to mock
-  useEffect(() => {
-    fetch("/api/faq")
-      .then(async (r) => {
-        if (!r.ok) throw new Error("sin API");
-        const data = await r.json();
-        const items: FAQItem[] = Array.isArray(data) ? data : (data.items ?? []);
-        if (items.length > 0) setFaqs(items);
-      })
-      .catch(() => {/* use mock */});
-  }, []);
-
-  const startEdit = (f: FAQItem) => {
-    setEditing(f.id);
-    setForm({ question: f.question, answer: f.answer });
-  };
-
-  const startNew = () => {
-    setEditing(0);
-    setForm({ question: "", answer: "" });
-  };
-
-  const cancelEdit = () => {
-    setEditing(null);
-    setForm({ question: "", answer: "" });
-  };
-
-  const save = async () => {
-    if (!form.question.trim() || !form.answer.trim()) {
-      toast.error("Pregunta y respuesta son requeridas");
-      return;
-    }
-    setBusy(true);
-    try {
-      if (editing === 0) {
-        const body = { question: form.question.trim(), answer: form.answer.trim(), order: faqs.length + 1 };
-        const r = await fetch("/api/faq", {
-          method: "POST",
-          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!r.ok) throw new Error("API error");
-        const saved: FAQItem = await r.json();
-        setFaqs((list) => [...list, saved]);
-      } else {
-        const body = { question: form.question.trim(), answer: form.answer.trim() };
-        const r = await fetch(`/api/faq/${editing}`, {
-          method: "PATCH",
-          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        if (!r.ok) throw new Error("API error");
-        const saved: FAQItem = await r.json();
-        setFaqs((list) => list.map((f) => (f.id === editing ? saved : f)));
-      }
-      toast.success(editing === 0 ? "FAQ creada" : "FAQ actualizada");
-      cancelEdit();
-    } catch {
-      // local fallback
-      if (editing === 0) {
-        const newId = Math.max(0, ...faqs.map((f) => f.id)) + 1;
-        setFaqs((list) => [
-          ...list,
-          { id: newId, question: form.question.trim(), answer: form.answer.trim(), order: list.length + 1 },
-        ]);
-        toast.success("FAQ creada");
-      } else {
-        setFaqs((list) =>
-          list.map((f) =>
-            f.id === editing ? { ...f, question: form.question.trim(), answer: form.answer.trim() } : f,
-          ),
-        );
-        toast.success("FAQ actualizada");
-      }
-      cancelEdit();
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const remove = async (id: number) => {
-    if (!window.confirm("¿Eliminar esta FAQ?")) return;
-    try {
-      const r = await fetch(`/api/faq/${id}`, {
-        method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!r.ok) throw new Error("API error");
-    } catch {
-      // local fallback — proceed anyway
-    }
-    setFaqs((list) => list.filter((f) => f.id !== id));
-    toast.success("FAQ eliminada");
-  };
-
-  const moveUp = (i: number) => {
-    if (i === 0) return;
-    setFaqs((list) => {
-      const next = [...list];
-      [next[i - 1], next[i]] = [next[i], next[i - 1]];
-      return next.map((f, idx) => ({ ...f, order: idx + 1 }));
-    });
-  };
-
-  const moveDown = (i: number) => {
-    setFaqs((list) => {
-      if (i === list.length - 1) return list;
-      const next = [...list];
-      [next[i], next[i + 1]] = [next[i + 1], next[i]];
-      return next.map((f, idx) => ({ ...f, order: idx + 1 }));
-    });
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    background: "var(--surface-2)",
-    border: "1px solid var(--line)",
-    borderRadius: 8,
-    padding: "8px 12px",
-    fontSize: 13,
-    color: "var(--ink)",
-    outline: "none",
-    boxSizing: "border-box",
-  };
+  const [modal, setModal] = useState<ModalState | null>(null);
 
   return (
     <>
-      <div className="section-head">
-        <h2>FAQ</h2>
-        {editing === null && (
-          <button className="btn primary sm" onClick={startNew}>
-            + Nueva FAQ
-          </button>
-        )}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ color: "var(--ink-3)", fontSize: 13 }}>
+          {FAQS.length} preguntas activas · arrastra para reordenar
+        </div>
+        <button className="btn primary" onClick={() => setModal({ type: "create" })}>＋ Nueva pregunta</button>
       </div>
 
-      {editing !== null && (
-        <div className="panel" style={{ marginBottom: 20 }}>
-          <div className="ph">
-            <h3>{editing === 0 ? "Nueva pregunta" : "Editar pregunta"}</h3>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div>
-              <label style={{ display: "block", fontSize: 12, color: "var(--ink-3)", marginBottom: 4 }}>
-                PREGUNTA
-              </label>
-              <input
-                style={inputStyle}
-                value={form.question}
-                onChange={(e) => setForm((f) => ({ ...f, question: e.target.value }))}
-                placeholder="¿Cómo puedo…?"
-              />
+      {FAQS.map((f, i) => (
+        <div key={i} className="panel" style={{ marginBottom: 8 }}>
+          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+            <div style={{ color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontSize: 11, marginTop: 4 }}>
+              ≡ {String(i + 1).padStart(2, "0")}
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: 12, color: "var(--ink-3)", marginBottom: 4 }}>
-                RESPUESTA
-              </label>
-              <textarea
-                style={{ ...inputStyle, minHeight: 80, resize: "vertical" }}
-                value={form.answer}
-                onChange={(e) => setForm((f) => ({ ...f, answer: e.target.value }))}
-                placeholder="La respuesta es…"
-              />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>{f[0]}</div>
+              <div style={{ color: "var(--ink-3)", fontSize: 13, lineHeight: 1.5 }}>{f[1]}</div>
             </div>
-          </div>
-          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-            <button className="btn ghost sm" onClick={cancelEdit}>
-              Cancelar
-            </button>
-            <button className="btn primary sm" onClick={save} disabled={busy}>
-              {busy ? "Guardando…" : editing === 0 ? "Crear" : "Guardar"}
-            </button>
+            <div className="row-act">
+              <button onClick={() => setModal({ type: "edit", item: { q: f[0], a: f[1] } })}>Editar</button>
+              <button className="bad" onClick={() => setModal({ type: "delete", item: { q: f[0] } })}>Eliminar</button>
+            </div>
           </div>
         </div>
-      )}
+      ))}
 
-      <div className="faq-list">
-        {faqs.map((f, i) => (
-          <div key={f.id} className="faq-item">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="faq-q">{f.question}</div>
-                <div className="faq-a">{f.answer}</div>
-              </div>
-              <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
-                {/* Reorder */}
-                <button
-                  onClick={() => moveUp(i)}
-                  disabled={i === 0}
-                  title="Subir"
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: 6,
-                    background: "var(--surface-2)",
-                    border: "1px solid var(--line)",
-                    color: i === 0 ? "var(--ink-3)" : "var(--ink-2)",
-                    fontSize: 13,
-                    cursor: i === 0 ? "default" : "pointer",
-                    opacity: i === 0 ? 0.4 : 1,
-                  }}
-                >
-                  ↑
-                </button>
-                <button
-                  onClick={() => moveDown(i)}
-                  disabled={i === faqs.length - 1}
-                  title="Bajar"
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: 6,
-                    background: "var(--surface-2)",
-                    border: "1px solid var(--line)",
-                    color: i === faqs.length - 1 ? "var(--ink-3)" : "var(--ink-2)",
-                    fontSize: 13,
-                    cursor: i === faqs.length - 1 ? "default" : "pointer",
-                    opacity: i === faqs.length - 1 ? 0.4 : 1,
-                  }}
-                >
-                  ↓
-                </button>
-                <button
-                  onClick={() => startEdit(f)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    background: "var(--surface-2)",
-                    border: "1px solid var(--line)",
-                    color: "var(--ink-2)",
-                    fontSize: 12,
-                    cursor: "pointer",
-                  }}
-                >
-                  Editar
-                </button>
-                <button
-                  onClick={() => remove(f.id)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: 6,
-                    background: "var(--surface-2)",
-                    border: "1px solid var(--line)",
-                    color: "var(--err)",
-                    fontSize: 12,
-                    cursor: "pointer",
-                  }}
-                >
-                  Eliminar
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      {modal?.type === "create" && (
+        <AdminFormModal
+          title="Nueva pregunta"
+          fields={FIELDS}
+          onClose={() => setModal(null)}
+          onSave={(d) => toast.success("Pregunta agregada", { description: d.q })}
+        />
+      )}
+      {modal?.type === "edit" && (
+        <AdminFormModal
+          title="Editar pregunta"
+          fields={FIELDS}
+          initial={modal.item as Record<string, string>}
+          onClose={() => setModal(null)}
+          onSave={() => toast.success("Cambios guardados")}
+        />
+      )}
+      {modal?.type === "delete" && (
+        <ConfirmDialog
+          title="¿Eliminar pregunta?"
+          message={`Se quitará "${modal.item.q}" del FAQ público.`}
+          confirmLabel="Sí, eliminar"
+          onConfirm={() => toast.warning("Pregunta eliminada")}
+          onClose={() => setModal(null)}
+        />
+      )}
     </>
   );
 }

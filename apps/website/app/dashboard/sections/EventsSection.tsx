@@ -1,14 +1,93 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
-import { api, imageUrl, type ApiEvent } from "@/lib/api";
 
-// Extend ApiEvent locally to support ban state and tags
-type ExtEvent = ApiEvent & { isBanned?: boolean; tags?: string[] };
+// ── Types ──────────────────────────────────────────────────────────────────
 
 type Status = "rev" | "pub" | "rej" | "ban";
+
+type MockEvent = {
+  id: number;
+  title: string;
+  category: string;
+  thumbnail: string | null;
+  organizador: string;
+  email: string;
+  fecha: string;
+  precioMin: number;
+  slug: string;
+  status: Status;
+};
+
+// ── Mock data ──────────────────────────────────────────────────────────────
+
+const MOCK_CATEGORIES = ["Música", "Teatro", "Arte", "Gastronomía", "Deporte"];
+
+const MOCK_EVENTS: MockEvent[] = [
+  {
+    id: 101,
+    title: "Festival de Jazz Santiago",
+    category: "Música",
+    thumbnail: null,
+    organizador: "Productora Sur",
+    email: "contacto@productosur.cl",
+    fecha: "2026-07-12",
+    precioMin: 15000,
+    slug: "festival-jazz-santiago",
+    status: "rev",
+  },
+  {
+    id: 102,
+    title: "Feria del Libro 2026",
+    category: "Arte",
+    thumbnail: null,
+    organizador: "Editorial Norte",
+    email: "info@editorialnorte.cl",
+    fecha: "2026-08-20",
+    precioMin: 0,
+    slug: "feria-libro-2026",
+    status: "pub",
+  },
+  {
+    id: 103,
+    title: "Obra de Teatro: La Tempestad",
+    category: "Teatro",
+    thumbnail: null,
+    organizador: "Compañía Errante",
+    email: "hola@errante.cl",
+    fecha: "2026-06-05",
+    precioMin: 8000,
+    slug: "obra-teatro-la-tempestad",
+    status: "rej",
+  },
+  {
+    id: 104,
+    title: "Maratón Santiago 2026",
+    category: "Deporte",
+    thumbnail: null,
+    organizador: "Atletas Chile",
+    email: "admin@atletaschile.cl",
+    fecha: "2026-09-15",
+    precioMin: 25000,
+    slug: "maraton-santiago-2026",
+    status: "ban",
+  },
+  {
+    id: 105,
+    title: "Festival Gastronómico del Sur",
+    category: "Gastronomía",
+    thumbnail: null,
+    organizador: "Sabores Patagonia",
+    email: "hola@saborespatagonia.cl",
+    fecha: "2026-10-01",
+    precioMin: 5000,
+    slug: "festival-gastronomico-sur",
+    status: "rev",
+  },
+];
+
 const STAT_LABEL: Record<Status, string> = {
   rev: "En revisión",
   pub: "Publicado",
@@ -16,23 +95,8 @@ const STAT_LABEL: Record<Status, string> = {
   ban: "Baneado",
 };
 
-function statusOf(e: ExtEvent): Status {
-  if (e.isBanned) return "ban";
-  if (e.isRejected) return "rej";
-  if (e.isApproved) return "pub";
-  return "rev";
-}
-
-function producerOf(e: ExtEvent): string {
-  if (!e.owner) return "—";
-  return [e.owner.firstname, e.owner.lastname].filter(Boolean).join(" ") || e.owner.email;
-}
-
-function eventDate(e: ExtEvent): string {
-  const raw = e.dates.find((d) => d.date)?.date;
-  if (!raw) return "Fecha por confirmar";
-  const d = new Date(raw);
-  return d.toLocaleDateString("es-CL", {
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("es-CL", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -40,42 +104,60 @@ function eventDate(e: ExtEvent): string {
   });
 }
 
-function minPrice(e: ExtEvent): number {
-  if (!e.prices.length) return 0;
-  return Math.min(...e.prices.map((p) => p.price));
+function fmtPrice(price: number): string {
+  if (price === 0) return "Liberado";
+  return `$${price.toLocaleString("es-CL")}`;
 }
 
-// ── Approve panel modal ─────────────────────────────────────────────────────
+// ── Mock users for transfer ────────────────────────────────────────────────
+
+type UserResult = { id: number; email: string; name: string; handle?: string };
+const MOCK_USERS: UserResult[] = [
+  { id: 10, email: "ana@ejemplo.com", name: "Ana Torres", handle: "anatorres" },
+  { id: 11, email: "pedro@ejemplo.com", name: "Pedro Muñoz", handle: "pedrom" },
+  { id: 12, email: "carla@ejemplo.com", name: "Carla Soto" },
+  { id: 13, email: "juan@konbini.cl", name: "Juan Pérez", handle: "juanp" },
+];
+
+// ── ApproveModal ─────────────────────────────────────────────────────────────
+
 function ApproveModal({
   event,
   token,
   onClose,
   onDone,
 }: {
-  event: ExtEvent;
+  event: MockEvent;
   token: string;
   onClose: () => void;
   onDone: (id: number) => void;
 }) {
-  const [tags, setTags] = useState<string>(event.tags?.join(", ") ?? "");
+  const [tags, setTags] = useState("");
   const [busy, setBusy] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
 
   const handleAiTags = () => {
     setAiLoading(true);
-    toast.info("IA generando tags…");
     setTimeout(() => {
       const sample = ["música", "cultura", "presencial", "familia", "entretenimiento"];
       setTags(sample.join(", "));
       setAiLoading(false);
-      toast.success("Tags generados por IA");
-    }, 1500);
+    }, 1000);
   };
 
   const handleApprove = async () => {
     setBusy(true);
     try {
-      await api.approveEvent(event.id, token);
+      const tagList = tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+      const r = await fetch(`/api/events/${event.id}/approve`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: tagList }),
+      });
+      if (!r.ok) throw new Error("No se pudo aprobar el evento");
       onDone(event.id);
       toast.success("Evento aprobado");
       onClose();
@@ -162,14 +244,15 @@ function ApproveModal({
   );
 }
 
-// ── Reject modal ────────────────────────────────────────────────────────────
+// ── RejectModal ───────────────────────────────────────────────────────────────
+
 function RejectModal({
   event,
   token,
   onClose,
   onDone,
 }: {
-  event: ExtEvent;
+  event: MockEvent;
   token: string;
   onClose: () => void;
   onDone: (id: number) => void;
@@ -184,7 +267,12 @@ function RejectModal({
     }
     setBusy(true);
     try {
-      await api.rejectEvent(event.id, reason.trim(), token);
+      const r = await fetch(`/api/events/${event.id}/reject`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      if (!r.ok) throw new Error("No se pudo rechazar el evento");
       onDone(event.id);
       toast.success("Evento rechazado");
       onClose();
@@ -204,17 +292,14 @@ function RejectModal({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Ej: El contenido no cumple con las normas de la plataforma…"
+          autoFocus
         />
         <div className="modal-acts">
           <button
             className="btn"
             onClick={handleReject}
             disabled={busy}
-            style={{
-              flex: 1,
-              background: "var(--err)",
-              color: "#fff",
-            }}
+            style={{ flex: 1, background: "var(--err)", color: "#fff" }}
           >
             {busy ? "Rechazando…" : "Rechazar evento"}
           </button>
@@ -227,14 +312,15 @@ function RejectModal({
   );
 }
 
-// ── Ban modal ───────────────────────────────────────────────────────────────
+// ── BanModal ──────────────────────────────────────────────────────────────────
+
 function BanModal({
   event,
   token,
   onClose,
   onDone,
 }: {
-  event: ExtEvent;
+  event: MockEvent;
   token: string;
   onClose: () => void;
   onDone: (id: number) => void;
@@ -274,6 +360,7 @@ function BanModal({
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Ej: Contenido inapropiado o fraudulento…"
+          autoFocus
         />
         <div className="modal-acts">
           <button
@@ -293,44 +380,33 @@ function BanModal({
   );
 }
 
-// ── Transfer modal ──────────────────────────────────────────────────────────
-type UserSearchResult = {
-  id: number;
-  email: string;
-  firstname: string | null;
-  lastname: string | null;
-  handle?: string | null;
-};
+// ── TransferModal ─────────────────────────────────────────────────────────────
 
 function TransferModal({
   event,
   token,
-  allUsers,
   onClose,
   onDone,
 }: {
-  event: ExtEvent;
+  event: MockEvent;
   token: string;
-  allUsers: UserSearchResult[];
   onClose: () => void;
-  onDone: (eventId: number, newOwner: UserSearchResult) => void;
+  onDone: (id: number) => void;
 }) {
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<UserSearchResult | null>(null);
+  const [selected, setSelected] = useState<UserResult | null>(null);
   const [busy, setBusy] = useState(false);
 
   const results = useMemo(() => {
     if (!q.trim()) return [];
     const lower = q.toLowerCase();
-    return allUsers
-      .filter(
-        (u) =>
-          u.email.toLowerCase().includes(lower) ||
-          (u.handle ?? "").toLowerCase().includes(lower) ||
-          [u.firstname, u.lastname].filter(Boolean).join(" ").toLowerCase().includes(lower),
-      )
-      .slice(0, 8);
-  }, [q, allUsers]);
+    return MOCK_USERS.filter(
+      (u) =>
+        u.email.toLowerCase().includes(lower) ||
+        u.name.toLowerCase().includes(lower) ||
+        (u.handle ?? "").toLowerCase().includes(lower),
+    ).slice(0, 8);
+  }, [q]);
 
   const handleTransfer = async () => {
     if (!selected) return;
@@ -342,7 +418,7 @@ function TransferModal({
         body: JSON.stringify({ targetUserId: selected.id }),
       });
       if (!r.ok) throw new Error("No se pudo transferir el evento");
-      onDone(event.id, selected);
+      onDone(event.id);
       toast.success(`Evento transferido a ${selected.email}`);
       onClose();
     } catch (ex) {
@@ -368,16 +444,8 @@ function TransferModal({
           />
         </div>
         {results.length > 0 && (
-          <div
-            style={{
-              border: "1px solid var(--line)",
-              borderRadius: 10,
-              overflow: "hidden",
-              marginBottom: 14,
-            }}
-          >
+          <div style={{ border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
             {results.map((u) => {
-              const name = [u.firstname, u.lastname].filter(Boolean).join(" ") || u.email;
               const isSelected = selected?.id === u.id;
               return (
                 <button
@@ -390,17 +458,16 @@ function TransferModal({
                     alignItems: "flex-start",
                     gap: 2,
                     padding: "10px 14px",
-                    background: isSelected ? "color-mix(in oklab, var(--accent) 12%, transparent)" : "var(--surface)",
-                    borderBottom: "1px solid var(--line)",
+                    background: isSelected
+                      ? "color-mix(in oklab, var(--accent) 12%, transparent)"
+                      : "var(--surface)",
                     cursor: "pointer",
                     textAlign: "left",
                     border: "none",
-                    borderBottomColor: "var(--line)",
-                    borderBottomWidth: 1,
-                    borderBottomStyle: "solid",
+                    borderBottom: "1px solid var(--line)",
                   }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{u.name}</span>
                   <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-3)" }}>
                     {u.email}{u.handle ? ` · @${u.handle}` : ""}
                   </span>
@@ -432,67 +499,26 @@ function TransferModal({
   );
 }
 
-// ── Main section ────────────────────────────────────────────────────────────
+// ── Main section ───────────────────────────────────────────────────────────────
+
 export default function EventsSection() {
   const { token } = useUser();
-  const [events, setEvents] = useState<ExtEvent[]>([]);
-  const [allUsers, setAllUsers] = useState<UserSearchResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [events, setEvents] = useState<MockEvent[]>(MOCK_EVENTS);
   const [search, setSearch] = useState("");
   const [statFilter, setStatFilter] = useState<"all" | Status>("all");
-
-  // Modal state
-  const [approveTarget, setApproveTarget] = useState<ExtEvent | null>(null);
-  const [rejectTarget, setRejectTarget] = useState<ExtEvent | null>(null);
-  const [banTarget, setBanTarget] = useState<ExtEvent | null>(null);
-  const [transferTarget, setTransferTarget] = useState<ExtEvent | null>(null);
+  const [catFilter, setCatFilter] = useState("all");
   const [busyId, setBusyId] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!token) return;
-    api
-      .adminEvents(token, { pageSize: 100 })
-      .then((r) => setEvents(r.items as ExtEvent[]))
-      .catch((e) => toast.error(e instanceof Error ? e.message : "No se pudieron cargar los eventos"))
-      .finally(() => setLoading(false));
+  // Modal state
+  const [approveTarget, setApproveTarget] = useState<MockEvent | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<MockEvent | null>(null);
+  const [banTarget, setBanTarget] = useState<MockEvent | null>(null);
+  const [transferTarget, setTransferTarget] = useState<MockEvent | null>(null);
 
-    // Load users for transfer search
-    fetch("/api/users/admin", { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (r) => {
-        if (!r.ok) return;
-        const data = await r.json();
-        setAllUsers(Array.isArray(data) ? data : (data.items ?? []));
-      })
-      .catch(() => {/* silently ignore — transfer modal will show empty results */});
-  }, [token]);
+  const patch = (id: number, fields: Partial<MockEvent>) =>
+    setEvents((list) => list.map((e) => (e.id === id ? { ...e, ...fields } : e)));
 
-  const counts = {
-    all: events.length,
-    rev: events.filter((e) => statusOf(e) === "rev").length,
-    pub: events.filter((e) => statusOf(e) === "pub").length,
-    rej: events.filter((e) => statusOf(e) === "rej").length,
-    ban: events.filter((e) => statusOf(e) === "ban").length,
-  };
-
-  const filtered = useMemo(() => {
-    let res = events;
-    if (statFilter !== "all") res = res.filter((e) => statusOf(e) === statFilter);
-    if (search) {
-      const q = search.toLowerCase();
-      res = res.filter(
-        (e) =>
-          e.title.toLowerCase().includes(q) ||
-          (e.company ?? "").toLowerCase().includes(q) ||
-          producerOf(e).toLowerCase().includes(q),
-      );
-    }
-    return res;
-  }, [events, statFilter, search]);
-
-  const patch = (id: number, fields: Partial<ExtEvent>) =>
-    setEvents((list) => list.map((x) => (x.id === id ? { ...x, ...fields } : x)));
-
-  const restore = async (e: ExtEvent) => {
+  const restore = async (e: MockEvent) => {
     if (!token) return;
     setBusyId(e.id);
     try {
@@ -501,7 +527,7 @@ export default function EventsSection() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!r.ok) throw new Error("No se pudo restaurar el evento");
-      patch(e.id, { isBanned: false, isRejected: false, isApproved: false });
+      patch(e.id, { status: "rev" });
       toast.success("Evento restaurado — vuelve a revisión");
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "No se pudo restaurar el evento");
@@ -510,8 +536,32 @@ export default function EventsSection() {
     }
   };
 
+  const filtered = useMemo(() => {
+    let res = events;
+    if (statFilter !== "all") res = res.filter((e) => e.status === statFilter);
+    if (catFilter !== "all") res = res.filter((e) => e.category === catFilter);
+    if (search) {
+      const q = search.toLowerCase();
+      res = res.filter(
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          e.organizador.toLowerCase().includes(q),
+      );
+    }
+    return res;
+  }, [events, statFilter, catFilter, search]);
+
+  const counts = useMemo(() => ({
+    all: events.length,
+    rev: events.filter((e) => e.status === "rev").length,
+    pub: events.filter((e) => e.status === "pub").length,
+    rej: events.filter((e) => e.status === "rej").length,
+    ban: events.filter((e) => e.status === "ban").length,
+  }), [events]);
+
   return (
     <>
+      {/* Filters */}
       <div className="filterbar">
         <div className="search-shell" style={{ flex: 1 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ink-3)", flexShrink: 0 }}>
@@ -542,14 +592,21 @@ export default function EventsSection() {
           <option value="rej">Rechazado ({counts.rej})</option>
           <option value="ban">Baneado ({counts.ban})</option>
         </select>
+        <select
+          className="sel"
+          value={catFilter}
+          onChange={(e) => setCatFilter(e.target.value)}
+        >
+          <option value="all">Todas las categorías</option>
+          {MOCK_CATEGORIES.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
       </div>
 
+      {/* Table */}
       <div className="table-wrap">
-        {loading ? (
-          <div className="empty">
-            <h3>Cargando eventos…</h3>
-          </div>
-        ) : filtered.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="empty">
             <div className="ic">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -573,101 +630,116 @@ export default function EventsSection() {
             </thead>
             <tbody>
               {filtered.map((e) => {
-                const status = statusOf(e);
-                const price = minPrice(e);
-                const thumb = imageUrl(e.poster ?? e.banner);
                 const isBusy = busyId === e.id;
                 return (
                   <tr key={e.id}>
-                    {/* Imagen + título */}
+                    {/* Thumbnail + título + categoría */}
                     <td>
                       <div className="cell-evt">
-                        <div className="thumb">
-                          {thumb && (
+                        <div
+                          className="thumb"
+                          style={{ width: 48, height: 48, flexShrink: 0 }}
+                        >
+                          {e.thumbnail ? (
                             <img
-                              src={thumb}
+                              src={e.thumbnail}
                               alt=""
                               style={{ width: "100%", height: "100%", objectFit: "cover" }}
                             />
-                          )}
+                          ) : null}
                         </div>
                         <div>
                           <div className="ti">{e.title}</div>
-                          <div className="mt">
-                            #{e.id} · {e.category?.name ?? "Sin categoría"}
-                          </div>
+                          <div className="mt">{e.category}</div>
                         </div>
                       </div>
                     </td>
-                    {/* Organizador */}
+
+                    {/* Organizador + email */}
                     <td>
                       <div className="cell-prod">
-                        <div className="nm">{producerOf(e)}</div>
-                        <div className="em">{e.owner?.email ?? ""}</div>
+                        <div className="nm">{e.organizador}</div>
+                        <div className="em">{e.email}</div>
                       </div>
                     </td>
+
                     {/* Fecha */}
                     <td>
                       <div className="cell-date">
-                        <div className="d">{eventDate(e)}</div>
-                        <div className="t">{e.commune?.name ?? e.address}</div>
+                        <div className="d">{fmtDate(e.fecha)}</div>
                       </div>
                     </td>
-                    {/* Precio */}
+
+                    {/* Precio mínimo */}
                     <td>
                       <div className="cell-price">
-                        {price === 0 ? (
+                        {e.precioMin === 0 ? (
                           <span className="free">Liberado</span>
                         ) : (
-                          <>
-                            ${price.toLocaleString("es-CL")}
-                            <span style={{ color: "var(--ink-3)" }}> CLP</span>
-                          </>
+                          `$${e.precioMin.toLocaleString("es-CL")}`
                         )}
                       </div>
                     </td>
-                    {/* Estado */}
+
+                    {/* Estado chip */}
                     <td>
-                      <div className={`stat ${status}`}>
+                      <div className={`stat ${e.status}`}>
                         <span className="dot" />
-                        {STAT_LABEL[status]}
+                        {STAT_LABEL[e.status]}
                       </div>
                     </td>
+
                     {/* Acciones */}
                     <td>
                       <div className="row-acts">
                         {/* En revisión */}
-                        {status === "rev" && (
+                        {e.status === "rev" && (
                           <>
-                            <button className="ok" onClick={() => setApproveTarget(e)} disabled={isBusy}>
+                            <button
+                              className="ok"
+                              onClick={() => setApproveTarget(e)}
+                              disabled={isBusy}
+                            >
                               Aprobar
                             </button>
-                            <button className="bad" onClick={() => setRejectTarget(e)} disabled={isBusy}>
+                            <button
+                              className="bad"
+                              onClick={() => setRejectTarget(e)}
+                              disabled={isBusy}
+                            >
                               Rechazar
                             </button>
                           </>
                         )}
                         {/* Publicado */}
-                        {status === "pub" && (
+                        {e.status === "pub" && (
                           <>
-                            <Link className="btn ghost sm" href={`/evento/${e.slug}`} target="_blank">
-                              Ver en sitio
+                            <Link
+                              className="btn ghost sm"
+                              href={`/evento/${e.slug}`}
+                              target="_blank"
+                            >
+                              Ver
                             </Link>
-                            <button className="bad" onClick={() => setBanTarget(e)} disabled={isBusy}>
+                            <button
+                              className="bad"
+                              onClick={() => setBanTarget(e)}
+                              disabled={isBusy}
+                            >
                               Banear
                             </button>
                           </>
                         )}
-                        {/* Baneado */}
-                        {status === "ban" && (
-                          <button className="ok" onClick={() => restore(e)} disabled={isBusy}>
-                            Restaurar
-                          </button>
-                        )}
                         {/* Rechazado */}
-                        {status === "rej" && (
+                        {e.status === "rej" && (
                           <button onClick={() => restore(e)} disabled={isBusy}>
                             Re-revisar
+                          </button>
+                        )}
+                        {/* Baneado */}
+                        {e.status === "ban" && (
+                          <button className="ok" onClick={() => restore(e)} disabled={isBusy}>
+                            Restaurar
                           </button>
                         )}
                         {/* Siempre: Transferir */}
@@ -690,7 +762,7 @@ export default function EventsSection() {
           event={approveTarget}
           token={token}
           onClose={() => setApproveTarget(null)}
-          onDone={(id) => patch(id, { isApproved: true, isRejected: false, isBanned: false })}
+          onDone={(id) => patch(id, { status: "pub" })}
         />
       )}
       {rejectTarget && token && (
@@ -698,7 +770,7 @@ export default function EventsSection() {
           event={rejectTarget}
           token={token}
           onClose={() => setRejectTarget(null)}
-          onDone={(id) => patch(id, { isApproved: false, isRejected: true, isBanned: false })}
+          onDone={(id) => patch(id, { status: "rej" })}
         />
       )}
       {banTarget && token && (
@@ -706,25 +778,15 @@ export default function EventsSection() {
           event={banTarget}
           token={token}
           onClose={() => setBanTarget(null)}
-          onDone={(id) => patch(id, { isBanned: true, isApproved: false })}
+          onDone={(id) => patch(id, { status: "ban" })}
         />
       )}
       {transferTarget && token && (
         <TransferModal
           event={transferTarget}
           token={token}
-          allUsers={allUsers}
           onClose={() => setTransferTarget(null)}
-          onDone={(eventId, newOwner) =>
-            patch(eventId, {
-              owner: {
-                id: newOwner.id,
-                email: newOwner.email,
-                firstname: newOwner.firstname,
-                lastname: newOwner.lastname,
-              },
-            })
-          }
+          onDone={() => {/* owner display not tracked in mock */}}
         />
       )}
     </>

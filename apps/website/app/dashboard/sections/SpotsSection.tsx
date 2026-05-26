@@ -1,35 +1,61 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
-import { imageUrl } from "@/lib/api";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-type SpotStatus = "PENDING_MODERATION" | "APPROVED" | "REJECTED" | "BANNED" | "EXPIRED" | string;
+type SpotStatus = "PENDING_MODERATION" | "APPROVED" | "REJECTED" | "BANNED" | "EXPIRED";
 
 type Spot = {
   id: number;
-  title: string;
-  description?: string | null;
   image?: string | null;
-  link?: string | null;
+  eventoAsociado: string;
+  organizador: string;
+  inicio: string;
+  fin: string;
   status: SpotStatus;
-  expirationDate?: string | null;
-  createdAt?: string | null;
-  statusReason?: string | null;
-  owner?: { name?: string | null; email?: string | null } | null;
 };
 
-type FilterChip = "all" | "PENDING_MODERATION" | "APPROVED" | "REJECTED" | "BANNED" | "EXPIRED";
+// ── Mock data ──────────────────────────────────────────────────────────────
 
-const CHIPS: { key: FilterChip; label: string }[] = [
-  { key: "all", label: "Todos" },
-  { key: "PENDING_MODERATION", label: "Pendiente" },
-  { key: "APPROVED", label: "Activo" },
-  { key: "REJECTED", label: "Rechazado" },
-  { key: "BANNED", label: "Baneado" },
-  { key: "EXPIRED", label: "Expirado" },
+const MOCK_SPOTS: Spot[] = [
+  {
+    id: 1,
+    image: null,
+    eventoAsociado: "Festival de Jazz Santiago",
+    organizador: "Productora Sur",
+    inicio: "2026-06-01",
+    fin: "2026-06-30",
+    status: "PENDING_MODERATION",
+  },
+  {
+    id: 2,
+    image: null,
+    eventoAsociado: "Feria del Libro 2026",
+    organizador: "Editorial Norte",
+    inicio: "2026-05-10",
+    fin: "2026-05-25",
+    status: "APPROVED",
+  },
+  {
+    id: 3,
+    image: null,
+    eventoAsociado: "Expo Diseño",
+    organizador: "Agencia Crear",
+    inicio: "2026-04-01",
+    fin: "2026-04-15",
+    status: "REJECTED",
+  },
+  {
+    id: 4,
+    image: null,
+    eventoAsociado: "Noche de Cine",
+    organizador: "Cine Club Retro",
+    inicio: "2026-03-01",
+    fin: "2026-03-31",
+    status: "BANNED",
+  },
 ];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -37,9 +63,9 @@ const CHIPS: { key: FilterChip; label: string }[] = [
 function statusClass(s: SpotStatus): string {
   if (s === "APPROVED") return "pub";
   if (s === "REJECTED") return "rej";
-  if (s === "BANNED") return "arc";
+  if (s === "BANNED") return "ban";
   if (s === "EXPIRED") return "arc";
-  return "rev"; // PENDING_MODERATION, DRAFT, etc.
+  return "rev";
 }
 
 function statusLabel(s: SpotStatus): string {
@@ -50,8 +76,7 @@ function statusLabel(s: SpotStatus): string {
   return "Pendiente";
 }
 
-function fmtDate(d?: string | null): string {
-  if (!d) return "—";
+function fmtDate(d: string): string {
   return new Date(d).toLocaleDateString("es-CL", {
     day: "numeric",
     month: "short",
@@ -60,424 +85,483 @@ function fmtDate(d?: string | null): string {
   });
 }
 
-function isExpired(spot: Spot): boolean {
-  if (!spot.expirationDate) return false;
-  return new Date(spot.expirationDate) < new Date();
+// ── Mock users for transfer ────────────────────────────────────────────────
+
+type UserResult = { id: number; email: string; name: string; handle?: string };
+const MOCK_USERS: UserResult[] = [
+  { id: 10, email: "ana@ejemplo.com", name: "Ana Torres", handle: "anatorres" },
+  { id: 11, email: "pedro@ejemplo.com", name: "Pedro Muñoz", handle: "pedrom" },
+  { id: 12, email: "carla@ejemplo.com", name: "Carla Soto" },
+  { id: 13, email: "juan@konbini.cl", name: "Juan Pérez", handle: "juanp" },
+];
+
+// ── Modals ─────────────────────────────────────────────────────────────────
+
+function RejectModal({
+  spotId,
+  token,
+  onClose,
+  onDone,
+}: {
+  spotId: number;
+  token: string;
+  onClose: () => void;
+  onDone: (id: number) => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const handleReject = async () => {
+    if (reason.trim().length < 3) {
+      toast.error("El motivo debe tener al menos 3 caracteres.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/spots/admin/${spotId}/reject`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      if (!r.ok) throw new Error("No se pudo rechazar el aviso");
+      onDone(spotId);
+      toast.success("Aviso rechazado");
+      onClose();
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al rechazar");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="confirm-card">
+        <h3>Rechazar aviso</h3>
+        <p>Indica el motivo del rechazo. Se notificará al organizador.</p>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Ej: El contenido no cumple con las normas de la plataforma…"
+          autoFocus
+        />
+        <div className="modal-acts">
+          <button
+            className="btn"
+            onClick={handleReject}
+            disabled={busy}
+            style={{ flex: 1, background: "var(--err)", color: "#fff" }}
+          >
+            {busy ? "Rechazando…" : "Rechazar aviso"}
+          </button>
+          <button className="btn ghost" onClick={onClose} disabled={busy}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function effectiveStatus(spot: Spot): SpotStatus {
-  if (spot.status === "APPROVED" && isExpired(spot)) return "EXPIRED";
-  return spot.status;
+function BanModal({
+  spotId,
+  token,
+  onClose,
+  onDone,
+}: {
+  spotId: number;
+  token: string;
+  onClose: () => void;
+  onDone: (id: number) => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const handleBan = async () => {
+    if (reason.trim().length < 3) {
+      toast.error("El motivo debe tener al menos 3 caracteres.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/spots/admin/${spotId}/ban`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: reason.trim() }),
+      });
+      if (!r.ok) throw new Error("No se pudo banear el aviso");
+      onDone(spotId);
+      toast.success("Aviso baneado");
+      onClose();
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al banear");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="confirm-card">
+        <h3>Banear aviso</h3>
+        <p>El aviso quedará oculto del sitio. Indica el motivo.</p>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="Ej: Contenido inapropiado o fraudulento…"
+          autoFocus
+        />
+        <div className="modal-acts">
+          <button
+            className="btn"
+            onClick={handleBan}
+            disabled={busy}
+            style={{ flex: 1, background: "var(--err)", color: "#fff" }}
+          >
+            {busy ? "Baneando…" : "Banear aviso"}
+          </button>
+          <button className="btn ghost" onClick={onClose} disabled={busy}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-// ── Confirm modal state ────────────────────────────────────────────────────
+function TransferModal({
+  spotId,
+  token,
+  onClose,
+  onDone,
+}: {
+  spotId: number;
+  token: string;
+  onClose: () => void;
+  onDone: (id: number, user: UserResult) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<UserResult | null>(null);
+  const [busy, setBusy] = useState(false);
 
-type ModalAction = "reject" | "ban";
-type ModalState = { open: false } | { open: true; action: ModalAction; spotId: number; reason: string };
+  const results = useMemo(() => {
+    if (!q.trim()) return [];
+    const lower = q.toLowerCase();
+    return MOCK_USERS.filter(
+      (u) =>
+        u.email.toLowerCase().includes(lower) ||
+        u.name.toLowerCase().includes(lower) ||
+        (u.handle ?? "").toLowerCase().includes(lower),
+    ).slice(0, 8);
+  }, [q]);
 
-// ── Icons (SVG, no emoji) ──────────────────────────────────────────────────
+  const handleTransfer = async () => {
+    if (!selected) return;
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/spots/admin/${spotId}/transfer`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ targetUserId: selected.id }),
+      });
+      if (!r.ok) throw new Error("No se pudo transferir el aviso");
+      onDone(spotId, selected);
+      toast.success(`Aviso transferido a ${selected.email}`);
+      onClose();
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al transferir");
+    } finally {
+      setBusy(false);
+    }
+  };
 
-const IconCheck = () => (
-  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path d="M2 7l4 4 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const IconX = () => (
-  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-
-const IconBan = () => (
-  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.8" />
-    <path d="M3.5 10.5l7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-  </svg>
-);
-
-const IconRestore = () => (
-  <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <path d="M2 5.5A5 5 0 1 1 3.5 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    <path d="M2 2.5v3h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const IconSearch = () => (
-  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-    <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.6" />
-    <path d="M9.5 9.5l2.5 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-  </svg>
-);
+  return (
+    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="confirm-card" style={{ maxWidth: 460 }}>
+        <h3>Transferir aviso</h3>
+        <p>Busca la cuenta destino por email o handle.</p>
+        <div className="search-shell" style={{ marginBottom: 10 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ink-3)", flexShrink: 0 }}>
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            value={q}
+            onChange={(e) => { setQ(e.target.value); setSelected(null); }}
+            placeholder="email@ejemplo.com o @handle"
+          />
+        </div>
+        {results.length > 0 && (
+          <div style={{ border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
+            {results.map((u) => {
+              const isSelected = selected?.id === u.id;
+              return (
+                <button
+                  key={u.id}
+                  onClick={() => setSelected(u)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    gap: 2,
+                    padding: "10px 14px",
+                    background: isSelected ? "color-mix(in oklab, var(--accent) 12%, transparent)" : "var(--surface)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    border: "none",
+                    borderBottom: "1px solid var(--line)",
+                  }}
+                >
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{u.name}</span>
+                  <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-3)" }}>
+                    {u.email}{u.handle ? ` · @${u.handle}` : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {selected && (
+          <p style={{ marginBottom: 14, fontSize: 13, color: "var(--ok)" }}>
+            Seleccionado: <strong>{selected.email}</strong>
+          </p>
+        )}
+        <div className="modal-acts">
+          <button
+            className="btn primary"
+            onClick={handleTransfer}
+            disabled={busy || !selected}
+            style={{ flex: 1 }}
+          >
+            {busy ? "Transfiriendo…" : "Confirmar transferencia"}
+          </button>
+          <button className="btn ghost" onClick={onClose} disabled={busy}>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Component ──────────────────────────────────────────────────────────────
 
 export default function SpotsSection() {
   const { token } = useUser();
-  const [spots, setSpots] = useState<Spot[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [chip, setChip] = useState<FilterChip>("all");
-  const [busy, setBusy] = useState<number | null>(null);
-  const [modal, setModal] = useState<ModalState>({ open: false });
+  const [spots, setSpots] = useState<Spot[]>(MOCK_SPOTS);
+  const [busyId, setBusyId] = useState<number | null>(null);
 
-  // ── Load ─────────────────────────────────────────────────────────────────
-
-  const load = () => {
-    if (!token) return;
-    setLoading(true);
-    fetch("/api/spots/admin", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(async (r) => {
-        if (!r.ok) throw new Error("Error al cargar avisos");
-        const data = await r.json();
-        setSpots(Array.isArray(data) ? data : (data.items ?? []));
-      })
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Error al cargar avisos"))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { load(); }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Derived ───────────────────────────────────────────────────────────────
+  // Modal state
+  const [rejectTarget, setRejectTarget] = useState<number | null>(null);
+  const [banTarget, setBanTarget] = useState<number | null>(null);
+  const [transferTarget, setTransferTarget] = useState<number | null>(null);
 
   const activeCount = useMemo(
-    () => spots.filter((s) => effectiveStatus(s) === "APPROVED").length,
+    () => spots.filter((s) => s.status === "APPROVED").length,
     [spots],
   );
-
-  const filtered = useMemo(() => {
-    let res = spots;
-    if (chip !== "all") res = res.filter((s) => effectiveStatus(s) === chip);
-    if (search) {
-      const q = search.toLowerCase();
-      res = res.filter((s) => s.title.toLowerCase().includes(q));
-    }
-    return res;
-  }, [spots, chip, search]);
-
-  // ── Actions ───────────────────────────────────────────────────────────────
 
   const patch = (id: number, fields: Partial<Spot>) =>
     setSpots((list) => list.map((s) => (s.id === id ? { ...s, ...fields } : s)));
 
-  const callApi = async (id: number, endpoint: string, body?: object) => {
-    if (!token) return false;
-    setBusy(id);
+  const restore = async (id: number) => {
+    if (!token) return;
+    setBusyId(id);
     try {
-      const r = await fetch(`/api/spots/admin/${id}/${endpoint}`, {
+      const r = await fetch(`/api/spots/admin/${id}/restore`, {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          ...(body ? { "Content-Type": "application/json" } : {}),
-        },
-        body: body ? JSON.stringify(body) : undefined,
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!r.ok) {
-        const err = await r.json().catch(() => ({}));
-        throw new Error((err as { message?: string }).message ?? "Error al ejecutar la acción");
-      }
-      return true;
+      if (!r.ok) throw new Error("No se pudo restaurar el aviso");
+      patch(id, { status: "PENDING_MODERATION" });
+      toast.success("Aviso restaurado");
     } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error");
-      return false;
+      toast.error(ex instanceof Error ? ex.message : "Error al restaurar");
     } finally {
-      setBusy(null);
+      setBusyId(null);
     }
   };
 
   const approve = async (id: number) => {
-    const ok = await callApi(id, "approve", {});
-    if (ok) {
-      patch(id, { status: "APPROVED", statusReason: null });
+    if (!token) return;
+    setBusyId(id);
+    try {
+      const r = await fetch(`/api/spots/admin/${id}/approve`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("No se pudo aprobar el aviso");
+      patch(id, { status: "APPROVED" });
       toast.success("Aviso aprobado");
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al aprobar");
+    } finally {
+      setBusyId(null);
     }
   };
-
-  const openReject = (id: number) =>
-    setModal({ open: true, action: "reject", spotId: id, reason: "" });
-
-  const openBan = (id: number) =>
-    setModal({ open: true, action: "ban", spotId: id, reason: "" });
-
-  const closeModal = () => setModal({ open: false });
-
-  const confirmModal = async () => {
-    if (!modal.open) return;
-    const { action, spotId, reason } = modal;
-    if (reason.trim().length < 3) {
-      toast.error("El motivo debe tener al menos 3 caracteres");
-      return;
-    }
-    closeModal();
-    if (action === "reject") {
-      const ok = await callApi(spotId, "reject", { reason: reason.trim() });
-      if (ok) {
-        patch(spotId, { status: "REJECTED", statusReason: reason.trim() });
-        toast.success("Aviso rechazado");
-      }
-    } else {
-      const ok = await callApi(spotId, "ban", { reason: reason.trim() });
-      if (ok) {
-        patch(spotId, { status: "BANNED", statusReason: reason.trim() });
-        toast.success("Aviso baneado");
-      }
-    }
-  };
-
-  const restore = async (id: number) => {
-    const ok = await callApi(id, "restore", {});
-    if (ok) {
-      patch(id, { status: "PENDING_MODERATION", statusReason: null });
-      toast.success("Aviso restaurado");
-    }
-  };
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* Confirm modal */}
-      {modal.open && (
-        <div className="confirm-bg" onClick={closeModal}>
-          <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              {modal.action === "reject" ? "Rechazar aviso" : "Banear aviso"}
-            </h3>
-            <p>
-              {modal.action === "reject"
-                ? "Indica el motivo del rechazo. Se notificará al organizador."
-                : "Indica el motivo del baneo. El aviso dejará de ser visible."}
-            </p>
-            <textarea
-              placeholder="Motivo (mínimo 3 caracteres)…"
-              value={modal.reason}
-              onChange={(e) =>
-                setModal((m) => (m.open ? { ...m, reason: e.target.value } : m))
-              }
-              autoFocus
-            />
-            <div className="modal-acts">
-              <button className="btn ghost sm" onClick={closeModal}>
-                Cancelar
-              </button>
-              <button
-                className="btn primary sm"
-                style={{ background: "var(--err)", color: "#fff" }}
-                onClick={confirmModal}
-              >
-                {modal.action === "reject" ? "Rechazar" : "Banear"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Modals */}
+      {rejectTarget !== null && token && (
+        <RejectModal
+          spotId={rejectTarget}
+          token={token}
+          onClose={() => setRejectTarget(null)}
+          onDone={(id) => patch(id, { status: "REJECTED" })}
+        />
+      )}
+      {banTarget !== null && token && (
+        <BanModal
+          spotId={banTarget}
+          token={token}
+          onClose={() => setBanTarget(null)}
+          onDone={(id) => patch(id, { status: "BANNED" })}
+        />
+      )}
+      {transferTarget !== null && token && (
+        <TransferModal
+          spotId={transferTarget}
+          token={token}
+          onClose={() => setTransferTarget(null)}
+          onDone={() => {/* owner display not tracked in mock */}}
+        />
       )}
 
-      {/* Header */}
-      <div className="section-head">
-        <h2>Avisos</h2>
-        <span
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 12,
-            fontWeight: 700,
-            padding: "5px 14px",
-            borderRadius: 999,
-            background: "color-mix(in oklab, var(--accent) 12%, transparent)",
-            color: "var(--accent)",
-            letterSpacing: ".04em",
-          }}
-        >
-          {activeCount} / 12 avisos activos
-        </span>
-      </div>
-
-      {/* Filterbar */}
-      <div className="filterbar">
-        <div className="search-shell">
-          <IconSearch />
-          <input
-            placeholder="Buscar por título…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {search && (
-            <button
-              style={{ background: "none", border: "none", color: "var(--ink-3)", cursor: "pointer", lineHeight: 1, padding: 0 }}
-              onClick={() => setSearch("")}
-              aria-label="Limpiar búsqueda"
+      {/* Panel header with occupancy */}
+      <div className="panel" style={{ marginBottom: 20 }}>
+        <div className="ph">
+          <h3>Avisos</h3>
+          <div className="right-act">
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: 12,
+                fontWeight: 700,
+                padding: "5px 14px",
+                borderRadius: 999,
+                background: "color-mix(in oklab, var(--accent) 12%, transparent)",
+                color: "var(--accent)",
+                letterSpacing: ".04em",
+              }}
             >
-              <IconX />
-            </button>
-          )}
+              {activeCount} / 12 avisos activos
+            </span>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {CHIPS.map((c) => (
-            <button
-              key={c.key}
-              className={`sel${chip === c.key ? " on" : ""}`}
-              onClick={() => setChip(c.key)}
-            >
-              {c.label}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Table */}
-      <div className="table-wrap">
-        {loading ? (
-          <div className="empty">
-            <h3>Cargando avisos…</h3>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="empty">
-            <div className="ic">
-              <IconSearch />
-            </div>
-            <h3>Sin avisos</h3>
-            <p>No hay avisos con esos filtros.</p>
-          </div>
-        ) : (
+        {/* Table */}
+        <div className="table-wrap">
           <table className="evt">
             <thead>
               <tr>
-                <th>Aviso</th>
+                <th>Imagen</th>
+                <th>Evento asociado</th>
                 <th>Organizador</th>
-                <th>Creado</th>
-                <th>Expira</th>
+                <th>Fechas activación</th>
                 <th>Estado</th>
                 <th style={{ textAlign: "right" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((s) => {
-                const thumb = imageUrl(s.image);
-                const status = effectiveStatus(s);
+              {spots.map((s) => {
+                const isBusy = busyId === s.id;
                 return (
                   <tr key={s.id}>
-                    {/* Aviso */}
+                    {/* Imagen */}
                     <td>
-                      <div className="cell-evt">
-                        <div className="thumb">
-                          {thumb && (
-                            <img
-                              src={thumb}
-                              alt=""
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            />
-                          )}
-                        </div>
-                        <div>
-                          <div className="ti">{s.title}</div>
-                          {s.description && (
-                            <div className="mt" style={{ maxWidth: 260 }}>
-                              {s.description.length > 80
-                                ? s.description.slice(0, 80) + "…"
-                                : s.description}
-                            </div>
-                          )}
-                          {status === "REJECTED" && s.statusReason && (
-                            <div
-                              className="mt"
-                              style={{ color: "var(--err)", marginTop: 2 }}
-                            >
-                              Motivo: {s.statusReason}
-                            </div>
-                          )}
-                        </div>
+                      <div
+                        style={{
+                          width: 80,
+                          height: 50,
+                          borderRadius: 6,
+                          overflow: "hidden",
+                          border: "1px solid var(--line)",
+                          background: "var(--surface-2)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {s.image ? (
+                          <img
+                            src={s.image}
+                            alt=""
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : null}
                       </div>
+                    </td>
+
+                    {/* Evento asociado */}
+                    <td>
+                      <div className="ti">{s.eventoAsociado}</div>
                     </td>
 
                     {/* Organizador */}
                     <td>
-                      {s.owner ? (
-                        <div className="cell-prod">
-                          <div className="nm">{s.owner.name ?? "—"}</div>
-                          <div className="em">{s.owner.email ?? ""}</div>
-                        </div>
-                      ) : (
-                        <span style={{ color: "var(--ink-3)" }}>—</span>
-                      )}
+                      <div className="ti">{s.organizador}</div>
                     </td>
 
-                    {/* Creado */}
+                    {/* Fechas activación */}
                     <td>
                       <div className="cell-date">
-                        <div className="d">{fmtDate(s.createdAt)}</div>
-                      </div>
-                    </td>
-
-                    {/* Expira */}
-                    <td>
-                      <div className="cell-date">
-                        <div className="d">{fmtDate(s.expirationDate)}</div>
+                        <div className="d">{fmtDate(s.inicio)} – {fmtDate(s.fin)}</div>
                       </div>
                     </td>
 
                     {/* Estado */}
                     <td>
-                      <div className={`stat ${statusClass(status)}`}>
+                      <div className={`stat ${statusClass(s.status)}`}>
                         <span className="dot" />
-                        {statusLabel(status)}
+                        {statusLabel(s.status)}
                       </div>
                     </td>
 
                     {/* Acciones */}
                     <td>
                       <div className="row-acts">
-                        {status === "PENDING_MODERATION" && (
+                        {s.status === "PENDING_MODERATION" && (
                           <>
                             <button
                               className="ok"
-                              disabled={busy === s.id}
+                              disabled={isBusy}
                               onClick={() => approve(s.id)}
-                              title="Aprobar aviso"
                             >
-                              <IconCheck /> Aprobar
+                              Aprobar
                             </button>
                             <button
                               className="bad"
-                              disabled={busy === s.id}
-                              onClick={() => openReject(s.id)}
-                              title="Rechazar aviso"
+                              disabled={isBusy}
+                              onClick={() => setRejectTarget(s.id)}
                             >
-                              <IconX /> Rechazar
+                              Rechazar
                             </button>
                           </>
                         )}
-                        {status === "APPROVED" && (
+                        {s.status === "APPROVED" && (
                           <button
                             className="bad"
-                            disabled={busy === s.id}
-                            onClick={() => openBan(s.id)}
-                            title="Banear aviso"
+                            disabled={isBusy}
+                            onClick={() => setBanTarget(s.id)}
                           >
-                            <IconBan /> Banear
+                            Banear
                           </button>
                         )}
-                        {status === "BANNED" && (
+                        {(s.status === "REJECTED" || s.status === "BANNED") && (
                           <button
                             className="ok"
-                            disabled={busy === s.id}
+                            disabled={isBusy}
                             onClick={() => restore(s.id)}
-                            title="Restaurar aviso"
                           >
-                            <IconRestore /> Restaurar
+                            Restaurar
                           </button>
                         )}
-                        {(status === "REJECTED" || status === "EXPIRED") && (
-                          <span
-                            style={{
-                              fontFamily: "var(--font-mono)",
-                              fontSize: 11,
-                              color: "var(--ink-3)",
-                            }}
-                          >
-                            —
-                          </span>
-                        )}
+                        {/* Siempre: Transferir */}
+                        <button
+                          disabled={isBusy}
+                          onClick={() => setTransferTarget(s.id)}
+                        >
+                          Transferir
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -485,7 +569,7 @@ export default function SpotsSection() {
               })}
             </tbody>
           </table>
-        )}
+        </div>
       </div>
     </>
   );

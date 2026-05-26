@@ -1,256 +1,206 @@
 "use client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useUser } from "@/components/providers";
 
-type ProductType = "Evento" | "Aviso" | "Portada" | "Artículo";
-type PaymentStatus = "Pendiente" | "Completado" | "Reembolsado";
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+type PaySt = "Aprobado" | "Fallido";
 
 type Payment = {
   id: string;
   org: string;
-  product: ProductType;
+  orgHd: string;
+  prod: string;
   amount: string;
   date: string;
-  status: PaymentStatus;
+  st: PaySt;
+  method: string;
+  card: string;
+  items: [string, string][];
+  err?: string;
 };
 
-const MOCK_PAYMENTS: Payment[] = [
+// ── Mock data (matches AdminPayments design) ──────────────────────────────────
+
+const ROWS: Payment[] = [
   {
-    id: "TX-9F2A-71X",
-    org: "Cinépolis Chile",
-    product: "Evento",
-    amount: "$54.980",
-    date: "2025-03-12",
-    status: "Completado",
+    id: "TX-9F2A-71X", org: "Cinépolis Chile", orgHd: "@cinepolis",
+    prod: "Evento + Aviso", amount: "$54.980", date: "12 MAR 2025", st: "Aprobado",
+    method: "WebPay Plus", card: "**** 8842 (VISA)",
+    items: [["Evento — Anime Crunchyroll Fest", "$24.980"], ["Aviso — 14 días", "$30.000"]],
   },
   {
-    id: "TX-8D7E-93Z",
-    org: "AnimeShop CL",
-    product: "Portada",
-    amount: "$150.000",
-    date: "2025-03-01",
-    status: "Completado",
+    id: "TX-9A1B-44C", org: "Cinépolis Chile", orgHd: "@cinepolis",
+    prod: "Suscripción", amount: "$29.990", date: "5 MAR 2025", st: "Aprobado",
+    method: "WebPay Plus", card: "**** 8842 (VISA)",
+    items: [["Plan mensual · 10 créditos", "$29.990"]],
   },
   {
-    id: "TX-7B91-09X",
-    org: "Konbini Ediciones",
-    product: "Aviso",
-    amount: "$112.000",
-    date: "2025-02-18",
-    status: "Completado",
+    id: "TX-8D7E-93Z", org: "AnimeShop CL", orgHd: "@animeshop",
+    prod: "Portada (10d)", amount: "$150.000", date: "1 MAR 2025", st: "Aprobado",
+    method: "WebPay Plus", card: "**** 4419 (MASTERCARD)",
+    items: [["Portada — 10 días", "$150.000"]],
   },
   {
-    id: "TX-7C44-88R",
-    org: "K-Pop Fest",
-    product: "Portada",
-    amount: "$200.000",
-    date: "2025-02-14",
-    status: "Reembolsado",
+    id: "TX-8C2A-12K", org: "María Pérez", orgHd: "maria.perez@email.cl",
+    prod: "Evento", amount: "$24.950", date: "20 FEB 2025", st: "Fallido",
+    method: "WebPay Plus", card: "**** 1004 (VISA)",
+    items: [["Evento — Meetup Cosplay", "$24.950"]],
+    err: "Tarjeta rechazada por el emisor",
   },
   {
-    id: "TX-6E12-55Q",
-    org: "CineClub Santiago",
-    product: "Artículo",
-    amount: "$19.990",
-    date: "2025-02-10",
-    status: "Pendiente",
-  },
-  {
-    id: "TX-5D99-31M",
-    org: "Cosplay Atelier",
-    product: "Aviso",
-    amount: "$89.000",
-    date: "2025-02-05",
-    status: "Pendiente",
-  },
-  {
-    id: "TX-4B77-20N",
-    org: "Anime Events CL",
-    product: "Evento",
-    amount: "$34.950",
-    date: "2025-01-28",
-    status: "Completado",
-  },
-  {
-    id: "TX-3A55-10P",
-    org: "Manga Club",
-    product: "Artículo",
-    amount: "$9.990",
-    date: "2025-01-20",
-    status: "Pendiente",
+    id: "TX-7B91-09X", org: "Konbini Ed.", orgHd: "@konbini-ed",
+    prod: "Aviso (14d)", amount: "$112.000", date: "18 FEB 2025", st: "Aprobado",
+    method: "WebPay Plus", card: "**** 7733 (VISA)",
+    items: [["Aviso — 14 días", "$112.000"]],
   },
 ];
 
-const STATUS_CLASS: Record<PaymentStatus, string> = {
-  Pendiente: "rev",
-  Completado: "pub",
-  Reembolsado: "arc",
-};
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function buildCSV(rows: Payment[]): string {
-  const header = ["ID Transacción", "Organizador", "Tipo de producto", "Monto", "Fecha", "Estado"];
-  const lines = rows.map((p) =>
-    [p.id, p.org, p.product, p.amount, p.date, p.status].join(",")
-  );
+  const header = ["ID", "Organizador", "Producto", "Monto", "Fecha", "Estado"];
+  const lines = rows.map((r) => [r.id, r.org, r.prod, r.amount, r.date, r.st].join(","));
   return [header.join(","), ...lines].join("\n");
 }
 
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function PaymentsSection() {
-  useUser();
-
-  const [productFilter, setProductFilter] = useState<ProductType | "Todos">("Todos");
-  const [statusFilter, setStatusFilter] = useState<PaymentStatus | "Todos">("Todos");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [search, setSearch] = useState("");
-
-  const filtered = MOCK_PAYMENTS.filter((p) => {
-    if (productFilter !== "Todos" && p.product !== productFilter) return false;
-    if (statusFilter !== "Todos" && p.status !== statusFilter) return false;
-    if (dateFrom && p.date < dateFrom) return false;
-    if (dateTo && p.date > dateTo) return false;
-    if (search && !p.org.toLowerCase().includes(search.toLowerCase())) return false;
-    return true;
-  });
+  const [detail, setDetail] = useState<Payment | null>(null);
 
   function exportCSV() {
-    const csv = buildCSV(filtered);
+    const csv = buildCSV(ROWS);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "pagos-konbini.csv";
+    a.download = "payments-konbini.csv";
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("CSV exportado");
+    toast.success("CSV generado", { description: "Descarga iniciada" });
   }
 
   return (
     <>
-      <div className="kpi-grid" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-        <div className="kpi">
-          <div className="l">Ingresos del mes</div>
-          <div className="v">$1.240.000</div>
-        </div>
-        <div className="kpi">
-          <div className="l">Total histórico</div>
-          <div className="v">$18.750.000</div>
-        </div>
-        <div className="kpi">
-          <div className="l">Transacciones pendientes</div>
-          <div className="v">3</div>
-        </div>
+      {/* KPIs */}
+      <div className="kpi-grid">
+        <div className="kpi"><div className="l">INGRESOS MES</div><div className="v">$3.8M</div></div>
+        <div className="kpi"><div className="l">HISTÓRICO</div><div className="v">$42M</div></div>
+        <div className="kpi"><div className="l">PENDIENTES</div><div className="v">3</div></div>
+        <div className="kpi"><div className="l">REEMBOLSOS</div><div className="v">2</div></div>
       </div>
 
-      <div className="panel">
-        <div className="ph">
-          <h2>Pagos</h2>
-          <button className="btn ghost sm" onClick={exportCSV}>
-            Exportar CSV
-          </button>
-        </div>
-
-        <div className="filterbar">
-          <select
-            className="sel"
-            value={productFilter}
-            onChange={(e) => setProductFilter(e.target.value as typeof productFilter)}
-          >
-            <option value="Todos">Tipo de producto: Todos</option>
-            <option value="Evento">Evento</option>
-            <option value="Aviso">Aviso</option>
-            <option value="Portada">Portada</option>
-            <option value="Artículo">Artículo</option>
-          </select>
-
-          <select
-            className="sel"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-          >
-            <option value="Todos">Estado: Todos</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Completado">Completado</option>
-            <option value="Reembolsado">Reembolsado</option>
-          </select>
-
-          <input
-            type="date"
-            className="sel"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            placeholder="Fecha inicio"
-          />
-          <input
-            type="date"
-            className="sel"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            placeholder="Fecha fin"
-          />
-
-          <input
-            className="sel"
-            placeholder="Buscar por organizador…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        <div className="table-wrap">
-          <table className="evt">
-            <thead>
-              <tr>
-                <th>ID transacción</th>
-                <th>Organizador</th>
-                <th>Tipo de producto</th>
-                <th>Monto</th>
-                <th>Fecha</th>
-                <th>Estado</th>
+      {/* Table */}
+      <div className="panel" style={{ padding: 0 }}>
+        <table className="a-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>ORGANIZADOR</th>
+              <th>PRODUCTO</th>
+              <th>MONTO</th>
+              <th>FECHA</th>
+              <th>ESTADO</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {ROWS.map((r) => (
+              <tr key={r.id}>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{r.id}</td>
+                <td>{r.org}</td>
+                <td>{r.prod}</td>
+                <td style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>{r.amount}</td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{r.date}</td>
+                <td>
+                  <span className={`stat-pill ${r.st === "Aprobado" ? "pub" : "rej"}`}>
+                    <span className="dot" />
+                    {r.st}
+                  </span>
+                </td>
+                <td>
+                  <div className="row-act">
+                    <button onClick={() => setDetail(r)}>Detalle</button>
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center", color: "var(--ink-3)", padding: "40px 16px" }}>
-                    Sin resultados para los filtros aplicados.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((p) => (
-                  <tr key={p.id}>
-                    <td>
-                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{p.id}</span>
-                    </td>
-                    <td>{p.org}</td>
-                    <td>
-                      <span className="stat arc">{p.product}</span>
-                    </td>
-                    <td>
-                      <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: 13 }}>
-                        {p.amount}
-                      </span>
-                    </td>
-                    <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{p.date}</td>
-                    <td>
-                      <div className={`stat ${STATUS_CLASS[p.status]}`}>
-                        <span className="dot" />
-                        {p.status}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          {filtered.length > 0 && (
-            <div className="pag">
-              <span className="info">{filtered.length} transacciones</span>
-            </div>
-          )}
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
+
+      <button className="btn ghost" style={{ marginTop: 14 }} onClick={exportCSV}>
+        ↓ Exportar CSV
+      </button>
+
+      {/* Detail modal */}
+      {detail && (
+        <div className="confirm-bg" onClick={() => setDetail(null)}>
+          <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: 18 }}>
+              <div>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: ".14em", color: "var(--ink-3)" }}>
+                  {detail.id}
+                </div>
+                <h3 style={{ margin: "4px 0 0" }}>{detail.prod}</h3>
+                <span className={`stat-pill ${detail.st === "Aprobado" ? "pub" : "rej"}`} style={{ marginTop: 6, display: "inline-flex" }}>
+                  <span className="dot" />{detail.st}
+                </span>
+              </div>
+              <button className="icon-btn" onClick={() => setDetail(null)}>✕</button>
+            </div>
+
+            <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 14, marginBottom: 14 }}>
+              {[
+                ["Organizador", `${detail.org} ${detail.orgHd}`],
+                ["Fecha",       detail.date],
+                ["Pasarela",    detail.method],
+                ["Tarjeta",     detail.card],
+              ].map(([k, v], i, arr) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: i < arr.length - 1 ? "1px dashed var(--line)" : "none" }}>
+                  <span style={{ color: "var(--ink-3)", fontSize: 13 }}>{k}</span>
+                  <span style={{ fontWeight: k === "Organizador" ? 600 : 400, fontFamily: k === "Fecha" || k === "Tarjeta" ? "var(--font-mono)" : "inherit", fontSize: k === "Fecha" || k === "Tarjeta" ? 12 : 13 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 8 }}>ÍTEMS</div>
+              {detail.items.map(([name, price]) => (
+                <div key={name} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--line)" }}>
+                  <span style={{ fontSize: 13 }}>{name}</span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{price}</span>
+                </div>
+              ))}
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0" }}>
+                <strong>Total</strong>
+                <strong style={{ fontFamily: "var(--font-mono)", fontSize: 16 }}>{detail.amount}</strong>
+              </div>
+            </div>
+
+            {detail.err && (
+              <div style={{ background: "color-mix(in oklab, var(--err) 10%, transparent)", border: "1px solid color-mix(in oklab, var(--err) 30%, var(--line))", borderRadius: 10, padding: 12, marginBottom: 14, color: "var(--err)", fontSize: 13 }}>
+                ⚠ {detail.err}
+              </div>
+            )}
+
+            <div className="row-act" style={{ justifyContent: "flex-end" }}>
+              <button onClick={() => { setDetail(null); toast.info("Descargando comprobante PDF…"); }}>
+                Descargar comprobante
+              </button>
+              {detail.st === "Aprobado" && (
+                <button className="bad" onClick={() => { setDetail(null); toast.warning("Iniciando reembolso…"); }}>
+                  Reembolsar
+                </button>
+              )}
+              <button className="btn dark" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => setDetail(null)}>
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

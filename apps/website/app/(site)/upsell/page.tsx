@@ -1,5 +1,6 @@
-import { UpsellView } from "./UpsellView";
+import { redirect } from "next/navigation";
 
-export default function UpsellPage() {
-  return <UpsellView />;
+// La página de upsell vive dentro del flujo /crear para no heredar el header público.
+export default function UpsellRedirect() {
+  redirect("/crear/upsell");
 }

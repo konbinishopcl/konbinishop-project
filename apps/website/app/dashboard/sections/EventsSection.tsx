@@ -1,242 +1,174 @@
 "use client";
-import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-type Status = "rev" | "pub" | "rej" | "ban";
+type ApiStatus =
+  | "DRAFT"
+  | "PENDING_PAYMENT"
+  | "PENDING_MODERATION"
+  | "APPROVED"
+  | "REJECTED"
+  | "BANNED";
 
-type MockEvent = {
+type DisplayStatus = "Borrador" | "En revisión" | "Publicado" | "Rechazado" | "Baneado";
+
+type ApiEvent = {
   id: number;
   title: string;
-  category: string;
-  thumbnail: string | null;
-  organizador: string;
-  email: string;
-  fecha: string;
-  precioMin: number;
   slug: string;
-  status: Status;
+  status: ApiStatus;
+  poster: string | null;
+  banner: string | null;
+  category: { name: string; slug: string } | null;
+  prices: { id: number; name: string; price: number }[];
+  dates: { id: number; date: string | null }[];
+  owner: {
+    id: number;
+    firstname: string | null;
+    lastname: string | null;
+    email: string;
+    handle: string | null;
+    profile: { displayName: string | null } | null;
+  } | null;
 };
 
-// ── Mock data ──────────────────────────────────────────────────────────────
+type ModalState =
+  | { type: "approve"; item: ApiEvent }
+  | { type: "reject";   item: ApiEvent }
+  | { type: "transfer"; item: ApiEvent }
+  | { type: "ban";      item: ApiEvent }
+  | null;
 
-const MOCK_CATEGORIES = ["Música", "Teatro", "Arte", "Gastronomía", "Deporte"];
-
-const MOCK_EVENTS: MockEvent[] = [
-  {
-    id: 101,
-    title: "Festival de Jazz Santiago",
-    category: "Música",
-    thumbnail: null,
-    organizador: "Productora Sur",
-    email: "contacto@productosur.cl",
-    fecha: "2026-07-12",
-    precioMin: 15000,
-    slug: "festival-jazz-santiago",
-    status: "rev",
-  },
-  {
-    id: 102,
-    title: "Feria del Libro 2026",
-    category: "Arte",
-    thumbnail: null,
-    organizador: "Editorial Norte",
-    email: "info@editorialnorte.cl",
-    fecha: "2026-08-20",
-    precioMin: 0,
-    slug: "feria-libro-2026",
-    status: "pub",
-  },
-  {
-    id: 103,
-    title: "Obra de Teatro: La Tempestad",
-    category: "Teatro",
-    thumbnail: null,
-    organizador: "Compañía Errante",
-    email: "hola@errante.cl",
-    fecha: "2026-06-05",
-    precioMin: 8000,
-    slug: "obra-teatro-la-tempestad",
-    status: "rej",
-  },
-  {
-    id: 104,
-    title: "Maratón Santiago 2026",
-    category: "Deporte",
-    thumbnail: null,
-    organizador: "Atletas Chile",
-    email: "admin@atletaschile.cl",
-    fecha: "2026-09-15",
-    precioMin: 25000,
-    slug: "maraton-santiago-2026",
-    status: "ban",
-  },
-  {
-    id: 105,
-    title: "Festival Gastronómico del Sur",
-    category: "Gastronomía",
-    thumbnail: null,
-    organizador: "Sabores Patagonia",
-    email: "hola@saborespatagonia.cl",
-    fecha: "2026-10-01",
-    precioMin: 5000,
-    slug: "festival-gastronomico-sur",
-    status: "rev",
-  },
-];
-
-const STAT_LABEL: Record<Status, string> = {
-  rev: "En revisión",
-  pub: "Publicado",
-  rej: "Rechazado",
-  ban: "Baneado",
+// status → API param map ("Todos" = undefined)
+const STATUS_API: Record<string, string | undefined> = {
+  "Todos":       undefined,
+  "Borrador":    "DRAFT",
+  "En revisión": "PENDING_MODERATION",
+  "Publicado":   "APPROVED",
+  "Rechazado":   "REJECTED",
+  "Baneado":     "BANNED",
 };
 
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-CL", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const MONTHS = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+
+function toDisplay(s: ApiStatus): DisplayStatus {
+  if (s === "DRAFT")              return "Borrador";
+  if (s === "PENDING_MODERATION") return "En revisión";
+  if (s === "APPROVED")           return "Publicado";
+  if (s === "REJECTED")           return "Rechazado";
+  return "Baneado";
 }
 
-function fmtPrice(price: number): string {
-  if (price === 0) return "Liberado";
-  return `$${price.toLocaleString("es-CL")}`;
+function statusCls(s: DisplayStatus) {
+  if (s === "Borrador")    return "dft";
+  if (s === "En revisión") return "rev";
+  if (s === "Publicado")   return "pub";
+  return "rej";
 }
 
-// ── Mock users for transfer ────────────────────────────────────────────────
+function fmtDate(d: string | null | undefined) {
+  if (!d) return "—";
+  const dt = new Date(d);
+  return `${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]} ${dt.getUTCFullYear()}`;
+}
 
-type UserResult = { id: number; email: string; name: string; handle?: string };
-const MOCK_USERS: UserResult[] = [
-  { id: 10, email: "ana@ejemplo.com", name: "Ana Torres", handle: "anatorres" },
-  { id: 11, email: "pedro@ejemplo.com", name: "Pedro Muñoz", handle: "pedrom" },
-  { id: 12, email: "carla@ejemplo.com", name: "Carla Soto" },
-  { id: 13, email: "juan@konbini.cl", name: "Juan Pérez", handle: "juanp" },
-];
+function fmtPrice(p: number) {
+  return "$" + p.toLocaleString("es-CL");
+}
 
-// ── ApproveModal ─────────────────────────────────────────────────────────────
+function ownerName(o: ApiEvent["owner"]) {
+  if (!o) return "—";
+  return (
+    o.profile?.displayName ??
+    ([o.firstname, o.lastname].filter(Boolean).join(" ") || o.email)
+  );
+}
 
-function ApproveModal({
-  event,
-  token,
-  onClose,
-  onDone,
-}: {
-  event: MockEvent;
-  token: string;
-  onClose: () => void;
-  onDone: (id: number) => void;
+function ownerHandle(o: ApiEvent["owner"]) {
+  if (!o) return "";
+  return o.handle ? `@${o.handle}` : o.email;
+}
+
+function posterSrc(poster: string | null) {
+  if (!poster) return null;
+  if (poster.startsWith("http")) return poster;
+  return `/api/media${poster}`;
+}
+
+// ── Pagination helpers ────────────────────────────────────────────────────────
+
+/** Genera el array de páginas visibles con ellipsis.
+ *  Ej: [1, "…", 4, 5, 6, "…", 12]
+ */
+function pageWindows(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "…")[] = [];
+  const addPage = (p: number) => { if (!pages.includes(p)) pages.push(p); };
+  addPage(1);
+  if (current > 3) pages.push("…");
+  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) addPage(p);
+  if (current < total - 2) pages.push("…");
+  addPage(total);
+  return pages;
+}
+
+// ── Chevron icons ─────────────────────────────────────────────────────────────
+
+const ChevL = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+const ChevR = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+// ── Modal components ──────────────────────────────────────────────────────────
+
+function AdminApproveModal({ kind, onClose, onApprove }: {
+  kind: string; onClose: () => void; onApprove: (tags: string) => void;
 }) {
-  const [tags, setTags] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-
-  const handleAiTags = () => {
-    setAiLoading(true);
+  const [tags, setTags] = useState("anime, cosplay, santiago, evento");
+  const [aiBusy, setAiBusy] = useState(false);
+  const regenAI = () => {
+    setAiBusy(true);
     setTimeout(() => {
-      const sample = ["música", "cultura", "presencial", "familia", "entretenimiento"];
-      setTags(sample.join(", "));
-      setAiLoading(false);
-    }, 1000);
+      setTags("anime, japón, otaku, santiago, evento, " + (Math.random() > 0.5 ? "convención" : "concierto"));
+      setAiBusy(false);
+    }, 700);
   };
-
-  const handleApprove = async () => {
-    setBusy(true);
-    try {
-      const tagList = tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
-      const r = await fetch(`/api/events/${event.id}/approve`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ tags: tagList }),
-      });
-      if (!r.ok) throw new Error("No se pudo aprobar el evento");
-      onDone(event.id);
-      toast.success("Evento aprobado");
-      onClose();
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "No se pudo aprobar el evento");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
-    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="confirm-card" style={{ maxWidth: 480 }}>
-        <h3>Aprobar evento</h3>
-        <p style={{ marginBottom: 14 }}>
-          <strong>{event.title}</strong> — revisa y agrega tags antes de publicar.
-        </p>
-        <label
-          style={{
-            display: "block",
-            fontSize: 11,
-            fontFamily: "var(--font-mono)",
-            letterSpacing: ".12em",
-            textTransform: "uppercase",
-            color: "var(--ink-3)",
-            marginBottom: 6,
-          }}
-        >
-          Tags (separados por coma)
-        </label>
-        <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
-          <input
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="música, cultura, gratis…"
-            style={{
-              flex: 1,
-              background: "var(--surface)",
-              border: "1px solid var(--line)",
-              borderRadius: 10,
-              padding: "8px 14px",
-              fontSize: 13,
-              color: "var(--ink)",
-              outline: "none",
-            }}
-          />
-          <button
-            onClick={handleAiTags}
-            disabled={aiLoading}
-            title="Generar tags con IA"
-            style={{
-              height: 38,
-              width: 38,
-              borderRadius: 999,
-              background: "var(--surface-2)",
-              border: "1px solid var(--line)",
-              cursor: "pointer",
-              fontSize: 16,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              color: aiLoading ? "var(--ink-3)" : "var(--accent)",
-            }}
-          >
-            ✦
-          </button>
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <h3 className="h">Aprobar {kind}</h3>
+        <p className="p">Al aprobar, el contenido pasa a ser público en Konbini. La IA sugirió los siguientes tags — puedes editarlos antes de confirmar.</p>
+        <div className="field" style={{ margin: 0 }}>
+          <label>Tags (separados por coma)</label>
+          <div style={{ position: "relative" }}>
+            <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} style={{ paddingRight: 44 }} />
+            <button
+              className="icon-btn"
+              onClick={regenAI}
+              title="Regenerar con IA"
+              style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, background: "var(--accent)", color: "#fff", borderColor: "var(--accent)" }}
+            >
+              <span style={{ animation: aiBusy ? "spin 1s linear infinite" : "none" }}>✦</span>
+            </button>
+          </div>
+          <div className="help">Los tags ayudan a categorizar el contenido. Se generan automáticamente con IA.</div>
         </div>
-        <div className="modal-acts">
-          <button
-            className="btn primary"
-            onClick={handleApprove}
-            disabled={busy}
-            style={{ flex: 1 }}
-          >
-            {busy ? "Aprobando…" : "Aprobar evento"}
-          </button>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>
-            Cancelar
+        <div className="row-act" style={{ marginTop: 22 }}>
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn primary" style={{ background: "var(--ok)" }} onClick={() => { onApprove(tags); onClose(); }}>
+            ✓ Aprobar y publicar
           </button>
         </div>
       </div>
@@ -244,67 +176,42 @@ function ApproveModal({
   );
 }
 
-// ── RejectModal ───────────────────────────────────────────────────────────────
-
-function RejectModal({
-  event,
-  token,
-  onClose,
-  onDone,
-}: {
-  event: MockEvent;
-  token: string;
-  onClose: () => void;
-  onDone: (id: number) => void;
+function AdminRejectModal({ kind, onClose, onReject }: {
+  kind: string; onClose: () => void; onReject: (reason: string) => void;
 }) {
   const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const handleReject = async () => {
-    if (reason.trim().length < 3) {
-      toast.error("El motivo debe tener al menos 3 caracteres.");
-      return;
-    }
-    setBusy(true);
-    try {
-      const r = await fetch(`/api/events/${event.id}/reject`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
-      if (!r.ok) throw new Error("No se pudo rechazar el evento");
-      onDone(event.id);
-      toast.success("Evento rechazado");
-      onClose();
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "No se pudo rechazar el evento");
-    } finally {
-      setBusy(false);
-    }
-  };
-
+  const presets = [
+    "Imagen no cumple con las dimensiones mínimas",
+    "Contenido duplicado o spam",
+    "Información incompleta o engañosa",
+    "Categoría incorrecta",
+    "Otro motivo",
+  ];
   return (
-    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="confirm-card">
-        <h3>Rechazar evento</h3>
-        <p>Indica el motivo del rechazo. El organizador lo verá en su panel.</p>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Ej: El contenido no cumple con las normas de la plataforma…"
-          autoFocus
-        />
-        <div className="modal-acts">
-          <button
-            className="btn"
-            onClick={handleReject}
-            disabled={busy}
-            style={{ flex: 1, background: "var(--err)", color: "#fff" }}
-          >
-            {busy ? "Rechazando…" : "Rechazar evento"}
-          </button>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>
-            Cancelar
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <div className="danger-ic">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" />
+          </svg>
+        </div>
+        <h3 className="h">Rechazar {kind}</h3>
+        <p className="p">El organizador recibirá un mensaje con el motivo. Sé claro para que pueda corregir y reenviar.</p>
+        <div className="field" style={{ margin: 0 }}>
+          <label>Motivo común</label>
+          <select onChange={(e) => setReason(e.target.value)} value={reason}>
+            <option value="">Selecciona un motivo o escribe abajo</option>
+            {presets.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+        <div className="field" style={{ marginTop: 14 }}>
+          <label>Mensaje al organizador</label>
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Explica al organizador por qué se rechaza..." style={{ minHeight: 100 }} />
+        </div>
+        <div className="row-act" style={{ marginTop: 14 }}>
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn primary" style={{ background: "var(--err)" }} onClick={() => { onReject(reason); onClose(); }} disabled={!reason.trim()}>
+            ✕ Rechazar y notificar
           </button>
         </div>
       </div>
@@ -312,186 +219,109 @@ function RejectModal({
   );
 }
 
-// ── BanModal ──────────────────────────────────────────────────────────────────
+type ApiUser = {
+  id: number; email: string; firstname: string | null; lastname: string | null;
+  handle: string | null; type: string;
+};
 
-function BanModal({
-  event,
-  token,
-  onClose,
-  onDone,
-}: {
-  event: MockEvent;
-  token: string;
-  onClose: () => void;
-  onDone: (id: number) => void;
+function AdminTransferModal({ item, token, onClose, onDone }: {
+  item: ApiEvent; token: string; onClose: () => void; onDone: () => void;
 }) {
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [q,       setQ]      = useState("");
+  const [users,   setUsers]  = useState<ApiUser[]>([]);
+  const [picked,  setPicked] = useState<ApiUser | null>(null);
+  const [busy,    setBusy]   = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const handleBan = async () => {
-    if (reason.trim().length < 3) {
-      toast.error("El motivo debe tener al menos 3 caracteres.");
-      return;
-    }
+  useEffect(() => {
+    fetch("/api/users", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => setUsers(Array.isArray(data) ? data : []))
+      .catch(() => setUsers([]))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const matches = users.filter((u) => {
+    if (!q) return true;
+    const nm = [u.firstname, u.lastname].filter(Boolean).join(" ").toLowerCase();
+    return nm.includes(q.toLowerCase()) || u.email.toLowerCase().includes(q.toLowerCase()) || (u.handle ?? "").toLowerCase().includes(q.toLowerCase());
+  });
+
+  function initials(u: ApiUser) {
+    return ([u.firstname?.[0], u.lastname?.[0]].filter(Boolean).join("") || u.email[0]).toUpperCase();
+  }
+  function displayName(u: ApiUser) {
+    return [u.firstname, u.lastname].filter(Boolean).join(" ") || u.email;
+  }
+
+  const PALETTES = ["#a25cff,#5b39ff","#ff5b8a,#ff2a59","#3bbf8a,#1e8a5b","#3b9eff,#2a5bff","#ff9900,#e65c00"];
+
+  async function doTransfer() {
+    if (!picked) return;
     setBusy(true);
     try {
-      const r = await fetch(`/api/events/${event.id}/ban`, {
-        method: "PATCH",
+      const r = await fetch("/api/admin/transfers", {
+        method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() }),
+        body: JSON.stringify({
+          itemType:   "EVENT",
+          itemId:     item.id,
+          fromUserId: item.owner?.id,
+          toOrgId:    picked.id,
+          reason:     "Transferencia administrativa",
+        }),
       });
-      if (!r.ok) throw new Error("No se pudo banear el evento");
-      onDone(event.id);
-      toast.success("Evento baneado");
+      if (!r.ok) throw new Error("Error al transferir");
+      toast.success(`Evento transferido a ${displayName(picked)}`);
       onClose();
+      onDone();
     } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "No se pudo banear el evento");
+      toast.error(ex instanceof Error ? ex.message : "Error al transferir");
     } finally {
       setBusy(false);
     }
-  };
+  }
 
   return (
-    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="confirm-card">
-        <h3>Banear evento</h3>
-        <p>El evento quedará oculto del sitio. Indica el motivo.</p>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Ej: Contenido inapropiado o fraudulento…"
-          autoFocus
-        />
-        <div className="modal-acts">
-          <button
-            className="btn"
-            onClick={handleBan}
-            disabled={busy}
-            style={{ flex: 1, background: "var(--err)", color: "#fff" }}
-          >
-            {busy ? "Baneando…" : "Banear evento"}
-          </button>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>
-            Cancelar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── TransferModal ─────────────────────────────────────────────────────────────
-
-function TransferModal({
-  event,
-  token,
-  onClose,
-  onDone,
-}: {
-  event: MockEvent;
-  token: string;
-  onClose: () => void;
-  onDone: (id: number) => void;
-}) {
-  const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<UserResult | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const results = useMemo(() => {
-    if (!q.trim()) return [];
-    const lower = q.toLowerCase();
-    return MOCK_USERS.filter(
-      (u) =>
-        u.email.toLowerCase().includes(lower) ||
-        u.name.toLowerCase().includes(lower) ||
-        (u.handle ?? "").toLowerCase().includes(lower),
-    ).slice(0, 8);
-  }, [q]);
-
-  const handleTransfer = async () => {
-    if (!selected) return;
-    setBusy(true);
-    try {
-      const r = await fetch(`/api/events/${event.id}/transfer`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUserId: selected.id }),
-      });
-      if (!r.ok) throw new Error("No se pudo transferir el evento");
-      onDone(event.id);
-      toast.success(`Evento transferido a ${selected.email}`);
-      onClose();
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "No se pudo transferir el evento");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="confirm-card" style={{ maxWidth: 460 }}>
-        <h3>Transferir evento</h3>
-        <p>Busca la cuenta destino por email o handle.</p>
-        <div className="search-shell" style={{ marginBottom: 10 }}>
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <h3 className="h">Transferir a otra cuenta</h3>
+        <p className="p">Busca al destinatario por nombre, handle o email. La transferencia se aplica inmediatamente.</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ink-3)", flexShrink: 0 }}>
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input
-            value={q}
-            onChange={(e) => { setQ(e.target.value); setSelected(null); }}
-            placeholder="email@ejemplo.com o @handle"
-          />
+          <input autoFocus placeholder="Buscar por nombre, handle o email…" value={q} onChange={(e) => setQ(e.target.value)} style={{ background: "none", border: "none", outline: "none", flex: 1, fontSize: 13, color: "var(--ink)" }} />
         </div>
-        {results.length > 0 && (
-          <div style={{ border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
-            {results.map((u) => {
-              const isSelected = selected?.id === u.id;
-              return (
-                <button
-                  key={u.id}
-                  onClick={() => setSelected(u)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    gap: 2,
-                    padding: "10px 14px",
-                    background: isSelected
-                      ? "color-mix(in oklab, var(--accent) 12%, transparent)"
-                      : "var(--surface)",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    border: "none",
-                    borderBottom: "1px solid var(--line)",
-                  }}
-                >
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{u.name}</span>
-                  <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-3)" }}>
-                    {u.email}{u.handle ? ` · @${u.handle}` : ""}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-        {selected && (
-          <p style={{ marginBottom: 14, fontSize: 13, color: "var(--ok)" }}>
-            Seleccionado: <strong>{selected.email}</strong>
-          </p>
-        )}
-        <div className="modal-acts">
-          <button
-            className="btn primary"
-            onClick={handleTransfer}
-            disabled={busy || !selected}
-            style={{ flex: 1 }}
-          >
-            {busy ? "Transfiriendo…" : "Confirmar transferencia"}
-          </button>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>
-            Cancelar
+        <div style={{ maxHeight: 280, overflowY: "auto", border: "1px solid var(--line)", borderRadius: 10, padding: 4 }}>
+          {loading ? (
+            <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>Cargando usuarios…</div>
+          ) : matches.length === 0 ? (
+            <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>Sin resultados</div>
+          ) : matches.map((u, i) => {
+            const [c1, c2] = PALETTES[i % PALETTES.length].split(",");
+            return (
+              <div key={u.id} onClick={() => setPicked(u)} style={{ display: "flex", gap: 12, alignItems: "center", padding: 10, borderRadius: 8, cursor: "pointer", background: picked?.id === u.id ? "var(--surface-2)" : "transparent" }}>
+                <div style={{ width: 36, height: 36, borderRadius: 999, background: `linear-gradient(135deg, ${c1}, ${c2})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
+                  {initials(u)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{displayName(u)}</div>
+                  <div style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {u.handle ? `@${u.handle}` : u.email}
+                  </div>
+                </div>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".1em", color: "var(--ink-3)", padding: "3px 7px", borderRadius: 4, background: "var(--surface-2)", flexShrink: 0 }}>
+                  {u.type === "ORGANIZATION" ? "ORG" : "USR"}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="row-act" style={{ marginTop: 18 }}>
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn dark" onClick={doTransfer} disabled={!picked || busy}>
+            {busy ? "Transfiriendo…" : `Transferir a ${picked ? displayName(picked) : "..."}`}
           </button>
         </div>
       </div>
@@ -499,253 +329,298 @@ function TransferModal({
   );
 }
 
-// ── Main section ───────────────────────────────────────────────────────────────
+function ConfirmDialog({
+  title, message, danger = false, confirmLabel = "Confirmar",
+  cancelLabel = "Cancelar", typeToConfirm, onConfirm, onClose,
+}: {
+  title: string; message: string; danger?: boolean;
+  confirmLabel?: string; cancelLabel?: string; typeToConfirm?: string;
+  onConfirm: () => void; onClose: () => void;
+}) {
+  const [typed, setTyped] = useState("");
+  const ok = !typeToConfirm || typed.trim().toUpperCase() === typeToConfirm.toUpperCase();
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
+        {danger && (
+          <div className="danger-ic">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <path d="M12 9v4M12 17h.01" />
+            </svg>
+          </div>
+        )}
+        <h3 className="h">{title}</h3>
+        <p className="p">{message}</p>
+        {typeToConfirm && (
+          <>
+            <p className="p" style={{ marginBottom: 8, fontSize: 12, color: "var(--ink-3)" }}>
+              Para confirmar, escribe <strong style={{ color: "var(--err)" }}>{typeToConfirm}</strong> abajo:
+            </p>
+            <input className="danger-input" value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus />
+          </>
+        )}
+        <div className="row-act">
+          <button className="btn ghost" onClick={onClose}>{cancelLabel}</button>
+          <button
+            className={`btn ${danger ? "primary" : "dark"}`}
+            style={danger ? { background: "var(--err)", color: "#fff" } : undefined}
+            onClick={ok ? onConfirm : undefined}
+            disabled={!ok}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main section ──────────────────────────────────────────────────────────────
+
+const FILTER_STATUSES = ["Todos", "Borrador", "En revisión", "Publicado", "Rechazado", "Baneado"];
+const PER_PAGE_OPTIONS = [12, 24, 48];
 
 export default function EventsSection() {
   const { token } = useUser();
-  const [events, setEvents] = useState<MockEvent[]>(MOCK_EVENTS);
-  const [search, setSearch] = useState("");
-  const [statFilter, setStatFilter] = useState<"all" | Status>("all");
-  const [catFilter, setCatFilter] = useState("all");
-  const [busyId, setBusyId] = useState<number | null>(null);
+
+  // Pagination & filter state
+  const [page,         setPage]        = useState(1);
+  const [perPage,      setPerPage]     = useState(20);
+  const [total,        setTotal]       = useState(0);
+  const [totalPages,   setTotalPages]  = useState(1);
+  const [activeFilter, setActiveFilter] = useState("Todos");
+
+  // Data state
+  const [events,  setEvents]  = useState<ApiEvent[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Modal state
-  const [approveTarget, setApproveTarget] = useState<MockEvent | null>(null);
-  const [rejectTarget, setRejectTarget] = useState<MockEvent | null>(null);
-  const [banTarget, setBanTarget] = useState<MockEvent | null>(null);
-  const [transferTarget, setTransferTarget] = useState<MockEvent | null>(null);
+  const [modal, setModal] = useState<ModalState>(null);
+  const close = () => setModal(null);
 
-  const patch = (id: number, fields: Partial<MockEvent>) =>
-    setEvents((list) => list.map((e) => (e.id === id ? { ...e, ...fields } : e)));
+  // ── Fetch ────────────────────────────────────────────────────────────────
 
-  const restore = async (e: MockEvent) => {
+  const fetchEvents = useCallback(async (p: number, ps: number, filter: string) => {
     if (!token) return;
-    setBusyId(e.id);
+    setLoading(true);
     try {
-      const r = await fetch(`/api/events/${e.id}/restore`, {
+      const statusParam = STATUS_API[filter];
+      const params = new URLSearchParams({
+        page:     String(p),
+        pageSize: String(ps),
+        ...(statusParam ? { status: statusParam } : {}),
+      });
+      const r = await fetch(`/api/events?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("Error al cargar eventos");
+      const data = await r.json();
+      setEvents(data.items ?? []);
+      setTotal(data.total ?? 0);
+      setTotalPages(data.totalPages ?? 1);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al cargar eventos");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchEvents(page, perPage, activeFilter);
+  }, [fetchEvents, page, perPage, activeFilter]);
+
+  // ── Filter & pagination handlers ─────────────────────────────────────────
+
+  function changeFilter(f: string) {
+    setActiveFilter(f);
+    setPage(1);
+  }
+
+  function changePerPage(ps: number) {
+    setPerPage(ps);
+    setPage(1);
+  }
+
+  // ── Actions ──────────────────────────────────────────────────────────────
+
+  async function doApprove(item: ApiEvent) {
+    try {
+      const r = await fetch(`/api/events/${item.id}/approve`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!r.ok) throw new Error("No se pudo restaurar el evento");
-      patch(e.id, { status: "rev" });
-      toast.success("Evento restaurado — vuelve a revisión");
+      if (!r.ok) throw new Error("Error al aprobar");
+      toast.success("Evento aprobado y publicado");
+      fetchEvents(page, perPage, activeFilter);
     } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "No se pudo restaurar el evento");
-    } finally {
-      setBusyId(null);
+      toast.error(ex instanceof Error ? ex.message : "Error al aprobar");
     }
-  };
+  }
 
-  const filtered = useMemo(() => {
-    let res = events;
-    if (statFilter !== "all") res = res.filter((e) => e.status === statFilter);
-    if (catFilter !== "all") res = res.filter((e) => e.category === catFilter);
-    if (search) {
-      const q = search.toLowerCase();
-      res = res.filter(
-        (e) =>
-          e.title.toLowerCase().includes(q) ||
-          e.organizador.toLowerCase().includes(q),
-      );
+  async function doReject(item: ApiEvent, reason: string) {
+    try {
+      const r = await fetch(`/api/events/${item.id}/reject`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      if (!r.ok) throw new Error("Error al rechazar");
+      toast.success("Evento rechazado");
+      fetchEvents(page, perPage, activeFilter);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al rechazar");
     }
-    return res;
-  }, [events, statFilter, catFilter, search]);
+  }
 
-  const counts = useMemo(() => ({
-    all: events.length,
-    rev: events.filter((e) => e.status === "rev").length,
-    pub: events.filter((e) => e.status === "pub").length,
-    rej: events.filter((e) => e.status === "rej").length,
-    ban: events.filter((e) => e.status === "ban").length,
-  }), [events]);
+  async function doBan(item: ApiEvent) {
+    try {
+      const r = await fetch(`/api/events/${item.id}/ban`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "Baneado por administrador" }),
+      });
+      if (!r.ok) throw new Error("Error al banear");
+      toast.success("Evento baneado");
+      fetchEvents(page, perPage, activeFilter);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al banear");
+    }
+  }
+
+  // ── Computed ─────────────────────────────────────────────────────────────
+
+  const from = total === 0 ? 0 : (page - 1) * perPage + 1;
+  const to   = Math.min(page * perPage, total);
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* Filters */}
-      <div className="filterbar">
-        <div className="search-shell" style={{ flex: 1 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ink-3)", flexShrink: 0 }}>
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            placeholder="Buscar por título u organizador…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              style={{ background: "none", border: "none", color: "var(--ink-3)", cursor: "pointer", fontSize: 16, lineHeight: 1, padding: 0 }}
-            >
-              ×
-            </button>
-          )}
-        </div>
-        <select
-          className="sel"
-          value={statFilter}
-          onChange={(e) => setStatFilter(e.target.value as "all" | Status)}
+      {/* Filter chips + create button */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+        {FILTER_STATUSES.map((s) => (
+          <button key={s} className={`sel${activeFilter === s ? " on" : ""}`} onClick={() => changeFilter(s)}>
+            {s}
+          </button>
+        ))}
+        <Link
+          href="/dashboard/events/new"
+          className="btn primary"
+          style={{ marginLeft: "auto", padding: "9px 16px", fontSize: 13 }}
         >
-          <option value="all">Todos ({counts.all})</option>
-          <option value="rev">En revisión ({counts.rev})</option>
-          <option value="pub">Publicado ({counts.pub})</option>
-          <option value="rej">Rechazado ({counts.rej})</option>
-          <option value="ban">Baneado ({counts.ban})</option>
-        </select>
-        <select
-          className="sel"
-          value={catFilter}
-          onChange={(e) => setCatFilter(e.target.value)}
-        >
-          <option value="all">Todas las categorías</option>
-          {MOCK_CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+          ＋ Crear evento
+        </Link>
       </div>
 
       {/* Table */}
-      <div className="table-wrap">
-        {filtered.length === 0 ? (
-          <div className="empty">
-            <div className="ic">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-            </div>
-            <h3>Sin resultados</h3>
-            <p>No hay eventos con esos filtros.</p>
-          </div>
-        ) : (
-          <table className="evt">
+      {loading ? (
+        <div className="panel" style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>
+          Cargando eventos…
+        </div>
+      ) : events.length === 0 ? (
+        <div className="panel" style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>
+          No hay eventos{activeFilter !== "Todos" ? ` con estado "${activeFilter}"` : ""}.
+        </div>
+      ) : (
+        <div className="panel" style={{ padding: 0 }}>
+          <table className="a-table">
             <thead>
               <tr>
-                <th>Evento</th>
-                <th>Organizador</th>
-                <th>Fecha</th>
-                <th>Precio mínimo</th>
-                <th>Estado</th>
-                <th style={{ textAlign: "right" }}>Acciones</th>
+                <th>EVENTO</th>
+                <th>ORGANIZADOR</th>
+                <th>FECHA</th>
+                <th>PRECIO</th>
+                <th>ESTADO</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((e) => {
-                const isBusy = busyId === e.id;
+              {events.map((e) => {
+                const status  = toDisplay(e.status);
+                const date    = fmtDate(e.dates[0]?.date);
+                const price   = e.prices[0]?.price != null ? fmtPrice(e.prices[0].price) : "Gratis";
+                const imgSrc  = posterSrc(e.poster);
+
                 return (
                   <tr key={e.id}>
-                    {/* Thumbnail + título + categoría */}
+                    {/* EVENTO */}
                     <td>
                       <div className="cell-evt">
-                        <div
-                          className="thumb"
-                          style={{ width: 48, height: 48, flexShrink: 0 }}
-                        >
-                          {e.thumbnail ? (
-                            <img
-                              src={e.thumbnail}
-                              alt=""
-                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                            />
-                          ) : null}
+                        <div className="thumb-sm">
+                          {imgSrc ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={imgSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                          ) : (
+                            <div className="pic" style={{ background: "linear-gradient(135deg, #a25cff, #5b39ff)" }} />
+                          )}
                         </div>
                         <div>
                           <div className="ti">{e.title}</div>
-                          <div className="mt">{e.category}</div>
+                          <div className="su">{e.category?.name ?? "—"}</div>
                         </div>
                       </div>
                     </td>
 
-                    {/* Organizador + email */}
+                    {/* ORGANIZADOR */}
                     <td>
-                      <div className="cell-prod">
-                        <div className="nm">{e.organizador}</div>
-                        <div className="em">{e.email}</div>
+                      <div style={{ fontSize: 13 }}>
+                        {ownerName(e.owner)}
+                        <br />
+                        <span style={{ color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontSize: 11 }}>
+                          {ownerHandle(e.owner)}
+                        </span>
                       </div>
                     </td>
 
-                    {/* Fecha */}
+                    {/* FECHA */}
+                    <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{date}</td>
+
+                    {/* PRECIO */}
+                    <td style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>{price}</td>
+
+                    {/* ESTADO */}
                     <td>
-                      <div className="cell-date">
-                        <div className="d">{fmtDate(e.fecha)}</div>
-                      </div>
+                      <span className={`stat-pill ${statusCls(status)}`}>
+                        <span className="dot" />{status}
+                      </span>
                     </td>
 
-                    {/* Precio mínimo */}
+                    {/* ACCIONES */}
                     <td>
-                      <div className="cell-price">
-                        {e.precioMin === 0 ? (
-                          <span className="free">Liberado</span>
-                        ) : (
-                          `$${e.precioMin.toLocaleString("es-CL")}`
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Estado chip */}
-                    <td>
-                      <div className={`stat ${e.status}`}>
-                        <span className="dot" />
-                        {STAT_LABEL[e.status]}
-                      </div>
-                    </td>
-
-                    {/* Acciones */}
-                    <td>
-                      <div className="row-acts">
-                        {/* En revisión */}
-                        {e.status === "rev" && (
+                      <div className="row-act">
+                        {status === "Borrador" && (
                           <>
-                            <button
-                              className="ok"
-                              onClick={() => setApproveTarget(e)}
-                              disabled={isBusy}
-                            >
-                              Aprobar
-                            </button>
-                            <button
-                              className="bad"
-                              onClick={() => setRejectTarget(e)}
-                              disabled={isBusy}
-                            >
-                              Rechazar
-                            </button>
+                            <Link href={`/dashboard/events/${e.id}/edit`}><button>Editar</button></Link>
+                            <button className="ok" onClick={() => setModal({ type: "approve", item: e })}>Publicar</button>
                           </>
                         )}
-                        {/* Publicado */}
-                        {e.status === "pub" && (
+                        {status === "En revisión" && (
                           <>
-                            <Link
-                              className="btn ghost sm"
-                              href={`/evento/${e.slug}`}
-                              target="_blank"
-                            >
-                              Ver
-                            </Link>
-                            <button
-                              className="bad"
-                              onClick={() => setBanTarget(e)}
-                              disabled={isBusy}
-                            >
-                              Banear
-                            </button>
+                            <button className="ok" onClick={() => setModal({ type: "approve", item: e })}>✓ Aprobar</button>
+                            <button className="bad" onClick={() => setModal({ type: "reject",  item: e })}>✕ Rechazar</button>
                           </>
                         )}
-                        {/* Rechazado */}
-                        {e.status === "rej" && (
-                          <button onClick={() => restore(e)} disabled={isBusy}>
-                            Re-revisar
-                          </button>
+                        {status === "Publicado" && (
+                          <>
+                            <Link href={`/dashboard/events/${e.id}/edit`}><button>Editar</button></Link>
+                            <button className="bad" onClick={() => setModal({ type: "ban",      item: e })}>Banear</button>
+                            <button          onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                          </>
                         )}
-                        {/* Baneado */}
-                        {e.status === "ban" && (
-                          <button className="ok" onClick={() => restore(e)} disabled={isBusy}>
-                            Restaurar
-                          </button>
+                        {status === "Rechazado" && (
+                          <>
+                            <button onClick={() => setModal({ type: "approve",  item: e })}>Re-revisar</button>
+                            <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                          </>
                         )}
-                        {/* Siempre: Transferir */}
-                        <button onClick={() => setTransferTarget(e)} disabled={isBusy}>
-                          Transferir
-                        </button>
+                        {status === "Baneado" && (
+                          <>
+                            <Link href={`/dashboard/events/${e.id}/edit`}><button>Editar</button></Link>
+                            <button className="bad" onClick={() => setModal({ type: "ban",      item: e })}>Banear</button>
+                            <button          onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -753,42 +628,85 @@ export default function EventsSection() {
               })}
             </tbody>
           </table>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Pagination bar */}
+      {!loading && total > 0 && (
+        <div className="pag-bar">
+          <div className="pag-info">
+            <span>
+              Mostrando{" "}
+              <strong style={{ color: "var(--ink)" }}>{from}–{to}</strong>
+              {" "}de{" "}
+              <strong style={{ color: "var(--ink)" }}>{total}</strong>
+              {" "}evento{total !== 1 ? "s" : ""}
+            </span>
+            <span style={{ color: "var(--line)" }}>·</span>
+            <span className="ips">
+              <span>Mostrar</span>
+              <select value={perPage} onChange={(e) => changePerPage(Number(e.target.value))}>
+                {PER_PAGE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <span>por página</span>
+            </span>
+          </div>
+          <div className="pag-pages">
+            <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} title="Anterior">
+              <ChevL />
+            </button>
+            {pageWindows(page, totalPages).map((p, i) =>
+              p === "…" ? (
+                <span key={`ell-${i}`} className="ell">…</span>
+              ) : (
+                <button key={p} className={page === p ? "on" : ""} onClick={() => setPage(p)}>
+                  {p}
+                </button>
+              )
+            )}
+            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages} title="Siguiente">
+              <ChevR />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
-      {approveTarget && token && (
-        <ApproveModal
-          event={approveTarget}
-          token={token}
-          onClose={() => setApproveTarget(null)}
-          onDone={(id) => patch(id, { status: "pub" })}
-        />
-      )}
-      {rejectTarget && token && (
-        <RejectModal
-          event={rejectTarget}
-          token={token}
-          onClose={() => setRejectTarget(null)}
-          onDone={(id) => patch(id, { status: "rej" })}
-        />
-      )}
-      {banTarget && token && (
-        <BanModal
-          event={banTarget}
-          token={token}
-          onClose={() => setBanTarget(null)}
-          onDone={(id) => patch(id, { status: "ban" })}
-        />
-      )}
-      {transferTarget && token && (
-        <TransferModal
-          event={transferTarget}
-          token={token}
-          onClose={() => setTransferTarget(null)}
-          onDone={() => {/* owner display not tracked in mock */}}
-        />
-      )}
+      {modal?.type === "approve" && (() => {
+        const item = modal.item;
+        return <AdminApproveModal kind="evento" onClose={close} onApprove={() => { close(); doApprove(item); }} />;
+      })()}
+      {modal?.type === "reject" && (() => {
+        const item = modal.item;
+        return <AdminRejectModal kind="evento" onClose={close} onReject={(reason) => { close(); doReject(item, reason); }} />;
+      })()}
+      {modal?.type === "transfer" && (() => {
+        const item = modal.item;
+        return (
+          <AdminTransferModal
+            item={item}
+            token={token ?? ""}
+            onClose={close}
+            onDone={() => fetchEvents(page, perPage, activeFilter)}
+          />
+        );
+      })()}
+      {modal?.type === "ban" && (() => {
+        const item = modal.item;
+        return (
+          <ConfirmDialog
+            danger
+            title="¿Banear evento?"
+            message="El evento dejará de ser público inmediatamente. El organizador será notificado. Puedes restaurarlo después si fue un error."
+            typeToConfirm="BANEAR"
+            confirmLabel="Sí, banear"
+            onConfirm={() => { close(); doBan(item); }}
+            onClose={close}
+          />
+        );
+      })()}
     </>
   );
 }

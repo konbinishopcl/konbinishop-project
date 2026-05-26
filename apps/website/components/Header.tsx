@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { Ic } from "./icons";
 import { useTheme, useUser } from "./providers";
+import { UserMenu } from "./UserMenu";
 import type { ApiCategory } from "@/lib/api";
 
 export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
@@ -13,7 +14,6 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
   const { user, logout } = useUser();
   const router = useRouter();
   const pathname = usePathname();
-  const [menu, setMenu] = useState(false);
   const [catsOpen, setCatsOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -216,87 +216,7 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
               <Link className="btn primary" href="/crear">
                 ＋ Crear evento
               </Link>
-              <button
-                className="avatar"
-                onClick={() => setMenu((m) => !m)}
-                title={user.name}
-              >
-                {user.initials}
-              </button>
-              {menu && (
-                <div
-                  className="menu"
-                  onMouseLeave={() => setMenu(false)}
-                  style={{ minWidth: 280 }}
-                >
-                  {/* Operando como */}
-                  <div className="hdr">
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".18em", color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 6 }}>
-                      Operando como
-                    </div>
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
-                        {user.initials}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div className="nm">{user.name}</div>
-                        <div className="em" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Cambiar de cuenta */}
-                  <div style={{ padding: "4px 10px 2px", fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".18em", color: "var(--ink-3)", textTransform: "uppercase" }}>
-                    Cambiar de cuenta
-                  </div>
-                  <button style={{ background: "var(--surface-2)", color: "var(--ink)" }}>
-                    <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
-                      {user.initials}
-                    </span>
-                    <span style={{ flex: 1 }}>Cuenta personal</span>
-                    <span style={{ color: "var(--accent)" }}>✓</span>
-                  </button>
-                  <button onClick={() => { router.push("/cuenta/organizaciones"); setMenu(false); }} style={{ color: "var(--ink-3)", fontSize: 12 }}>
-                    <span style={{ width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-                    </span>
-                    <span>Crear organización</span>
-                  </button>
-                  {/* Admin — solo visible para admins, incluye su propio separador superior */}
-                  {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && (
-                    <>
-                      <div style={{ height: 1, background: "var(--line)", margin: "6px 8px" }} />
-                      <button onClick={() => { router.push("/dashboard"); setMenu(false); }}>
-                        🛠 Panel de administración
-                      </button>
-                    </>
-                  )}
-
-                  {/* Separador antes de sección cuenta */}
-                  <div style={{ height: 1, background: "var(--line)", margin: "6px 8px" }} />
-
-                  {/* Cuenta */}
-                  <button onClick={() => { router.push("/cuenta/perfil"); setMenu(false); }}>
-                    👤 Mi cuenta
-                  </button>
-                  <button onClick={() => { router.push("/cuenta/publicaciones"); setMenu(false); }}>
-                    📋 Mis eventos
-                  </button>
-                  <button onClick={() => { router.push("/cuenta/suscripcion"); setMenu(false); }}>
-                    ✦ Suscripción
-                  </button>
-                  <button onClick={() => { router.push("/cuenta/favoritos"); setMenu(false); }}>
-                    ♡ Favoritos
-                  </button>
-
-                  {/* Separador */}
-                  <div style={{ height: 1, background: "var(--line)", margin: "6px 8px" }} />
-
-                  <button className="danger" onClick={() => { logout(); setMenu(false); router.push("/"); }}>
-                    ↩ Cerrar sesión
-                  </button>
-                </div>
-              )}
+              <UserMenu />
             </>
           )}
         </div>

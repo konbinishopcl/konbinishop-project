@@ -104,6 +104,38 @@ export class OrganizationsService {
   }
 
   /**
+   * Devuelve todas las organizaciones de las que el usuario es miembro.
+   */
+  async findMine(userId: number) {
+    const memberships = await this.prisma.orgMember.findMany({
+      where: { userId },
+      include: {
+        org: {
+          select: {
+            id: true,
+            firstname: true,
+            handle: true,
+            email: true,
+            isVerified: true,
+            profile: { select: { avatar: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    return memberships.map((m) => ({
+      id: m.org.id,
+      name: m.org.firstname,
+      handle: m.org.handle,
+      email: m.org.email,
+      isVerified: m.org.isVerified,
+      avatar: (m.org.profile as { avatar?: string } | null)?.avatar ?? null,
+      role: m.role,
+    }));
+  }
+
+  /**
    * Devuelve una organización por ID. Solo accesible para miembros o admins.
    */
   async findOne(id: number, user: JwtUser) {

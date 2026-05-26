@@ -37,6 +37,14 @@ export class OrganizationsController {
     return this.service.create(dto, user, req);
   }
 
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar organizaciones del usuario autenticado' })
+  findMine(@CurrentUser() user: JwtUser) {
+    return this.service.findMine(user.sub);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

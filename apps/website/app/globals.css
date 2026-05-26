@@ -1071,6 +1071,7 @@
 .admin-top { padding: 22px 36px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: color-mix(in oklab, var(--bg) 90%, transparent); backdrop-filter: blur(12px); z-index: 30; }
 .admin-top h1 { font-family: var(--font-display); font-size: 26px; letter-spacing: -.015em; margin: 0; font-weight: 700; }
 .admin-top .crumb { color: var(--ink-3); font-size: 12px; font-family: var(--font-mono); letter-spacing: .04em; margin-bottom: 2px; }
+
 .admin-body { padding: 28px 36px 60px; min-width: 0; }
 .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
 .kpi { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; }
@@ -1110,6 +1111,8 @@
 .stat-pill.rej .dot { background: var(--err); }
 .stat-pill.exp { background: var(--surface-2); color: var(--ink-3); }
 .stat-pill.exp .dot { background: var(--ink-3); }
+.stat-pill.dft { background: var(--surface-2); color: var(--ink-3); }
+.stat-pill.dft .dot { background: var(--ink-3); }
 .chart { height: 240px; display: flex; align-items: flex-end; gap: 12px; padding: 14px 0 0; }
 .chart .bar { flex: 1; background: linear-gradient(180deg, var(--accent) 0%, color-mix(in oklab, var(--accent) 50%, transparent) 100%); border-radius: 6px 6px 0 0; position: relative; min-height: 12px; transition: transform .15s; cursor: pointer; }
 .chart .bar:hover { transform: scaleY(1.04); transform-origin: bottom; }

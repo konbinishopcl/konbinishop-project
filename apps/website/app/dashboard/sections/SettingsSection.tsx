@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
@@ -15,7 +16,6 @@ type ModalState =
   | { type: "createCreat" }
   | { type: "editCreat"; item: ServiceItem }
   | { type: "deleteCreat"; item: ServiceItem }
-  | { type: "legal"; key: string; label: string; content: string }
   | null;
 
 // ── Default services ──────────────────────────────────────────────────────────
@@ -32,14 +32,6 @@ const DEFAULT_CREAT: ServiceItem[] = [
   { name: "Aftermovie" },
   { name: "Cobertura en vivo (stories)" },
   { name: "Video resumen 60s" },
-];
-
-// ── Legal texts ───────────────────────────────────────────────────────────────
-
-const LEGAL_TEXTS = [
-  { key: "legal_terms",   label: "Editar Términos y condiciones" },
-  { key: "legal_privacy", label: "Editar Política de privacidad" },
-  { key: "legal_cookies", label: "Editar Política de cookies" },
 ];
 
 // ── Inline ConfirmDialog ──────────────────────────────────────────────────────
@@ -122,10 +114,6 @@ export default function SettingsSection() {
   const [fotoServices,  setFotoServices]  = useState<ServiceItem[]>(DEFAULT_FOTO);
   const [creatServices, setCreatServices] = useState<ServiceItem[]>(DEFAULT_CREAT);
 
-  // Legal
-  const [legalValues, setLegalValues] = useState<Record<string, string>>({});
-  const [busyLegal,   setBusyLegal]   = useState(false);
-
   // Modal
   const [modal, setModal] = useState<ModalState>(null);
   const closeModal = () => setModal(null);
@@ -143,15 +131,12 @@ export default function SettingsSection() {
         if (!Array.isArray(data)) return;
         const avisosPatch: Record<string, string> = {};
         const portadasPatch: Record<string, string> = {};
-        const legalPatch: Record<string, string> = {};
         data.forEach(({ key, value }) => {
           if (key in avisos)   avisosPatch[key]   = value;
           if (key in portadas) portadasPatch[key] = value;
-          if (LEGAL_TEXTS.some((t) => t.key === key)) legalPatch[key] = value;
         });
         if (Object.keys(avisosPatch).length)   setAvisos((p) => ({ ...p, ...avisosPatch }));
         if (Object.keys(portadasPatch).length) setPortadas((p) => ({ ...p, ...portadasPatch }));
-        if (Object.keys(legalPatch).length)    setLegalValues((p) => ({ ...p, ...legalPatch }));
       })
       .catch(() => {/* use defaults */});
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -177,24 +162,6 @@ export default function SettingsSection() {
       toast.error(ex instanceof Error ? ex.message : "Error al guardar");
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function saveLegal(key: string, content: string) {
-    if (!token) return;
-    setBusyLegal(true);
-    try {
-      const r = await fetch("/api/settings", {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ [key]: content }),
-      });
-      if (!r.ok) throw new Error("Error al guardar");
-      toast.success("Texto legal guardado");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al guardar");
-    } finally {
-      setBusyLegal(false);
     }
   }
 
@@ -429,23 +396,10 @@ export default function SettingsSection() {
         <div className="ph">
           <h3>Textos legales</h3>
         </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          {LEGAL_TEXTS.map((t) => (
-            <button
-              key={t.key}
-              className="btn ghost"
-              onClick={() =>
-                setModal({
-                  type: "legal",
-                  key:   t.key,
-                  label: t.label,
-                  content: legalValues[t.key] ?? "",
-                })
-              }
-            >
-              {t.label}
-            </button>
-          ))}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <Link className="btn ghost" href="/dashboard/settings/terms">Editar Términos y condiciones</Link>
+          <Link className="btn ghost" href="/dashboard/settings/privacy">Editar Política de privacidad</Link>
+          <Link className="btn ghost" href="/dashboard/settings/cookies">Editar Política de cookies</Link>
         </div>
       </div>
 
@@ -517,57 +471,6 @@ export default function SettingsSection() {
         />
       )}
 
-      {/* Modal: Legal text editor */}
-      {modal?.type === "legal" && (
-        <div className="confirm-bg" onClick={closeModal}>
-          <div
-            className="confirm-card"
-            style={{ maxWidth: 680, width: "100%" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="ph" style={{ marginBottom: 12 }}>
-              <h3 style={{ margin: 0 }}>{modal.label}</h3>
-            </div>
-            <textarea
-              rows={16}
-              value={modal.content}
-              onChange={(e) => {
-                const val = e.target.value;
-                setModal((m) => m?.type === "legal" ? { ...m, content: val } : m);
-              }}
-              style={{
-                width: "100%",
-                background: "var(--surface-2)",
-                border: "1px solid var(--line)",
-                borderRadius: 8,
-                padding: "10px 12px",
-                fontSize: 13,
-                color: "var(--ink)",
-                outline: "none",
-                resize: "vertical",
-                boxSizing: "border-box",
-                lineHeight: 1.6,
-              }}
-            />
-            <div style={{ display: "flex", gap: 8, marginTop: 14, justifyContent: "flex-end" }}>
-              <button className="btn ghost" onClick={closeModal}>Cancelar</button>
-              <button
-                className="btn dark"
-                disabled={busyLegal}
-                onClick={async () => {
-                  if (modal?.type !== "legal") return;
-                  const { key, content } = modal;
-                  setLegalValues((p) => ({ ...p, [key]: content }));
-                  await saveLegal(key, content);
-                  closeModal();
-                }}
-              >
-                {busyLegal ? "Guardando…" : "Guardar"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

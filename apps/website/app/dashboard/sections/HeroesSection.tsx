@@ -1,152 +1,60 @@
 "use client";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
-import { useUser } from "@/components/providers";
+import { useState } from "react";
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── Mock data ─────────────────────────────────────────────────────────────────
 
-type HeroStatus = "PENDING_MODERATION" | "APPROVED" | "REJECTED" | "BANNED" | "EXPIRED";
-
-type Hero = {
-  id: number;
-  image?: string | null;
-  eventoAsociado: string;
-  organizador: string;
-  inicio: string;
-  fin: string;
-  status: HeroStatus;
-};
-
-// ── Mock data ──────────────────────────────────────────────────────────────
-
-const MOCK_HEROES: Hero[] = [
-  {
-    id: 1,
-    image: null,
-    eventoAsociado: "Festival de Jazz Santiago",
-    organizador: "Productora Sur",
-    inicio: "2026-06-01",
-    fin: "2026-06-14",
-    status: "PENDING_MODERATION",
-  },
-  {
-    id: 2,
-    image: null,
-    eventoAsociado: "Lollapalooza Chile 2026",
-    organizador: "DG Medios",
-    inicio: "2026-05-01",
-    fin: "2026-05-31",
-    status: "APPROVED",
-  },
-  {
-    id: 3,
-    image: null,
-    eventoAsociado: "Expo Arte Contemporáneo",
-    organizador: "Galería Central",
-    inicio: "2026-04-01",
-    fin: "2026-04-20",
-    status: "BANNED",
-  },
+const EVENTS = [
+  { id: 1, title: "Ado: World Tour Hibana", cat: "Conciertos", art: "pa-1", date: "8 ABR 2025", price: 65 },
+  { id: 2, title: "Multitude", cat: "Conciertos", art: "pa-2", date: "8 ABR 2025", price: 80 },
+  { id: 3, title: "Demon Slayer: Infinity Castle", cat: "Cine", art: "pa-3", date: "8 ABR 2025", price: 9.99 },
+  { id: 4, title: "Super Japan Expo 2025", cat: "Convenciones", art: "pa-4", date: "9–12 MAY 2025", price: 25 },
+  { id: 5, title: "My Hero Academia: You're Next", cat: "Cine", art: "pa-5", date: "8 ABR 2025", price: 9.99 },
+  { id: 6, title: "Solo Leveling: ReAwakening", cat: "Cine", art: "pa-6", date: "8 ABR 2025", price: 9.99 },
 ];
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+type ModalState =
+  | { type: "approve"; item: (typeof EVENTS)[0] }
+  | { type: "reject"; item: (typeof EVENTS)[0] }
+  | { type: "transfer"; item: (typeof EVENTS)[0] }
+  | { type: "ban"; item: (typeof EVENTS)[0] }
+  | null;
 
-function statusClass(s: HeroStatus): string {
-  if (s === "APPROVED") return "pub";
-  if (s === "REJECTED") return "rej";
-  if (s === "BANNED") return "ban";
-  if (s === "EXPIRED") return "arc";
-  return "rev";
-}
+// ── Shared modals ──────────────────────────────────────────────────────────────
 
-function statusLabel(s: HeroStatus): string {
-  if (s === "APPROVED") return "Activo";
-  if (s === "REJECTED") return "Rechazado";
-  if (s === "BANNED") return "Baneado";
-  if (s === "EXPIRED") return "Expirado";
-  return "Pendiente";
-}
-
-function fmtDate(d: string): string {
-  return new Date(d).toLocaleDateString("es-CL", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
-
-// ── Mock users for transfer ────────────────────────────────────────────────
-
-type UserResult = { id: number; email: string; name: string; handle?: string };
-const MOCK_USERS: UserResult[] = [
-  { id: 10, email: "ana@ejemplo.com", name: "Ana Torres", handle: "anatorres" },
-  { id: 11, email: "pedro@ejemplo.com", name: "Pedro Muñoz", handle: "pedrom" },
-  { id: 12, email: "carla@ejemplo.com", name: "Carla Soto" },
-  { id: 13, email: "juan@konbini.cl", name: "Juan Pérez", handle: "juanp" },
-];
-
-// ── Modals ─────────────────────────────────────────────────────────────────
-
-function RejectModal({
-  heroId,
-  token,
-  onClose,
-  onDone,
-}: {
-  heroId: number;
-  token: string;
-  onClose: () => void;
-  onDone: (id: number) => void;
-}) {
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const handleReject = async () => {
-    if (reason.trim().length < 3) {
-      toast.error("El motivo debe tener al menos 3 caracteres.");
-      return;
-    }
-    setBusy(true);
-    try {
-      const r = await fetch(`/api/heroes/admin/${heroId}/reject`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
-      if (!r.ok) throw new Error("No se pudo rechazar la portada");
-      onDone(heroId);
-      toast.success("Portada rechazada");
-      onClose();
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al rechazar");
-    } finally {
-      setBusy(false);
-    }
+function AdminApproveModal({ kind, onClose, onApprove }: { kind: string; onClose: () => void; onApprove: (tags: string) => void }) {
+  const [tags, setTags] = useState("anime, cosplay, santiago, evento");
+  const [aiBusy, setAiBusy] = useState(false);
+  const regenAI = () => {
+    setAiBusy(true);
+    setTimeout(() => {
+      setTags("anime, japón, otaku, santiago, evento, " + (Math.random() > 0.5 ? "convención" : "concierto"));
+      setAiBusy(false);
+    }, 700);
   };
-
   return (
-    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="confirm-card">
-        <h3>Rechazar portada</h3>
-        <p>Indica el motivo del rechazo. Se notificará al organizador.</p>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Ej: El contenido no cumple con las normas de la plataforma…"
-          autoFocus
-        />
-        <div className="modal-acts">
-          <button
-            className="btn"
-            onClick={handleReject}
-            disabled={busy}
-            style={{ flex: 1, background: "var(--err)", color: "#fff" }}
-          >
-            {busy ? "Rechazando…" : "Rechazar portada"}
-          </button>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>
-            Cancelar
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <h3 className="h">Aprobar {kind}</h3>
+        <p className="p">Al aprobar, el contenido pasa a ser público en Konbini. La IA sugirió los siguientes tags — puedes editarlos antes de confirmar.</p>
+        <div className="field" style={{ margin: 0 }}>
+          <label>Tags (separados por coma)</label>
+          <div style={{ position: "relative" }}>
+            <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} style={{ paddingRight: 44 }} />
+            <button
+              className="icon-btn"
+              onClick={regenAI}
+              title="Regenerar con IA"
+              style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, background: "var(--accent)", color: "#fff", borderColor: "var(--accent)" }}
+            >
+              <span style={{ animation: aiBusy ? "spin 1s linear infinite" : "none" }}>✦</span>
+            </button>
+          </div>
+          <div className="help">Los tags ayudan a categorizar el contenido. Se generan automáticamente con IA.</div>
+        </div>
+        <div className="row-act" style={{ marginTop: 22 }}>
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn primary" style={{ background: "var(--ok)" }} onClick={() => { onApprove(tags); onClose(); }}>
+            ✓ Aprobar y publicar
           </button>
         </div>
       </div>
@@ -154,65 +62,50 @@ function RejectModal({
   );
 }
 
-function BanModal({
-  heroId,
-  token,
-  onClose,
-  onDone,
-}: {
-  heroId: number;
-  token: string;
-  onClose: () => void;
-  onDone: (id: number) => void;
-}) {
+function AdminRejectModal({ kind, onClose, onReject }: { kind: string; onClose: () => void; onReject: (reason: string) => void }) {
   const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const handleBan = async () => {
-    if (reason.trim().length < 3) {
-      toast.error("El motivo debe tener al menos 3 caracteres.");
-      return;
-    }
-    setBusy(true);
-    try {
-      const r = await fetch(`/api/heroes/admin/${heroId}/ban`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: reason.trim() }),
-      });
-      if (!r.ok) throw new Error("No se pudo banear la portada");
-      onDone(heroId);
-      toast.success("Portada baneada");
-      onClose();
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al banear");
-    } finally {
-      setBusy(false);
-    }
-  };
-
+  const presets = [
+    "Imagen no cumple con las dimensiones mínimas",
+    "Contenido duplicado o spam",
+    "Información incompleta o engañosa",
+    "Categoría incorrecta",
+    "Otro motivo",
+  ];
   return (
-    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="confirm-card">
-        <h3>Banear portada</h3>
-        <p>La portada quedará oculta del sitio. Indica el motivo.</p>
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Ej: Contenido inapropiado o fraudulento…"
-          autoFocus
-        />
-        <div className="modal-acts">
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <div className="danger-ic">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+            <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" />
+          </svg>
+        </div>
+        <h3 className="h">Rechazar {kind}</h3>
+        <p className="p">El organizador recibirá un mensaje con el motivo. Sé claro para que pueda corregir y reenviar.</p>
+        <div className="field" style={{ margin: 0 }}>
+          <label>Motivo común</label>
+          <select onChange={(e) => setReason(e.target.value)} value={reason}>
+            <option value="">Selecciona un motivo o escribe abajo</option>
+            {presets.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+        <div className="field" style={{ marginTop: 14 }}>
+          <label>Mensaje al organizador</label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Explica al organizador por qué se rechaza..."
+            style={{ minHeight: 100 }}
+          />
+        </div>
+        <div className="row-act" style={{ marginTop: 14 }}>
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
           <button
-            className="btn"
-            onClick={handleBan}
-            disabled={busy}
-            style={{ flex: 1, background: "var(--err)", color: "#fff" }}
+            className="btn primary"
+            style={{ background: "var(--err)" }}
+            onClick={() => { onReject(reason); onClose(); }}
+            disabled={!reason.trim()}
           >
-            {busy ? "Baneando…" : "Banear portada"}
-          </button>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>
-            Cancelar
+            ✕ Rechazar y notificar
           </button>
         </div>
       </div>
@@ -220,114 +113,51 @@ function BanModal({
   );
 }
 
-function TransferModal({
-  heroId,
-  token,
-  onClose,
-  onDone,
-}: {
-  heroId: number;
-  token: string;
-  onClose: () => void;
-  onDone: (id: number, user: UserResult) => void;
-}) {
+function AdminTransferModal({ onClose, onTransfer }: { onClose: () => void; onTransfer: (dest: { nm: string } | null) => void }) {
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<UserResult | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const results = useMemo(() => {
-    if (!q.trim()) return [];
-    const lower = q.toLowerCase();
-    return MOCK_USERS.filter(
-      (u) =>
-        u.email.toLowerCase().includes(lower) ||
-        u.name.toLowerCase().includes(lower) ||
-        (u.handle ?? "").toLowerCase().includes(lower),
-    ).slice(0, 8);
-  }, [q]);
-
-  const handleTransfer = async () => {
-    if (!selected) return;
-    setBusy(true);
-    try {
-      const r = await fetch(`/api/heroes/admin/${heroId}/transfer`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ targetUserId: selected.id }),
-      });
-      if (!r.ok) throw new Error("No se pudo transferir la portada");
-      onDone(heroId, selected);
-      toast.success(`Portada transferida a ${selected.email}`);
-      onClose();
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al transferir");
-    } finally {
-      setBusy(false);
-    }
-  };
+  const [picked, setPicked] = useState<{ ch: string; nm: string; hd: string; type: string; pal: string[] } | null>(null);
+  const matches = [
+    { ch: "C", nm: "Cinépolis Chile", hd: "@cinepolis", type: "org", pal: ["#a25cff", "#5b39ff"] },
+    { ch: "K", nm: "Konbini Editorial", hd: "@konbini-ed", type: "org", pal: ["#ff5b8a", "#ff2a59"] },
+    { ch: "MP", nm: "María Pérez", hd: "maria.perez@email.cl", type: "user", pal: ["#3bbf8a", "#1e8a5b"] },
+    { ch: "JR", nm: "José Ramírez", hd: "jr@email.cl", type: "user", pal: ["#3b9eff", "#2a5bff"] },
+  ].filter((m) => !q || m.nm.toLowerCase().includes(q.toLowerCase()) || m.hd.toLowerCase().includes(q.toLowerCase()));
 
   return (
-    <div className="confirm-bg" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="confirm-card" style={{ maxWidth: 460 }}>
-        <h3>Transferir portada</h3>
-        <p>Busca la cuenta destino por email o handle.</p>
-        <div className="search-shell" style={{ marginBottom: 10 }}>
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <h3 className="h">Transferir a otra cuenta</h3>
+        <p className="p">Busca al destinatario por nombre, handle o email. La transferencia se aplica inmediatamente.</p>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ink-3)", flexShrink: 0 }}>
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
-          <input
-            value={q}
-            onChange={(e) => { setQ(e.target.value); setSelected(null); }}
-            placeholder="email@ejemplo.com o @handle"
-          />
+          <input autoFocus placeholder="Buscar cuenta..." value={q} onChange={(e) => setQ(e.target.value)} style={{ background: "none", border: "none", outline: "none", flex: 1, fontSize: 13, color: "var(--ink)" }} />
         </div>
-        {results.length > 0 && (
-          <div style={{ border: "1px solid var(--line)", borderRadius: 10, overflow: "hidden", marginBottom: 14 }}>
-            {results.map((u) => {
-              const isSelected = selected?.id === u.id;
-              return (
-                <button
-                  key={u.id}
-                  onClick={() => setSelected(u)}
-                  style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "flex-start",
-                    gap: 2,
-                    padding: "10px 14px",
-                    background: isSelected ? "color-mix(in oklab, var(--accent) 12%, transparent)" : "var(--surface)",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    border: "none",
-                    borderBottom: "1px solid var(--line)",
-                  }}
-                >
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>{u.name}</span>
-                  <span style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-3)" }}>
-                    {u.email}{u.handle ? ` · @${u.handle}` : ""}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-        {selected && (
-          <p style={{ marginBottom: 14, fontSize: 13, color: "var(--ok)" }}>
-            Seleccionado: <strong>{selected.email}</strong>
-          </p>
-        )}
-        <div className="modal-acts">
-          <button
-            className="btn primary"
-            onClick={handleTransfer}
-            disabled={busy || !selected}
-            style={{ flex: 1 }}
-          >
-            {busy ? "Transfiriendo…" : "Confirmar transferencia"}
-          </button>
-          <button className="btn ghost" onClick={onClose} disabled={busy}>
-            Cancelar
+        <div style={{ maxHeight: 280, overflowY: "auto", border: "1px solid var(--line)", borderRadius: 10, padding: 4 }}>
+          {matches.length === 0 ? (
+            <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>Sin resultados</div>
+          ) : matches.map((m) => (
+            <div
+              key={m.hd}
+              onClick={() => setPicked(m)}
+              style={{ display: "flex", gap: 12, alignItems: "center", padding: 10, borderRadius: 8, cursor: "pointer", background: picked?.hd === m.hd ? "var(--surface-2)" : "transparent" }}
+            >
+              <div style={{ width: 36, height: 36, borderRadius: 999, background: `linear-gradient(135deg, ${m.pal[0]}, ${m.pal[1]})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13 }}>{m.ch}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{m.nm}</div>
+                <div style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}>{m.hd}</div>
+              </div>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".1em", color: "var(--ink-3)", padding: "3px 7px", borderRadius: 4, background: "var(--surface-2)" }}>
+                {m.type === "org" ? "ORG" : "USUARIO"}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="row-act" style={{ marginTop: 18 }}>
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn dark" onClick={() => { onTransfer(picked); onClose(); }} disabled={!picked}>
+            Transferir a {picked?.nm || "..."}
           </button>
         </div>
       </div>
@@ -335,233 +165,199 @@ function TransferModal({
   );
 }
 
-// ── Component ──────────────────────────────────────────────────────────────
+function ConfirmDialog({
+  title,
+  message,
+  danger = false,
+  confirmLabel = "Confirmar",
+  cancelLabel = "Cancelar",
+  typeToConfirm,
+  onConfirm,
+  onClose,
+}: {
+  title: string;
+  message: string;
+  danger?: boolean;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  typeToConfirm?: string;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const [typed, setTyped] = useState("");
+  const ok = !typeToConfirm || typed.trim().toUpperCase() === typeToConfirm.toUpperCase();
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
+        {danger && (
+          <div className="danger-ic">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <path d="M12 9v4M12 17h.01" />
+            </svg>
+          </div>
+        )}
+        <h3 className="h">{title}</h3>
+        <p className="p">{message}</p>
+        {typeToConfirm && (
+          <>
+            <p className="p" style={{ marginBottom: 8, fontSize: 12, color: "var(--ink-3)" }}>
+              Para confirmar, escribe <strong style={{ color: "var(--err)" }}>{typeToConfirm}</strong> abajo:
+            </p>
+            <input className="danger-input" value={typed} onChange={(e) => setTyped(e.target.value)} autoFocus />
+          </>
+        )}
+        <div className="row-act">
+          <button className="btn ghost" onClick={onClose}>{cancelLabel}</button>
+          <button
+            className={`btn ${danger ? "primary" : "dark"}`}
+            style={danger ? { background: "var(--err)", color: "#fff" } : undefined}
+            onClick={ok ? onConfirm : undefined}
+            disabled={!ok}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main section ──────────────────────────────────────────────────────────────
+
+const STATUSES = ["Todos", "Pendiente", "Activo", "Rechazado", "Expirado"];
 
 export default function HeroesSection() {
-  const { token } = useUser();
-  const [heroes, setHeroes] = useState<Hero[]>(MOCK_HEROES);
-  const [busyId, setBusyId] = useState<number | null>(null);
+  const [activeStatus, setActiveStatus] = useState("Todos");
+  const [modal, setModal] = useState<ModalState>(null);
+  const close = () => setModal(null);
 
-  // Modal state
-  const [rejectTarget, setRejectTarget] = useState<number | null>(null);
-  const [banTarget, setBanTarget] = useState<number | null>(null);
-  const [transferTarget, setTransferTarget] = useState<number | null>(null);
+  const items = EVENTS.map((e, i) => ({
+    ...e,
+    status: i === 0 || i === 4 ? "Pendiente" : i === 5 ? "Rechazado" : "Activo",
+  }));
 
-  const activeCount = useMemo(
-    () => heroes.filter((h) => h.status === "APPROVED").length,
-    [heroes],
-  );
-
-  const patch = (id: number, fields: Partial<Hero>) =>
-    setHeroes((list) => list.map((h) => (h.id === id ? { ...h, ...fields } : h)));
-
-  const restore = async (id: number) => {
-    if (!token) return;
-    setBusyId(id);
-    try {
-      const r = await fetch(`/api/heroes/admin/${id}/restore`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!r.ok) throw new Error("No se pudo restaurar la portada");
-      patch(id, { status: "PENDING_MODERATION" });
-      toast.success("Portada restaurada");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al restaurar");
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  const approve = async (id: number) => {
-    if (!token) return;
-    setBusyId(id);
-    try {
-      const r = await fetch(`/api/heroes/admin/${id}/approve`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!r.ok) throw new Error("No se pudo aprobar la portada");
-      patch(id, { status: "APPROVED" });
-      toast.success("Portada aprobada");
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error al aprobar");
-    } finally {
-      setBusyId(null);
-    }
-  };
+  const filtered = activeStatus === "Todos" ? items : items.filter((e) => e.status === activeStatus);
 
   return (
     <>
-      {/* Modals */}
-      {rejectTarget !== null && token && (
-        <RejectModal
-          heroId={rejectTarget}
-          token={token}
-          onClose={() => setRejectTarget(null)}
-          onDone={(id) => patch(id, { status: "REJECTED" })}
-        />
-      )}
-      {banTarget !== null && token && (
-        <BanModal
-          heroId={banTarget}
-          token={token}
-          onClose={() => setBanTarget(null)}
-          onDone={(id) => patch(id, { status: "BANNED" })}
-        />
-      )}
-      {transferTarget !== null && token && (
-        <TransferModal
-          heroId={transferTarget}
-          token={token}
-          onClose={() => setTransferTarget(null)}
-          onDone={() => {/* owner display not tracked in mock */}}
-        />
-      )}
-
-      {/* Panel header with occupancy */}
-      <div className="panel" style={{ marginBottom: 20 }}>
-        <div className="ph">
-          <h3>Portadas</h3>
-          <div className="right-act">
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 12,
-                fontWeight: 700,
-                padding: "5px 14px",
-                borderRadius: 999,
-                background: "color-mix(in oklab, var(--accent) 12%, transparent)",
-                color: "var(--accent)",
-                letterSpacing: ".04em",
-              }}
-            >
-              {activeCount} / 5 portadas activas
-            </span>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="table-wrap">
-          <table className="evt">
-            <thead>
-              <tr>
-                <th>Imagen</th>
-                <th>Evento asociado</th>
-                <th>Organizador</th>
-                <th>Fechas activación</th>
-                <th>Estado</th>
-                <th style={{ textAlign: "right" }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {heroes.map((h) => {
-                const isBusy = busyId === h.id;
-                return (
-                  <tr key={h.id}>
-                    {/* Imagen banner 96x54 */}
-                    <td>
-                      <div
-                        style={{
-                          width: 96,
-                          height: 54,
-                          borderRadius: 6,
-                          overflow: "hidden",
-                          border: "1px solid var(--line)",
-                          background: "var(--surface-2)",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {h.image ? (
-                          <img
-                            src={h.image}
-                            alt=""
-                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                          />
-                        ) : null}
-                      </div>
-                    </td>
-
-                    {/* Evento asociado */}
-                    <td>
-                      <div className="ti">{h.eventoAsociado}</div>
-                    </td>
-
-                    {/* Organizador */}
-                    <td>
-                      <div className="ti">{h.organizador}</div>
-                    </td>
-
-                    {/* Fechas activación */}
-                    <td>
-                      <div className="cell-date">
-                        <div className="d">{fmtDate(h.inicio)} – {fmtDate(h.fin)}</div>
-                      </div>
-                    </td>
-
-                    {/* Estado */}
-                    <td>
-                      <div className={`stat ${statusClass(h.status)}`}>
-                        <span className="dot" />
-                        {statusLabel(h.status)}
-                      </div>
-                    </td>
-
-                    {/* Acciones */}
-                    <td>
-                      <div className="row-acts">
-                        {h.status === "PENDING_MODERATION" && (
-                          <>
-                            <button
-                              className="ok"
-                              disabled={isBusy}
-                              onClick={() => approve(h.id)}
-                            >
-                              Aprobar
-                            </button>
-                            <button
-                              className="bad"
-                              disabled={isBusy}
-                              onClick={() => setRejectTarget(h.id)}
-                            >
-                              Rechazar
-                            </button>
-                          </>
-                        )}
-                        {h.status === "APPROVED" && (
-                          <button
-                            className="bad"
-                            disabled={isBusy}
-                            onClick={() => setBanTarget(h.id)}
-                          >
-                            Banear
-                          </button>
-                        )}
-                        {(h.status === "REJECTED" || h.status === "BANNED") && (
-                          <button
-                            className="ok"
-                            disabled={isBusy}
-                            onClick={() => restore(h.id)}
-                          >
-                            Restaurar
-                          </button>
-                        )}
-                        {/* Siempre: Transferir */}
-                        <button
-                          disabled={isBusy}
-                          onClick={() => setTransferTarget(h.id)}
-                        >
-                          Transferir
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {/* Filter chips + occupancy badge */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+        {STATUSES.map((s) => (
+          <button key={s} className={`sel ${activeStatus === s ? "on" : ""}`} onClick={() => setActiveStatus(s)}>
+            {s}
+          </button>
+        ))}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", padding: "9px 14px", borderRadius: 999, background: "color-mix(in oklab, var(--accent) 12%, transparent)", color: "var(--accent)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-mono)", letterSpacing: ".08em" }}>
+          OCUPACIÓN · 3 / 5
         </div>
       </div>
+
+      {/* Table */}
+      <div className="panel" style={{ padding: 0 }}>
+        <table className="a-table">
+          <thead>
+            <tr>
+              <th>PORTADA</th>
+              <th>ORGANIZADOR</th>
+              <th>FECHA</th>
+              <th>PRECIO</th>
+              <th>ESTADO</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((e) => (
+              <tr key={e.id}>
+                {/* PORTADA: thumb + title + category */}
+                <td>
+                  <div className="cell-evt">
+                    <div className="thumb-sm"><div className={`pic poster-art ${e.art}`} /></div>
+                    <div>
+                      <div className="ti">{e.title}</div>
+                      <div className="su">{e.cat}</div>
+                    </div>
+                  </div>
+                </td>
+
+                {/* ORGANIZADOR */}
+                <td>
+                  <div style={{ fontSize: 13 }}>
+                    Cinépolis Chile
+                    <br />
+                    <span style={{ color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontSize: 11 }}>@cinepolis</span>
+                  </div>
+                </td>
+
+                {/* FECHA */}
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{e.date}</td>
+
+                {/* PRECIO */}
+                <td style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
+                  ${(e.price * 1000).toLocaleString("es-CL")}
+                </td>
+
+                {/* ESTADO */}
+                <td>
+                  <span className={`stat-pill ${e.status === "Pendiente" ? "rev" : e.status === "Rechazado" ? "rej" : e.status === "Expirado" ? "exp" : "pub"}`}>
+                    <span className="dot" />{e.status}
+                  </span>
+                </td>
+
+                {/* ACCIONES */}
+                <td>
+                  <div className="row-act">
+                    {e.status === "Pendiente" && (
+                      <>
+                        <button className="ok" onClick={() => setModal({ type: "approve", item: e })}>✓ Aprobar</button>
+                        <button className="bad" onClick={() => setModal({ type: "reject", item: e })}>✕ Rechazar</button>
+                      </>
+                    )}
+                    {e.status === "Activo" && (
+                      <>
+                        <button onClick={() => {}}>Editar</button>
+                        <button className="bad" onClick={() => setModal({ type: "ban", item: e })}>Banear</button>
+                        <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                      </>
+                    )}
+                    {e.status === "Rechazado" && (
+                      <>
+                        <button onClick={() => setModal({ type: "approve", item: e })}>Re-revisar</button>
+                        <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                      </>
+                    )}
+                    {e.status === "Expirado" && (
+                      <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modals */}
+      {modal?.type === "approve" && (
+        <AdminApproveModal kind="portada" onClose={close} onApprove={() => {}} />
+      )}
+      {modal?.type === "reject" && (
+        <AdminRejectModal kind="portada" onClose={close} onReject={() => {}} />
+      )}
+      {modal?.type === "transfer" && (
+        <AdminTransferModal onClose={close} onTransfer={() => {}} />
+      )}
+      {modal?.type === "ban" && (
+        <ConfirmDialog
+          danger
+          title="¿Banear portada?"
+          message="La portada dejará de ser pública inmediatamente. El organizador será notificado. Puedes restaurarla después si fue un error."
+          typeToConfirm="BANEAR"
+          confirmLabel="Sí, banear"
+          onConfirm={close}
+          onClose={close}
+        />
+      )}
     </>
   );
 }

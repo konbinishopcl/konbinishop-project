@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { PublicationStatus } from '@prisma/client';
 
 export enum SortBy {
   LIKES = 'likes',
@@ -41,4 +42,12 @@ export class QueryEventsDto {
   @IsOptional()
   @IsEnum(SortBy)
   sortBy?: SortBy;
+
+  @ApiPropertyOptional({
+    enum: PublicationStatus,
+    description: 'Filtrar por estado (solo ADMIN/SUPER_ADMIN)',
+  })
+  @IsOptional()
+  @IsEnum(PublicationStatus)
+  status?: PublicationStatus;
 }

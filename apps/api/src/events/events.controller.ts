@@ -57,6 +57,15 @@ export class EventsController {
     return this.events.findMine(user, ctx);
   }
 
+  @Get(':id/admin')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Detalle completo de un evento por ID (ADMIN+)' })
+  findByIdAdmin(@Param('id', ParseIntPipe) id: number) {
+    return this.events.findByIdAdmin(id);
+  }
+
   @Get(':slug')
   @UseGuards(OptionalJwtAuthGuard)
   @ApiBearerAuth()

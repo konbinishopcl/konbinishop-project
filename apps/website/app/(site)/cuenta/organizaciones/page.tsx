@@ -3,21 +3,147 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Building2, ShieldCheck } from "lucide-react";
 import { AccountShell } from "../AccountShell";
 import { useUser } from "@/components/providers";
 
 interface Org {
-  id: number;
-  name: string;
-  handle: string;
-  role: string;
+  id:         number;
+  name:       string | null;
+  handle:     string | null;
+  email:      string;
+  role:       string;
+  isVerified: boolean;
+  avatar:     string | null;
 }
 
+/* ─── Modal crear organización ──────────────────────────────────────── */
+function CreateOrgModal({ token, onClose, onCreated }: {
+  token:     string;
+  onClose:   () => void;
+  onCreated: (org: Org) => void;
+}) {
+  const [name,   setName]   = useState("");
+  const [email,  setEmail]  = useState("");
+  const [handle, setHandle] = useState("");
+  const [busy,   setBusy]   = useState(false);
+
+  // Auto-genera el handle desde el nombre
+  const suggestHandle = (val: string) => {
+    setName(val);
+    if (!handle) {
+      setHandle(
+        val.toLowerCase()
+          .normalize("NFD").replace(/[̀-ͯ]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .slice(0, 30)
+      );
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!name.trim())        { toast.error("El nombre es requerido"); return; }
+    if (!email.includes("@")){ toast.error("Email inválido"); return; }
+    if (handle && !/^[a-z0-9-]{3,30}$/.test(handle)) {
+      toast.error("El handle debe tener 3–30 caracteres (letras minúsculas, números y guiones)");
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await fetch("/api/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), ...(handle ? { handle } : {}) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? "Error al crear organización");
+      toast.success(`Organización "${name}" creada`);
+      onCreated({ id: data.id, name: data.firstname, handle: data.handle, email: data.email, role: "OWNER", isVerified: false, avatar: null });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-lg)", width: "100%", maxWidth: 480, padding: 28 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <h3 style={{ margin: 0, fontFamily: "var(--font-display)", fontSize: 22 }}>Crear organización</h3>
+          <button className="icon-btn" onClick={onClose} style={{ width: 32, height: 32, fontSize: 18 }}>✕</button>
+        </div>
+        <p style={{ color: "var(--ink-3)", fontSize: 13, margin: "0 0 22px" }}>
+          Una organización es una cuenta compartida con miembros, carrito y suscripción independientes.
+        </p>
+
+        <div className="field">
+          <label>Nombre de la organización <span style={{ color: "var(--err)" }}>*</span></label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => suggestHandle(e.target.value)}
+            placeholder="Ej: Productora Konbini"
+            maxLength={100}
+            autoFocus
+          />
+        </div>
+
+        <div className="field">
+          <label>Email de contacto <span style={{ color: "var(--err)" }}>*</span></label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="contacto@miorganizacion.cl"
+          />
+          <div className="help">Este email se usará para comunicaciones con la organización.</div>
+        </div>
+
+        <div className="field">
+          <label>Handle <span style={{ color: "var(--ink-3)", fontWeight: 400 }}>(opcional)</span></label>
+          <div className="input-prefix">
+            <span>@</span>
+            <input
+              type="text"
+              value={handle}
+              onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30))}
+              placeholder="mi-organizacion"
+              maxLength={30}
+            />
+          </div>
+          <div className="help">3–30 caracteres. Solo letras minúsculas, números y guiones.</div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginTop: 24 }}>
+          <button className="btn ghost" onClick={onClose} style={{ flex: 1 }} disabled={busy}>
+            Cancelar
+          </button>
+          <button
+            className="btn primary"
+            onClick={handleSubmit}
+            disabled={busy || !name.trim() || !email.trim()}
+            style={{ flex: 2 }}
+          >
+            {busy ? "Creando…" : "Crear organización →"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Page ───────────────────────────────────────────────────────────── */
 export default function OrganizacionesPage() {
   const { user, token, ready } = useUser();
   const router = useRouter();
-  const [orgs, setOrgs] = useState<Org[]>([]);
+  const [orgs,    setOrgs]    = useState<Org[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modal,   setModal]   = useState(false);
 
   useEffect(() => {
     if (ready && !user) {
@@ -29,7 +155,7 @@ export default function OrganizacionesPage() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((data) => setOrgs(Array.isArray(data) ? data : data.organizations ?? []))
+      .then((data) => setOrgs(Array.isArray(data) ? data : []))
       .catch(() => setOrgs([]))
       .finally(() => setLoading(false));
   }, [ready, user, token, router]);
@@ -42,41 +168,66 @@ export default function OrganizacionesPage() {
     );
   }
 
-  const handleCreate = async () => {
-    toast.info("Próximamente: Crear organización");
+  const ROLE_LABEL: Record<string, string> = {
+    OWNER: "Propietario",
+    ADMIN: "Administrador",
+    MEMBER: "Miembro",
   };
 
   return (
     <AccountShell>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 4 }}>
         <h1>Mis organizaciones</h1>
-        <button className="btn primary" onClick={handleCreate}>＋ Crear organización</button>
+        <button className="btn primary" onClick={() => setModal(true)}>＋ Crear organización</button>
       </div>
       <p className="lead">Cuentas compartidas con miembros, carrito y suscripción independientes.</p>
 
       {loading ? (
-        <div className="acc-section" style={{ color: "var(--ink-3)", fontSize: 14 }}>Cargando organizaciones…</div>
+        <div className="acc-section" style={{ color: "var(--ink-3)", fontSize: 14 }}>
+          Cargando organizaciones…
+        </div>
       ) : orgs.length === 0 ? (
-        <div className="acc-section">
-          <div style={{ color: "var(--ink-3)", fontSize: 14, textAlign: "center", padding: "24px 0" }}>
-            No perteneces a ninguna organización aún.
+        <div className="acc-section" style={{ textAlign: "center", padding: "40px 28px" }}>
+          <Building2 size={40} style={{ opacity: .2, marginBottom: 12 }} />
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>Aún no tienes organizaciones</div>
+          <div style={{ color: "var(--ink-3)", fontSize: 14, marginBottom: 20 }}>
+            Crea una para gestionar eventos y miembros de forma independiente.
           </div>
+          <button className="btn primary" onClick={() => setModal(true)}>＋ Crear organización</button>
         </div>
       ) : (
         <div className="acc-section">
           {orgs.map((o) => (
             <div key={o.id} className="acc-list-row">
-              <div className="av" style={{ background: "linear-gradient(135deg, var(--accent-3), var(--accent))" }}>
-                {o.name?.[0] ?? "O"}
+              <div className="av" style={{ background: "linear-gradient(135deg, var(--accent-3), var(--accent))", fontSize: 16 }}>
+                {o.name?.[0]?.toUpperCase() ?? "O"}
               </div>
               <div className="main">
-                <div className="t">{o.name}</div>
-                <div className="m">@{o.handle} · {o.role}</div>
+                <div className="t" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {o.name ?? "Sin nombre"}
+                  {o.isVerified && <ShieldCheck size={14} style={{ color: "var(--accent)" }} />}
+                </div>
+                <div className="m">
+                  {o.handle ? `@${o.handle} · ` : ""}{ROLE_LABEL[o.role] ?? o.role}
+                </div>
               </div>
-              <button className="btn ghost">Entrar</button>
+              <button className="btn ghost" onClick={() => router.push(`/organizacion/${o.handle ?? o.id}`)}>
+                Entrar
+              </button>
             </div>
           ))}
         </div>
+      )}
+
+      {modal && token && (
+        <CreateOrgModal
+          token={token}
+          onClose={() => setModal(false)}
+          onCreated={(org) => {
+            setOrgs((prev) => [...prev, org]);
+            setModal(false);
+          }}
+        />
       )}
     </AccountShell>
   );

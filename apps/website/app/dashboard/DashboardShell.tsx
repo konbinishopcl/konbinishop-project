@@ -3,55 +3,94 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import {
+  LayoutDashboard,
+  CalendarDays,
+  Megaphone,
+  Layers,
+  FileText,
+  CreditCard,
+  Repeat2,
+  Mail,
+  Camera,
+  Clapperboard,
+  Users,
+  Tag,
+  Tags,
+  Globe,
+  Map,
+  MapPin,
+  HelpCircle,
+  UserCog,
+  BarChart2,
+  ScrollText,
+  Settings,
+  ChevronRight,
+  type LucideIcon,
+} from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
+import { UserMenu } from "@/components/UserMenu";
 import { useUser } from "@/components/providers";
 
-const ADMIN_NAV = [
+type NavItem = {
+  label:     string;
+  ic:        LucideIcon;
+  href:      string;
+  superOnly?: boolean;
+};
+
+type NavGroup = {
+  grp:            string;
+  superAdminOnly?: boolean;
+  items:          NavItem[];
+};
+
+const ADMIN_NAV: NavGroup[] = [
   {
     grp: "INICIO",
     items: [
-      { label: "Vista general", ic: "◉", href: "/dashboard" },
+      { label: "Vista general", ic: LayoutDashboard, href: "/dashboard" },
     ],
   },
   {
     grp: "MODERACIÓN",
     items: [
-      { label: "Eventos",   ic: "▦", href: "/dashboard/events" },
-      { label: "Avisos",    ic: "▰", href: "/dashboard/spots" },
-      { label: "Portadas",  ic: "▶", href: "/dashboard/heroes" },
-      { label: "Artículos", ic: "▤", href: "/dashboard/articles" },
+      { label: "Eventos",   ic: CalendarDays,  href: "/dashboard/events" },
+      { label: "Avisos",    ic: Megaphone,     href: "/dashboard/spots" },
+      { label: "Portadas",  ic: Layers,        href: "/dashboard/heroes" },
+      { label: "Artículos", ic: FileText,      href: "/dashboard/articles" },
     ],
   },
   {
     grp: "COMERCIAL",
     items: [
-      { label: "Pagos & ventas",    ic: "$", href: "/dashboard/payments" },
-      { label: "Suscripciones",     ic: "★", href: "/dashboard/subscriptions" },
-      { label: "Contacto",          ic: "✉", href: "/dashboard/contact" },
-      { label: "Fotografía",        ic: "◐", href: "/dashboard/photography" },
-      { label: "Creadores",         ic: "◑", href: "/dashboard/content-creators" },
-      { label: "CRM",               ic: "▣", href: "/dashboard/crm" },
+      { label: "Pagos & ventas",  ic: CreditCard,   href: "/dashboard/payments" },
+      { label: "Suscripciones",   ic: Repeat2,      href: "/dashboard/subscriptions" },
+      { label: "Contacto",        ic: Mail,         href: "/dashboard/contact" },
+      { label: "Fotografía",      ic: Camera,       href: "/dashboard/photography" },
+      { label: "Creadores",       ic: Clapperboard, href: "/dashboard/content-creators" },
+      { label: "CRM",             ic: Users,        href: "/dashboard/crm" },
     ],
   },
   {
     grp: "MANTENEDORES",
     items: [
-      { label: "Categorías",        ic: "#", href: "/dashboard/categories" },
-      { label: "Tags",              ic: "#", href: "/dashboard/tags" },
-      { label: "Países",            ic: "⊕", href: "/dashboard/countries" },
-      { label: "Divisiones",        ic: "⊕", href: "/dashboard/states" },
-      { label: "Ciudades",          ic: "⊕", href: "/dashboard/cities" },
-      { label: "FAQ",               ic: "?", href: "/dashboard/faq" },
+      { label: "Categorías", ic: Tag,        href: "/dashboard/categories" },
+      { label: "Tags",       ic: Tags,       href: "/dashboard/tags" },
+      { label: "Países",     ic: Globe,      href: "/dashboard/countries" },
+      { label: "Divisiones", ic: Map,        href: "/dashboard/states" },
+      { label: "Ciudades",   ic: MapPin,     href: "/dashboard/cities" },
+      { label: "FAQ",        ic: HelpCircle, href: "/dashboard/faq" },
     ],
   },
   {
     grp: "SISTEMA",
     superAdminOnly: true,
     items: [
-      { label: "Usuarios",          ic: "◎", href: "/dashboard/users",    superOnly: true },
-      { label: "Reportes",          ic: "△", href: "/dashboard/reports" },
-      { label: "Logs & auditoría",  ic: "≡", href: "/dashboard/logs" },
-      { label: "Configuración",     ic: "⚙", href: "/dashboard/settings" },
+      { label: "Usuarios",         ic: UserCog,    href: "/dashboard/users",   superOnly: true },
+      { label: "Reportes",         ic: BarChart2,  href: "/dashboard/reports" },
+      { label: "Logs & auditoría", ic: ScrollText, href: "/dashboard/logs" },
+      { label: "Configuración",    ic: Settings,   href: "/dashboard/settings" },
     ],
   },
 ];
@@ -75,9 +114,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     return init;
   });
 
-  const allItems = ADMIN_NAV.flatMap((g) => g.items);
-  const cur = allItems.find((i) => isActive(i.href)) ?? ADMIN_NAV[0].items[0];
+  const SUB_PAGES: Record<string, { label: string; crumb: string }> = {
+    "/dashboard/settings/terms":   { label: "Términos y condiciones", crumb: "CONFIGURACIÓN / TÉRMINOS" },
+    "/dashboard/settings/privacy": { label: "Política de privacidad", crumb: "CONFIGURACIÓN / PRIVACIDAD" },
+    "/dashboard/settings/cookies": { label: "Política de cookies",    crumb: "CONFIGURACIÓN / COOKIES" },
+    "/dashboard/events/new":       { label: "Crear evento",           crumb: "EVENTOS / NUEVO" },
+  };
 
+  const editMatch = pathname.match(/^\/dashboard\/events\/(\d+)\/edit$/);
+  if (editMatch) {
+    SUB_PAGES[pathname] = { label: "Editar evento", crumb: "EVENTOS / EDITAR" };
+  }
+
+  const allItems  = ADMIN_NAV.flatMap((g) => g.items);
+  const subPage   = SUB_PAGES[pathname];
+  const cur       = subPage ?? allItems.find((i) => isActive(i.href)) ?? ADMIN_NAV[0].items[0];
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
   const initials = user
@@ -100,23 +151,26 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 className={`grp ${openGroups[g.grp] ? "open" : ""}`}
                 onClick={() => setOpenGroups((o) => ({ ...o, [g.grp]: !o[g.grp] }))}
               >
-                <span className="chev">▶</span>
+                <ChevronRight size={12} className="chev" />
                 <span>{g.grp}</span>
                 <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: 10, opacity: 0.5 }}>
                   {g.items.length}
                 </span>
               </button>
               <div className={`grp-items ${!openGroups[g.grp] ? "closed" : ""}`}>
-                {g.items.map((i) => (
-                  <Link
-                    key={i.href}
-                    href={i.href}
-                    className={`nav-item${isActive(i.href) ? " on" : ""}${"superOnly" in i && i.superOnly ? " super" : ""}`}
-                  >
-                    <span style={{ width: 18, textAlign: "center", opacity: 0.7 }}>{i.ic}</span>
-                    <span>{i.label}</span>
-                  </Link>
-                ))}
+                {g.items.map((i) => {
+                  const Icon = i.ic;
+                  return (
+                    <Link
+                      key={i.href}
+                      href={i.href}
+                      className={`nav-item${isActive(i.href) ? " on" : ""}${i.superOnly ? " super" : ""}`}
+                    >
+                      <Icon size={15} style={{ flexShrink: 0, opacity: 0.7 }} />
+                      <span>{i.label}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           ))}
@@ -137,10 +191,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             <div className="crumb">DASHBOARD / {cur.label.toUpperCase()}</div>
             <h1>{cur.label}</h1>
           </div>
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <Link className="icon-btn" href="/" title="Ir al sitio">↗</Link>
-            <div className="avatar" style={{ width: 36, height: 36, fontSize: 12 }}>{initials}</div>
-          </div>
+          <UserMenu size={36} />
         </div>
         <div className="admin-body">
           {children}

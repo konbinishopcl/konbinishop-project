@@ -37,7 +37,16 @@ const EVENT_INCLUDE = {
 // Para vistas de admin: además del contenido, el organizador.
 const EVENT_INCLUDE_ADMIN = {
   ...EVENT_INCLUDE,
-  owner: { select: { id: true, firstname: true, lastname: true, email: true } },
+  owner: {
+    select: {
+      id: true,
+      firstname: true,
+      lastname: true,
+      email: true,
+      handle: true,
+      profile: { select: { displayName: true } },
+    },
+  },
 } satisfies Prisma.EventInclude;
 
 @Injectable()
@@ -76,6 +85,13 @@ export class EventsService {
         status: PublicationStatus.APPROVED,
         OR: [{ expirationDate: null }, { expirationDate: { gte: new Date() } }],
       }),
+      // Admin: muestra todo por defecto; filtra por estado si se pide.
+      // Solo excluye PENDING_PAYMENT (flujo de pago en curso, sin valor para moderación).
+      ...(isAdmin && query.status
+        ? { status: query.status }
+        : isAdmin
+          ? { status: { not: PublicationStatus.PENDING_PAYMENT } }
+          : {}),
       ...(query.category ? { category: { slug: query.category } } : {}),
       ...(query.state ? { city: { state: { slug: query.state } } } : {}),
       ...textFilter,
@@ -130,6 +146,16 @@ export class EventsService {
       });
       return { ...event, isSaved: saved !== null };
     }
+    return event;
+  }
+
+  /** Detalle de un evento por ID, accesible solo para ADMIN+ (incluye owner). */
+  async findByIdAdmin(id: number) {
+    const event = await this.prisma.event.findUnique({
+      where: { id },
+      include: EVENT_INCLUDE_ADMIN,
+    });
+    if (!event) throw new NotFoundException('Evento no encontrado');
     return event;
   }
 

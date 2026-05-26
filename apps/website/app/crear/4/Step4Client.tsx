@@ -128,7 +128,7 @@ export function Step4Client() {
 
       await api.createEvent(payload, token);
       resetForm();
-      router.push("/upsell");
+      router.push("/crear/upsell");
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "No se pudo publicar el evento");
     } finally {

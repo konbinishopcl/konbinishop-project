@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Poster } from "@/components/Poster";
 import { EventCard } from "@/components/EventCard";
 import { Ic } from "@/components/icons";
 import { useUser } from "@/components/providers";
-import { imageUrl, withUtm, toEventItem, type ApiEvent } from "@/lib/api";
+import { imageUrl, withUtm, type ApiEvent } from "@/lib/api";
 import type { EventItem } from "@/lib/data";
 
 function clp(n: number): string {
@@ -105,7 +104,13 @@ export function EventView({ event, related }: Props) {
         <div className="grain" />
         <div className="event-hero-body">
           <div className="event-poster-lg">
-            <Poster e={toEventItem(event)} />
+            {(event.poster ?? event.banner) && (
+              <img
+                src={imageUrl(event.poster ?? event.banner)}
+                alt=""
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            )}
           </div>
           <div style={{ flex: 1 }}>
             <div className="row" style={{ gap: 10 }}>

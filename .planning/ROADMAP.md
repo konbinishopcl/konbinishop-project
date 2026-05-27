@@ -50,7 +50,7 @@
 
 ### Taxonomía y modelo de datos
 
-- [ ] Phase 18: Separar taxonomía eventos/artículos (0/4 plans) — Crear EventCategory, EventTag, ArticleCategory, ArticleTag independientes; eliminar Category y Tag compartidos; migrar datos y actualizar toda la capa API + frontend
+- [x] Phase 18: Separar taxonomía eventos/artículos (0/4 plans) — Crear EventCategory, EventTag, ArticleCategory, ArticleTag independientes; eliminar Category y Tag compartidos; migrar datos y actualizar toda la capa API + frontend (completed 2026-05-27)
 
 ### Phase 17: Articles CRUD completo — CRUD de noticias en dashboard admin + cuenta organizador: formulario, permisos por rol, listado, moderación
 
@@ -77,14 +77,14 @@ Plans:
 
 **Depends on:** Phase 17 (Articles CRUD), Phase 1 (API taxonomías original)
 
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 
 - [x] 18-01-PLAN.md — Schema Prisma + migración aditiva sch08 con copia de datos preservando IDs (wave 1)
 - [x] 18-02-PLAN.md — Backend API split: endpoints /event-categories /event-tags /article-categories /article-tags + OrdersService pricing migrado + EventsService/HeroesService/ArticlesService usando los nuevos modelos (wave 2)
 - [x] 18-03-PLAN.md — Frontend split: api.ts tipos + Header/sitemap/CategoryView/SearchView/EventForm/ArticleForm/Step1Client (wave 3)
-- [ ] 18-04-PLAN.md — Dashboard CategoriesSection real + cleanup: drop tablas legacy con migración sch09, eliminar referencias `category` y `tags` (wave 4)
+- [x] 18-04-PLAN.md — Dashboard CategoriesSection real + cleanup: drop tablas legacy con migración sch09, eliminar referencias `category` y `tags` (wave 4)
 
 ---
 

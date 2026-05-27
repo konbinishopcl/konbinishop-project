@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-27T22:05:53.892Z"
+last_updated: "2026-05-27T22:32:50.221Z"
 progress:
   total_phases: 2
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-27T22:05:53.890Z
+**Last session:** 2026-05-27T22:32:50.219Z
 
 ## Phase Summary
 
@@ -154,6 +154,8 @@ administrador quedan visibles al público.
 - [Phase 18-03]: api.categories() mantiene alias hacia /event-categories — compatibilidad temporal hasta Phase 19+
 - [Phase 18-03]: Step4Client (no Step1Client) enviaba categoryIds al backend — fix corregido a eventCategoryId singular
 - [Phase 18-03]: ArticleForm usa /api/article-tags y envía articleTagIds al backend — migración completa desde /api/tags
+- [Phase 18]: Endpoints /categories y /tags eliminados definitivamente (no mantenidos como aliases permanentes)
+- [Phase 18]: Migración sch09_drop_legacy_taxonomy creada manualmente con prisma migrate resolve --applied por restricción de entorno non-interactive
 
 ## Quick Tasks Completed
 

@@ -33,28 +33,20 @@ No se introduce shadcn ni ninguna librería de formulario en esta fase.
 
 ## Spacing Scale
 
-El proyecto usa una escala derivada de 4-point con excepciones legacy heredadas de `globals.css`. No se introduce una nueva escala en esta fase.
+El proyecto usa una escala de 4-point. No se introduce una nueva escala en esta fase.
 
 | Token | Value | Usage en el formulario |
 |-------|-------|------------------------|
 | xs | 4px | Gap entre badge de número y texto del título de sección |
 | sm | 8px | Gap entre label y help text; gap entre botones del footer |
+| sm2 | 12px | Padding badge de número de sección (`padding: 4px 8px` en `SectionHead`) |
 | md | 16px | Espaciado por defecto de `.field`; gap de `.grid-2` |
 | lg | 24px | Padding lateral de `.panel` |
 | xl | 32px | `paddingBottom` del contenedor del form |
 | 2xl | 48px | — |
 | 3xl | 64px | — |
 
-Excepciones legacy (values in CSS not on 8-point grid — NO cambiar, heredados):
-
-| Value | Source | Donde aparece |
-|-------|--------|---------------|
-| 10px | `.gap` en filas de upload/social | `gap: 10` en filas de arrays dinámicos |
-| 12px | Padding badge de número de sección | `padding: "4px 8px"` en `SectionHead` |
-| 14px | `.gap` de `.grid-2`/`.grid-3` | `gap: 14px` en grids del form |
-| 18px | `.padding` vertical de `.form-foot` | `.form-foot { padding: 18px 0 }` |
-| 22px | Margen entre paneles | `.panel { margin-bottom: 18px }`, usado ~22px en el contenedor |
-| 100px | `paddingBottom` del scroll container | Espacio bajo el último panel para que el footer no tape |
+> **CSS legacy values (read-only, out of scope):** The following values exist in `globals.css` and MUST NOT be modified — they are not part of the spacing contract for this phase: 10px (gallery gap, price-row gap), 14px (grid-2/grid-3 gap, input-prefix padding), 18px (form-foot vertical padding, panel margin-bottom), 22px (container margin-bottom). Use only the 4-point scale above for any new spacing decisions.
 
 ---
 
@@ -66,8 +58,12 @@ Cuatro roles en el formulario (reducidos desde todos los tamaños del sistema):
 |------|--------|------|--------|-------------|-----|
 | Page H1 | Space Grotesk (`--font-display`) | 24px | 700 | 1.2 | "Crear evento" / "Editar evento" — título de página |
 | Section title | Space Grotesk (`--font-display`) | 16px | 700 | 1.2 | "01 Información básica" etc. |
-| Body / label | Inter (`--font-body`) | 13px | 500 | 1.5 | Labels de campo, help text, texto de footer |
+| Body / label | Inter (`--font-body`) | 13px | 600 | 1.5 | Labels de campo, help text, texto de footer |
 | Button | Inter (`--font-body`) | 14px | 600 | — | Todos los `.btn` |
+
+Weights declared: **600** (body/label/button) + **700** (display/section titles). Maximum 2 weights.
+
+Note: `globals.css` line 310 declares `.field label { font-weight: 500 }` — this existing rule is read-only and is NOT modified in this phase. New label elements added in this phase use weight 600 to match the 2-weight contract.
 
 Eyebrow / mono (11px, JetBrains Mono, weight 400, tracking `.15em`) — aparece solo en el badge de número de sección (`SectionHead`). No es un rol tipográfico de cuerpo.
 
@@ -234,14 +230,14 @@ El footer usa la clase CSS `.form-foot` existente — no recrear con `position: 
 | `socials` | `"+ Agregar otra red social"` | 1 | `row` inline + `.add-line` |
 | `videos` | `"+ Agregar otro video"` | 1 | `row` inline + `.add-line` |
 
-Botón × de eliminación: solo visible cuando `array.length > 1`. Clase `.icon-btn`.
+Botón × de eliminación: solo visible cuando `array.length > 1`. Clase `.icon-btn`. Accessibility: añadir `aria-label="Eliminar"` en todos los botones × icon-only para que los lectores de pantalla anuncien la acción.
 
 ### Precio — layout de tarifa
 
 Usa `.price-row` (`grid-template-columns: 1fr 200px 40px`):
 - Col 1 (1fr): campo `.field` "Nombre de tarifa" (placeholder: "Ej: Entrada General, VIP, Estudiante")
 - Col 2 (200px): campo `.field` + `.input-prefix` con prefijo `"$"` y sufijo `"CLP"`
-- Col 3 (40px): `.icon-btn` con icono close (visible solo si `prices.length > 1`)
+- Col 3 (40px): `.icon-btn` con icono close (visible solo si `prices.length > 1`) + `aria-label="Eliminar"`
 
 ### Imágenes — upload-box
 

@@ -250,6 +250,7 @@ async function main() {
       content:
         'Las convenciones de anime son el punto de encuentro de la cultura otaku en Chile. ' +
         'En esta guía repasamos cómo prepararte, qué llevar y cómo aprovechar al máximo el evento.',
+      status: 'APPROVED',
       tags: { connect: [{ id: cosplay.id }, { id: familiar.id }] },
     },
   });
@@ -261,6 +262,7 @@ async function main() {
       content:
         'La escena indie santiaguina vive en salas íntimas. Recorremos los espacios donde ' +
         'las bandas emergentes dan sus primeros conciertos.',
+      status: 'APPROVED',
       tags: { connect: [{ id: indie.id }, { id: rock.id }] },
     },
   });
@@ -272,6 +274,7 @@ async function main() {
       content:
         'No siempre hay que pagar para pasarlo bien. Esta es nuestra selección de panoramas ' +
         'gratuitos y familiares a lo largo del país.',
+      status: 'APPROVED',
       tags: { connect: [{ id: gratis.id }, { id: familiar.id }] },
     },
   });
@@ -320,6 +323,7 @@ async function main() {
         linkType: 'URL',
         linkValue: 'https://example.cl/arriendo-de-locales',
         expirationDate: new Date('2026-12-31'),
+        status: 'APPROVED',
         userId: organizer.id,
       },
       {
@@ -327,6 +331,7 @@ async function main() {
         linkType: 'PHONE',
         linkValue: '+56912345678',
         expirationDate: new Date('2026-11-30'),
+        status: 'APPROVED',
         userId: organizer.id,
       },
       {
@@ -334,6 +339,7 @@ async function main() {
         image: 'https://placehold.co/600x300/png',
         linkType: 'EMAIL',
         linkValue: 'ventas@example.cl',
+        status: 'APPROVED',
         userId: organizer.id,
       },
     ],

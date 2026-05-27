@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { imageUrl } from "@/lib/api";
+import { EventCard } from "@/components/EventCard";
+import type { EventItem } from "@/lib/data";
 import type { ApiArticle, ApiArticleEvent } from "../page";
 
 function formatDate(iso: string): string {
@@ -33,6 +35,20 @@ function authorInitials(name: string): string {
     .slice(0, 2)
     .join("")
     .toUpperCase() || "K";
+}
+
+/** Convierte ApiArticleEvent al shape EventItem que espera EventCard/Poster */
+function toEventItem(e: ApiArticleEvent): EventItem {
+  return {
+    id: e.id,
+    slug: e.slug,
+    title: e.title,
+    cat: e.category?.name ?? "Evento",
+    image: imageUrl(e.poster ?? e.banner ?? ""),
+    date: formatEventDate(e.dates),
+    place: e.city?.name ?? "",
+    price: 0,
+  };
 }
 
 // Markdown sencillo → HTML (párrafos, h2, blockquote, bold, italic)
@@ -175,7 +191,7 @@ export function ArticleView({ article, related, linkedEvent, relatedEvents }: Ar
 
         {/* ─── Sidebar derecho: evento vinculado + eventos relacionados ─── */}
         <aside className="art-side">
-          {/* EVENTO VINCULADO (si existe) */}
+          {/* EVENTO VINCULADO — usa EventCard igual que el diseño */}
           {linkedEvent && (
             <div>
               <div className="art-side-title">
@@ -183,97 +199,59 @@ export function ArticleView({ article, related, linkedEvent, relatedEvents }: Ar
                 <h4 style={{ margin: "8px 0 4px" }}>Asiste al evento</h4>
                 <div className="sub">El organizador encargó este artículo a Konbini.</div>
               </div>
-              <div
-                className="art-side featured-evt"
-                style={{ marginTop: 14, cursor: "pointer" }}
-                onClick={() => router.push(`/evento/${linkedEvent.slug}`)}
-              >
-                {linkedEvent.poster || linkedEvent.banner ? (
-                  <img
-                    src={imageUrl(linkedEvent.poster ?? linkedEvent.banner ?? "")}
-                    alt={linkedEvent.title}
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                ) : (
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a0e1e,#3a1840)" }} />
-                )}
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "linear-gradient(to top, rgba(0,0,0,.85) 40%, transparent)",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-end",
-                    padding: "20px 18px",
-                    gap: 4,
-                  }}
-                >
-                  {linkedEvent.category && (
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".14em", color: "var(--accent)", fontWeight: 700 }}>
-                      {linkedEvent.category.name.toUpperCase()}
-                    </div>
-                  )}
-                  <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16, lineHeight: 1.2, color: "#fff" }}>
-                    {linkedEvent.title}
-                  </div>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "rgba(255,255,255,.65)", letterSpacing: ".06em" }}>
-                    {formatEventDate(linkedEvent.dates)}
-                    {linkedEvent.city?.name ? ` · ${linkedEvent.city.name}` : ""}
-                  </div>
-                </div>
+              <div style={{ cursor: "pointer", marginTop: 14 }}>
+                <EventCard e={toEventItem(linkedEvent)} />
               </div>
             </div>
           )}
 
           {/* EVENTOS RELACIONADOS */}
-          <div className="blk">
+          <div
+            className="blk"
+            style={{
+              padding: linkedEvent ? "22px" : "0",
+              background: linkedEvent ? "var(--surface)" : "transparent",
+              border: linkedEvent ? "1px solid var(--line)" : "0",
+            }}
+          >
             <h4>Eventos relacionados</h4>
-            <div className="sub">Próximos · misma categoría</div>
-
-            {relatedEvents.length > 0 ? (
-              <div style={{ marginTop: 8 }}>
-                {relatedEvents.map((e) => (
-                  <div
-                    key={e.id}
-                    className="mini-evt"
-                    onClick={() => router.push(`/evento/${e.slug}`)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="mt">
-                      {e.poster || e.banner ? (
-                        <img
-                          src={imageUrl(e.poster ?? e.banner ?? "")}
-                          alt={e.title}
-                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                        />
-                      ) : (
-                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a0e1e,#3a1840)" }} />
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="nm">{e.title}</div>
-                      <div className="dt">
-                        {formatEventDate(e.dates)}
-                        {e.city?.name ? ` · ${e.city.name}` : ""}
-                      </div>
-                    </div>
-                    <span style={{ color: "var(--ink-3)" }}>→</span>
+            <div className="sub">Misma categoría · próximos</div>
+            <div style={{ marginTop: 8 }}>
+              {relatedEvents.map((e) => (
+                <div
+                  key={e.id}
+                  className="mini-evt"
+                  onClick={() => router.push(`/evento/${e.slug}`)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <div className="mt">
+                    {e.poster || e.banner ? (
+                      <img
+                        src={imageUrl(e.poster ?? e.banner ?? "")}
+                        alt={e.title}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a0e1e,#3a1840)" }} />
+                    )}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ color: "var(--ink-3)", fontSize: 13, margin: "12px 0 0" }}>
-                No hay eventos próximos.
-              </p>
-            )}
-
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="nm">{e.title}</div>
+                    <div className="dt">
+                      {formatEventDate(e.dates)}
+                      {e.city?.name ? ` · ${e.city.name}` : ""}
+                    </div>
+                  </div>
+                  <span style={{ color: "var(--ink-3)" }}>→</span>
+                </div>
+              ))}
+            </div>
             <button
               className="btn ghost block"
               style={{ marginTop: 14 }}
               onClick={() => router.push("/")}
             >
-              Ver más eventos →
+              Ver más eventos de {cat} →
             </button>
           </div>
         </aside>

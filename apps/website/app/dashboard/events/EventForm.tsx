@@ -436,6 +436,338 @@ export function EventForm({ mode, initial }: Props) {
     }
   }
 
-  // Temporary render (task 2 replaces this with panels + footer)
-  return <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: 100 }}>TODO: panels + footer</div>;
+  return (
+    <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: 100 }}>
+
+      {/* Back link */}
+      <Link href="/dashboard/events" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginBottom: 24 }}>
+        ◀ Volver a eventos
+      </Link>
+
+      {/* Page title */}
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 24, margin: 0 }}>
+          {mode === "create" ? "Crear evento" : "Editar evento"}
+        </h1>
+        <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "6px 0 0" }}>
+          {mode === "create"
+            ? "Creando como admin · sin checkout ni upsell."
+            : `Editando evento #${initial?.id} · no se notifica al organizador.`}
+        </p>
+      </div>
+
+      {/* ── Panel 01 — Información básica ─────────────────────────────────── */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <SectionHead n="01" title="Información básica" />
+
+        <div className="grid-2">
+          <div className="field">
+            <label>Título del evento <span style={{ color: "var(--err)" }}>*</span></label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => set("title", e.target.value)}
+              placeholder="Ej: Anime Crunchyroll Fest 2025"
+            />
+          </div>
+          <div className="field">
+            <label>Empresa organizadora (pública)</label>
+            <input
+              type="text"
+              value={form.company}
+              onChange={(e) => set("company", e.target.value)}
+              placeholder="Ej: Productora 8U, Cinépolis Chile"
+            />
+          </div>
+        </div>
+
+        <div className="grid-2">
+          <div className="field">
+            <label>Categoría</label>
+            <select value={form.categoryId} onChange={(e) => set("categoryId", e.target.value)}>
+              <option value="">Sin categoría</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label>URL de entradas (externa)</label>
+            <input
+              type="url"
+              value={form.ticketUrl}
+              onChange={(e) => set("ticketUrl", e.target.value)}
+              placeholder="https://ticketmaster.com/..."
+            />
+          </div>
+        </div>
+
+        <div className="field">
+          <label>Descripción corta <span style={{ color: "var(--err)" }}>*</span></label>
+          <textarea
+            rows={3}
+            value={form.description}
+            onChange={(e) => set("description", e.target.value)}
+            placeholder="Aparece en la card del evento. Mínimo 10 caracteres al publicar."
+          />
+        </div>
+
+        <div className="field" style={{ marginBottom: 0 }}>
+          <label>Sobre el evento (texto completo)</label>
+          <textarea
+            rows={6}
+            value={form.about}
+            onChange={(e) => set("about", e.target.value)}
+            placeholder="Descripción larga que aparece en el detalle del evento."
+          />
+        </div>
+      </div>
+
+      {/* ── Panel 02 — Precio ──────────────────────────────────────────────── */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <SectionHead n="02" title="Precio" />
+
+        <div style={{ marginBottom: form.isFree ? 0 : 14 }}>
+          <Checkbox
+            checked={form.isFree}
+            onChange={() => set("isFree", !form.isFree)}
+            label="Evento gratuito"
+          />
+        </div>
+
+        {!form.isFree && (
+          <div style={{ marginTop: 16 }}>
+            {form.prices.map((p, i) => (
+              <div className="price-row" key={i}>
+                <div className="field" style={{ margin: 0 }}>
+                  <label>Nombre de tarifa</label>
+                  <input type="text" placeholder="Ej: General, VIP, Estudiante" value={p.name}
+                         onChange={(e) => updatePrice(i, "name", e.target.value)} />
+                </div>
+                <div className="field" style={{ margin: 0 }}>
+                  <label>Precio</label>
+                  <div className="input-prefix">
+                    <span>$</span>
+                    <input type="number" min="0" placeholder="0" value={p.amount}
+                           onChange={(e) => updatePrice(i, "amount", e.target.value)} />
+                    <span className="suffix">CLP</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "end" }}>
+                  {form.prices.length > 1 && (
+                    <button type="button" className="icon-btn" aria-label="Eliminar" onClick={() => removePrice(i)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+            <button type="button" className="add-line" onClick={addPrice}>+ Agregar otra tarifa</button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Panel 03 — Fechas, horario y ubicación ────────────────────────── */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <SectionHead n="03" title="Fechas, horario y ubicación" />
+
+        {form.dates.map((d, i) => (
+          <div key={i} style={{ marginBottom: 14 }}>
+            <div className="grid-3">
+              <div className="field" style={{ margin: 0 }}>
+                <label>Fecha {i > 0 ? `(día ${i + 1})` : ""}</label>
+                <input type="date" value={d.date} onChange={(e) => updateDate(i, "date", e.target.value)} />
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Hora inicio</label>
+                <input type="time" value={d.startTime} onChange={(e) => updateDate(i, "startTime", e.target.value)} />
+              </div>
+              <div className="field" style={{ margin: 0 }}>
+                <label>Hora término</label>
+                <input type="time" value={d.endTime} onChange={(e) => updateDate(i, "endTime", e.target.value)} />
+              </div>
+            </div>
+            {form.dates.length > 1 && (
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6 }}>
+                <button type="button" className="icon-btn" aria-label="Eliminar" onClick={() => removeDate(i)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+        <button type="button" className="add-line" onClick={addDate} style={{ marginBottom: 16 }}>+ Agregar otro día</button>
+
+        <div className="grid-3">
+          <div className="field">
+            <label>País</label>
+            <select
+              value={form.countrySlug}
+              onChange={(e) => {
+                set("countrySlug", e.target.value);
+                set("stateSlug", "");
+                set("cityId", "");
+              }}
+            >
+              <option value="">Selecciona país…</option>
+              {countries.map((c) => (
+                <option key={c.id} value={c.slug}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label>Región</label>
+            <select
+              value={form.stateSlug}
+              onChange={(e) => { set("stateSlug", e.target.value); set("cityId", ""); }}
+              disabled={!form.countrySlug || states.length === 0}
+            >
+              <option value="">Selecciona región…</option>
+              {states.map((s) => (
+                <option key={s.id} value={s.slug}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label>Ciudad</label>
+            <select
+              value={form.cityId}
+              onChange={(e) => set("cityId", e.target.value)}
+              disabled={!form.stateSlug || cities.length === 0}
+            >
+              <option value="">Selecciona ciudad…</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="grid-2" style={{ marginBottom: 0 }}>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label>Dirección <span style={{ color: "var(--err)" }}>*</span></label>
+            <input
+              type="text"
+              value={form.address}
+              onChange={(e) => set("address", e.target.value)}
+              placeholder="Av. Providencia 1234, Providencia, Santiago"
+            />
+          </div>
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label>Número / Piso</label>
+            <input
+              type="text"
+              value={form.addressNumber}
+              onChange={(e) => set("addressNumber", e.target.value)}
+              placeholder="Of. 201, piso 3…"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Panel 04 — Multimedia ─────────────────────────────────────────── */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <SectionHead n="04" title="Multimedia" sub="Opcional" />
+
+        <div className="upload-grid">
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>Banner (horizontal · 16:9)</label>
+            <ImageUploadBox
+              variant="banner"
+              slot={form.banner}
+              onPick={(f) => set("banner", { file: f, url: form.banner.url })}
+              onRemove={() => set("banner", { file: null, url: "" })}
+              label="Sube una imagen horizontal"
+              hint="JPG / PNG · máx 5MB · sin texto sobreimpreso"
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>Poster (vertical · 2:3)</label>
+            <ImageUploadBox
+              variant="poster"
+              slot={form.poster}
+              onPick={(f) => set("poster", { file: f, url: form.poster.url })}
+              onRemove={() => set("poster", { file: null, url: "" })}
+              label="Poster oficial"
+              hint="JPG / PNG · 1200×1800"
+            />
+          </div>
+        </div>
+
+        <div style={{ marginTop: 18 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-2)", marginBottom: 8 }}>Galería</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+            {form.gallery.map((g, i) => (
+              <ImageUploadBox
+                key={i}
+                variant="gallery"
+                slot={g}
+                onPick={(f) => updateGallery(i, { file: f, url: g.url })}
+                onRemove={() => updateGallery(i, { file: null, url: "" })}
+                label={`Imagen ${i + 1}`}
+              />
+            ))}
+          </div>
+          <div className="help" style={{ marginTop: 10 }}>Hasta 8 imágenes. Aparecerán en la sección "Galería" del evento.</div>
+        </div>
+
+        <div style={{ marginTop: 18 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-2)", marginBottom: 8 }}>Videos</div>
+          {form.videos.map((v, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+              <div className="input-prefix" style={{ flex: 1 }}>
+                <span>▶</span>
+                <input type="url" placeholder="https://youtube.com/watch?v=..." value={v.link}
+                       onChange={(e) => updateVideo(i, e.target.value)} />
+              </div>
+              {form.videos.length > 1 && (
+                <button type="button" className="icon-btn" aria-label="Eliminar" onClick={() => removeVideo(i)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
+              )}
+            </div>
+          ))}
+          <button type="button" className="add-line" onClick={addVideo}>+ Agregar otro video</button>
+        </div>
+      </div>
+
+      {/* ── Panel 05 — Redes sociales ─────────────────────────────────────── */}
+      <div className="panel" style={{ marginBottom: 16 }}>
+        <SectionHead n="05" title="Redes sociales" sub="Opcional" />
+
+        {form.socials.map((s, i) => (
+          <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+            <div className="input-prefix" style={{ flex: 1 }}>
+              <span>@</span>
+              <input type="url" placeholder="instagram.com/tu-evento" value={s.link}
+                     onChange={(e) => updateSocial(i, e.target.value)} />
+            </div>
+            {form.socials.length > 1 && (
+              <button type="button" className="icon-btn" aria-label="Eliminar" onClick={() => removeSocial(i)}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            )}
+          </div>
+        ))}
+        <button type="button" className="add-line" onClick={addSocial}>+ Agregar otra red social</button>
+      </div>
+
+      {/* ── Panel 06 — Administración (admin-only) ────────────────────────── */}
+      {isAdmin && (
+        <div className="panel" style={{ marginBottom: 16 }}>
+          <SectionHead n="06" title="Administración" sub="Solo admin" />
+          <div className="field" style={{ marginBottom: 0 }}>
+            <label>Estado de publicación</label>
+            <select value={form.status} onChange={(e) => set("status", e.target.value as FormData["status"])}>
+              <option value="APPROVED">Publicado (directo)</option>
+              <option value="PENDING_MODERATION">En revisión</option>
+              <option value="DRAFT">Borrador</option>
+            </select>
+            <div className="help">Define en qué estado queda el evento al guardarlo.</div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
 }

@@ -265,7 +265,7 @@ export default function ArticlesSection() {
 
   // ── Fetch ────────────────────────────────────────────────────────────────
 
-  const fetchArticles = useCallback(async (p: number, ps: number, filter: string) => {
+  const fetchArticles = useCallback(async (p: number, ps: number, filter: string, signal?: AbortSignal) => {
     if (!token) return;
     setLoading(true);
     try {
@@ -277,6 +277,7 @@ export default function ArticlesSection() {
       });
       const r = await fetch(`/api/articles?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
+        signal,
       });
       if (!r.ok) throw new Error("Error al cargar artículos");
       const data = await r.json();
@@ -284,14 +285,18 @@ export default function ArticlesSection() {
       setTotal(data.total ?? 0);
       setTotalPages(data.totalPages ?? 1);
     } catch (ex) {
+      if (ex instanceof Error && ex.name === "AbortError") return; // petición cancelada — ignorar
       toast.error(ex instanceof Error ? ex.message : "Error al cargar artículos");
     } finally {
       setLoading(false);
     }
   }, [token]);
 
+  // AbortController cancela la petición anterior cuando cambian las dependencias
   useEffect(() => {
-    fetchArticles(page, perPage, activeFilter);
+    const controller = new AbortController();
+    fetchArticles(page, perPage, activeFilter, controller.signal);
+    return () => controller.abort();
   }, [fetchArticles, page, perPage, activeFilter]);
 
   // ── Filter & pagination handlers ─────────────────────────────────────────

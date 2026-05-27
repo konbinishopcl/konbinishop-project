@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
-status: unknown
-last_updated: "2026-05-27T02:39:59.030Z"
+milestone_name: MVP Konbini
+status: milestone_complete
+last_updated: "2026-05-27T15:00:00.000Z"
 progress:
-  total_phases: 17
+  total_phases: 16
   completed_phases: 16
   total_plans: 54
   completed_plans: 54
@@ -15,11 +15,11 @@ progress:
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
+See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
-administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 16 — necesito-que-el-formulario-de-eventos-del-dashboard-sea-igual-al-formulario-de-eventos-del-dashboard-de-design
+administrador quedan visibles al público.
+**Current focus:** Milestone v1.0 completo — definir next milestone con `/gsd:new-milestone`
 
 ## Current Status
 
@@ -169,7 +169,8 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 
 ## Next Action
 
-**Phase 15 en progreso.** Plans 15-01, 15-02, 15-04 completos. Plan 15-03 (admin dashboard) completo con 15-04. Próximo: verificación Phase 15 completa (15-VERIFICATION.md).
+**Milestone v1.0 completo.** Archived to `.planning/milestones/`. Todas las fases completas.
+Próximo: `/gsd:new-milestone` para definir el siguiente ciclo.
 
 ---
 *State initialized: 2026-03-23 · Re-alineado: 2026-05-20*

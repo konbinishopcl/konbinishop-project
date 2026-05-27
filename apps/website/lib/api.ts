@@ -252,9 +252,9 @@ export const api = {
     return data as { url: string; filename: string };
   },
   categories: () => request<ApiCategory[]>("/categories"),
-  regions: () => request<ApiRegion[]>("/regions"),
+  regions: () => request<ApiRegion[]>("/states"),
   communes: (region?: string) =>
-    request<ApiCommune[]>(`/communes${region ? `?region=${encodeURIComponent(region)}` : ""}`),
+    request<ApiCommune[]>(`/cities${region ? `?state=${encodeURIComponent(region)}` : ""}`),
   heroes: () => request<ApiHero[]>("/heroes"),
 };
 

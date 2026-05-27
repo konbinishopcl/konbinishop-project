@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-27T21:41:43.429Z"
+last_updated: "2026-05-27T21:54:47.059Z"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 8
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-27T21:41:43.427Z
+**Last session:** 2026-05-27T21:54:47.057Z
 
 ## Phase Summary
 
@@ -148,6 +148,9 @@ administrador quedan visibles al público.
 - [Phase 17-articles-crud]: Use slug (not id) for articles edit URLs — zero API proxy changes
 - [Phase 17-articles-crud]: AdminArticleEditor eliminado — era orphan llamando a /api/articles/edit (no existe)
 - [Phase 18-01]: Hero reutiliza EventCategory (opción A): Hero.eventCategoryId apunta a event_categories; categoría decorativa no de pricing. Migración sch08 hand-edited con orden A→B→C→D: CreateTable → ADD COLUMN → DML INSERT/UPDATE → AddForeignKey. Tablas legacy conservadas hasta plan 18-04.
+- [Phase 18-02]: aliases /categories y /tags apuntan a eventCategory/articleTag en lectura; escritura sigue en tablas legacy hasta plan 18-04
+- [Phase 18-02]: dual-write en create/update: ambas FKs (category + eventCategory) se escriben con mismo ID; unitPrice usa fallback chain eventCategory?.pricePerDay ?? category?.pricePerDay ?? 0
+- [Phase 18-02]: EventTag endpoint creado pero UI de asignación diferida a Phase 19+
 
 ## Quick Tasks Completed
 

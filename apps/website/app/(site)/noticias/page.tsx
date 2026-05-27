@@ -6,6 +6,17 @@ export const metadata: Metadata = {
   description: "Cobertura editorial de anime, manga, cine, gaming y cultura otaku chilena.",
 };
 
+export type ApiArticleEvent = {
+  id: number;
+  slug: string;
+  title: string;
+  poster: string | null;
+  banner: string | null;
+  dates: { id: number; date: string | null }[];
+  city: { name: string } | null;
+  category: { name: string; slug: string } | null;
+};
+
 export type ApiArticle = {
   id: number;
   title: string;
@@ -18,6 +29,8 @@ export type ApiArticle = {
   isSponsored: boolean;
   createdAt: string;
   tags: { id: number; name: string; slug: string }[];
+  // Evento vinculado (solo en vista detalle, undefined en lista)
+  events?: ApiArticleEvent[];
 };
 
 async function fetchArticles(): Promise<ApiArticle[]> {

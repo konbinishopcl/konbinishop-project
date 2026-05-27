@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { imageUrl } from "@/lib/api";
-import type { ApiArticle } from "../page";
-import type { ApiEventSlim } from "./page";
+import type { ApiArticle, ApiArticleEvent } from "../page";
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -58,10 +57,11 @@ function renderMarkdown(md: string): string {
 interface ArticleViewProps {
   article: ApiArticle;
   related: ApiArticle[];
-  relatedEvents: ApiEventSlim[];
+  linkedEvent: ApiArticleEvent | null;
+  relatedEvents: ApiArticleEvent[];
 }
 
-export function ArticleView({ article, related, relatedEvents }: ArticleViewProps) {
+export function ArticleView({ article, related, linkedEvent, relatedEvents }: ArticleViewProps) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
 
@@ -165,7 +165,7 @@ export function ArticleView({ article, related, relatedEvents }: ArticleViewProp
               }}
             >
               {article.tags.map((t) => (
-                <Link key={t.id} href={`/noticias`} className="pill">
+                <Link key={t.id} href="/noticias" className="pill">
                   #{t.name}
                 </Link>
               ))}
@@ -173,8 +173,60 @@ export function ArticleView({ article, related, relatedEvents }: ArticleViewProp
           )}
         </div>
 
-        {/* ─── Sidebar derecho: SOLO eventos ─── */}
+        {/* ─── Sidebar derecho: evento vinculado + eventos relacionados ─── */}
         <aside className="art-side">
+          {/* EVENTO VINCULADO (si existe) */}
+          {linkedEvent && (
+            <div>
+              <div className="art-side-title">
+                <span className="badge-link">EVENTO VINCULADO</span>
+                <h4 style={{ margin: "8px 0 4px" }}>Asiste al evento</h4>
+                <div className="sub">El organizador encargó este artículo a Konbini.</div>
+              </div>
+              <div
+                className="art-side featured-evt"
+                style={{ marginTop: 14, cursor: "pointer" }}
+                onClick={() => router.push(`/evento/${linkedEvent.slug}`)}
+              >
+                {linkedEvent.poster || linkedEvent.banner ? (
+                  <img
+                    src={imageUrl(linkedEvent.poster ?? linkedEvent.banner ?? "")}
+                    alt={linkedEvent.title}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a0e1e,#3a1840)" }} />
+                )}
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(to top, rgba(0,0,0,.85) 40%, transparent)",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-end",
+                    padding: "20px 18px",
+                    gap: 4,
+                  }}
+                >
+                  {linkedEvent.category && (
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".14em", color: "var(--accent)", fontWeight: 700 }}>
+                      {linkedEvent.category.name.toUpperCase()}
+                    </div>
+                  )}
+                  <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16, lineHeight: 1.2, color: "#fff" }}>
+                    {linkedEvent.title}
+                  </div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "rgba(255,255,255,.65)", letterSpacing: ".06em" }}>
+                    {formatEventDate(linkedEvent.dates)}
+                    {linkedEvent.city?.name ? ` · ${linkedEvent.city.name}` : ""}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* EVENTOS RELACIONADOS */}
           <div className="blk">
             <h4>Eventos relacionados</h4>
             <div className="sub">Próximos · misma categoría</div>
@@ -193,29 +245,17 @@ export function ArticleView({ article, related, relatedEvents }: ArticleViewProp
                         <img
                           src={imageUrl(e.poster ?? e.banner ?? "")}
                           alt={e.title}
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                          }}
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                         />
                       ) : (
-                        <div
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            background: "linear-gradient(135deg,#1a0e1e,#3a1840)",
-                          }}
-                        />
+                        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#1a0e1e,#3a1840)" }} />
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div className="nm">{e.title}</div>
                       <div className="dt">
                         {formatEventDate(e.dates)}
-                        {e.commune?.name ? ` · ${e.commune.name}` : ""}
+                        {e.city?.name ? ` · ${e.city.name}` : ""}
                       </div>
                     </div>
                     <span style={{ color: "var(--ink-3)" }}>→</span>
@@ -255,22 +295,10 @@ export function ArticleView({ article, related, relatedEvents }: ArticleViewProp
                       <img
                         src={imageUrl(a.image)}
                         alt={a.title}
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (
-                      <div
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          background: "linear-gradient(135deg,#2a1410,#4a1820)",
-                        }}
-                      />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#2a1410,#4a1820)" }} />
                     )}
                     {a.isSponsored && <span className="sponsor">ARTÍCULO PATROCINADO</span>}
                   </div>

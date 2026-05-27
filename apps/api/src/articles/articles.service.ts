@@ -30,6 +30,26 @@ const ARTICLE_INCLUDE = {
   _count: { select: { likes: true } },
 } as const;
 
+// Incluye el primer evento vinculado (APPROVED) para la vista de detalle
+const ARTICLE_DETAIL_INCLUDE = {
+  tags: true,
+  _count: { select: { likes: true } },
+  events: {
+    where: { status: PublicationStatus.APPROVED },
+    take: 1,
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      poster: true,
+      banner: true,
+      dates: { take: 1, select: { id: true, date: true } },
+      city: { select: { name: true } },
+      category: { select: { name: true, slug: true } },
+    },
+  },
+} as const;
+
 @Injectable()
 export class ArticlesService {
   constructor(
@@ -71,7 +91,7 @@ export class ArticlesService {
   }
 
   async findBySlug(slug: string, user?: JwtUser | null) {
-    const article = await this.prisma.article.findUnique({ where: { slug }, include: ARTICLE_INCLUDE });
+    const article = await this.prisma.article.findUnique({ where: { slug }, include: ARTICLE_DETAIL_INCLUDE });
     if (!article) throw new NotFoundException('Artículo no encontrado');
     const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
     // Seguridad: visitantes públicos no pueden leer artículos que no estén APPROVED

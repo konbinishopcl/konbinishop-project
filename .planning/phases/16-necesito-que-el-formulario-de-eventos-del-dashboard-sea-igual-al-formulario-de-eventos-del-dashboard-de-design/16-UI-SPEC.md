@@ -39,13 +39,14 @@ El proyecto usa una escala de 4-point. No se introduce una nueva escala en esta 
 |-------|-------|------------------------|
 | xs | 4px | Gap entre badge de número y texto del título de sección |
 | sm | 8px | Gap entre label y help text; gap entre botones del footer |
-| sm2 | 12px | Padding badge de número de sección (`padding: 4px 8px` en `SectionHead`) |
 | md | 16px | Espaciado por defecto de `.field`; gap de `.grid-2` |
 | lg | 24px | Padding lateral de `.panel` |
 | xl | 32px | `paddingBottom` del contenedor del form |
 | 2xl | 48px | — |
 | 3xl | 64px | — |
 
+> SectionHead badge padding `4px 8px` uses existing standard set values (xs=4, sm=8) — not a new spacing token.
+>
 > **CSS legacy values (read-only, out of scope):** The following values exist in `globals.css` and MUST NOT be modified — they are not part of the spacing contract for this phase: 10px (gallery gap, price-row gap), 14px (grid-2/grid-3 gap, input-prefix padding), 18px (form-foot vertical padding, panel margin-bottom), 22px (container margin-bottom). Use only the 4-point scale above for any new spacing decisions.
 
 ---
@@ -63,9 +64,9 @@ Cuatro roles en el formulario (reducidos desde todos los tamaños del sistema):
 
 Weights declared: **600** (body/label/button) + **700** (display/section titles). Maximum 2 weights.
 
-Note: `globals.css` line 310 declares `.field label { font-weight: 500 }` — this existing rule is read-only and is NOT modified in this phase. New label elements added in this phase use weight 600 to match the 2-weight contract.
+> **SectionHead badge (inherited):** The `<span>` inside SectionHead uses `font-family: var(--font-mono); font-size: 10px; font-weight: 700` from globals.css — this is not a new typographic role and is not part of this phase's type contract.
 
-Eyebrow / mono (11px, JetBrains Mono, weight 400, tracking `.15em`) — aparece solo en el badge de número de sección (`SectionHead`). No es un rol tipográfico de cuerpo.
+Note: `globals.css` line 310 declares `.field label { font-weight: 500 }` — this existing rule is read-only and is NOT modified in this phase. New label elements added in this phase use weight 600 to match the 2-weight contract.
 
 Source: `globals.css` — `.step-title`, `.field label`, `.btn`, `.field-set-title`; `EventForm.tsx` — `h1` del page title.
 
@@ -200,11 +201,13 @@ Source: RESEARCH.md `Mapeo diseño → paneles del dashboard`; confirmado en `de
 .form-foot
   └── .container    ← display:flex; justify-content:space-between; align-items:center
         ├── <span> infoText    ← izquierda: solo texto, fontSize:13, color:var(--ink-3)
-        └── <div> gap:10px     ← derecha: 3 botones en orden fijo
+        └── <div> gap:8px      ← derecha: 3 botones en orden fijo
               ├── <Link>    "Cancelar"        → .btn.ghost
               ├── <button>  "Guardar borrador" → .btn.dark  (siempre DRAFT)
               └── <button>  {ctaLabel}         → .btn.primary (status dinámico)
 ```
+
+> The footer button group uses `gap: 8px` (sm token). If `globals.css` hard-codes a different gap for `.form-foot` buttons, that rule is inherited read-only and must not be overridden in this phase.
 
 **Contrato negativo (Pitfall #1):** NO colocar ningún `<select>` dentro de `.form-foot`.
 El status-select está en Panel 06 (Admin), NO en el footer.

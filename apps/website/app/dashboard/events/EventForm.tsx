@@ -335,12 +335,19 @@ export function EventForm({ mode, initial }: Props) {
       fetch("/api/countries",  { headers: h }).then((r) => r.json()).catch(() => []),
     ]);
     setCategories(Array.isArray(cats) ? cats : []);
-    setCountries( Array.isArray(ctrs) ? ctrs : []);
+    setCountries(Array.isArray(ctrs) ? ctrs : []);
   }, [token]);
   useEffect(() => { fetchCatalog(); }, [fetchCatalog]);
 
   const watchCountrySlug = watch("countrySlug");
   const watchStateSlug   = watch("stateSlug");
+
+  // Auto-selecciona el país cuando hay uno solo y el formulario no tiene país (creación)
+  useEffect(() => {
+    if (countries.length === 1 && !watchCountrySlug) {
+      setValue("countrySlug", countries[0].slug);
+    }
+  }, [countries, watchCountrySlug, setValue]);
 
   useEffect(() => {
     if (!token || !watchCountrySlug) { setStates([]); return; }

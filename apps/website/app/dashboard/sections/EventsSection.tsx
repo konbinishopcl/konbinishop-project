@@ -41,6 +41,7 @@ type ModalState =
   | { type: "reject";   item: ApiEvent }
   | { type: "transfer"; item: ApiEvent }
   | { type: "ban";      item: ApiEvent }
+  | { type: "delete";   item: ApiEvent }
   | null;
 
 // status → API param map ("Todos" = undefined)
@@ -386,7 +387,7 @@ export default function EventsSection() {
 
   // Pagination & filter state
   const [page,         setPage]        = useState(1);
-  const [perPage,      setPerPage]     = useState(20);
+  const [perPage,      setPerPage]     = useState(12);
   const [total,        setTotal]       = useState(0);
   const [totalPages,   setTotalPages]  = useState(1);
   const [activeFilter, setActiveFilter] = useState("Todos");
@@ -485,6 +486,20 @@ export default function EventsSection() {
       fetchEvents(page, perPage, activeFilter);
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "Error al banear");
+    }
+  }
+
+  async function doDelete(item: ApiEvent) {
+    try {
+      const r = await fetch(`/api/events/${item.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("Error al eliminar");
+      toast.success("Evento eliminado");
+      fetchEvents(page, perPage, activeFilter);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al eliminar");
     }
   }
 
@@ -592,12 +607,14 @@ export default function EventsSection() {
                         {status === "Borrador" && (
                           <>
                             <Link href={`/dashboard/events/${e.id}/edit`}><button>Editar</button></Link>
-                            <button className="ok" onClick={() => setModal({ type: "approve", item: e })}>Publicar</button>
+                            <button className="ok"  onClick={() => setModal({ type: "approve", item: e })}>Publicar</button>
+                            <button className="bad" onClick={() => setModal({ type: "delete",  item: e })}>Eliminar</button>
                           </>
                         )}
                         {status === "En revisión" && (
                           <>
-                            <button className="ok" onClick={() => setModal({ type: "approve", item: e })}>✓ Aprobar</button>
+                            <Link href={`/dashboard/events/${e.id}/edit`}><button>Editar</button></Link>
+                            <button className="ok"  onClick={() => setModal({ type: "approve", item: e })}>✓ Aprobar</button>
                             <button className="bad" onClick={() => setModal({ type: "reject",  item: e })}>✕ Rechazar</button>
                           </>
                         )}
@@ -605,20 +622,21 @@ export default function EventsSection() {
                           <>
                             <Link href={`/dashboard/events/${e.id}/edit`}><button>Editar</button></Link>
                             <button className="bad" onClick={() => setModal({ type: "ban",      item: e })}>Banear</button>
-                            <button          onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                            <button                 onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
                           </>
                         )}
                         {status === "Rechazado" && (
                           <>
-                            <button onClick={() => setModal({ type: "approve",  item: e })}>Re-revisar</button>
-                            <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                            <Link href={`/dashboard/events/${e.id}/edit`}><button>Editar</button></Link>
+                            <button                 onClick={() => setModal({ type: "approve",  item: e })}>Re-revisar</button>
+                            <button className="bad" onClick={() => setModal({ type: "delete",   item: e })}>Eliminar</button>
                           </>
                         )}
                         {status === "Baneado" && (
                           <>
                             <Link href={`/dashboard/events/${e.id}/edit`}><button>Editar</button></Link>
-                            <button className="bad" onClick={() => setModal({ type: "ban",      item: e })}>Banear</button>
-                            <button          onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
+                            <button className="ok"  onClick={() => setModal({ type: "approve",  item: e })}>Restaurar</button>
+                            <button                 onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
                           </>
                         )}
                       </div>
@@ -703,6 +721,20 @@ export default function EventsSection() {
             typeToConfirm="BANEAR"
             confirmLabel="Sí, banear"
             onConfirm={() => { close(); doBan(item); }}
+            onClose={close}
+          />
+        );
+      })()}
+      {modal?.type === "delete" && (() => {
+        const item = modal.item;
+        return (
+          <ConfirmDialog
+            danger
+            title="¿Eliminar evento?"
+            message={`"${item.title}" se eliminará permanentemente. Esta acción no se puede deshacer.`}
+            typeToConfirm="ELIMINAR"
+            confirmLabel="Sí, eliminar"
+            onConfirm={() => { close(); doDelete(item); }}
             onClose={close}
           />
         );

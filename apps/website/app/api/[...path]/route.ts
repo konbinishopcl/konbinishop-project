@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 const BACKEND_URL = process.env.API_URL || "http://localhost:3333/api";
 const API_KEY = process.env.API_KEY || "";
 
@@ -23,7 +25,7 @@ async function handler(
       : undefined;
 
   try {
-    const res = await fetch(url, { method, headers, body });
+    const res = await fetch(url, { method, headers, body, cache: "no-store" });
 
     const resHeaders = new Headers();
     res.headers.forEach((value, key) => {

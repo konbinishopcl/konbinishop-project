@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
+import { api, imageUrl } from "@/lib/api";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -11,6 +12,14 @@ type Category = { id: number; name: string; slug: string };
 type Country  = { id: number; name: string; slug: string };
 type State    = { id: number; name: string; slug: string };
 type City     = { id: number; name: string };
+
+type ImageSlot =
+  | null
+  | { kind: "pending";  file: File; preview: string }
+  | { kind: "uploaded"; url: string };
+
+type PriceTier = { name: string; amount: string };
+type DateSlot  = { date: string; start: string; end: string };
 
 type FormData = {
   title:         string;
@@ -20,23 +29,18 @@ type FormData = {
   address:       string;
   addressNumber: string;
   ticketUrl:     string;
-  banner:        string;
-  poster:        string;
   categoryId:    string;
   countrySlug:   string;
   stateSlug:     string;
   cityId:        string;
-  priceName:     string;
-  priceAmount:   string;
   isFree:        boolean;
-  dateStr:       string;
-  startTime:     string;
-  endTime:       string;
-  instagram:     string;
-  tiktok:        string;
-  facebook:      string;
-  twitter:       string;
-  videoUrl:      string;
+  prices:        PriceTier[];
+  dates:         DateSlot[];
+  socials:       string[];
+  videos:        string[];
+  banner:        ImageSlot;
+  poster:        ImageSlot;
+  gallery:       ImageSlot[];
   status:        "APPROVED" | "PENDING_MODERATION" | "DRAFT";
 };
 
@@ -58,6 +62,7 @@ export type InitialEvent = {
   dates:         { date: string | null; startTime: string | null; endTime: string | null }[];
   socialLinks:   { link: string | null }[];
   videos:        { link: string | null }[];
+  gallery?:      string[];
   city?: {
     id: number; name: string;
     state?: { id: number; slug: string; country?: { slug: string } };
@@ -69,7 +74,16 @@ interface Props {
   initial?: InitialEvent;
 }
 
-// ── Section heading ────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function uploadSlot(slot: ImageSlot, token: string): Promise<string | undefined> {
+  if (!slot) return undefined;
+  if (slot.kind === "uploaded") return slot.url;
+  const { url } = await api.uploadImage(slot.file, token);
+  return url;
+}
+
+// ── Section heading ───────────────────────────────────────────────────────────
 
 function SectionHead({ n, title, sub }: { n: string; title: string; sub?: string }) {
   return (
@@ -114,20 +128,125 @@ function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: ()
   );
 }
 
+// ── Image uploader ─────────────────────────────────────────────────────────────
+
+function ImageUploader({
+  label, value, onChange, tall,
+}: {
+  label: string; value: ImageSlot; onChange: (s: ImageSlot) => void; tall?: boolean;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("La imagen no debe superar 5 MB."); return; }
+    if (value?.kind === "pending") URL.revokeObjectURL(value.preview);
+    onChange({ kind: "pending", file, preview: URL.createObjectURL(file) });
+  };
+
+  const src =
+    value?.kind === "pending"  ? value.preview :
+    value?.kind === "uploaded" ? imageUrl(value.url) : null;
+
+  return (
+    <div>
+      <label style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, display: "block" }}>{label}</label>
+      <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={onFile} />
+      {src ? (
+        <div className={`upload-box ${tall ? "tall" : ""}`} style={{ padding: 0, overflow: "hidden", position: "relative" }}>
+          <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <button
+            type="button"
+            onClick={() => { if (value?.kind === "pending") URL.revokeObjectURL(value.preview); onChange(null); }}
+            style={{
+              position: "absolute", top: 8, right: 8,
+              background: "rgba(0,0,0,.65)", color: "#fff",
+              border: "none", borderRadius: 6, width: 28, height: 28,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 14,
+            }}
+          >✕</button>
+        </div>
+      ) : (
+        <div className={`upload-box ${tall ? "tall" : ""}`} onClick={() => ref.current?.click()}>
+          <div style={{ fontSize: 22, marginBottom: 4, opacity: .45 }}>↑</div>
+          <div style={{ fontWeight: 500, color: "var(--ink-2)", fontSize: 13 }}>Subir imagen</div>
+          <small style={{ fontSize: 11, color: "var(--ink-3)" }}>JPG / PNG / WebP · máx 5 MB</small>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Remove button ─────────────────────────────────────────────────────────────
+
+function RemoveBtn({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flexShrink: 0, width: 32, height: 32, borderRadius: 6,
+        border: "1px solid var(--line)", background: "transparent",
+        color: "var(--ink-3)", cursor: "pointer", fontSize: 14,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}
+    >✕</button>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function EventForm({ mode, initial }: Props) {
-  const router     = useRouter();
-  const { token }  = useUser();
+  const router    = useRouter();
+  const { token } = useUser();
   const [busy, setBusy] = useState(false);
 
-  // Catalog data
+  // Catalog
   const [categories, setCategories] = useState<Category[]>([]);
   const [countries,  setCountries]  = useState<Country[]>([]);
   const [states,     setStates]     = useState<State[]>([]);
   const [cities,     setCities]     = useState<City[]>([]);
 
-  // Form state
+  // ── Initial state derivation ───────────────────────────────────────────────
+  const initialPrices: PriceTier[] =
+    initial && initial.prices.length && initial.prices[0].price !== 0
+      ? initial.prices.map((p) => ({ name: p.name, amount: String(p.price) }))
+      : [{ name: "General", amount: "" }];
+
+  const initialDates: DateSlot[] =
+    initial && initial.dates.length
+      ? initial.dates.map((d) => ({
+          date:  d.date ? d.date.slice(0, 10) : "",
+          start: d.startTime ?? "",
+          end:   d.endTime   ?? "",
+        }))
+      : [{ date: "", start: "", end: "" }];
+
+  const initialSocials: string[] =
+    initial && initial.socialLinks.length
+      ? initial.socialLinks.map((s) => s.link ?? "").filter(Boolean)
+      : [""];
+
+  const initialVideos: string[] =
+    initial && initial.videos.length
+      ? initial.videos.map((v) => v.link ?? "").filter(Boolean)
+      : [""];
+
+  const initialBanner: ImageSlot =
+    initial?.banner ? { kind: "uploaded", url: initial.banner } : null;
+
+  const initialPoster: ImageSlot =
+    initial?.poster ? { kind: "uploaded", url: initial.poster } : null;
+
+  const initialGallery: ImageSlot[] =
+    initial?.gallery?.length
+      ? initial.gallery.map((url) => ({ kind: "uploaded" as const, url }))
+      : [];
+
+  // ── Form state ─────────────────────────────────────────────────────────────
   const [form, setForm] = useState<FormData>({
     title:         initial?.title         ?? "",
     company:       initial?.company       ?? "",
@@ -136,25 +255,20 @@ export function EventForm({ mode, initial }: Props) {
     address:       initial?.address       ?? "",
     addressNumber: initial?.addressNumber ?? "",
     ticketUrl:     initial?.ticketUrl     ?? "",
-    banner:        initial?.banner        ?? "",
-    poster:        initial?.poster        ?? "",
     categoryId:    initial?.categoryId != null ? String(initial.categoryId) : "",
     countrySlug:   initial?.city?.state?.country?.slug ?? "",
     stateSlug:     initial?.city?.state?.slug          ?? "",
     cityId:        initial?.cityId != null ? String(initial.cityId) : "",
-    priceName:     initial?.prices[0]?.name   ?? "General",
-    priceAmount:   initial?.prices[0]?.price != null ? String(initial.prices[0].price) : "",
     isFree:        initial
-                     ? (initial.prices[0]?.price === 0 || initial.prices.length === 0)
+                     ? (initial.prices.length === 0 || initial.prices[0]?.price === 0)
                      : false,
-    dateStr:       initial?.dates[0]?.date ? initial.dates[0].date.slice(0, 10) : "",
-    startTime:     initial?.dates[0]?.startTime ?? "",
-    endTime:       initial?.dates[0]?.endTime   ?? "",
-    instagram:     initial?.socialLinks.find((l) => l.link?.includes("instagram"))?.link ?? "",
-    tiktok:        initial?.socialLinks.find((l) => l.link?.includes("tiktok"))?.link    ?? "",
-    facebook:      initial?.socialLinks.find((l) => l.link?.includes("facebook"))?.link  ?? "",
-    twitter:       initial?.socialLinks.find((l) => l.link?.includes("twitter") || l.link?.includes("x.com"))?.link ?? "",
-    videoUrl:      initial?.videos[0]?.link ?? "",
+    prices:        initialPrices,
+    dates:         initialDates,
+    socials:       initialSocials.length ? initialSocials : [""],
+    videos:        initialVideos.length  ? initialVideos  : [""],
+    banner:        initialBanner,
+    poster:        initialPoster,
+    gallery:       initialGallery,
     status:        initial?.status === "APPROVED"
                      ? "APPROVED"
                      : initial?.status === "PENDING_MODERATION"
@@ -165,7 +279,7 @@ export function EventForm({ mode, initial }: Props) {
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  // ── Catalog cascade ──────────────────────────────────────────────────────────
+  // ── Catalog cascade ────────────────────────────────────────────────────────
 
   const fetchCatalog = useCallback(async () => {
     if (!token) return;
@@ -200,24 +314,112 @@ export function EventForm({ mode, initial }: Props) {
       .catch(() => setCities([]));
   }, [token, form.stateSlug]);
 
-  // ── Submit ───────────────────────────────────────────────────────────────────
+  // ── Price tiers ────────────────────────────────────────────────────────────
+
+  const addPrice = () =>
+    set("prices", [...form.prices, { name: "", amount: "" }]);
+
+  const removePrice = (i: number) =>
+    set("prices", form.prices.filter((_, j) => j !== i));
+
+  const updatePrice = (i: number, key: keyof PriceTier, val: string) =>
+    set("prices", form.prices.map((p, j) => j === i ? { ...p, [key]: val } : p));
+
+  // ── Dates ──────────────────────────────────────────────────────────────────
+
+  const addDate = () =>
+    set("dates", [...form.dates, { date: "", start: "", end: "" }]);
+
+  const removeDate = (i: number) =>
+    set("dates", form.dates.filter((_, j) => j !== i));
+
+  const updateDate = (i: number, key: keyof DateSlot, val: string) =>
+    set("dates", form.dates.map((d, j) => j === i ? { ...d, [key]: val } : d));
+
+  // ── Social links ───────────────────────────────────────────────────────────
+
+  const addSocial = () => set("socials", [...form.socials, ""]);
+
+  const removeSocial = (i: number) =>
+    set("socials", form.socials.filter((_, j) => j !== i));
+
+  const updateSocial = (i: number, val: string) =>
+    set("socials", form.socials.map((s, j) => j === i ? val : s));
+
+  // ── Videos ─────────────────────────────────────────────────────────────────
+
+  const addVideo = () => set("videos", [...form.videos, ""]);
+
+  const removeVideo = (i: number) =>
+    set("videos", form.videos.filter((_, j) => j !== i));
+
+  const updateVideo = (i: number, val: string) =>
+    set("videos", form.videos.map((v, j) => j === i ? val : v));
+
+  // ── Gallery ────────────────────────────────────────────────────────────────
+
+  const galRef = useRef<HTMLInputElement>(null);
+
+  const onGalleryFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { toast.error("La imagen no debe superar 5 MB."); return; }
+    set("gallery", [...form.gallery, { kind: "pending", file, preview: URL.createObjectURL(file) }]);
+  };
+
+  const removeGallery = (i: number) => {
+    const slot = form.gallery[i];
+    if (slot?.kind === "pending") URL.revokeObjectURL(slot.preview);
+    set("gallery", form.gallery.filter((_, j) => j !== i));
+  };
+
+  // ── Submit ─────────────────────────────────────────────────────────────────
 
   async function handleSubmit(targetStatus: "APPROVED" | "PENDING_MODERATION" | "DRAFT") {
     if (!token) { toast.error("No autenticado"); return; }
     if (!form.title.trim()) { toast.error("El título es requerido"); return; }
     if (targetStatus !== "DRAFT") {
-      if (form.description.trim().length < 10) { toast.error("La descripción debe tener al menos 10 caracteres"); return; }
+      if (form.description.trim().length < 10) {
+        toast.error("La descripción debe tener al menos 10 caracteres"); return;
+      }
       if (!form.address.trim()) { toast.error("La dirección es requerida"); return; }
     }
 
     setBusy(true);
     try {
-      const socialLinks = [
-        form.instagram ? { link: form.instagram } : null,
-        form.tiktok    ? { link: form.tiktok }    : null,
-        form.facebook  ? { link: form.facebook }  : null,
-        form.twitter   ? { link: form.twitter }   : null,
-      ].filter(Boolean) as { link: string }[];
+      // Upload images in parallel
+      const [bannerUrl, posterUrl, galleryUrls] = await Promise.all([
+        uploadSlot(form.banner,  token),
+        uploadSlot(form.poster,  token),
+        Promise.all(form.gallery.map((g) => uploadSlot(g, token))),
+      ]);
+
+      const socialLinks = form.socials
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((s) => ({ link: s }));
+
+      const videos = form.videos
+        .map((v) => v.trim())
+        .filter(Boolean)
+        .map((v) => ({ link: v }));
+
+      const prices = form.isFree
+        ? [{ name: "Entrada", price: 0 }]
+        : form.prices
+            .filter((p) => p.name.trim())
+            .map((p) => ({ name: p.name.trim(), price: Number(p.amount) || 0 }));
+
+      const dates = form.dates
+        .filter((d) => d.date)
+        .map((d) => ({
+          date:      d.date,
+          startTime: d.start || undefined,
+          endTime:   d.end   || undefined,
+        }));
+
+      const gallery = galleryUrls.filter((u): u is string => !!u);
 
       const payload = {
         title:         form.title.trim(),
@@ -227,20 +429,15 @@ export function EventForm({ mode, initial }: Props) {
         address:       form.address.trim(),
         addressNumber: form.addressNumber.trim() || undefined,
         ticketUrl:     form.ticketUrl.trim()     || undefined,
-        banner:        form.banner.trim()        || undefined,
-        poster:        form.poster.trim()        || undefined,
+        banner:        bannerUrl,
+        poster:        posterUrl,
+        gallery:       gallery.length ? gallery : undefined,
         categoryId:    form.categoryId ? Number(form.categoryId) : undefined,
         cityId:        form.cityId     ? Number(form.cityId)     : undefined,
-        prices:        form.isFree
-                         ? [{ name: "Entrada", price: 0 }]
-                         : form.priceAmount
-                           ? [{ name: form.priceName || "General", price: Number(form.priceAmount) }]
-                           : undefined,
-        dates:         form.dateStr
-                         ? [{ date: form.dateStr, startTime: form.startTime || undefined, endTime: form.endTime || undefined }]
-                         : undefined,
+        prices:        prices.length   ? prices : undefined,
+        dates:         dates.length    ? dates  : undefined,
         socialLinks:   socialLinks.length ? socialLinks : undefined,
-        videos:        form.videoUrl ? [{ link: form.videoUrl }] : undefined,
+        videos:        videos.length      ? videos      : undefined,
       };
 
       const url    = mode === "create" ? "/api/events" : `/api/events/${initial!.id}`;
@@ -281,10 +478,10 @@ export function EventForm({ mode, initial }: Props) {
     }
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: 100 }}>
+    <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: 120 }}>
 
       {/* Back */}
       <Link
@@ -379,7 +576,7 @@ export function EventForm({ mode, initial }: Props) {
       <div className="panel" style={{ marginBottom: 16 }}>
         <SectionHead n="02" title="Precio" />
 
-        <div style={{ marginBottom: form.isFree ? 0 : 14 }}>
+        <div style={{ marginBottom: 16 }}>
           <Checkbox
             checked={form.isFree}
             onChange={() => set("isFree", !form.isFree)}
@@ -388,49 +585,88 @@ export function EventForm({ mode, initial }: Props) {
         </div>
 
         {!form.isFree && (
-          <div className="grid-2" style={{ marginTop: 16 }}>
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>Tipo de tarifa</label>
-              <input
-                type="text"
-                value={form.priceName}
-                onChange={(e) => set("priceName", e.target.value)}
-                placeholder="General / VIP / Preventa"
-              />
-            </div>
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>Precio (CLP)</label>
-              <input
-                type="number"
-                value={form.priceAmount}
-                onChange={(e) => set("priceAmount", e.target.value)}
-                placeholder="9990"
-                min="0"
-              />
-            </div>
+          <div>
+            {form.prices.map((p, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, marginBottom: 10, alignItems: "center" }}>
+                <input
+                  type="text"
+                  value={p.name}
+                  onChange={(e) => updatePrice(i, "name", e.target.value)}
+                  placeholder="General / VIP / Preventa…"
+                  style={{ flex: 2, minWidth: 0 }}
+                />
+                <div className="input-prefix" style={{ flex: 1, minWidth: 0 }}>
+                  <span>$</span>
+                  <input
+                    type="number"
+                    value={p.amount}
+                    onChange={(e) => updatePrice(i, "amount", e.target.value)}
+                    placeholder="9990"
+                    min="0"
+                  />
+                </div>
+                {form.prices.length > 1 && (
+                  <RemoveBtn onClick={() => removePrice(i)} />
+                )}
+              </div>
+            ))}
+            <button type="button" className="add-line" onClick={addPrice}>
+              + Agregar tarifa
+            </button>
           </div>
         )}
       </div>
 
-      {/* ── 3. Fecha y ubicación ──────────────────────────────────────────── */}
+      {/* ── 3. Fechas y ubicación ─────────────────────────────────────────── */}
       <div className="panel" style={{ marginBottom: 16 }}>
-        <SectionHead n="03" title="Fecha, horario y ubicación" />
+        <SectionHead n="03" title="Fechas y ubicación" />
 
-        <div className="grid-3">
-          <div className="field">
-            <label>Fecha del evento</label>
-            <input type="date" value={form.dateStr} onChange={(e) => set("dateStr", e.target.value)} />
+        {/* Dates */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 12, color: "var(--ink-2)" }}>
+            Días del evento
           </div>
-          <div className="field">
-            <label>Hora de inicio</label>
-            <input type="time" value={form.startTime} onChange={(e) => set("startTime", e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Hora de término</label>
-            <input type="time" value={form.endTime} onChange={(e) => set("endTime", e.target.value)} />
-          </div>
+          {form.dates.map((d, i) => (
+            <div key={i} style={{ marginBottom: 10 }}>
+              <div className="grid-3">
+                <div className="field" style={{ margin: 0 }}>
+                  <label style={{ fontSize: 12 }}>Fecha {i > 0 ? `(día ${i + 1})` : ""}</label>
+                  <input
+                    type="date"
+                    value={d.date}
+                    onChange={(e) => updateDate(i, "date", e.target.value)}
+                  />
+                </div>
+                <div className="field" style={{ margin: 0 }}>
+                  <label style={{ fontSize: 12 }}>Hora inicio</label>
+                  <input
+                    type="time"
+                    value={d.start}
+                    onChange={(e) => updateDate(i, "start", e.target.value)}
+                  />
+                </div>
+                <div className="field" style={{ margin: 0 }}>
+                  <label style={{ fontSize: 12 }}>Hora término</label>
+                  <input
+                    type="time"
+                    value={d.end}
+                    onChange={(e) => updateDate(i, "end", e.target.value)}
+                  />
+                </div>
+              </div>
+              {form.dates.length > 1 && (
+                <div style={{ marginTop: 6 }}>
+                  <RemoveBtn onClick={() => removeDate(i)} />
+                </div>
+              )}
+            </div>
+          ))}
+          <button type="button" className="add-line" onClick={addDate}>
+            + Agregar otro día
+          </button>
         </div>
 
+        {/* Location */}
         <div className="grid-3">
           <div className="field">
             <label>País</label>
@@ -502,37 +738,99 @@ export function EventForm({ mode, initial }: Props) {
       <div className="panel" style={{ marginBottom: 16 }}>
         <SectionHead n="04" title="Multimedia" sub="Opcional" />
 
-        <div className="grid-2">
-          <div className="field">
-            <label>Banner (URL · 16:9)</label>
-            <input
-              type="url"
-              value={form.banner}
-              onChange={(e) => set("banner", e.target.value)}
-              placeholder="https://..."
-            />
-            <div className="help">Imagen horizontal. 2400×1350 recomendado.</div>
+        {/* Banner + Poster */}
+        <div className="upload-grid" style={{ marginBottom: 20 }}>
+          <ImageUploader
+            label="Banner (horizontal · 16:9)"
+            value={form.banner}
+            onChange={(s) => set("banner", s)}
+          />
+          <ImageUploader
+            label="Poster (vertical · 2:3)"
+            value={form.poster}
+            onChange={(s) => set("poster", s)}
+            tall
+          />
+        </div>
+
+        {/* Gallery */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, color: "var(--ink-2)" }}>
+            Galería
           </div>
-          <div className="field">
-            <label>Poster (URL · 2:3)</label>
-            <input
-              type="url"
-              value={form.poster}
-              onChange={(e) => set("poster", e.target.value)}
-              placeholder="https://..."
-            />
-            <div className="help">Imagen vertical. 1200×1800 recomendado.</div>
+          <input
+            ref={galRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style={{ display: "none" }}
+            onChange={onGalleryFile}
+          />
+          <div className="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+            {form.gallery.map((slot, i) => {
+              const src =
+                slot?.kind === "pending"  ? slot.preview :
+                slot?.kind === "uploaded" ? imageUrl(slot.url) : null;
+              return src ? (
+                <div
+                  key={i}
+                  className="upload-box"
+                  style={{ aspectRatio: "1/1", padding: 0, overflow: "hidden", position: "relative" }}
+                >
+                  <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <button
+                    type="button"
+                    onClick={() => removeGallery(i)}
+                    style={{
+                      position: "absolute", top: 6, right: 6,
+                      background: "rgba(0,0,0,.65)", color: "#fff",
+                      border: "none", borderRadius: 4, width: 24, height: 24,
+                      cursor: "pointer", fontSize: 12,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                  >✕</button>
+                </div>
+              ) : null;
+            })}
+            {form.gallery.length < 10 && (
+              <div
+                className="upload-box"
+                style={{ aspectRatio: "1/1", padding: 14 }}
+                onClick={() => galRef.current?.click()}
+              >
+                <div style={{ fontSize: 22, opacity: .45 }}>+</div>
+                <small style={{ fontSize: 10 }}>Agregar</small>
+              </div>
+            )}
+          </div>
+          <div className="help" style={{ marginTop: 8 }}>
+            Hasta 10 imágenes. Aparecen en la sección &ldquo;Galería&rdquo; del evento.
           </div>
         </div>
 
-        <div className="field" style={{ marginBottom: 0 }}>
-          <label>Video (URL de YouTube)</label>
-          <input
-            type="url"
-            value={form.videoUrl}
-            onChange={(e) => set("videoUrl", e.target.value)}
-            placeholder="https://youtube.com/watch?v=..."
-          />
+        {/* Videos */}
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 8, color: "var(--ink-2)" }}>
+            Videos
+          </div>
+          {form.videos.map((v, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+              <div className="input-prefix" style={{ flex: 1 }}>
+                <span>▶</span>
+                <input
+                  type="url"
+                  value={v}
+                  onChange={(e) => updateVideo(i, e.target.value)}
+                  placeholder="https://youtube.com/watch?v=..."
+                />
+              </div>
+              {form.videos.length > 1 && (
+                <RemoveBtn onClick={() => removeVideo(i)} />
+              )}
+            </div>
+          ))}
+          <button type="button" className="add-line" onClick={addVideo}>
+            + Agregar otro video
+          </button>
         </div>
       </div>
 
@@ -540,44 +838,25 @@ export function EventForm({ mode, initial }: Props) {
       <div className="panel" style={{ marginBottom: 16 }}>
         <SectionHead n="05" title="Redes sociales" sub="Opcional" />
 
-        <div className="grid-2" style={{ marginBottom: 0 }}>
-          <div className="field">
-            <label>Instagram</label>
-            <input
-              type="url"
-              value={form.instagram}
-              onChange={(e) => set("instagram", e.target.value)}
-              placeholder="https://instagram.com/..."
-            />
+        {form.socials.map((s, i) => (
+          <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
+            <div className="input-prefix" style={{ flex: 1 }}>
+              <span>@</span>
+              <input
+                type="url"
+                value={s}
+                onChange={(e) => updateSocial(i, e.target.value)}
+                placeholder="https://instagram.com/tu-evento"
+              />
+            </div>
+            {form.socials.length > 1 && (
+              <RemoveBtn onClick={() => removeSocial(i)} />
+            )}
           </div>
-          <div className="field">
-            <label>TikTok</label>
-            <input
-              type="url"
-              value={form.tiktok}
-              onChange={(e) => set("tiktok", e.target.value)}
-              placeholder="https://tiktok.com/@..."
-            />
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>Facebook</label>
-            <input
-              type="url"
-              value={form.facebook}
-              onChange={(e) => set("facebook", e.target.value)}
-              placeholder="https://facebook.com/..."
-            />
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>X / Twitter</label>
-            <input
-              type="url"
-              value={form.twitter}
-              onChange={(e) => set("twitter", e.target.value)}
-              placeholder="https://x.com/..."
-            />
-          </div>
-        </div>
+        ))}
+        <button type="button" className="add-line" onClick={addSocial}>
+          + Agregar otra red social
+        </button>
       </div>
 
       {/* ── Sticky footer ─────────────────────────────────────────────────── */}

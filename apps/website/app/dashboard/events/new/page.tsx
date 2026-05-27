@@ -1,5 +1,5 @@
-import { AdminEventEditor } from "../../modals/AdminEventEditor";
+import { EventForm } from "../EventForm";
 
 export default function Page() {
-  return <AdminEventEditor mode="create" />;
+  return <EventForm mode="create" />;
 }

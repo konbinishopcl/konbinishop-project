@@ -2,12 +2,12 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useUser } from "@/components/providers";
-import { AdminEventEditor } from "../../../modals/AdminEventEditor";
+import { EventForm, type InitialEvent } from "../../EventForm";
 
 export default function Page() {
   const { id } = useParams<{ id: string }>();
   const { token } = useUser();
-  const [event, setEvent] = useState<Parameters<typeof AdminEventEditor>[0]["initial"] | null>(null);
+  const [event, setEvent] = useState<InitialEvent | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function Page() {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => r.json())
-      .then((data) => setEvent(data))
+      .then((data: InitialEvent) => setEvent(data))
       .catch(() => setEvent(null))
       .finally(() => setLoading(false));
   }, [token, id]);
@@ -32,5 +32,5 @@ export default function Page() {
     </div>
   );
 
-  return <AdminEventEditor mode="edit" initial={event} />;
+  return <EventForm mode="edit" initial={event} />;
 }

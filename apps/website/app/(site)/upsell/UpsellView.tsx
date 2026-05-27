@@ -195,121 +195,11 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
   );
 }
 
-/* ─── ArticleForm ────────────────────────────────────────────────────────── */
-function ArticleForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void }) {
-  const { token } = useUser();
-  const [busy, setBusy] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-
-  const handleAdd = async () => {
-    if (!title.trim()) { toast.error("El título es requerido"); return; }
-    if (!content.trim()) { toast.error("El contenido es requerido"); return; }
-    if (!token) { toast.error("Debes iniciar sesión"); return; }
-    setBusy(true);
-    try {
-      const res = await fetch("/api/articles", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), content: content.trim(), videoUrl: videoUrl.trim() || undefined, isSponsored: true }),
-      });
-      if (!res.ok) throw new Error("Error al crear artículo");
-      toast.success("Artículo patrocinado agregado al carrito");
-      onAdd();
-    } catch (ex) {
-      toast.error(ex instanceof Error ? ex.message : "Error");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div>
-      {/* Aviso editorial */}
-      <div style={{ background: "color-mix(in oklab, var(--accent-3) 8%, var(--surface-2))", border: "1px solid color-mix(in oklab, var(--accent-3) 30%, var(--line))", borderRadius: 12, padding: 14, marginBottom: 18, display: "flex", gap: 12, alignItems: "flex-start" }}>
-        <div style={{ width: 28, height: 28, borderRadius: 999, background: "var(--accent-3)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, flexShrink: 0 }}>i</div>
-        <div style={{ fontSize: 13, color: "var(--ink-2)", lineHeight: 1.5 }}>
-          <strong style={{ color: "var(--ink)" }}>Konbini revisará el contenido antes de publicarlo.</strong> El texto puede sufrir cambios de redacción para alinearse al estilo editorial de Konbini.
-        </div>
-      </div>
-
-      <div className="field">
-        <label>Título del artículo <span style={{ color: "var(--err)" }}>*</span></label>
-        <input type="text" placeholder="Ej: Anime Crunchyroll Fest 2025 llega a Santiago con artistas internacionales" value={title} onChange={e => setTitle(e.target.value)} />
-      </div>
-
-      {/* WYSIWYG toolbar + textarea */}
-      <div className="field">
-        <label>Contenido <span style={{ color: "var(--err)" }}>*</span></label>
-        <div style={{ display: "flex", gap: 4, padding: 8, background: "var(--surface-2)", border: "1px solid var(--line)", borderBottom: 0, borderRadius: "10px 10px 0 0", flexWrap: "wrap" }}>
-          {[
-            { label: "B", style: { fontWeight: 700 } },
-            { label: "I", style: { fontStyle: "italic" } },
-            { label: "H1" },
-            { label: "H2" },
-            { label: "≡" },
-            { label: '"' },
-            { label: "🔗" },
-          ].map(btn => (
-            <button key={btn.label} type="button" className="sel" style={{ padding: "5px 10px", fontSize: 12, ...btn.style }}>{btn.label}</button>
-          ))}
-          <div style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)", padding: "5px 10px", letterSpacing: ".1em", alignSelf: "center" }}>MARKDOWN</div>
-        </div>
-        <textarea
-          placeholder={"Escribe el contenido. Puedes usar Markdown: **negrita**, *cursiva*, # títulos, > citas, etc."}
-          style={{ minHeight: 240, borderRadius: "0 0 10px 10px", borderTop: 0 }}
-          value={content}
-          onChange={e => setContent(e.target.value)}
-        />
-        <div className="help">El admin de Konbini puede editar el texto para alinearlo al estilo editorial.</div>
-      </div>
-
-      <div className="field">
-        <label>Imagen principal <span style={{ color: "var(--err)" }}>*</span></label>
-        <div className="upload-box" style={{ aspectRatio: "16/9" }}>
-          <div className="ic">{Ic.upl}</div>
-          <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Imagen destacada</div>
-          <small>JPG / PNG · 1600×900 mín · máx 5MB</small>
-        </div>
-      </div>
-
-      <div className="field">
-        <label>Video (YouTube)</label>
-        <div className="input-prefix">
-          <span>▶</span>
-          <input type="text" placeholder="https://youtube.com/watch?v=..." value={videoUrl} onChange={e => setVideoUrl(e.target.value)} />
-        </div>
-      </div>
-
-      <div className="field">
-        <label>Galería de imágenes adicionales</label>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-          {[0, 1, 2, 3].map(i => (
-            <div key={i} className="upload-box" style={{ aspectRatio: "1/1", padding: 12 }}>
-              <div className="ic" style={{ width: 28, height: 28 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-              </div>
-              <small style={{ fontSize: 10 }}>{i + 1}</small>
-            </div>
-          ))}
-        </div>
-        <div className="help">Hasta 8 imágenes adicionales · opcional.</div>
-      </div>
-
-      <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : <>Agregar artículo al carrito {Ic.arrow}</>}</button>
-        <button className="btn ghost" onClick={onCancel}>Cancelar</button>
-      </div>
-    </div>
-  );
-}
-
 /* ─── UpsellView ─────────────────────────────────────────────────────────── */
 export function UpsellView() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [open, setOpen] = useState<{ spot?: boolean; hero?: boolean; article?: boolean }>({});
+  const [open, setOpen] = useState<{ spot?: boolean; hero?: boolean }>({});
 
   const advance = (n: number) => setStep(n + 1);
   const goCart = () => router.push("/carrito");
@@ -384,14 +274,10 @@ export function UpsellView() {
         <p className="av">Konbini revisa, edita y publica con su estilo editorial. El evento aparece destacado en el bloque de relacionados del artículo. Sin cupo limitado.</p>
         {step === 3 && (
           <div className="body">
-            {!open.article ? (
-              <div className="ups-cta-row">
-                <button className="btn primary" onClick={() => setOpen({ ...open, article: true })}>Sí, agregar artículo</button>
-                <button className="btn ghost" onClick={goCart}>No, gracias — ir al carrito</button>
-              </div>
-            ) : (
-              <ArticleForm onAdd={goCart} onCancel={() => setOpen({ ...open, article: false })} />
-            )}
+            <div className="ups-cta-row">
+              <button className="btn primary" onClick={() => router.push("/crear-articulo")}>Sí, agregar artículo</button>
+              <button className="btn ghost" onClick={goCart}>No, gracias — ir al carrito</button>
+            </div>
           </div>
         )}
       </div>

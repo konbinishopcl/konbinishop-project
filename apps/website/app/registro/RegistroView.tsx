@@ -199,18 +199,28 @@ function RegistroForm() {
                 />
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "18px 0" }}>
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>
-                <input type="checkbox" checked={acceptTerms} onChange={e => setAcceptTerms(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
-                <span>Acepto los <Link href="/ayuda?tab=terms" target="_blank" style={{ color: "var(--accent)" }}>Términos y condiciones</Link> y la <Link href="/ayuda?tab=privacy" target="_blank" style={{ color: "var(--accent)" }}>Política de privacidad</Link> <span style={{ color: "var(--err)" }}>*</span></span>
+            <div className="consent-block">
+              <div className="law-tag">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/></svg>
+                LEY 21.719 · OBLIGATORIO
+              </div>
+              <label onClick={() => setAcceptTerms(!acceptTerms)}>
+                <span className={`ck ${acceptTerms ? "on" : ""}`} style={{ flex: "0 0 18px", marginTop: 1 }}>
+                  {acceptTerms && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                </span>
+                <span>Acepto los <Link href="/ayuda?tab=terms" target="_blank">Términos y condiciones</Link> y la <Link href="/ayuda?tab=privacy" target="_blank">Política de privacidad</Link> de Konbini. <span style={{ color: "var(--err)" }}>*</span></span>
               </label>
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>
-                <input type="checkbox" checked={accept18} onChange={e => setAccept18(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
-                <span>Confirmo que soy mayor de 18 años <span style={{ color: "var(--err)" }}>*</span></span>
+              <label onClick={() => setAccept18(!accept18)}>
+                <span className={`ck ${accept18 ? "on" : ""}`} style={{ flex: "0 0 18px", marginTop: 1 }}>
+                  {accept18 && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                </span>
+                <span>Confirmo que tengo <strong>18 años o más</strong>. <span style={{ color: "var(--err)" }}>*</span></span>
               </label>
-              <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>
-                <input type="checkbox" checked={acceptMarketing} onChange={e => setAcceptMarketing(e.target.checked)} style={{ marginTop: 2, flexShrink: 0 }} />
-                <span style={{ color: "var(--ink-3)" }}>Quiero recibir noticias y promociones de Konbini (opcional)</span>
+              <label onClick={() => setAcceptMarketing(!acceptMarketing)}>
+                <span className={`ck ${acceptMarketing ? "on" : ""}`} style={{ flex: "0 0 18px", marginTop: 1 }}>
+                  {acceptMarketing && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                </span>
+                <span style={{ color: "var(--ink-2)" }}>Quiero recibir comunicaciones de Konbini (eventos, novedades editoriales, promociones). <em style={{ color: "var(--ink-3)" }}>Opcional · puedes desuscribirte cuando quieras.</em></span>
               </label>
             </div>
             <button type="submit" className="btn primary block lg" disabled={busy}>

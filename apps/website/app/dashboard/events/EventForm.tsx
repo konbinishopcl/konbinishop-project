@@ -116,24 +116,25 @@ type ImageSlot = { file: File | null; url: string };
 // ── InitialEvent exported type ─────────────────────────────────────────────────
 
 export type InitialEvent = {
-  id:            number;
-  title:         string;
-  company:       string | null;
-  description:   string;
-  about:         string | null;
-  address:       string;
-  addressNumber: string | null;
-  ticketUrl:     string | null;
-  banner:        string | null;
-  poster:        string | null;
-  gallery?:      string[];
-  categoryId:    number | null;
-  cityId:        number | null;
-  status:        string;
-  prices:        { name: string; price: number }[];
-  dates:         { date: string | null; startTime: string | null; endTime: string | null }[];
-  socialLinks:   { link: string | null }[];
-  videos:        { link: string | null }[];
+  id:              number;
+  title:           string;
+  company:         string | null;
+  description:     string;
+  about:           string | null;
+  address:         string;
+  addressNumber:   string | null;
+  ticketUrl:       string | null;
+  banner:          string | null;
+  poster:          string | null;
+  gallery?:        string[];
+  categoryId:      number | null;      // legacy — backend lo sigue devolviendo durante la transición
+  eventCategoryId: number | null;      // Phase 18+ — se prefiere sobre categoryId
+  cityId:          number | null;
+  status:          string;
+  prices:          { name: string; price: number }[];
+  dates:           { date: string | null; startTime: string | null; endTime: string | null }[];
+  socialLinks:     { link: string | null }[];
+  videos:          { link: string | null }[];
   city?: { id: number; name: string; state?: { id: number; slug: string; country?: { slug: string } } } | null;
 };
 
@@ -284,7 +285,7 @@ export function EventForm({ mode, initial }: Props) {
       address:       initial?.address       ?? "",
       addressNumber: initial?.addressNumber ?? "",
       ticketUrl:     initial?.ticketUrl     ?? "",
-      categoryId:    initial?.categoryId != null ? String(initial.categoryId) : "",
+      categoryId:    (initial?.eventCategoryId ?? initial?.categoryId) != null ? String(initial?.eventCategoryId ?? initial?.categoryId) : "",
       countrySlug:   initial?.city?.state?.country?.slug ?? "",
       stateSlug:     initial?.city?.state?.slug          ?? "",
       cityId:        initial?.cityId != null ? String(initial.cityId) : "",
@@ -331,8 +332,8 @@ export function EventForm({ mode, initial }: Props) {
     if (!token) return;
     const h = { Authorization: `Bearer ${token}` };
     const [cats, ctrs] = await Promise.all([
-      fetch("/api/categories", { headers: h }).then((r) => r.json()).catch(() => []),
-      fetch("/api/countries",  { headers: h }).then((r) => r.json()).catch(() => []),
+      fetch("/api/event-categories", { headers: h }).then((r) => r.json()).catch(() => []),
+      fetch("/api/countries",        { headers: h }).then((r) => r.json()).catch(() => []),
     ]);
     setCategories(Array.isArray(cats) ? cats : []);
     setCountries(Array.isArray(ctrs) ? ctrs : []);
@@ -418,8 +419,8 @@ export function EventForm({ mode, initial }: Props) {
         banner:        bannerUrl                   || undefined,
         poster:        posterUrl                   || undefined,
         gallery:       galleryUrls.length ? galleryUrls : undefined,
-        categoryId:    values.categoryId ? Number(values.categoryId) : undefined,
-        cityId:        values.cityId     ? Number(values.cityId)     : undefined,
+        eventCategoryId: values.categoryId ? Number(values.categoryId) : undefined,
+        cityId:          values.cityId     ? Number(values.cityId)     : undefined,
 
         prices: values.isFree
           ? [{ name: "Entrada", price: 0 }]

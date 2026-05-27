@@ -5,12 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { EventCard } from "@/components/EventCard";
 import { Ic } from "@/components/icons";
-import { api, toEventItem, type ApiCategory, type ApiRegion } from "@/lib/api";
+import { api, toEventItem, type ApiEventCategory, type ApiRegion } from "@/lib/api";
 import type { EventItem } from "@/lib/data";
 
 type Props = {
   initialResults: EventItem[];
-  initialCategories: ApiCategory[];
+  initialCategories: ApiEventCategory[];
   initialRegions: ApiRegion[];
 };
 
@@ -25,7 +25,7 @@ export function SearchView({ initialResults, initialCategories, initialRegions }
   const [tab, setTab] = useState<"all" | "events">("all");
   const [results, setResults] = useState<EventItem[]>(initialResults);
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<ApiCategory[]>(initialCategories);
+  const [categories, setCategories] = useState<ApiEventCategory[]>(initialCategories);
   const [regions, setRegions] = useState<ApiRegion[]>(initialRegions);
   // Rastrear si es el primer render (ya tenemos datos SSR).
   const [hydrated, setHydrated] = useState(false);
@@ -36,7 +36,7 @@ export function SearchView({ initialResults, initialCategories, initialRegions }
 
   // Cargar catálogos solo si el server no los proveyó (fallo de API en SSR).
   useEffect(() => {
-    if (categories.length === 0) api.categories().then(setCategories).catch(() => {});
+    if (categories.length === 0) api.eventCategories().then(setCategories).catch(() => {});
     if (regions.length === 0) api.regions().then(setRegions).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

@@ -38,7 +38,8 @@ export type InitialArticle = {
   image: string | null;
   youtubeUrl: string | null;
   status: string;
-  tags: Tag[];
+  tags: Tag[];          // legacy — backend lo sigue devolviendo durante la transición
+  articleTags?: Tag[];  // Phase 18+ — se prefiere sobre tags
   events?: { id: number; title: string }[];
 };
 
@@ -106,7 +107,7 @@ export function ArticleForm({ mode, variant, initial }: Props) {
   const [busy, setBusy] = useState(false);
   const [image, setImage] = useState<ImageSlot>({ file: null, url: initial?.image ?? "" });
   const [tags, setTags] = useState<Tag[]>([]);
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>(initial?.tags?.map(t => t.id) ?? []);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>((initial?.articleTags ?? initial?.tags)?.map(t => t.id) ?? []);
   const [tagSearch, setTagSearch] = useState("");
   const [myEvents, setMyEvents] = useState<EventMine[]>([]);
 
@@ -134,7 +135,7 @@ export function ArticleForm({ mode, variant, initial }: Props) {
 
   // Load tags
   useEffect(() => {
-    fetch("/api/tags").then(r => r.json()).then(d => setTags(Array.isArray(d) ? d : [])).catch(() => setTags([]));
+    fetch("/api/article-tags").then(r => r.json()).then(d => setTags(Array.isArray(d) ? d : [])).catch(() => setTags([]));
   }, []);
 
   // Load own events when sponsored variant
@@ -173,7 +174,7 @@ export function ArticleForm({ mode, variant, initial }: Props) {
         content:    values.content.trim(),
         image:      imageUrlPath || undefined,
         youtubeUrl: values.youtubeUrl?.trim() || undefined,
-        tagIds:     selectedTagIds.length ? selectedTagIds : undefined,
+        articleTagIds: selectedTagIds.length ? selectedTagIds : undefined,
       };
 
       // 3) Choose endpoint based on mode + variant

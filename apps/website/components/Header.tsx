@@ -7,9 +7,9 @@ import { BrandMark } from "./BrandMark";
 import { Ic } from "./icons";
 import { useTheme, useUser } from "./providers";
 import { UserMenu } from "./UserMenu";
-import type { ApiCategory } from "@/lib/api";
+import type { ApiEventCategory } from "@/lib/api";
 
-export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
+export function Header({ categories = [] }: { categories?: ApiEventCategory[] }) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useUser();
   const router = useRouter();

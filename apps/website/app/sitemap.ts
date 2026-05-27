@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Categorías
   let categoryRoutes: MetadataRoute.Sitemap = [];
   try {
-    const categories = await api.categories();
+    const categories = await api.eventCategories();
     categoryRoutes = categories.map((c) => ({
       url: `${SITE_URL}/categoria/${c.slug}`,
       lastModified: now,

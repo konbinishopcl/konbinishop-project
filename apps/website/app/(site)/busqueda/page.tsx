@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SearchView } from "./SearchView";
-import { api, toEventItem, type ApiCategory, type ApiRegion } from "@/lib/api";
+import { api, toEventItem, type ApiEventCategory, type ApiRegion } from "@/lib/api";
 import type { EventItem } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
@@ -21,13 +21,13 @@ export default async function BusquedaPage({ searchParams }: Props) {
   const { q, category, region } = await searchParams;
 
   let initialResults: EventItem[] = [];
-  let initialCategories: ApiCategory[] = [];
+  let initialCategories: ApiEventCategory[] = [];
   let initialRegions: ApiRegion[] = [];
 
   try {
     const [list, cats, regs] = await Promise.all([
       api.events({ q, category, region, pageSize: 60 }),
-      api.categories(),
+      api.eventCategories(),
       api.regions(),
     ]);
     initialResults = list.items.map(toEventItem);

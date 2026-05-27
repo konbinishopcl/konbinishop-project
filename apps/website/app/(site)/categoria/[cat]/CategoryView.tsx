@@ -4,12 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { EventCard } from "@/components/EventCard";
 import { Ic } from "@/components/icons";
-import type { ApiCategory } from "@/lib/api";
+import type { ApiEventCategory } from "@/lib/api";
 import type { EventItem } from "@/lib/data";
 
 type Props = {
-  category: ApiCategory;
-  allCategories: ApiCategory[];
+  category: ApiEventCategory;
+  allCategories: ApiEventCategory[];
   items: EventItem[];
 };
 

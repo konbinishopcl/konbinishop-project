@@ -111,9 +111,9 @@ export function Step4Client() {
         gallery:       galleryUrls.filter((u): u is string => !!u).length
                          ? galleryUrls.filter((u): u is string => !!u)
                          : undefined,
-        regionId:    values.regionId  ? Number(values.regionId)  : undefined,
-        communeId:   values.communeId ? Number(values.communeId) : undefined,
-        categoryIds: values.categoryId ? [Number(values.categoryId)] : undefined,
+        regionId:         values.regionId  ? Number(values.regionId)  : undefined,
+        communeId:        values.communeId ? Number(values.communeId) : undefined,
+        eventCategoryId:  values.categoryId ? Number(values.categoryId) : undefined,
         prices:      values.free
           ? []
           : values.prices

@@ -9,14 +9,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { BrandMark } from "@/components/BrandMark";
 import { Ic } from "@/components/icons";
 import { useUser } from "@/components/providers";
-import { type ApiCategory } from "@/lib/api";
+import { type ApiEventCategory } from "@/lib/api";
 import { useForm as useFormCtx, type FormValues } from "../FormContext";
 import { step1Schema, type Step1Values } from "../schemas";
 import { FieldError, useHeadroom } from "../shared";
 
 const PASO = 1;
 
-export function Step1Client({ categories }: { categories: ApiCategory[] }) {
+export function Step1Client({ categories }: { categories: ApiEventCategory[] }) {
   const router   = useRouter();
   const pathname = usePathname();
   const { user, ready } = useUser();
@@ -142,6 +142,7 @@ export function Step1Client({ categories }: { categories: ApiCategory[] }) {
                     Controller (controlado) en lugar de register (ref) — así value={field.value}
                     garantiza que el select muestre la opción guardada aunque se recargue la página.
                     Las opciones vienen del servidor (SSR), por lo que existen desde el primer render.
+                    Phase 18+: el valor se envía al backend como eventCategoryId en Step4Client.
                   */}
                   <Controller
                     control={control}

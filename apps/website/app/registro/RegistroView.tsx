@@ -177,25 +177,27 @@ function RegistroForm() {
                 ))}
               </select>
             </div>
-            <div className="field">
-              <label>Contraseña</label>
-              <input
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className="field">
-              <label>Confirmar contraseña</label>
-              <input
-                type="password"
-                placeholder="••••••••"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-              />
+            <div className="grid-2">
+              <div className="field">
+                <label>Contraseña</label>
+                <input
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label>Confirmar contraseña</label>
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  required
+                />
+              </div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "18px 0" }}>
               <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>

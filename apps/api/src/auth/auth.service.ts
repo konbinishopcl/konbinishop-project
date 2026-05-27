@@ -215,6 +215,16 @@ export class AuthService {
   }
 
   /**
+   * Emite un nuevo JWT con el rol actual del usuario en DB.
+   * Útil para refrescar el token cuando el rol cambió sin cerrar sesión.
+   */
+  async refreshToken(userId: number) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || user.blocked) throw new UnauthorizedException();
+    return { token: this.sign(user), user: this.sanitize(user) };
+  }
+
+  /**
    * Paso 1 de recuperación: genera un token (válido 1 h) y lo asocia al usuario.
    * Sin infraestructura de email, el token se registra en el log del servidor;
    * en v2 se enviará por correo. La respuesta es uniforme y no revela si el

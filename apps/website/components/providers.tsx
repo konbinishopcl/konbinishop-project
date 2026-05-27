@@ -54,15 +54,51 @@ function UserProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const u = localStorage.getItem("kb-user");
-      const t = localStorage.getItem("kb-token");
-      if (u && u !== "null") setUserState(JSON.parse(u));
-      if (t) setToken(t);
-    } catch {
-      /* ignore */
+    let cancelled = false;
+
+    async function init() {
+      let storedToken: string | null = null;
+      try {
+        const u = localStorage.getItem("kb-user");
+        const t = localStorage.getItem("kb-token");
+        if (u && u !== "null") setUserState(JSON.parse(u));
+        if (t) { setToken(t); storedToken = t; }
+      } catch {
+        /* ignore */
+      }
+      setReady(true);
+
+      // Refresca el JWT en background para obtener el rol actual desde DB.
+      // Si el token expiró → 401 → auto-logout.
+      // Si el rol cambió sin re-login → nuevo JWT con rol actualizado.
+      if (storedToken) {
+        try {
+          const r = await fetch("/api/auth/refresh", {
+            headers: { Authorization: `Bearer ${storedToken}` },
+          });
+          if (cancelled) return;
+          if (r.ok) {
+            const data = await r.json() as { token: string; user: unknown };
+            setUserState(data.user as Parameters<typeof setUserState>[0]);
+            setToken(data.token);
+            localStorage.setItem("kb-user", JSON.stringify(data.user));
+            localStorage.setItem("kb-token", data.token);
+          } else if (r.status === 401) {
+            // Token expirado o inválido → cerrar sesión
+            setUserState(null);
+            setToken(null);
+            localStorage.removeItem("kb-user");
+            localStorage.removeItem("kb-token");
+          }
+          // Otros errores (502 si el backend está caído) → mantener sesión existente
+        } catch {
+          /* error de red → mantener sesión existente */
+        }
+      }
     }
-    setReady(true);
+
+    void init();
+    return () => { cancelled = true; };
   }, []);
 
   const setAuth = (nextUser: User, nextToken: string) => {

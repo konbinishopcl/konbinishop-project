@@ -147,6 +147,16 @@ export class AuthController {
     return this.auth.me(user.sub);
   }
 
+  @Get('refresh')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Emite un nuevo JWT con el rol actual del usuario en DB (útil tras cambio de rol)' })
+  @ApiResponse({ status: 200, description: '{ token, user } — nuevo JWT con rol actualizado' })
+  @ApiResponse({ status: 401, description: 'Token inválido o expirado' })
+  refresh(@CurrentUser() user: JwtUser) {
+    return this.auth.refreshToken(user.sub);
+  }
+
   @Patch('password')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

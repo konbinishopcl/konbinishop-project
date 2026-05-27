@@ -6,8 +6,8 @@ import type { ReactNode } from "react";
 
 const NAV = [
   { href: "/preguntas-frecuentes", label: "Preguntas frecuentes" },
-  { href: "/terminos",             label: "Términos y condiciones" },
-  { href: "/privacidad",           label: "Política de privacidad" },
+  { href: "/terminos-y-condiciones",             label: "Términos y condiciones" },
+  { href: "/politica-de-privacidad",           label: "Política de privacidad" },
   { href: "/contacto",             label: "Contacto" },
 ];
 

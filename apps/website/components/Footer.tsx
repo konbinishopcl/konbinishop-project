@@ -46,8 +46,8 @@ export function Footer() {
         <div className="foot-col">
           <h4>Ayuda</h4>
           <Link href="/preguntas-frecuentes">Preguntas frecuentes</Link>
-          <Link href="/terminos">Términos</Link>
-          <Link href="/privacidad">Privacidad</Link>
+          <Link href="/terminos-y-condiciones">Términos</Link>
+          <Link href="/politica-de-privacidad">Privacidad</Link>
           <Link href="/contacto">Contacto</Link>
         </div>
 

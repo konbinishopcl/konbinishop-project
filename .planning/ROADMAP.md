@@ -42,9 +42,28 @@
 
 ---
 
-## ▶ Next Milestone
+## ▶ Milestone v2 — Plataforma de contenido (Phases 17+)
 
-*Run `/gsd:new-milestone` to define next milestone scope, requirements, and roadmap.*
+### Gestión de contenido
+
+- [ ] Phase 17: Articles CRUD completo (0/4 plans) — CRUD de noticias en dashboard admin + cuenta organizador: formulario, permisos por rol, listado, moderación
+
+### Phase 17: Articles CRUD completo — CRUD de noticias en dashboard admin + cuenta organizador: formulario, permisos por rol, listado, moderación
+
+**Goal:** Habilitar CRUD completo de artículos para ambos roles: ADMIN/SUPER_ADMIN gestiona TODOS los artículos desde `/dashboard/articles` (lista real + moderación + crear/editar editorial), y organizadores gestionan SUS PROPIOS artículos patrocinados desde `/cuenta/articulos` (crear via `/crear-articulo`, editar/eliminar los suyos). Comparten un único `<ArticleForm />` sin acordeón con 2 variants ('admin' y 'sponsored').
+
+**Requirements**: ART-01..ART-14 (definidos inline en los 4 PLAN.md de la fase)
+
+**Depends on:** Phase 13 (sponsored articles base), Phase 15 (UI rediseño), Phase 16 (form patterns)
+
+**Plans:** 4 plans · 3 waves
+
+Plans:
+
+- [ ] 17-01-PLAN.md — API: GET /articles/mine + ownership en PATCH/DELETE (wave 1)
+- [ ] 17-02-PLAN.md — Shared: MarkdownEditor + ArticleForm sin acordeón (wave 2)
+- [ ] 17-03-PLAN.md — Admin dashboard: ArticlesSection real + rutas + breadcrumbs + eliminar modal roto (wave 3)
+- [ ] 17-04-PLAN.md — Organizador /cuenta/articulos + /crear-articulo + edit page (wave 3)
 
 ---
 

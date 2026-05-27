@@ -90,6 +90,42 @@ export type ApiCategory = {
   description: string | null;
 };
 
+// Phase 18+ — taxonomías separadas (las viejas ApiCategory/ApiTag se mantienen como alias)
+export type ApiEventCategory = {
+  id: number;
+  name: string | null;
+  slug: string;
+  description: string | null;
+  pricePerDay: number;
+  icon: string | null;
+  color: string | null;
+  minDays: number;
+  maxDays: number;
+  order: number;
+};
+
+export type ApiEventTag = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+export type ApiArticleCategory = {
+  id: number;
+  name: string | null;
+  slug: string;
+  description: string | null;
+};
+
+export type ApiArticleTag = {
+  id: number;
+  name: string;
+  slug: string;
+};
+
+/** @deprecated usar ApiArticleTag — se eliminará en Phase 19+ */
+export type ApiTag = ApiArticleTag;
+
 export type ApiCountry = { id: number; name: string; slug: string };
 export type ApiRegion = { id: number; name: string; slug: string; countryId: number };
 export type ApiCommune = { id: number; name: string; slug: string; stateId: number };
@@ -129,7 +165,9 @@ export type ApiEvent = {
   } | null;
   region: ApiRegion | null;
   commune: ApiCommune | null;
-  category: ApiCategory | null;
+  category: ApiCategory | null;          // legacy — backend lo sigue devolviendo durante la transición
+  eventCategory: ApiEventCategory | null; // Phase 18+
+  eventTags?: ApiEventTag[];              // Phase 18+ (opcional — algunos endpoints viejos pueden no incluirlo)
   prices: ApiEventPrice[];
   dates: ApiEventDate[];
   socialLinks: ApiEventLink[];
@@ -154,7 +192,8 @@ export type ApiHero = {
   date: string | null;
   place: string | null;
   link: string | null;
-  category: ApiCategory | null;
+  category: ApiCategory | null;           // legacy
+  eventCategory: ApiEventCategory | null; // Phase 18+
   days: number | null;
   amount: number | null;
   expirationDate: string | null;
@@ -165,6 +204,7 @@ export type EventsQuery = {
   pageSize?: number;
   q?: string;
   category?: string;
+  eventCategory?: string; // alias preferido de `category` en Phase 18+
   region?: string;
 };
 
@@ -183,7 +223,12 @@ export type CreateEventInput = {
   gallery?: string[];
   regionId?: number;
   communeId?: number;
+  /** @deprecated usar eventCategoryId — el backend acepta ambos durante la transición */
+  categoryId?: number;
+  /** @deprecated usar eventCategoryId — mantenido para compat con Step4Client legacy */
   categoryIds?: number[];
+  eventCategoryId?: number; // Phase 18+
+  eventTagIds?: number[];   // Phase 18+
   prices?: { name: string; price?: number }[];
   dates?: { date?: string; startTime?: string; endTime?: string }[];
   socialLinks?: { link: string }[];
@@ -253,7 +298,12 @@ export const api = {
     return data as { url: string; filename: string };
   },
   countries: () => request<ApiCountry[]>("/countries"),
-  categories: () => request<ApiCategory[]>("/categories"),
+  /** @deprecated usar api.eventCategories() — alias temporal hasta Phase 19+ */
+  categories: () => request<ApiEventCategory[]>("/event-categories"),
+  eventCategories: () => request<ApiEventCategory[]>("/event-categories"),
+  eventTags:       () => request<ApiEventTag[]>("/event-tags"),
+  articleCategories: () => request<ApiArticleCategory[]>("/article-categories"),
+  articleTags:     () => request<ApiArticleTag[]>("/article-tags"),
   regions: (country?: string) => request<ApiRegion[]>(`/states${country ? `?country=${encodeURIComponent(country)}` : ""}`),
   communes: (region?: string) =>
     request<ApiCommune[]>(`/cities${region ? `?state=${encodeURIComponent(region)}` : ""}`),
@@ -316,8 +366,8 @@ export function toEventItem(e: ApiEvent): EventItem {
     id: e.id,
     slug: e.slug,
     title: e.title,
-    cat: e.category?.name ?? "Evento",
-    catSlug: e.category?.slug,
+    cat: (e.eventCategory?.name ?? e.category?.name) ?? "Evento",
+    catSlug: e.eventCategory?.slug ?? e.category?.slug,
     image: imageUrl(e.poster ?? e.banner),
     date: formatEventDate(e.dates),
     place: e.commune?.name ?? e.address,
@@ -343,7 +393,7 @@ export function toHeroSlide(h: ApiHero): HeroSlide {
     title: h.title,
     titleAccent: h.titleAccent ?? "",
     lead: h.lead ?? "",
-    category: h.category?.name ?? "",
+    category: (h.eventCategory?.name ?? h.category?.name) ?? "",
     date: h.date ? formatDateLabel(h.date) : "",
     place: h.place ?? "",
     image: imageUrl(h.image),

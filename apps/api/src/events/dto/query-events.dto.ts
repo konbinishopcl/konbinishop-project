@@ -33,6 +33,11 @@ export class QueryEventsDto {
   @IsString()
   category?: string;
 
+  @ApiPropertyOptional({ description: 'Filtrar por slug de categoría de evento (alias de category)' })
+  @IsOptional()
+  @IsString()
+  eventCategory?: string;
+
   @ApiPropertyOptional({ example: 'region-metropolitana-de-santiago', description: 'Slug de estado/región' })
   @IsOptional()
   @IsString()

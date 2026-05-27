@@ -46,4 +46,9 @@ export class CreateHeroDto {
   @IsOptional()
   @IsInt()
   categoryId?: number;
+
+  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría de evento que reutiliza Hero (Phase 18+)' })
+  @IsOptional()
+  @IsInt()
+  eventCategoryId?: number;
 }

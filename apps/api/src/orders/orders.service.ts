@@ -15,9 +15,9 @@ import { AddItemDto, OrderItemType } from './dto/add-item.dto';
 import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 const ITEM_INCLUDE = {
-  event: { include: { category: true } },
+  event: { include: { category: true, eventCategory: true } },
   spot: true,
-  hero: { include: { category: true } },
+  hero: { include: { category: true, eventCategory: true } },
   article: true,
 } as const;
 
@@ -95,16 +95,20 @@ export class OrdersService {
       dto.type === OrderItemType.HERO ||
       (dto.type === OrderItemType.EVENT && !hasCredit);
 
-    // CNT-04 D-17: para EVENT sin crédito, cargar category para usar category.minDays/maxDays
+    // CNT-04 D-17: para EVENT sin crédito, cargar eventCategory para usar minDays/maxDays
     let categoryMinDays: number | null = null;
     let categoryMaxDays: number | null = null;
     if (dto.type === OrderItemType.EVENT && !hasCredit && dto.eventId) {
       const eventForCap = await this.prisma.event.findUnique({
         where: { id: dto.eventId },
-        select: { category: { select: { minDays: true, maxDays: true } } },
+        select: {
+          eventCategory: { select: { minDays: true, maxDays: true } },
+          category:      { select: { minDays: true, maxDays: true } },  // fallback
+        },
       });
-      categoryMinDays = eventForCap?.category?.minDays ?? null;
-      categoryMaxDays = eventForCap?.category?.maxDays ?? null;
+      const cat = eventForCap?.eventCategory ?? eventForCap?.category;
+      categoryMinDays = cat?.minDays ?? null;
+      categoryMaxDays = cat?.maxDays ?? null;
     }
 
     if (needsDays && (dto.days === undefined || dto.days < 1)) {
@@ -249,7 +253,7 @@ export class OrdersService {
     if (!dto.eventId) throw new BadRequestException('eventId es requerido para ítems de tipo EVENT');
     const event = await this.prisma.event.findUnique({
       where: { id: dto.eventId },
-      include: { category: true },
+      include: { category: true, eventCategory: true },
     });
     if (!event) throw new NotFoundException('Evento no encontrado');
     if (event.userId !== ownerId) throw new ForbiddenException('Este evento no pertenece al contexto actual');
@@ -274,8 +278,8 @@ export class OrdersService {
       };
     }
 
-    // D-06: sin crédito → cobro normal
-    const unitPrice = event.category?.pricePerDay ?? 0;
+    // D-06: sin crédito → cobro normal. Usar eventCategory primero; category como fallback.
+    const unitPrice = event.eventCategory?.pricePerDay ?? event.category?.pricePerDay ?? 0;
     return { unitPrice, eventId: dto.eventId, spotId: null, heroId: null, articleId: null, creditApplied: false };
   }
 

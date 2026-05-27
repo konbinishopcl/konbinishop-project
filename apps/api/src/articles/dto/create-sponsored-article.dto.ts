@@ -37,6 +37,17 @@ export class CreateSponsoredArticleDto {
   @IsInt({ each: true })
   tagIds?: number[];
 
+  @ApiPropertyOptional({ type: [Number], example: [1, 4], description: 'IDs de article-tags (Phase 18+, reemplaza tagIds)' })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  articleTagIds?: number[];
+
+  @ApiPropertyOptional({ example: 3, description: 'ID de la categoría del artículo (Phase 18+, opcional)' })
+  @IsOptional()
+  @IsInt()
+  articleCategoryId?: number;
+
   @ApiPropertyOptional({ example: 12, description: 'ID del evento relacionado (opcional)' })
   @IsOptional()
   @IsInt()

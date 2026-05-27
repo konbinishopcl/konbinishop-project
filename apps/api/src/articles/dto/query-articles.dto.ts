@@ -14,6 +14,16 @@ export class QueryArticlesDto {
   @IsString()
   tag?: string;
 
+  @ApiPropertyOptional({ description: 'Filtrar por slug de article-tag (alias de tag)' })
+  @IsOptional()
+  @IsString()
+  articleTag?: string;
+
+  @ApiPropertyOptional({ description: 'Filtrar por slug de article-category' })
+  @IsOptional()
+  @IsString()
+  articleCategory?: string;
+
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()
   @Type(() => Number)

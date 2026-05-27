@@ -26,13 +26,17 @@ function slugify(text: string): string {
 }
 
 const ARTICLE_INCLUDE = {
-  tags: true,
+  tags: true,                  // legacy
+  articleTags: true,           // Phase 18+
+  articleCategory: true,       // Phase 18+
   _count: { select: { likes: true } },
 } as const;
 
 // Incluye el primer evento vinculado (APPROVED) para la vista de detalle
 const ARTICLE_DETAIL_INCLUDE = {
-  tags: true,
+  tags: true,                  // legacy
+  articleTags: true,           // Phase 18+
+  articleCategory: true,       // Phase 18+
   _count: { select: { likes: true } },
   events: {
     where: { status: PublicationStatus.APPROVED },
@@ -46,6 +50,7 @@ const ARTICLE_DETAIL_INCLUDE = {
       dates: { take: 1, select: { id: true, date: true } },
       city: { select: { name: true } },
       category: { select: { name: true, slug: true } },
+      eventCategory: { select: { name: true, slug: true } },
     },
   },
 } as const;
@@ -67,7 +72,11 @@ export class ArticlesService {
       ...(!isAdmin && { status: PublicationStatus.APPROVED }),
       ...(isAdmin && query.status !== undefined && { status: query.status }),
       ...(query.q && { OR: [{ title: { contains: query.q } }, { excerpt: { contains: query.q } }] }),
-      ...(query.tag && { tags: { some: { slug: query.tag } } }),
+      ...(() => {
+        const tagSlug = query.articleTag ?? query.tag;
+        return tagSlug ? { articleTags: { some: { slug: tagSlug } } } : {};
+      })(),
+      ...(query.articleCategory && { articleCategory: { slug: query.articleCategory } }),
     };
 
     const [items, total] = await this.prisma.$transaction([
@@ -138,6 +147,7 @@ export class ArticlesService {
     const slug = dto.slug ?? slugify(dto.title);
     const existing = await this.prisma.article.findUnique({ where: { slug } });
     if (existing) throw new ConflictException(`Ya existe un artículo con el slug "${slug}"`);
+    const tagIds = dto.articleTagIds ?? dto.tagIds;
     const article = await this.prisma.article.create({
       data: {
         title: dto.title,
@@ -145,7 +155,9 @@ export class ArticlesService {
         excerpt: dto.excerpt,
         content: dto.content,
         image: dto.image,
-        tags: dto.tagIds?.length ? { connect: dto.tagIds.map((id) => ({ id })) } : undefined,
+        tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
+        articleTags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
+        articleCategory: dto.articleCategoryId ? { connect: { id: dto.articleCategoryId } } : undefined,
       },
       include: ARTICLE_INCLUDE,
     });
@@ -159,6 +171,7 @@ export class ArticlesService {
       const conflict = await this.prisma.article.findFirst({ where: { slug: dto.slug, NOT: { id } } });
       if (conflict) throw new ConflictException(`Ya existe un artículo con el slug "${dto.slug}"`);
     }
+    const incomingTagIds = dto.articleTagIds ?? dto.tagIds;
     const updated = await this.prisma.article.update({
       where: { id },
       data: {
@@ -167,7 +180,15 @@ export class ArticlesService {
         ...(dto.excerpt !== undefined && { excerpt: dto.excerpt }),
         ...(dto.content !== undefined && { content: dto.content }),
         ...(dto.image !== undefined && { image: dto.image }),
-        ...(dto.tagIds !== undefined && { tags: { set: dto.tagIds.map((tagId) => ({ id: tagId })) } }),
+        ...(incomingTagIds !== undefined && {
+          tags: { set: incomingTagIds.map((tagId) => ({ id: tagId })) },
+          articleTags: { set: incomingTagIds.map((tagId) => ({ id: tagId })) },
+        }),
+        ...(dto.articleCategoryId !== undefined && {
+          articleCategory: dto.articleCategoryId
+            ? { connect: { id: dto.articleCategoryId } }
+            : { disconnect: true },
+        }),
       },
       include: ARTICLE_INCLUDE,
     });
@@ -194,6 +215,7 @@ export class ArticlesService {
     const existing = await this.prisma.article.findUnique({ where: { slug } });
     if (existing) throw new ConflictException(`Ya existe un artículo con el slug "${slug}"`);
 
+    const tagIds = dto.articleTagIds ?? dto.tagIds;
     const article = await this.prisma.article.create({
       data: {
         title: dto.title,
@@ -203,7 +225,9 @@ export class ArticlesService {
         image: dto.image,
         status: PublicationStatus.DRAFT,
         owner: { connect: { id: ownerId } },
-        tags: dto.tagIds?.length ? { connect: dto.tagIds.map((id) => ({ id })) } : undefined,
+        tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
+        articleTags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
+        articleCategory: dto.articleCategoryId ? { connect: { id: dto.articleCategoryId } } : undefined,
         events: dto.eventId ? { connect: { id: dto.eventId } } : undefined,
       },
       include: ARTICLE_INCLUDE,

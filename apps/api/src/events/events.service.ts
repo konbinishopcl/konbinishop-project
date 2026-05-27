@@ -26,7 +26,9 @@ function slugify(text: string): string {
 // Relaciones y componentes que se devuelven con cada evento.
 const EVENT_INCLUDE = {
   city: { include: { state: { include: { country: true } } } },
-  category: true,
+  category: true,           // legacy — mantener hasta 18-04
+  eventCategory: true,      // Phase 18+
+  eventTags: true,          // Phase 18+
   prices: true,
   dates: true,
   socialLinks: true,
@@ -92,7 +94,10 @@ export class EventsService {
         : isAdmin
           ? { status: { not: PublicationStatus.PENDING_PAYMENT } }
           : {}),
-      ...(query.category ? { category: { slug: query.category } } : {}),
+      ...(() => {
+        const categorySlug = query.eventCategory ?? query.category;
+        return categorySlug ? { eventCategory: { slug: categorySlug } } : {};
+      })(),
       ...(query.state ? { city: { state: { slug: query.state } } } : {}),
       ...textFilter,
     };
@@ -216,6 +221,7 @@ export class EventsService {
   async create(dto: CreateEventDto, user: JwtUser, orgContext: OrgContextDto | null = null, req?: Request) {
     const ownerId = orgContext?.orgId ?? user.sub;
     const slug = await this.uniqueSlug(dto.title);
+    const catId = dto.eventCategoryId ?? dto.categoryId;
     const event = await this.prisma.event.create({
       data: {
         title: dto.title,
@@ -232,7 +238,11 @@ export class EventsService {
         status: PublicationStatus.DRAFT,
         owner: { connect: { id: ownerId } },
         city: dto.cityId ? { connect: { id: dto.cityId } } : undefined,
-        category: dto.categoryId ? { connect: { id: dto.categoryId } } : undefined,
+        category: catId ? { connect: { id: catId } } : undefined,              // legacy FK
+        eventCategory: catId ? { connect: { id: catId } } : undefined,         // Phase 18+ FK
+        eventTags: dto.eventTagIds?.length
+          ? { connect: dto.eventTagIds.map((id) => ({ id })) }
+          : undefined,
         prices: dto.prices?.length
           ? { create: dto.prices.map((p) => ({ name: p.name, price: p.price ?? 0 })) }
           : undefined,
@@ -282,8 +292,13 @@ export class EventsService {
     if (dto.cityId !== undefined) {
       data.city = dto.cityId ? { connect: { id: dto.cityId } } : { disconnect: true };
     }
-    if (dto.categoryId !== undefined) {
-      data.category = dto.categoryId ? { connect: { id: dto.categoryId } } : { disconnect: true };
+    const catId = dto.eventCategoryId ?? dto.categoryId;
+    if (catId !== undefined || dto.categoryId !== undefined || dto.eventCategoryId !== undefined) {
+      data.category = catId ? { connect: { id: catId } } : { disconnect: true };
+      data.eventCategory = catId ? { connect: { id: catId } } : { disconnect: true };
+    }
+    if (dto.eventTagIds !== undefined) {
+      data.eventTags = { set: dto.eventTagIds.map((id) => ({ id })) };
     }
     if (dto.prices !== undefined) {
       data.prices = {

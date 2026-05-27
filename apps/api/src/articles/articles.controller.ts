@@ -43,6 +43,14 @@ export class ArticlesController {
     return this.articles.findAll(query, user);
   }
 
+  @Get('mine')
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Listar artículos del usuario autenticado (u org si X-Org-Context)' })
+  findMine(@CurrentUser() user: JwtUser, @OrgContext() ctx: OrgContextDto | null) {
+    return this.articles.findMine(user, ctx);
+  }
+
   @Get(':slug')
   @UseGuards(OptionalJwtAuthGuard)
   @ApiBearerAuth()
@@ -76,21 +84,28 @@ export class ArticlesController {
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Editar un artículo (ADMIN+)' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateArticleDto) {
-    return this.articles.update(id, dto);
+  @ApiOperation({ summary: 'Editar artículo (owner o ADMIN+)' })
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateArticleDto,
+    @CurrentUser() user: JwtUser,
+    @OrgContext() ctx: OrgContextDto | null,
+  ) {
+    return this.articles.update(id, dto, user, ctx);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
+  @UseGuards(JwtAuthGuard, OrgContextGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Eliminar un artículo (ADMIN+)' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.articles.remove(id);
+  @ApiOperation({ summary: 'Eliminar artículo (owner o ADMIN+)' })
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: JwtUser,
+    @OrgContext() ctx: OrgContextDto | null,
+  ) {
+    return this.articles.remove(id, user, ctx);
   }
 
   // ── Moderación (ADMIN+) ──

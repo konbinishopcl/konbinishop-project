@@ -108,6 +108,32 @@ export class ArticlesService {
     return { ...article, isSponsored: article.userId !== null };
   }
 
+  async findMine(user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const ownerId = orgContext?.orgId ?? user.sub;
+    const items = await this.prisma.article.findMany({
+      where: { userId: ownerId },
+      include: ARTICLE_INCLUDE,
+      orderBy: { createdAt: 'desc' },
+    });
+    return items.map((a) => ({ ...a, isSponsored: a.userId !== null }));
+  }
+
+  private assertOwnerOrAdmin(
+    article: { userId: number | null },
+    user: JwtUser,
+    orgContext: OrgContextDto | null = null,
+  ): void {
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    if (isAdmin) return;
+    if (article.userId === null) {
+      throw new ForbiddenException('Solo administradores pueden modificar artículos editoriales');
+    }
+    const effectiveUserId = orgContext?.orgId ?? user.sub;
+    if (article.userId !== effectiveUserId) {
+      throw new ForbiddenException('No tienes permiso para modificar este artículo');
+    }
+  }
+
   async create(dto: CreateArticleDto) {
     const slug = dto.slug ?? slugify(dto.title);
     const existing = await this.prisma.article.findUnique({ where: { slug } });
@@ -126,13 +152,14 @@ export class ArticlesService {
     return { ...article, isSponsored: article.userId !== null };
   }
 
-  async update(id: number, dto: UpdateArticleDto) {
-    await this.findById(id);
+  async update(id: number, dto: UpdateArticleDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const article = await this.findById(id);
+    this.assertOwnerOrAdmin(article, user, orgContext);
     if (dto.slug) {
       const conflict = await this.prisma.article.findFirst({ where: { slug: dto.slug, NOT: { id } } });
       if (conflict) throw new ConflictException(`Ya existe un artículo con el slug "${dto.slug}"`);
     }
-    const article = await this.prisma.article.update({
+    const updated = await this.prisma.article.update({
       where: { id },
       data: {
         ...(dto.title !== undefined && { title: dto.title }),
@@ -144,11 +171,12 @@ export class ArticlesService {
       },
       include: ARTICLE_INCLUDE,
     });
-    return { ...article, isSponsored: article.userId !== null };
+    return { ...updated, isSponsored: updated.userId !== null };
   }
 
-  async remove(id: number) {
-    await this.findById(id);
+  async remove(id: number, user: JwtUser, orgContext: OrgContextDto | null = null) {
+    const article = await this.findById(id);
+    this.assertOwnerOrAdmin(article, user, orgContext);
     await this.prisma.article.delete({ where: { id } });
     return { deleted: true };
   }

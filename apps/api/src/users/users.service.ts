@@ -87,7 +87,7 @@ export class UsersService {
       take: 12,
       include: {
         city: { include: { state: { include: { country: true } } } },
-        category: true,
+        eventCategory: true,
         dates: true,
       },
     });
@@ -99,7 +99,7 @@ export class UsersService {
         where: { userId: user.id, status: PublicationStatus.APPROVED },
         orderBy: { createdAt: 'desc' },
         take: 12,
-        include: { tags: true },
+        include: { articleTags: true },
       });
     }
 

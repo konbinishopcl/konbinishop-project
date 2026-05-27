@@ -171,8 +171,6 @@ async function main() {
   await prisma.city.deleteMany();
   await prisma.state.deleteMany();
   await prisma.country.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.tag.deleteMany();
   await prisma.profile.deleteMany();
   await prisma.user.deleteMany();
 
@@ -217,34 +215,34 @@ async function main() {
     return c;
   };
 
-  // ── Categorías ──
-  const musica = await prisma.category.create({
+  // ── Categorías de evento ──
+  const musica = await prisma.eventCategory.create({
     data: { name: 'Música', slug: 'musica', description: 'Conciertos y festivales.' },
   });
-  const teatro = await prisma.category.create({
+  const teatro = await prisma.eventCategory.create({
     data: { name: 'Teatro', slug: 'teatro', description: 'Obras y artes escénicas.' },
   });
-  const gastronomia = await prisma.category.create({
+  const gastronomia = await prisma.eventCategory.create({
     data: { name: 'Gastronomía', slug: 'gastronomia', description: 'Ferias y eventos gastronómicos.' },
   });
-  const animeManga = await prisma.category.create({
+  const animeManga = await prisma.eventCategory.create({
     data: { name: 'Anime y Manga', slug: 'anime-y-manga', description: 'Convenciones de cultura otaku.' },
   });
-  const videojuegos = await prisma.category.create({
+  const videojuegos = await prisma.eventCategory.create({
     data: { name: 'Videojuegos', slug: 'videojuegos', description: 'eSports y cultura gamer.' },
   });
 
-  // ── Tags ──
-  const rock    = await prisma.tag.create({ data: { name: 'Rock',    slug: 'rock'    } });
-  const indie   = await prisma.tag.create({ data: { name: 'Indie',   slug: 'indie'   } });
-  const cosplay = await prisma.tag.create({ data: { name: 'Cosplay', slug: 'cosplay' } });
-  const gratis  = await prisma.tag.create({ data: { name: 'Gratis',  slug: 'gratis'  } });
-  const familiar = await prisma.tag.create({ data: { name: 'Familiar', slug: 'familiar' } });
-  const anime   = await prisma.tag.create({ data: { name: 'Anime',   slug: 'anime'   } });
-  const manga   = await prisma.tag.create({ data: { name: 'Manga',   slug: 'manga'   } });
-  const cine    = await prisma.tag.create({ data: { name: 'Cine',    slug: 'cine'    } });
-  const gaming  = await prisma.tag.create({ data: { name: 'Gaming',  slug: 'gaming'  } });
-  const kpop    = await prisma.tag.create({ data: { name: 'K-Pop',   slug: 'k-pop'   } });
+  // ── Tags de artículo ──
+  const rock    = await prisma.articleTag.create({ data: { name: 'Rock',    slug: 'rock'    } });
+  const indie   = await prisma.articleTag.create({ data: { name: 'Indie',   slug: 'indie'   } });
+  const cosplay = await prisma.articleTag.create({ data: { name: 'Cosplay', slug: 'cosplay' } });
+  const gratis  = await prisma.articleTag.create({ data: { name: 'Gratis',  slug: 'gratis'  } });
+  const familiar = await prisma.articleTag.create({ data: { name: 'Familiar', slug: 'familiar' } });
+  const anime   = await prisma.articleTag.create({ data: { name: 'Anime',   slug: 'anime'   } });
+  const manga   = await prisma.articleTag.create({ data: { name: 'Manga',   slug: 'manga'   } });
+  const cine    = await prisma.articleTag.create({ data: { name: 'Cine',    slug: 'cine'    } });
+  const gaming  = await prisma.articleTag.create({ data: { name: 'Gaming',  slug: 'gaming'  } });
+  const kpop    = await prisma.articleTag.create({ data: { name: 'K-Pop',   slug: 'k-pop'   } });
 
   // ── Artículos ──
   await prisma.article.create({
@@ -279,7 +277,7 @@ Las convenciones son espacios seguros para toda la comunidad. El acoso, el conta
 
 Finalmente, lo más importante: preséntate con disposición de disfrutar y conocer gente. La comunidad otaku chilena es acogedora, apasionada y tiene mucho que decir. Una conversación sobre tu serie favorita puede terminar en una nueva amistad que dure años.`,
       status: 'APPROVED',
-      tags: { connect: [{ id: cosplay.id }, { id: anime.id }, { id: familiar.id }] },
+      articleTags: { connect: [{ id: cosplay.id }, { id: anime.id }, { id: familiar.id }] },
     },
   });
 
@@ -313,7 +311,7 @@ Lo que los une es la plataforma: gran parte de esta producción circula por Webt
 
 La mayoría tiene presencia en Instagram bajo su nombre o el título de su obra. La Feria de Cómic Alternativo, que se realiza anualmente en el Parque de los Reyes de Santiago, es el lugar físico donde muchos venden sus fanzines y ediciones físicas de sus trabajos. También vale la pena revisar el catálogo de Webtoon Chile y el grupo de Facebook "Manga Chileno" donde los propios autores comparten sus novedades.`,
       status: 'APPROVED',
-      tags: { connect: [{ id: manga.id }, { id: anime.id }] },
+      articleTags: { connect: [{ id: manga.id }, { id: anime.id }] },
     },
   });
 
@@ -347,7 +345,7 @@ Si quieres ir acompañado, compra las entradas en cuanto se abra la venta — us
 
 Una de las cosas más particulares de ver Ghibli en el cine es el público. No es el silencio tenso de un thriller; es una sala que ríe junta, que se emociona junta, en la que de vez en cuando escuchas a alguien susurrar una línea de diálogo que sabe de memoria. Esa experiencia compartida es algo que el streaming, con todo lo que tiene a favor, no puede ofrecer.`,
       status: 'APPROVED',
-      tags: { connect: [{ id: cine.id }, { id: anime.id }] },
+      articleTags: { connect: [{ id: cine.id }, { id: anime.id }] },
     },
   });
 
@@ -381,7 +379,7 @@ El jugador promedio de la escena chilena sigue siendo alguien que estudia o trab
 
 Ese número va a crecer. La pregunta es si el ecosistema de apoyo — organizaciones serias, sponsors que entiendan el mercado, medios que cubran la escena — crece a la misma velocidad.`,
       status: 'APPROVED',
-      tags: { connect: [{ id: gaming.id }, { id: gratis.id }] },
+      articleTags: { connect: [{ id: gaming.id }, { id: gratis.id }] },
     },
   });
 
@@ -417,7 +415,7 @@ Una de las expresiones más interesantes del K-Pop chileno es la comunidad de co
 
 Esta escena tiene su propio circuito: estudios de danza que ofrecen clases específicas de K-Pop, competencias que se realizan en teatros y centros culturales, y una red de entrenadores muchos de los cuales aprendieron de forma autodidacta viendo los videos de práctica de los propios artistas.`,
       status: 'APPROVED',
-      tags: { connect: [{ id: kpop.id }, { id: familiar.id }] },
+      articleTags: { connect: [{ id: kpop.id }, { id: familiar.id }] },
     },
   });
 
@@ -459,7 +457,7 @@ Hacer cosplay cuesta dinero. Un traje de mediana complejidad puede requerir entr
 
 Esta realidad ha impulsado el desarrollo de un mercado informal pero activo de venta y alquiler de piezas entre cosplayers, y de grupos de compra conjunta de materiales importados que no se consiguen en Chile o que son significativamente más baratos al pedirlos al por mayor.`,
       status: 'APPROVED',
-      tags: { connect: [{ id: cosplay.id }, { id: anime.id }] },
+      articleTags: { connect: [{ id: cosplay.id }, { id: anime.id }] },
     },
   });
 
@@ -497,7 +495,7 @@ En su tramo final, "Dungeon Meshi" hace algo que pocas obras de fantasía se atr
 
 Si no has leído "Dungeon Meshi", empieza por el primer volumen. Si lo has visto solo en la adaptación de Studio Trigger —que es excelente— lee el manga de todas formas: hay capas de detalle y de humor seco que la animación no puede capturar del todo.`,
       status: 'APPROVED',
-      tags: { connect: [{ id: manga.id }, { id: anime.id }] },
+      articleTags: { connect: [{ id: manga.id }, { id: anime.id }] },
     },
   });
 
@@ -535,7 +533,7 @@ Mención especial para los flippers o pinball, que tienen su propia escena. El B
 
 Lleva efectivo: la mayoría de estas salas operan con fichas o tokens que se compran en efectivo. Ve en horarios de semana si quieres máquinas disponibles sin esperar; los fines de semana están llenas. Si vas a juegos de ritmo por primera vez, no te frustres en los primeros intentos: la curva inicial es empinada pero el punto donde empieza a ser divertido llega antes de lo que parece.`,
       status: 'APPROVED',
-      tags: { connect: [{ id: gaming.id }, { id: anime.id }] },
+      articleTags: { connect: [{ id: gaming.id }, { id: anime.id }] },
     },
   });
 
@@ -616,7 +614,7 @@ Lleva efectivo: la mayoría de estas salas operan con fichas o tokens que se com
         date: new Date('2026-09-21'),
         place: "Parque O'Higgins, Santiago",
         link: 'https://example.cl/festival-de-primavera',
-        categoryId: musica.id,
+        eventCategoryId: musica.id,
         userId: organizer.id,
         status: 'APPROVED',
         days: 30,
@@ -631,7 +629,7 @@ Lleva efectivo: la mayoría de estas salas operan con fichas o tokens que se com
         date: new Date('2026-10-12'),
         place: 'Centro de Convenciones, Viña del Mar',
         link: 'https://example.cl/expo-otaku-vina',
-        categoryId: animeManga.id,
+        eventCategoryId: animeManga.id,
         userId: organizer.id,
         status: 'APPROVED',
         days: 30,
@@ -872,7 +870,7 @@ Lleva efectivo: la mayoría de estas salas operan con fichas o tokens que se com
         userId: organizer.id,
         approvedById: ev.approved ? admin.id : null,
         cityId: city(ev.citySlug).id,
-        categoryId: catId[ev.cats[0]] ?? null,
+        eventCategoryId: catId[ev.cats[0]] ?? null,
         prices: { create: ev.prices },
         dates: {
           create: ev.dates.map((d) => ({
@@ -1023,8 +1021,8 @@ escribiéndonos a hola@konbini.cl.`,
     countries: await prisma.country.count(),
     states: await prisma.state.count(),
     cities: await prisma.city.count(),
-    categories: await prisma.category.count(),
-    tags: await prisma.tag.count(),
+    eventCategories: await prisma.eventCategory.count(),
+    articleTags: await prisma.articleTag.count(),
     articles: await prisma.article.count(),
     heroes: await prisma.hero.count(),
     spots: await prisma.spot.count(),

@@ -51,37 +51,7 @@ model City {
 
 // ─────────────────────────── Taxonomía ───────────────────────────
 
-model Category {
-  id          Int      @id @default(autoincrement())
-  name        String?
-  slug        String   @unique
-  description String?
-  pricePerDay Int      @default(1000)
-  // v2: metadatos visuales para el frontend
-  icon        String?            // lucide icon name, ej. "calendar"
-  color       String?            // hex (#FF6B00) o CSS class
-  // v2: rango permitido de días al publicar un evento de esta categoría
-  minDays     Int                @default(1)
-  maxDays     Int                @default(30)
-  // v2: ordenamiento manual en listados del frontend (0 = primero)
-  order       Int                @default(0)
-  events      Event[]
-  heroes      Hero[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model Tag {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  slug      String    @unique
-  articles  Article[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-// ─── Taxonomías separadas (Phase 18) ───
-// Aditivo-primero: coexisten con Category/Tag hasta el plan 18-04.
+// ─── Taxonomías separadas (Phase 18) ─── (legacy Category/Tag eliminados en 18-04)
 
 model EventCategory {
   id          Int      @id @default(autoincrement())
@@ -152,8 +122,6 @@ model Article {
   // v2: dueño del artículo patrocinado (null para artículos editoriales legacy)
   owner        User?             @relation("ArticleOwner", fields: [userId], references: [id])
   userId       Int?
-  tags      Tag[]
-  // Phase 18 — taxonomía separada (coexiste con tags mientras se migra)
   articleCategory   ArticleCategory? @relation(fields: [articleCategoryId], references: [id])
   articleCategoryId Int?
   articleTags       ArticleTag[]
@@ -192,9 +160,6 @@ model Hero {
   place     String? // optional place label shown in the hero
   link      String?  // CTA URL
 
-  category   Category? @relation(fields: [categoryId], references: [id])
-  categoryId Int?
-  // Phase 18 — taxonomía separada (coexiste con category mientras se migra)
   eventCategory   EventCategory? @relation(fields: [eventCategoryId], references: [id])
   eventCategoryId Int?
 
@@ -215,7 +180,6 @@ model Hero {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
-  @@index([categoryId])
   @@index([eventCategoryId])
 }
 
@@ -285,9 +249,6 @@ model Event {
   // Relaciones
   city       City?      @relation(fields: [cityId], references: [id])
   cityId     Int?
-  category   Category?  @relation(fields: [categoryId], references: [id])
-  categoryId Int?
-  // Phase 18 — taxonomía separada (coexiste con category mientras se migra)
   eventCategory   EventCategory? @relation(fields: [eventCategoryId], references: [id])
   eventCategoryId Int?
   eventTags       EventTag[]

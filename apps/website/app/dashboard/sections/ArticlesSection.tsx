@@ -1,27 +1,115 @@
 "use client";
-import { useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useUser } from "@/components/providers";
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-const EVENTS = [
-  { id: 1, title: "Ado: World Tour Hibana", cat: "Conciertos", art: "pa-1", date: "8 ABR 2025", price: 65 },
-  { id: 2, title: "Multitude", cat: "Conciertos", art: "pa-2", date: "8 ABR 2025", price: 80 },
-  { id: 3, title: "Demon Slayer: Infinity Castle", cat: "Cine", art: "pa-3", date: "8 ABR 2025", price: 9.99 },
-  { id: 4, title: "Super Japan Expo 2025", cat: "Convenciones", art: "pa-4", date: "9–12 MAY 2025", price: 25 },
-  { id: 5, title: "My Hero Academia: You're Next", cat: "Cine", art: "pa-5", date: "8 ABR 2025", price: 9.99 },
-  { id: 6, title: "Solo Leveling: ReAwakening", cat: "Cine", art: "pa-6", date: "8 ABR 2025", price: 9.99 },
-];
+type ApiStatus =
+  | "DRAFT"
+  | "PENDING_PAYMENT"
+  | "PENDING_MODERATION"
+  | "APPROVED"
+  | "REJECTED"
+  | "BANNED";
+
+type DisplayStatus = "Borrador" | "En revisión" | "Publicado" | "Rechazado" | "Baneado";
+
+type ApiArticle = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  image: string | null;
+  status: ApiStatus;
+  statusReason: string | null;
+  userId: number | null;
+  createdAt: string;
+  tags: { id: number; name: string; slug: string }[];
+  _count: { likes: number };
+  isSponsored: boolean;
+};
 
 type ModalState =
-  | { type: "approve"; item: (typeof EVENTS)[0] }
-  | { type: "reject"; item: (typeof EVENTS)[0] }
-  | { type: "transfer"; item: (typeof EVENTS)[0] }
-  | { type: "ban"; item: (typeof EVENTS)[0] }
+  | { type: "approve"; item: ApiArticle }
+  | { type: "reject";  item: ApiArticle }
+  | { type: "ban";     item: ApiArticle }
+  | { type: "delete";  item: ApiArticle }
   | null;
 
-// ── Shared modals ──────────────────────────────────────────────────────────────
+// status → API param map ("Todos" = undefined)
+const STATUS_API: Record<string, string | undefined> = {
+  "Todos":       undefined,
+  "Borrador":    "DRAFT",
+  "En revisión": "PENDING_MODERATION",
+  "Publicado":   "APPROVED",
+  "Rechazado":   "REJECTED",
+  "Baneado":     "BANNED",
+};
 
-function AdminApproveModal({ kind, onClose, onApprove }: { kind: string; onClose: () => void; onApprove: (tags: string) => void }) {
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+const MONTHS = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+
+function toDisplay(s: ApiStatus): DisplayStatus {
+  if (s === "DRAFT")              return "Borrador";
+  if (s === "PENDING_MODERATION") return "En revisión";
+  if (s === "APPROVED")           return "Publicado";
+  if (s === "REJECTED")           return "Rechazado";
+  return "Baneado";
+}
+
+function statusCls(s: DisplayStatus) {
+  if (s === "Borrador")    return "dft";
+  if (s === "En revisión") return "rev";
+  if (s === "Publicado")   return "pub";
+  return "rej";
+}
+
+function fmtDate(d: string) {
+  const dt = new Date(d);
+  return `${dt.getUTCDate()} ${MONTHS[dt.getUTCMonth()]} ${dt.getUTCFullYear()}`;
+}
+
+function imageSrc(image: string | null) {
+  if (!image) return null;
+  if (image.startsWith("http")) return image;
+  return `/api/media${image}`;
+}
+
+// ── Pagination helpers ────────────────────────────────────────────────────────
+
+function pageWindows(current: number, total: number): (number | "…")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "…")[] = [];
+  const addPage = (p: number) => { if (!pages.includes(p)) pages.push(p); };
+  addPage(1);
+  if (current > 3) pages.push("…");
+  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) addPage(p);
+  if (current < total - 2) pages.push("…");
+  addPage(total);
+  return pages;
+}
+
+// ── Chevron icons ─────────────────────────────────────────────────────────────
+
+const ChevL = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+);
+const ChevR = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+// ── Modal components ──────────────────────────────────────────────────────────
+
+function AdminApproveModal({ kind, onClose, onApprove }: {
+  kind: string; onClose: () => void; onApprove: (tags: string) => void;
+}) {
   const [tags, setTags] = useState("anime, cosplay, santiago, evento");
   const [aiBusy, setAiBusy] = useState(false);
   const regenAI = () => {
@@ -62,7 +150,9 @@ function AdminApproveModal({ kind, onClose, onApprove }: { kind: string; onClose
   );
 }
 
-function AdminRejectModal({ kind, onClose, onReject }: { kind: string; onClose: () => void; onReject: (reason: string) => void }) {
+function AdminRejectModal({ kind, onClose, onReject }: {
+  kind: string; onClose: () => void; onReject: (reason: string) => void;
+}) {
   const [reason, setReason] = useState("");
   const presets = [
     "Imagen no cumple con las dimensiones mínimas",
@@ -90,21 +180,11 @@ function AdminRejectModal({ kind, onClose, onReject }: { kind: string; onClose: 
         </div>
         <div className="field" style={{ marginTop: 14 }}>
           <label>Mensaje al organizador</label>
-          <textarea
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="Explica al organizador por qué se rechaza..."
-            style={{ minHeight: 100 }}
-          />
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Explica al organizador por qué se rechaza..." style={{ minHeight: 100 }} />
         </div>
         <div className="row-act" style={{ marginTop: 14 }}>
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button
-            className="btn primary"
-            style={{ background: "var(--err)" }}
-            onClick={() => { onReject(reason); onClose(); }}
-            disabled={!reason.trim()}
-          >
+          <button className="btn primary" style={{ background: "var(--err)" }} onClick={() => { onReject(reason); onClose(); }} disabled={!reason.trim()}>
             ✕ Rechazar y notificar
           </button>
         </div>
@@ -113,76 +193,13 @@ function AdminRejectModal({ kind, onClose, onReject }: { kind: string; onClose: 
   );
 }
 
-function AdminTransferModal({ onClose, onTransfer }: { onClose: () => void; onTransfer: (dest: { nm: string } | null) => void }) {
-  const [q, setQ] = useState("");
-  const [picked, setPicked] = useState<{ ch: string; nm: string; hd: string; type: string; pal: string[] } | null>(null);
-  const matches = [
-    { ch: "C", nm: "Cinépolis Chile", hd: "@cinepolis", type: "org", pal: ["#a25cff", "#5b39ff"] },
-    { ch: "K", nm: "Konbini Editorial", hd: "@konbini-ed", type: "org", pal: ["#ff5b8a", "#ff2a59"] },
-    { ch: "MP", nm: "María Pérez", hd: "maria.perez@email.cl", type: "user", pal: ["#3bbf8a", "#1e8a5b"] },
-    { ch: "JR", nm: "José Ramírez", hd: "jr@email.cl", type: "user", pal: ["#3b9eff", "#2a5bff"] },
-  ].filter((m) => !q || m.nm.toLowerCase().includes(q.toLowerCase()) || m.hd.toLowerCase().includes(q.toLowerCase()));
-
-  return (
-    <div className="confirm-bg" onClick={onClose}>
-      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-        <h3 className="h">Transferir a otra cuenta</h3>
-        <p className="p">Busca al destinatario por nombre, handle o email. La transferencia se aplica inmediatamente.</p>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, background: "var(--surface-2)", border: "1px solid var(--line)", borderRadius: 10, padding: "10px 14px", marginBottom: 12 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--ink-3)", flexShrink: 0 }}>
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input autoFocus placeholder="Buscar cuenta..." value={q} onChange={(e) => setQ(e.target.value)} style={{ background: "none", border: "none", outline: "none", flex: 1, fontSize: 13, color: "var(--ink)" }} />
-        </div>
-        <div style={{ maxHeight: 280, overflowY: "auto", border: "1px solid var(--line)", borderRadius: 10, padding: 4 }}>
-          {matches.length === 0 ? (
-            <div style={{ padding: 24, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>Sin resultados</div>
-          ) : matches.map((m) => (
-            <div
-              key={m.hd}
-              onClick={() => setPicked(m)}
-              style={{ display: "flex", gap: 12, alignItems: "center", padding: 10, borderRadius: 8, cursor: "pointer", background: picked?.hd === m.hd ? "var(--surface-2)" : "transparent" }}
-            >
-              <div style={{ width: 36, height: 36, borderRadius: 999, background: `linear-gradient(135deg, ${m.pal[0]}, ${m.pal[1]})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13 }}>{m.ch}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>{m.nm}</div>
-                <div style={{ color: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}>{m.hd}</div>
-              </div>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".1em", color: "var(--ink-3)", padding: "3px 7px", borderRadius: 4, background: "var(--surface-2)" }}>
-                {m.type === "org" ? "ORG" : "USUARIO"}
-              </span>
-            </div>
-          ))}
-        </div>
-        <div className="row-act" style={{ marginTop: 18 }}>
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn dark" onClick={() => { onTransfer(picked); onClose(); }} disabled={!picked}>
-            Transferir a {picked?.nm || "..."}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ConfirmDialog({
-  title,
-  message,
-  danger = false,
-  confirmLabel = "Confirmar",
-  cancelLabel = "Cancelar",
-  typeToConfirm,
-  onConfirm,
-  onClose,
+  title, message, danger = false, confirmLabel = "Confirmar",
+  cancelLabel = "Cancelar", typeToConfirm, onConfirm, onClose,
 }: {
-  title: string;
-  message: string;
-  danger?: boolean;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  typeToConfirm?: string;
-  onConfirm: () => void;
-  onClose: () => void;
+  title: string; message: string; danger?: boolean;
+  confirmLabel?: string; cancelLabel?: string; typeToConfirm?: string;
+  onConfirm: () => void; onClose: () => void;
 }) {
   const [typed, setTyped] = useState("");
   const ok = !typeToConfirm || typed.trim().toUpperCase() === typeToConfirm.toUpperCase();
@@ -225,140 +242,349 @@ function ConfirmDialog({
 
 // ── Main section ──────────────────────────────────────────────────────────────
 
-const STATUSES = ["Todos", "En revisión", "Publicado", "Rechazado"];
+const FILTER_STATUSES = ["Todos", "Borrador", "En revisión", "Publicado", "Rechazado", "Baneado"];
+const PER_PAGE_OPTIONS = [12, 24, 48];
 
 export default function ArticlesSection() {
-  const [activeStatus, setActiveStatus] = useState("Todos");
+  const { token } = useUser();
+
+  // Pagination & filter state
+  const [page,         setPage]        = useState(1);
+  const [perPage,      setPerPage]     = useState(12);
+  const [total,        setTotal]       = useState(0);
+  const [totalPages,   setTotalPages]  = useState(1);
+  const [activeFilter, setActiveFilter] = useState("Todos");
+
+  // Data state
+  const [articles, setArticles] = useState<ApiArticle[]>([]);
+  const [loading,  setLoading]  = useState(true);
+
+  // Modal state
   const [modal, setModal] = useState<ModalState>(null);
   const close = () => setModal(null);
 
-  const items = EVENTS.map((e, i) => ({
-    ...e,
-    status: i === 0 || i === 4 ? "En revisión" : i === 5 ? "Rechazado" : "Publicado",
-  }));
+  // ── Fetch ────────────────────────────────────────────────────────────────
 
-  const filtered = activeStatus === "Todos" ? items : items.filter((e) => e.status === activeStatus);
+  const fetchArticles = useCallback(async (p: number, ps: number, filter: string) => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const statusParam = STATUS_API[filter];
+      const params = new URLSearchParams({
+        page:     String(p),
+        pageSize: String(ps),
+        ...(statusParam ? { status: statusParam } : {}),
+      });
+      const r = await fetch(`/api/articles?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("Error al cargar artículos");
+      const data = await r.json();
+      setArticles(data.items ?? []);
+      setTotal(data.total ?? 0);
+      setTotalPages(data.totalPages ?? 1);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al cargar artículos");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchArticles(page, perPage, activeFilter);
+  }, [fetchArticles, page, perPage, activeFilter]);
+
+  // ── Filter & pagination handlers ─────────────────────────────────────────
+
+  function changeFilter(f: string) {
+    setActiveFilter(f);
+    setPage(1);
+  }
+
+  function changePerPage(ps: number) {
+    setPerPage(ps);
+    setPage(1);
+  }
+
+  // ── Actions ──────────────────────────────────────────────────────────────
+
+  async function doApprove(item: ApiArticle) {
+    try {
+      const r = await fetch(`/api/articles/${item.id}/approve`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("Error al aprobar");
+      toast.success("Artículo aprobado y publicado");
+      fetchArticles(page, perPage, activeFilter);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al aprobar");
+    }
+  }
+
+  async function doReject(item: ApiArticle, reason: string) {
+    try {
+      const r = await fetch(`/api/articles/${item.id}/reject`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      if (!r.ok) throw new Error("Error al rechazar");
+      toast.success("Artículo rechazado");
+      fetchArticles(page, perPage, activeFilter);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al rechazar");
+    }
+  }
+
+  async function doBan(item: ApiArticle, reason: string) {
+    try {
+      const r = await fetch(`/api/articles/${item.id}/ban`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      if (!r.ok) throw new Error("Error al banear");
+      toast.success("Artículo baneado");
+      fetchArticles(page, perPage, activeFilter);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al banear");
+    }
+  }
+
+  async function doDelete(item: ApiArticle) {
+    try {
+      const r = await fetch(`/api/articles/${item.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("Error al eliminar");
+      toast.success("Artículo eliminado");
+      fetchArticles(page, perPage, activeFilter);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al eliminar");
+    }
+  }
+
+  // ── Computed ─────────────────────────────────────────────────────────────
+
+  const from = total === 0 ? 0 : (page - 1) * perPage + 1;
+  const to   = Math.min(page * perPage, total);
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
       {/* Filter chips + create button */}
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
-        {STATUSES.map((s) => (
-          <button key={s} className={`sel ${activeStatus === s ? "on" : ""}`} onClick={() => setActiveStatus(s)}>
+        {FILTER_STATUSES.map((s) => (
+          <button key={s} className={`sel${activeFilter === s ? " on" : ""}`} onClick={() => changeFilter(s)}>
             {s}
           </button>
         ))}
-        <button
+        <Link
+          href="/dashboard/articles/new"
           className="btn primary"
           style={{ marginLeft: "auto", padding: "9px 16px", fontSize: 13 }}
-          onClick={() => {}}
         >
           ＋ Crear artículo
-        </button>
+        </Link>
       </div>
 
       {/* Table */}
-      <div className="panel" style={{ padding: 0 }}>
-        <table className="a-table">
-          <thead>
-            <tr>
-              <th>ARTÍCULO</th>
-              <th>ORGANIZADOR</th>
-              <th>FECHA</th>
-              <th>PRECIO</th>
-              <th>ESTADO</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((e) => (
-              <tr key={e.id}>
-                {/* ARTÍCULO: thumb + title + category */}
-                <td>
-                  <div className="cell-evt">
-                    <div className="thumb-sm"><div className={`pic poster-art ${e.art}`} /></div>
-                    <div>
-                      <div className="ti">{e.title}</div>
-                      <div className="su">{e.cat}</div>
-                    </div>
-                  </div>
-                </td>
-
-                {/* ORGANIZADOR */}
-                <td>
-                  <div style={{ fontSize: 13 }}>
-                    Cinépolis Chile
-                    <br />
-                    <span style={{ color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontSize: 11 }}>@cinepolis</span>
-                  </div>
-                </td>
-
-                {/* FECHA */}
-                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{e.date}</td>
-
-                {/* PRECIO */}
-                <td style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
-                  ${(e.price * 1000).toLocaleString("es-CL")}
-                </td>
-
-                {/* ESTADO */}
-                <td>
-                  <span className={`stat-pill ${e.status === "En revisión" ? "rev" : e.status === "Rechazado" ? "rej" : "pub"}`}>
-                    <span className="dot" />{e.status}
-                  </span>
-                </td>
-
-                {/* ACCIONES */}
-                <td>
-                  <div className="row-act">
-                    {e.status === "En revisión" && (
-                      <>
-                        <button className="ok" onClick={() => setModal({ type: "approve", item: e })}>✓ Aprobar</button>
-                        <button className="bad" onClick={() => setModal({ type: "reject", item: e })}>✕ Rechazar</button>
-                      </>
-                    )}
-                    {e.status === "Publicado" && (
-                      <>
-                        <button onClick={() => {}}>Editar</button>
-                        <button className="bad" onClick={() => setModal({ type: "ban", item: e })}>Banear</button>
-                        <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
-                      </>
-                    )}
-                    {e.status === "Rechazado" && (
-                      <>
-                        <button onClick={() => setModal({ type: "approve", item: e })}>Re-revisar</button>
-                        <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
-                      </>
-                    )}
-                  </div>
-                </td>
+      {loading ? (
+        <div className="panel" style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>
+          Cargando artículos…
+        </div>
+      ) : articles.length === 0 ? (
+        <div className="panel" style={{ padding: 32, textAlign: "center", color: "var(--ink-3)", fontSize: 13 }}>
+          No hay artículos{activeFilter !== "Todos" ? ` con estado "${activeFilter}"` : ""}.
+        </div>
+      ) : (
+        <div className="panel" style={{ padding: 0 }}>
+          <table className="a-table">
+            <thead>
+              <tr>
+                <th>ARTÍCULO</th>
+                <th>AUTOR</th>
+                <th>CREADO</th>
+                <th>ESTADO</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {articles.map((a) => {
+                const status = toDisplay(a.status);
+                const img    = imageSrc(a.image);
+
+                return (
+                  <tr key={a.id}>
+                    {/* ARTÍCULO */}
+                    <td>
+                      <div className="cell-evt">
+                        <div className="thumb-sm">
+                          {img ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                          ) : (
+                            <div className="pic" style={{ background: "linear-gradient(135deg, #a25cff, #5b39ff)" }} />
+                          )}
+                        </div>
+                        <div>
+                          <div className="ti">{a.title}</div>
+                          <div className="su">{a.tags.slice(0, 3).map((t) => t.name).join(" · ") || "Sin tags"}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* AUTOR */}
+                    <td>
+                      <div style={{ fontSize: 13 }}>
+                        {a.userId === null
+                          ? <span style={{ color: "var(--ink-3)" }}>Editorial</span>
+                          : `Usuario #${a.userId}`}
+                        <br />
+                        <span style={{ color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontSize: 11 }}>
+                          {a.isSponsored ? "Patrocinado" : "Editorial"}
+                        </span>
+                      </div>
+                    </td>
+
+                    {/* CREADO */}
+                    <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{fmtDate(a.createdAt)}</td>
+
+                    {/* ESTADO */}
+                    <td>
+                      <span className={`stat-pill ${statusCls(status)}`}>
+                        <span className="dot" />{status}
+                      </span>
+                    </td>
+
+                    {/* ACCIONES */}
+                    <td>
+                      <div className="row-act">
+                        {status === "Borrador" && (
+                          <>
+                            <Link href={`/dashboard/articles/${a.slug}/edit`}><button>Editar</button></Link>
+                            <button className="ok"  onClick={() => setModal({ type: "approve", item: a })}>Publicar</button>
+                            <button className="bad" onClick={() => setModal({ type: "delete",  item: a })}>Eliminar</button>
+                          </>
+                        )}
+                        {status === "En revisión" && (
+                          <>
+                            <Link href={`/dashboard/articles/${a.slug}/edit`}><button>Editar</button></Link>
+                            <button className="ok"  onClick={() => setModal({ type: "approve", item: a })}>✓ Aprobar</button>
+                            <button className="bad" onClick={() => setModal({ type: "reject",  item: a })}>✕ Rechazar</button>
+                          </>
+                        )}
+                        {status === "Publicado" && (
+                          <>
+                            <Link href={`/dashboard/articles/${a.slug}/edit`}><button>Editar</button></Link>
+                            <button className="bad" onClick={() => setModal({ type: "ban",     item: a })}>Banear</button>
+                          </>
+                        )}
+                        {status === "Rechazado" && (
+                          <>
+                            <Link href={`/dashboard/articles/${a.slug}/edit`}><button>Editar</button></Link>
+                            <button                 onClick={() => setModal({ type: "approve", item: a })}>Re-revisar</button>
+                            <button className="bad" onClick={() => setModal({ type: "delete",  item: a })}>Eliminar</button>
+                          </>
+                        )}
+                        {status === "Baneado" && (
+                          <>
+                            <Link href={`/dashboard/articles/${a.slug}/edit`}><button>Editar</button></Link>
+                            <button className="ok"  onClick={() => setModal({ type: "approve", item: a })}>Restaurar</button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Pagination bar */}
+      {!loading && total > 0 && (
+        <div className="pag-bar">
+          <div className="pag-info">
+            <span>
+              Mostrando{" "}
+              <strong style={{ color: "var(--ink)" }}>{from}–{to}</strong>
+              {" "}de{" "}
+              <strong style={{ color: "var(--ink)" }}>{total}</strong>
+              {" "}artículo{total !== 1 ? "s" : ""}
+            </span>
+            <span style={{ color: "var(--line)" }}>·</span>
+            <span className="ips">
+              <span>Mostrar</span>
+              <select value={perPage} onChange={(e) => changePerPage(Number(e.target.value))}>
+                {PER_PAGE_OPTIONS.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+              <span>por página</span>
+            </span>
+          </div>
+          <div className="pag-pages">
+            <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} title="Anterior">
+              <ChevL />
+            </button>
+            {pageWindows(page, totalPages).map((p, i) =>
+              p === "…" ? (
+                <span key={`ell-${i}`} className="ell">…</span>
+              ) : (
+                <button key={p} className={page === p ? "on" : ""} onClick={() => setPage(p)}>
+                  {p}
+                </button>
+              )
+            )}
+            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages} title="Siguiente">
+              <ChevR />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
-      {modal?.type === "approve" && (
-        <AdminApproveModal kind="artículo" onClose={close} onApprove={() => {}} />
-      )}
-      {modal?.type === "reject" && (
-        <AdminRejectModal kind="artículo" onClose={close} onReject={() => {}} />
-      )}
-      {modal?.type === "transfer" && (
-        <AdminTransferModal onClose={close} onTransfer={() => {}} />
-      )}
-      {modal?.type === "ban" && (
-        <ConfirmDialog
-          danger
-          title="¿Banear artículo?"
-          message="El artículo dejará de ser público inmediatamente. El organizador será notificado. Puedes restaurarlo después si fue un error."
-          typeToConfirm="BANEAR"
-          confirmLabel="Sí, banear"
-          onConfirm={close}
-          onClose={close}
-        />
-      )}
+      {modal?.type === "approve" && (() => {
+        const item = modal.item;
+        return <AdminApproveModal kind="artículo" onClose={close} onApprove={() => { close(); doApprove(item); }} />;
+      })()}
+      {modal?.type === "reject" && (() => {
+        const item = modal.item;
+        return <AdminRejectModal kind="artículo" onClose={close} onReject={(reason) => { close(); doReject(item, reason); }} />;
+      })()}
+      {modal?.type === "ban" && (() => {
+        const item = modal.item;
+        return (
+          <ConfirmDialog
+            danger
+            title="¿Banear artículo?"
+            message="El artículo dejará de ser público inmediatamente. Puedes restaurarlo después si fue un error."
+            typeToConfirm="BANEAR"
+            confirmLabel="Sí, banear"
+            onConfirm={() => { close(); doBan(item, "Baneado por administrador"); }}
+            onClose={close}
+          />
+        );
+      })()}
+      {modal?.type === "delete" && (() => {
+        const item = modal.item;
+        return (
+          <ConfirmDialog
+            danger
+            title="¿Eliminar artículo?"
+            message={`"${item.title}" se eliminará permanentemente. Esta acción no se puede deshacer.`}
+            typeToConfirm="ELIMINAR"
+            confirmLabel="Sí, eliminar"
+            onConfirm={() => { close(); doDelete(item); }}
+            onClose={close}
+          />
+        );
+      })()}
     </>
   );
 }

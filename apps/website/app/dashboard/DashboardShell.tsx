@@ -119,11 +119,17 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     "/dashboard/settings/privacy": { label: "Política de privacidad", crumb: "CONFIGURACIÓN / PRIVACIDAD" },
     "/dashboard/settings/cookies": { label: "Política de cookies",    crumb: "CONFIGURACIÓN / COOKIES" },
     "/dashboard/events/new":       { label: "Crear evento",           crumb: "EVENTOS / NUEVO" },
+    "/dashboard/articles/new":     { label: "Crear artículo",         crumb: "ARTÍCULOS / NUEVO" },
   };
 
   const editMatch = pathname.match(/^\/dashboard\/events\/(\d+)\/edit$/);
   if (editMatch) {
     SUB_PAGES[pathname] = { label: "Editar evento", crumb: "EVENTOS / EDITAR" };
+  }
+
+  const articleEditMatch = pathname.match(/^\/dashboard\/articles\/([^/]+)\/edit$/);
+  if (articleEditMatch) {
+    SUB_PAGES[pathname] = { label: "Editar artículo", crumb: "ARTÍCULOS / EDITAR" };
   }
 
   const allItems  = ADMIN_NAV.flatMap((g) => g.items);

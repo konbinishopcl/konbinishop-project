@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-27T21:54:47.059Z"
+last_updated: "2026-05-27T22:05:53.892Z"
 progress:
   total_phases: 2
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-27T21:54:47.057Z
+**Last session:** 2026-05-27T22:05:53.890Z
 
 ## Phase Summary
 
@@ -151,6 +151,9 @@ administrador quedan visibles al público.
 - [Phase 18-02]: aliases /categories y /tags apuntan a eventCategory/articleTag en lectura; escritura sigue en tablas legacy hasta plan 18-04
 - [Phase 18-02]: dual-write en create/update: ambas FKs (category + eventCategory) se escriben con mismo ID; unitPrice usa fallback chain eventCategory?.pricePerDay ?? category?.pricePerDay ?? 0
 - [Phase 18-02]: EventTag endpoint creado pero UI de asignación diferida a Phase 19+
+- [Phase 18-03]: api.categories() mantiene alias hacia /event-categories — compatibilidad temporal hasta Phase 19+
+- [Phase 18-03]: Step4Client (no Step1Client) enviaba categoryIds al backend — fix corregido a eventCategoryId singular
+- [Phase 18-03]: ArticleForm usa /api/article-tags y envía articleTagIds al backend — migración completa desde /api/tags
 
 ## Quick Tasks Completed
 

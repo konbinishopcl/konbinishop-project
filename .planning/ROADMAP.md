@@ -56,12 +56,12 @@
 
 **Depends on:** Phase 13 (sponsored articles base), Phase 15 (UI rediseño), Phase 16 (form patterns)
 
-**Plans:** 4 plans · 3 waves
+**Plans:** 2/4 plans executed
 
 Plans:
 
-- [ ] 17-01-PLAN.md — API: GET /articles/mine + ownership en PATCH/DELETE (wave 1)
-- [ ] 17-02-PLAN.md — Shared: MarkdownEditor + ArticleForm sin acordeón (wave 2)
+- [x] 17-01-PLAN.md — API: GET /articles/mine + ownership en PATCH/DELETE (wave 1)
+- [x] 17-02-PLAN.md — Shared: MarkdownEditor + ArticleForm sin acordeón (wave 2)
 - [ ] 17-03-PLAN.md — Admin dashboard: ArticlesSection real + rutas + breadcrumbs + eliminar modal roto (wave 3)
 - [ ] 17-04-PLAN.md — Organizador /cuenta/articulos + /crear-articulo + edit page (wave 3)
 

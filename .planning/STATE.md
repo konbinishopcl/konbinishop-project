@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: MVP Konbini
-status: milestone_complete
-last_updated: "2026-05-27T15:00:00.000Z"
+milestone_name: milestone
+status: unknown
+last_updated: "2026-05-27T17:54:29.132Z"
 progress:
-  total_phases: 16
-  completed_phases: 16
-  total_plans: 54
-  completed_plans: 54
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 2
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Milestone v1.0 completo — definir next milestone con `/gsd:new-milestone`
+**Current focus:** Phase 17 — articles-crud-completo
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-27T02:39:59.027Z
+**Last session:** 2026-05-27T17:54:29.130Z
 
 ## Phase Summary
 

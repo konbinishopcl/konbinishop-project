@@ -90,8 +90,9 @@ export type ApiCategory = {
   description: string | null;
 };
 
-export type ApiRegion = { id: number; name: string; slug: string };
-export type ApiCommune = { id: number; name: string; slug: string; regionId: number | null };
+export type ApiCountry = { id: number; name: string; slug: string };
+export type ApiRegion = { id: number; name: string; slug: string; countryId: number };
+export type ApiCommune = { id: number; name: string; slug: string; stateId: number };
 
 export type ApiEventPrice = { id: number; name: string; price: number };
 export type ApiEventDate = {
@@ -198,7 +199,7 @@ function qs(query: Record<string, string | number | undefined>): string {
 
 export const api = {
   // Auth
-  register: (body: { email: string; password: string; firstname: string; lastname: string }) =>
+  register: (body: { email: string; password: string; firstname: string; lastname: string; countryId?: number }) =>
     request<AuthResponse>("/auth/register", { method: "POST", body: JSON.stringify(body) }),
   login: (body: { email: string; password: string }) =>
     request<AuthResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
@@ -251,8 +252,9 @@ export const api = {
     }
     return data as { url: string; filename: string };
   },
+  countries: () => request<ApiCountry[]>("/countries"),
   categories: () => request<ApiCategory[]>("/categories"),
-  regions: () => request<ApiRegion[]>("/states"),
+  regions: (country?: string) => request<ApiRegion[]>(`/states${country ? `?country=${encodeURIComponent(country)}` : ""}`),
   communes: (region?: string) =>
     request<ApiCommune[]>(`/cities${region ? `?state=${encodeURIComponent(region)}` : ""}`),
   heroes: () => request<ApiHero[]>("/heroes"),

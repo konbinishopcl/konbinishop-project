@@ -119,10 +119,16 @@ export class AuthService {
       },
     });
     const slug = await this.generateProfileSlug(user.firstname, user.lastname, user.id);
-    await this.prisma.profile.create({ data: { userId: user.id, slug } });
+    await this.prisma.profile.create({
+      data: {
+        userId: user.id,
+        slug,
+        ...(dto.countryId ? { countryId: dto.countryId } : {}),
+      },
+    });
     await this.mail.sendWelcome(user.email, user.firstname ?? user.email);
-    await this.issueTwoFaCode(user);
-    return { pendingToken: this.sign2FaPending(user), twoFaRequired: true as const };
+    // 2FA desactivado temporalmente — reactivar antes de producción
+    return { token: this.sign(user), user: this.sanitize(user) };
   }
 
   async login(dto: LoginDto) {

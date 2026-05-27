@@ -14,12 +14,13 @@ datasource db {
 // ─────────────────────────── Geografía ───────────────────────────
 
 model Country {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  slug      String   @unique
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
   states    State[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  profiles  Profile[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model State {
@@ -447,6 +448,10 @@ model Profile {
   youtube     String?
   twitch      String?
   linkedin    String?
+
+  // País del usuario (elegido durante el registro)
+  country   Country? @relation(fields: [countryId], references: [id])
+  countryId Int?
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int      @unique

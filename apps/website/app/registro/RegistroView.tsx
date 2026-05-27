@@ -1,13 +1,13 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { AuthShell } from "@/components/AuthShell";
 import { GoogleLoginButton } from "@/components/GoogleLoginButton";
 import { useUser } from "@/components/providers";
-import { api, toUser } from "@/lib/api";
+import { api, toUser, type ApiCountry } from "@/lib/api";
 
 function RegistroForm() {
   const router = useRouter();
@@ -22,10 +22,23 @@ function RegistroForm() {
   const [lastname, setLastname] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [countryId, setCountryId] = useState<number | "">("");
+  const [countries, setCountries] = useState<ApiCountry[]>([]);
   const [busy, setBusy] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [accept18, setAccept18] = useState(false);
   const [acceptMarketing, setAcceptMarketing] = useState(false);
+
+  // Carga los países al pasar al paso 2
+  useEffect(() => {
+    if (step === 2 && countries.length === 0) {
+      api.countries().then((list) => {
+        setCountries(list);
+        // Auto-selecciona si solo hay un país (e.g., Chile)
+        if (list.length === 1) setCountryId(list[0].id);
+      }).catch(() => { /* silencioso */ });
+    }
+  }, [step, countries.length]);
 
   const redirectAfterLogin = (role: string) =>
     router.push(role === "ADMIN" || role === "SUPER_ADMIN" ? "/dashboard" : returnTo);
@@ -71,7 +84,13 @@ function RegistroForm() {
     if (!accept18) { toast.error("Debes confirmar que eres mayor de 18 años"); return; }
     setBusy(true);
     try {
-      const res = await api.register({ email, password, firstname, lastname });
+      const res = await api.register({
+        email,
+        password,
+        firstname,
+        lastname,
+        ...(countryId !== "" ? { countryId } : {}),
+      });
       setAuth(toUser(res.user), res.token);
       toast.success("Cuenta creada");
       redirectAfterLogin(res.user.role);
@@ -163,6 +182,20 @@ function RegistroForm() {
                 onChange={(e) => setConfirm(e.target.value)}
                 required
               />
+            </div>
+            <div className="field">
+              <label>País</label>
+              <select
+                value={countryId}
+                onChange={(e) => setCountryId(e.target.value ? Number(e.target.value) : "")}
+                required
+                disabled={countries.length === 0}
+              >
+                <option value="">{countries.length === 0 ? "Cargando…" : "Selecciona tu país"}</option>
+                {countries.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "18px 0" }}>
               <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>

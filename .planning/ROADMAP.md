@@ -531,10 +531,10 @@ Plans:
 **Goal:** Reescribir `apps/website/app/dashboard/events/EventForm.tsx` para alcanzar paridad visual y funcional con `design/app.jsx` (FormPage): footer sin status-select, CTA con labels correctos, arrays dinámicos para precios/fechas/sociales/videos, y subida de banner/poster/galería con file picker + preview.
 **Requirements**: UI16-FORM-01, UI16-FORM-02, UI16-FORM-03
 **Depends on:** Phase 15
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 16-01-PLAN.md — Reescritura completa de EventForm.tsx en un solo plan, 3 tareas: tipos+state+ImageUploadBox, paneles 01-06, footer sticky con CTA dinámico
+- [x] 16-01-PLAN.md — Reescritura completa de EventForm.tsx en un solo plan, 3 tareas: tipos+state+ImageUploadBox, paneles 01-06, footer sticky con CTA dinámico
 
 ---
 

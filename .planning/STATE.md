@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-25T20:38:23.554Z"
+last_updated: "2026-05-27T02:39:59.030Z"
 progress:
-  total_phases: 16
-  completed_phases: 15
-  total_plans: 53
-  completed_plans: 53
+  total_phases: 17
+  completed_phases: 16
+  total_plans: 54
+  completed_plans: 54
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (re-alineado 2026-05-20)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público. v2 agrega suscripción, organizaciones, servicios y CRM.
-**Current focus:** Phase 15
+**Current focus:** Phase 16 — necesito-que-el-formulario-de-eventos-del-dashboard-sea-igual-al-formulario-de-eventos-del-dashboard-de-design
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-25T20:38:23.552Z
+**Last session:** 2026-05-27T02:39:59.027Z
 
 ## Phase Summary
 
@@ -143,6 +143,7 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 - [Phase 15-04]: AuthShell uses .auth-shell/.auth-art/.auth-form-side from design (not .auth-card spec in plan); User.type has no firstname/lastname — AccountShell uses user.name+initials; api.login takes {email,password} object; Suspense wrapper preserved for useSearchParams; admin section stubs created for InboxSection/CRMSection/FAQSection/ReportsSection/SettingsSection (missing from 15-03 parallel run)
 - [Phase 15-03]: Admin nav uses button+useRouter.push (CSS .admin-side button.nav-item); api.ts only has adminEvents/approveEvent/rejectEvent — other sections use fetch() directly; CRMSection uses mock data with /api/crm fallback; InboxSection receives kind prop routed by AdminPage
 - [Phase 15-05]: api.ts sin métodos articles/userByHandle — server pages usan fetch() directo con process.env.API_URL + API_KEY (NO TOCAR api.ts preservado)
+- [Phase 16]: Status-select movido al Panel 06 admin-only; footer limpio con texto + 3 botones; CTA labels exactos per UI-SPEC
 
 ## Quick Tasks Completed
 
@@ -159,6 +160,12 @@ administrador quedan visibles al público. v2 agrega suscripción, organizacione
 | 260521-kcl | Actualizar WEBSITE-VIEWS.md con reglas de negocio completas | 2026-05-21 | [dir](./quick/260521-kcl-actualizar-website-views-md-con-reglas-d/) |
 | 260521-mkj | Implementar envío de emails transaccionales con Mailgun + MJML | 2026-05-21 | [dir](./quick/260521-mkj-implementar-envio-de-emails-mailgun-mjml/) |
 | 260522-lu2 | Corregir validación del formulario de creación de eventos (/crear) | 2026-05-22 | [dir](./quick/260522-lu2-corregir-validaci-n-del-formulario-de-cr/) |
+
+## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 16 added: Necesito que el formulario de eventos del dashboard sea igual al formulario de eventos del dashboard de /design
 
 ## Next Action
 

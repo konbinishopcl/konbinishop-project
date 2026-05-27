@@ -46,7 +46,7 @@
 
 ### Gestión de contenido
 
-- [x] Phase 17: Articles CRUD completo (0/4 plans) — CRUD de noticias en dashboard admin + cuenta organizador: formulario, permisos por rol, listado, moderación (completed 2026-05-27)
+- [x] Phase 17: Articles CRUD completo (4/4 plans) — CRUD de noticias en dashboard admin + cuenta organizador: formulario, permisos por rol, listado, moderación (completed 2026-05-27)
 
 ### Phase 17: Articles CRUD completo — CRUD de noticias en dashboard admin + cuenta organizador: formulario, permisos por rol, listado, moderación
 

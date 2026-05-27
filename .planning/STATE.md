@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-27T18:23:12.079Z"
+last_updated: "2026-05-27T18:25:57.299Z"
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-27T18:23:06.560Z
+**Last session:** 2026-05-27T18:25:57.297Z
 
 ## Phase Summary
 
@@ -145,6 +145,8 @@ administrador quedan visibles al público.
 - [Phase 15-05]: api.ts sin métodos articles/userByHandle — server pages usan fetch() directo con process.env.API_URL + API_KEY (NO TOCAR api.ts preservado)
 - [Phase 16]: Status-select movido al Panel 06 admin-only; footer limpio con texto + 3 botones; CTA labels exactos per UI-SPEC
 - [Phase 17-04]: ArticleForm inline en UpsellView eliminado (payload roto videoUrl+isSponsored:true); botón 'Sí, agregar artículo' redirige a /crear-articulo via router.push (decisión D-#3 conectada)
+- [Phase 17-articles-crud]: Use slug (not id) for articles edit URLs — zero API proxy changes
+- [Phase 17-articles-crud]: AdminArticleEditor eliminado — era orphan llamando a /api/articles/edit (no existe)
 
 ## Quick Tasks Completed
 

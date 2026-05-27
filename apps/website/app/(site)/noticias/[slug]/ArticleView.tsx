@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { imageUrl } from "@/lib/api";
 import { EventCard } from "@/components/EventCard";
+import { Ic } from "@/components/icons";
 import type { EventItem } from "@/lib/data";
 import type { ApiArticle, ApiArticleEvent } from "../page";
 
@@ -242,7 +243,7 @@ export function ArticleView({ article, related, linkedEvent, relatedEvents }: Ar
                       {e.city?.name ? ` · ${e.city.name}` : ""}
                     </div>
                   </div>
-                  <span style={{ color: "var(--ink-3)" }}>→</span>
+                  <span style={{ color: "var(--ink-3)" }}>{Ic.arrow}</span>
                 </div>
               ))}
             </div>
@@ -251,7 +252,7 @@ export function ArticleView({ article, related, linkedEvent, relatedEvents }: Ar
               style={{ marginTop: 14 }}
               onClick={() => router.push("/")}
             >
-              Ver más eventos de {cat} →
+              Ver más eventos de {cat} {Ic.arrow}
             </button>
           </div>
         </aside>

@@ -1,5 +1,5 @@
 "use client";
-import { CSSProperties } from "react";
+import { CSSProperties, useEffect, useRef } from "react";
 
 interface MarkdownEditorProps {
   value: string;
@@ -28,6 +28,16 @@ export function MarkdownEditor({
   id,
   helpText = "Soporta Markdown: **negrita**, *cursiva*, `código`, ## h2, - lista",
 }: MarkdownEditorProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize: ajusta la altura al contenido en cada cambio
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.max(el.scrollHeight, minHeight)}px`;
+  }, [value, minHeight]);
+
   return (
     <>
       <div style={{
@@ -65,6 +75,7 @@ export function MarkdownEditor({
         </div>
       </div>
       <textarea
+        ref={textareaRef}
         id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -77,6 +88,9 @@ export function MarkdownEditor({
           fontFamily: "var(--font-mono)",
           fontSize: 13,
           lineHeight: 1.6,
+          resize: "none",
+          overflow: "hidden",
+          boxSizing: "border-box",
         }}
       />
       {helpText && <div className="help" style={{ marginTop: 6 }}>{helpText}</div>}

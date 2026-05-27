@@ -3,6 +3,18 @@ import { notFound } from "next/navigation";
 import { ArticleView } from "./ArticleView";
 import type { ApiArticle } from "../page";
 
+// Slim shape del evento que se muestra en el sidebar
+export type ApiEventSlim = {
+  id: number;
+  slug: string;
+  title: string;
+  poster: string | null;
+  banner: string | null;
+  dates: { id: number; date: string | null }[];
+  commune: { name: string } | null;
+  category: { name: string; slug: string } | null;
+};
+
 async function ssrFetch(path: string) {
   const base = process.env.API_URL || "http://localhost:3333/api";
   const headers: Record<string, string> = {};
@@ -36,7 +48,7 @@ export default async function ArticleSlugPage(
   const article: ApiArticle | null = await ssrFetch(`/articles/${slug}`);
   if (!article) notFound();
 
-  // Fetch related articles (same first tag)
+  // Artículos relacionados para "Sigue leyendo" (misma primera tag)
   const tag = article.tags?.[0]?.slug;
   const relatedData = tag
     ? await ssrFetch(`/articles?pageSize=4${tag ? `&tag=${encodeURIComponent(tag)}` : ""}`)
@@ -45,5 +57,9 @@ export default async function ArticleSlugPage(
     (a: ApiArticle) => a.id !== article.id,
   ).slice(0, 3);
 
-  return <ArticleView article={article} related={related} />;
+  // Eventos para sidebar
+  const eventsData = await ssrFetch(`/events?pageSize=4`);
+  const relatedEvents: ApiEventSlim[] = (eventsData?.items ?? []).slice(0, 3);
+
+  return <ArticleView article={article} related={related} relatedEvents={relatedEvents} />;
 }

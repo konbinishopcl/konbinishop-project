@@ -164,6 +164,20 @@ function RegistroForm() {
               </div>
             </div>
             <div className="field">
+              <label>País</label>
+              <select
+                value={countryId}
+                onChange={(e) => setCountryId(e.target.value ? Number(e.target.value) : "")}
+                required
+                disabled={countries.length === 0}
+              >
+                <option value="">{countries.length === 0 ? "Cargando…" : "Selecciona tu país"}</option>
+                {countries.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <label>Contraseña</label>
               <input
                 type="password"
@@ -182,20 +196,6 @@ function RegistroForm() {
                 onChange={(e) => setConfirm(e.target.value)}
                 required
               />
-            </div>
-            <div className="field">
-              <label>País</label>
-              <select
-                value={countryId}
-                onChange={(e) => setCountryId(e.target.value ? Number(e.target.value) : "")}
-                required
-                disabled={countries.length === 0}
-              >
-                <option value="">{countries.length === 0 ? "Cargando…" : "Selecciona tu país"}</option>
-                {countries.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, margin: "18px 0" }}>
               <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer", fontSize: 13 }}>

@@ -1,16 +1,24 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
+import { api, imageUrl } from "@/lib/api";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
+// ── Auxiliary types ────────────────────────────────────────────────────────────
 
 type Category = { id: number; name: string; slug: string };
 type Country  = { id: number; name: string; slug: string };
 type State    = { id: number; name: string; slug: string };
 type City     = { id: number; name: string };
+
+type PriceRow  = { name: string; amount: string };
+type DateRow   = { date: string; startTime: string; endTime: string };
+type LinkRow   = { link: string };
+type ImageSlot = { file: File | null; url: string };
+
+// ── FormData ───────────────────────────────────────────────────────────────────
 
 type FormData = {
   title:         string;
@@ -20,25 +28,25 @@ type FormData = {
   address:       string;
   addressNumber: string;
   ticketUrl:     string;
-  banner:        string;
-  poster:        string;
   categoryId:    string;
   countrySlug:   string;
   stateSlug:     string;
   cityId:        string;
-  priceName:     string;
-  priceAmount:   string;
-  isFree:        boolean;
-  dateStr:       string;
-  startTime:     string;
-  endTime:       string;
-  instagram:     string;
-  tiktok:        string;
-  facebook:      string;
-  twitter:       string;
-  videoUrl:      string;
-  status:        "APPROVED" | "PENDING_MODERATION" | "DRAFT";
+
+  isFree:  boolean;
+  prices:  PriceRow[];
+  dates:   DateRow[];
+  socials: LinkRow[];
+  videos:  LinkRow[];
+
+  banner:  ImageSlot;
+  poster:  ImageSlot;
+  gallery: ImageSlot[];   // always 8 elements
+
+  status: "APPROVED" | "PENDING_MODERATION" | "DRAFT";
 };
+
+// ── InitialEvent exported type ─────────────────────────────────────────────────
 
 export type InitialEvent = {
   id:            number;
@@ -51,6 +59,7 @@ export type InitialEvent = {
   ticketUrl:     string | null;
   banner:        string | null;
   poster:        string | null;
+  gallery?: string[];
   categoryId:    number | null;
   cityId:        number | null;
   status:        string;
@@ -58,10 +67,7 @@ export type InitialEvent = {
   dates:         { date: string | null; startTime: string | null; endTime: string | null }[];
   socialLinks:   { link: string | null }[];
   videos:        { link: string | null }[];
-  city?: {
-    id: number; name: string;
-    state?: { id: number; slug: string; country?: { slug: string } };
-  } | null;
+  city?: { id: number; name: string; state?: { id: number; slug: string; country?: { slug: string } } } | null;
 };
 
 interface Props {
@@ -69,7 +75,7 @@ interface Props {
   initial?: InitialEvent;
 }
 
-// ── Section heading ────────────────────────────────────────────────────────────
+// ── SectionHead ────────────────────────────────────────────────────────────────
 
 function SectionHead({ n, title, sub }: { n: string; title: string; sub?: string }) {
   return (
@@ -114,11 +120,90 @@ function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: ()
   );
 }
 
+// ── ImageUploadBox ─────────────────────────────────────────────────────────────
+
+function ImageUploadBox({
+  variant,
+  slot,
+  onPick,
+  onRemove,
+  label,
+  hint,
+}: {
+  variant: "banner" | "poster" | "gallery";
+  slot: ImageSlot;
+  onPick: (file: File) => void;
+  onRemove: () => void;
+  label: string;
+  hint?: string;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Preview: if there's a file, use URL.createObjectURL; if there's a url (from server), use imageUrl()
+  const previewSrc = slot.file
+    ? URL.createObjectURL(slot.file)
+    : slot.url ? imageUrl(slot.url) : "";
+
+  // Clean up object URL on unmount
+  useEffect(() => {
+    if (!slot.file) return;
+    const u = URL.createObjectURL(slot.file);
+    return () => URL.revokeObjectURL(u);
+  }, [slot.file]);
+
+  if (previewSrc) {
+    const aspect = variant === "poster" ? "3/4" : variant === "gallery" ? "1/1" : "16/9";
+    return (
+      <div style={{ position: "relative", aspectRatio: aspect, borderRadius: "var(--r)", overflow: "hidden", background: "var(--surface-2)" }}>
+        <img src={previewSrc} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Eliminar imagen"
+          className="icon-btn"
+          style={{ position: "absolute", top: 8, right: 8, width: 32, height: 32, background: "rgba(15,12,10,.75)", color: "#fff", borderColor: "rgba(255,255,255,.15)" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    );
+  }
+
+  const boxClass = variant === "poster" ? "upload-box tall" : "upload-box";
+  const extraStyle = variant === "gallery" ? { aspectRatio: "1/1" as const, padding: 14 } : undefined;
+
+  return (
+    <>
+      <div className={boxClass} style={extraStyle} onClick={() => inputRef.current?.click()}>
+        <div className="ic" style={variant === "gallery" ? { width: 28, height: 28 } : undefined}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          </svg>
+        </div>
+        <div style={{ fontWeight: 500, color: "var(--ink-2)", fontSize: variant === "gallery" ? 12 : 14 }}>{label}</div>
+        {hint && <small style={{ fontSize: variant === "gallery" ? 10 : 11 }}>{hint}</small>}
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{ display: "none" }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onPick(f);
+          e.target.value = "";   // allow re-pick of same file
+        }}
+      />
+    </>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function EventForm({ mode, initial }: Props) {
-  const router     = useRouter();
-  const { token }  = useUser();
+  const router = useRouter();
+  const { token, user } = useUser();
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
   const [busy, setBusy] = useState(false);
 
   // Catalog data
@@ -127,46 +212,90 @@ export function EventForm({ mode, initial }: Props) {
   const [states,     setStates]     = useState<State[]>([]);
   const [cities,     setCities]     = useState<City[]>([]);
 
-  // Form state
-  const [form, setForm] = useState<FormData>({
-    title:         initial?.title         ?? "",
-    company:       initial?.company       ?? "",
-    description:   initial?.description   ?? "",
-    about:         initial?.about         ?? "",
-    address:       initial?.address       ?? "",
-    addressNumber: initial?.addressNumber ?? "",
-    ticketUrl:     initial?.ticketUrl     ?? "",
-    banner:        initial?.banner        ?? "",
-    poster:        initial?.poster        ?? "",
-    categoryId:    initial?.categoryId != null ? String(initial.categoryId) : "",
-    countrySlug:   initial?.city?.state?.country?.slug ?? "",
-    stateSlug:     initial?.city?.state?.slug          ?? "",
-    cityId:        initial?.cityId != null ? String(initial.cityId) : "",
-    priceName:     initial?.prices[0]?.name   ?? "General",
-    priceAmount:   initial?.prices[0]?.price != null ? String(initial.prices[0].price) : "",
-    isFree:        initial
-                     ? (initial.prices[0]?.price === 0 || initial.prices.length === 0)
-                     : false,
-    dateStr:       initial?.dates[0]?.date ? initial.dates[0].date.slice(0, 10) : "",
-    startTime:     initial?.dates[0]?.startTime ?? "",
-    endTime:       initial?.dates[0]?.endTime   ?? "",
-    instagram:     initial?.socialLinks.find((l) => l.link?.includes("instagram"))?.link ?? "",
-    tiktok:        initial?.socialLinks.find((l) => l.link?.includes("tiktok"))?.link    ?? "",
-    facebook:      initial?.socialLinks.find((l) => l.link?.includes("facebook"))?.link  ?? "",
-    twitter:       initial?.socialLinks.find((l) => l.link?.includes("twitter") || l.link?.includes("x.com"))?.link ?? "",
-    videoUrl:      initial?.videos[0]?.link ?? "",
-    status:        initial?.status === "APPROVED"
-                     ? "APPROVED"
-                     : initial?.status === "PENDING_MODERATION"
-                       ? "PENDING_MODERATION"
-                       : "DRAFT",
+  // ── Form initialization ────────────────────────────────────────────────────
+  const [form, setForm] = useState<FormData>(() => {
+    const initialGallery: ImageSlot[] = Array(8).fill(null).map((_, i) => ({
+      file: null,
+      url:  initial?.gallery?.[i] ?? "",
+    }));
+
+    // Default status: admin can choose, non-admin stays in PENDING_MODERATION
+    let initStatus: FormData["status"] = "PENDING_MODERATION";
+    if (initial?.status === "APPROVED") initStatus = "APPROVED";
+    else if (initial?.status === "DRAFT") initStatus = "DRAFT";
+    else if (initial?.status === "PENDING_MODERATION") initStatus = "PENDING_MODERATION";
+
+    return {
+      title:         initial?.title         ?? "",
+      company:       initial?.company       ?? "",
+      description:   initial?.description   ?? "",
+      about:         initial?.about         ?? "",
+      address:       initial?.address       ?? "",
+      addressNumber: initial?.addressNumber ?? "",
+      ticketUrl:     initial?.ticketUrl     ?? "",
+      categoryId:    initial?.categoryId != null ? String(initial.categoryId) : "",
+      countrySlug:   initial?.city?.state?.country?.slug ?? "",
+      stateSlug:     initial?.city?.state?.slug          ?? "",
+      cityId:        initial?.cityId != null ? String(initial.cityId) : "",
+
+      isFree: initial ? (initial.prices.length === 0 || initial.prices[0]?.price === 0) : false,
+
+      prices: initial?.prices.length
+        ? initial.prices.map((p) => ({ name: p.name, amount: String(p.price) }))
+        : [{ name: "General", amount: "" }],
+
+      dates: initial?.dates.length
+        ? initial.dates.map((d) => ({
+            date:      d.date ? d.date.slice(0, 10) : "",
+            startTime: d.startTime ?? "",
+            endTime:   d.endTime   ?? "",
+          }))
+        : [{ date: "", startTime: "", endTime: "" }],
+
+      socials: initial?.socialLinks.length
+        ? initial.socialLinks.map((l) => ({ link: l.link ?? "" }))
+        : [{ link: "" }],
+
+      videos: initial?.videos.length
+        ? initial.videos.map((v) => ({ link: v.link ?? "" }))
+        : [{ link: "" }],
+
+      banner:  { file: null, url: initial?.banner ?? "" },
+      poster:  { file: null, url: initial?.poster ?? "" },
+      gallery: initialGallery,
+
+      status: initStatus,
+    };
   });
 
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) =>
     setForm((f) => ({ ...f, [k]: v }));
 
-  // ── Catalog cascade ──────────────────────────────────────────────────────────
+  // ── Dynamic array helpers ──────────────────────────────────────────────────
+  const updatePrice  = (i: number, k: keyof PriceRow, v: string) =>
+    set("prices", form.prices.map((p, j) => j === i ? { ...p, [k]: v } : p));
+  const addPrice     = () => set("prices", [...form.prices, { name: "", amount: "" }]);
+  const removePrice  = (i: number) => set("prices", form.prices.filter((_, j) => j !== i));
 
+  const updateDate   = (i: number, k: keyof DateRow, v: string) =>
+    set("dates", form.dates.map((d, j) => j === i ? { ...d, [k]: v } : d));
+  const addDate      = () => set("dates", [...form.dates, { date: "", startTime: "", endTime: "" }]);
+  const removeDate   = (i: number) => set("dates", form.dates.filter((_, j) => j !== i));
+
+  const updateSocial = (i: number, v: string) =>
+    set("socials", form.socials.map((s, j) => j === i ? { link: v } : s));
+  const addSocial    = () => set("socials", [...form.socials, { link: "" }]);
+  const removeSocial = (i: number) => set("socials", form.socials.filter((_, j) => j !== i));
+
+  const updateVideo  = (i: number, v: string) =>
+    set("videos", form.videos.map((vv, j) => j === i ? { link: v } : vv));
+  const addVideo     = () => set("videos", [...form.videos, { link: "" }]);
+  const removeVideo  = (i: number) => set("videos", form.videos.filter((_, j) => j !== i));
+
+  const updateGallery = (i: number, slot: ImageSlot) =>
+    set("gallery", form.gallery.map((g, j) => j === i ? slot : g));
+
+  // ── Catalog cascade (preserved from original — do not modify) ─────────────
   const fetchCatalog = useCallback(async () => {
     if (!token) return;
     const h = { Authorization: `Bearer ${token}` };
@@ -177,48 +306,64 @@ export function EventForm({ mode, initial }: Props) {
     setCategories(Array.isArray(cats) ? cats : []);
     setCountries( Array.isArray(ctrs) ? ctrs : []);
   }, [token]);
-
   useEffect(() => { fetchCatalog(); }, [fetchCatalog]);
 
   useEffect(() => {
     if (!token || !form.countrySlug) { setStates([]); return; }
     fetch(`/api/states?country=${encodeURIComponent(form.countrySlug)}`, {
       headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => setStates(Array.isArray(d) ? d : []))
-      .catch(() => setStates([]));
+    }).then((r) => r.json()).then((d) => setStates(Array.isArray(d) ? d : [])).catch(() => setStates([]));
   }, [token, form.countrySlug]);
 
   useEffect(() => {
     if (!token || !form.stateSlug) { setCities([]); return; }
     fetch(`/api/cities?state=${encodeURIComponent(form.stateSlug)}`, {
       headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => setCities(Array.isArray(d) ? d : []))
-      .catch(() => setCities([]));
+    }).then((r) => r.json()).then((d) => setCities(Array.isArray(d) ? d : [])).catch(() => setCities([]));
   }, [token, form.stateSlug]);
 
-  // ── Submit ───────────────────────────────────────────────────────────────────
-
+  // ── handleSubmit (with pending image uploads) ──────────────────────────────
   async function handleSubmit(targetStatus: "APPROVED" | "PENDING_MODERATION" | "DRAFT") {
     if (!token) { toast.error("No autenticado"); return; }
     if (!form.title.trim()) { toast.error("El título es requerido"); return; }
     if (targetStatus !== "DRAFT") {
       if (form.description.trim().length < 10) { toast.error("La descripción debe tener al menos 10 caracteres"); return; }
-      if (!form.address.trim()) { toast.error("La dirección es requerida"); return; }
+      if (!form.address.trim())                 { toast.error("La dirección es requerida"); return; }
     }
 
     setBusy(true);
     try {
-      const socialLinks = [
-        form.instagram ? { link: form.instagram } : null,
-        form.tiktok    ? { link: form.tiktok }    : null,
-        form.facebook  ? { link: form.facebook }  : null,
-        form.twitter   ? { link: form.twitter }   : null,
-      ].filter(Boolean) as { link: string }[];
+      // 1) Upload pending images (banner / poster / gallery) — only those with .file
+      let bannerUrl = form.banner.url;
+      if (form.banner.file) {
+        const r = await api.uploadImage(form.banner.file, token);
+        bannerUrl = r.url;
+        // clear file to avoid re-upload on next handleSubmit (Pitfall #4)
+        set("banner", { file: null, url: r.url });
+      }
 
+      let posterUrl = form.poster.url;
+      if (form.poster.file) {
+        const r = await api.uploadImage(form.poster.file, token);
+        posterUrl = r.url;
+        set("poster", { file: null, url: r.url });
+      }
+
+      const galleryUrls: string[] = [];
+      const newGallery: ImageSlot[] = [...form.gallery];
+      for (let i = 0; i < form.gallery.length; i++) {
+        const g = form.gallery[i];
+        if (g.file) {
+          const r = await api.uploadImage(g.file, token);
+          newGallery[i] = { file: null, url: r.url };
+          galleryUrls.push(r.url);
+        } else if (g.url) {
+          galleryUrls.push(g.url);
+        }
+      }
+      set("gallery", newGallery);
+
+      // 2) Build payload
       const payload = {
         title:         form.title.trim(),
         company:       form.company.trim()       || undefined,
@@ -227,22 +372,31 @@ export function EventForm({ mode, initial }: Props) {
         address:       form.address.trim(),
         addressNumber: form.addressNumber.trim() || undefined,
         ticketUrl:     form.ticketUrl.trim()     || undefined,
-        banner:        form.banner.trim()        || undefined,
-        poster:        form.poster.trim()        || undefined,
+        banner:        bannerUrl                 || undefined,
+        poster:        posterUrl                 || undefined,
+        gallery:       galleryUrls.length ? galleryUrls : undefined,
         categoryId:    form.categoryId ? Number(form.categoryId) : undefined,
         cityId:        form.cityId     ? Number(form.cityId)     : undefined,
-        prices:        form.isFree
-                         ? [{ name: "Entrada", price: 0 }]
-                         : form.priceAmount
-                           ? [{ name: form.priceName || "General", price: Number(form.priceAmount) }]
-                           : undefined,
-        dates:         form.dateStr
-                         ? [{ date: form.dateStr, startTime: form.startTime || undefined, endTime: form.endTime || undefined }]
-                         : undefined,
-        socialLinks:   socialLinks.length ? socialLinks : undefined,
-        videos:        form.videoUrl ? [{ link: form.videoUrl }] : undefined,
+
+        prices: form.isFree
+          ? [{ name: "Entrada", price: 0 }]
+          : form.prices
+              .filter((p) => p.amount)
+              .map((p) => ({ name: p.name || "General", price: Number(p.amount) })),
+
+        dates: form.dates
+          .filter((d) => d.date)
+          .map((d) => ({
+            date:      d.date,
+            startTime: d.startTime || undefined,
+            endTime:   d.endTime   || undefined,
+          })),
+
+        socialLinks: form.socials.filter((s) => s.link.trim()).map((s) => ({ link: s.link.trim() })),
+        videos:      form.videos .filter((v) => v.link.trim()).map((v) => ({ link: v.link.trim() })),
       };
 
+      // 3) Submit
       const url    = mode === "create" ? "/api/events" : `/api/events/${initial!.id}`;
       const method = mode === "create" ? "POST" : "PATCH";
 
@@ -259,6 +413,7 @@ export function EventForm({ mode, initial }: Props) {
 
       const saved = await r.json() as { id: number; status?: string };
 
+      // 4) If admin requested APPROVED but backend left it PENDING_MODERATION, approve explicitly
       if (targetStatus === "APPROVED" && saved.status !== "APPROVED") {
         await fetch(`/api/events/${saved.id}/approve`, {
           method: "PATCH",
@@ -281,355 +436,6 @@ export function EventForm({ mode, initial }: Props) {
     }
   }
 
-  // ── Render ───────────────────────────────────────────────────────────────────
-
-  return (
-    <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: 100 }}>
-
-      {/* Back */}
-      <Link
-        href="/dashboard/events"
-        style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginBottom: 24 }}
-      >
-        ◀ Volver a eventos
-      </Link>
-
-      {/* Page title */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 24, margin: 0 }}>
-          {mode === "create" ? "Crear evento" : "Editar evento"}
-        </h1>
-        <p style={{ fontSize: 13, color: "var(--ink-3)", margin: "6px 0 0" }}>
-          {mode === "create"
-            ? "Creando como admin · sin checkout ni upsell."
-            : `Editando evento #${initial?.id} · no se notifica al organizador.`}
-        </p>
-      </div>
-
-      {/* ── 1. Información básica ─────────────────────────────────────────── */}
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <SectionHead n="01" title="Información básica" />
-
-        <div className="grid-2">
-          <div className="field">
-            <label>Título del evento <span style={{ color: "var(--err)" }}>*</span></label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="Ej: Anime Crunchyroll Fest 2025"
-            />
-          </div>
-          <div className="field">
-            <label>Empresa organizadora (pública)</label>
-            <input
-              type="text"
-              value={form.company}
-              onChange={(e) => set("company", e.target.value)}
-              placeholder="Ej: Productora 8U, Cinépolis Chile"
-            />
-            <div className="help">Nombre que aparece públicamente como organizador.</div>
-          </div>
-        </div>
-
-        <div className="grid-2">
-          <div className="field">
-            <label>Categoría</label>
-            <select value={form.categoryId} onChange={(e) => set("categoryId", e.target.value)}>
-              <option value="">Sin categoría</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>URL de entradas (externa)</label>
-            <input
-              type="url"
-              value={form.ticketUrl}
-              onChange={(e) => set("ticketUrl", e.target.value)}
-              placeholder="https://ticketmaster.com/..."
-            />
-            <div className="help">Link a plataforma externa de venta de entradas.</div>
-          </div>
-        </div>
-
-        <div className="field">
-          <label>Descripción corta <span style={{ color: "var(--err)" }}>*</span></label>
-          <textarea
-            rows={3}
-            value={form.description}
-            onChange={(e) => set("description", e.target.value)}
-            placeholder="Aparece en la card del evento. Mínimo 10 caracteres al publicar."
-          />
-        </div>
-
-        <div className="field" style={{ marginBottom: 0 }}>
-          <label>Sobre el evento (texto completo)</label>
-          <textarea
-            rows={6}
-            value={form.about}
-            onChange={(e) => set("about", e.target.value)}
-            placeholder="Descripción larga que aparece en el detalle del evento."
-          />
-        </div>
-      </div>
-
-      {/* ── 2. Precio ─────────────────────────────────────────────────────── */}
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <SectionHead n="02" title="Precio" />
-
-        <div style={{ marginBottom: form.isFree ? 0 : 14 }}>
-          <Checkbox
-            checked={form.isFree}
-            onChange={() => set("isFree", !form.isFree)}
-            label="Evento gratuito"
-          />
-        </div>
-
-        {!form.isFree && (
-          <div className="grid-2" style={{ marginTop: 16 }}>
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>Tipo de tarifa</label>
-              <input
-                type="text"
-                value={form.priceName}
-                onChange={(e) => set("priceName", e.target.value)}
-                placeholder="General / VIP / Preventa"
-              />
-            </div>
-            <div className="field" style={{ marginBottom: 0 }}>
-              <label>Precio (CLP)</label>
-              <input
-                type="number"
-                value={form.priceAmount}
-                onChange={(e) => set("priceAmount", e.target.value)}
-                placeholder="9990"
-                min="0"
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── 3. Fecha y ubicación ──────────────────────────────────────────── */}
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <SectionHead n="03" title="Fecha, horario y ubicación" />
-
-        <div className="grid-3">
-          <div className="field">
-            <label>Fecha del evento</label>
-            <input type="date" value={form.dateStr} onChange={(e) => set("dateStr", e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Hora de inicio</label>
-            <input type="time" value={form.startTime} onChange={(e) => set("startTime", e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Hora de término</label>
-            <input type="time" value={form.endTime} onChange={(e) => set("endTime", e.target.value)} />
-          </div>
-        </div>
-
-        <div className="grid-3">
-          <div className="field">
-            <label>País</label>
-            <select
-              value={form.countrySlug}
-              onChange={(e) => {
-                set("countrySlug", e.target.value);
-                set("stateSlug", "");
-                set("cityId", "");
-              }}
-            >
-              <option value="">Selecciona país…</option>
-              {countries.map((c) => (
-                <option key={c.id} value={c.slug}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>Región</label>
-            <select
-              value={form.stateSlug}
-              onChange={(e) => { set("stateSlug", e.target.value); set("cityId", ""); }}
-              disabled={!form.countrySlug || states.length === 0}
-            >
-              <option value="">Selecciona región…</option>
-              {states.map((s) => (
-                <option key={s.id} value={s.slug}>{s.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>Ciudad</label>
-            <select
-              value={form.cityId}
-              onChange={(e) => set("cityId", e.target.value)}
-              disabled={!form.stateSlug || cities.length === 0}
-            >
-              <option value="">Selecciona ciudad…</option>
-              {cities.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid-2" style={{ marginBottom: 0 }}>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>Dirección <span style={{ color: "var(--err)" }}>*</span></label>
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) => set("address", e.target.value)}
-              placeholder="Av. Providencia 1234, Providencia, Santiago"
-            />
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>Número / Piso</label>
-            <input
-              type="text"
-              value={form.addressNumber}
-              onChange={(e) => set("addressNumber", e.target.value)}
-              placeholder="Of. 201, piso 3…"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── 4. Multimedia ─────────────────────────────────────────────────── */}
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <SectionHead n="04" title="Multimedia" sub="Opcional" />
-
-        <div className="grid-2">
-          <div className="field">
-            <label>Banner (URL · 16:9)</label>
-            <input
-              type="url"
-              value={form.banner}
-              onChange={(e) => set("banner", e.target.value)}
-              placeholder="https://..."
-            />
-            <div className="help">Imagen horizontal. 2400×1350 recomendado.</div>
-          </div>
-          <div className="field">
-            <label>Poster (URL · 2:3)</label>
-            <input
-              type="url"
-              value={form.poster}
-              onChange={(e) => set("poster", e.target.value)}
-              placeholder="https://..."
-            />
-            <div className="help">Imagen vertical. 1200×1800 recomendado.</div>
-          </div>
-        </div>
-
-        <div className="field" style={{ marginBottom: 0 }}>
-          <label>Video (URL de YouTube)</label>
-          <input
-            type="url"
-            value={form.videoUrl}
-            onChange={(e) => set("videoUrl", e.target.value)}
-            placeholder="https://youtube.com/watch?v=..."
-          />
-        </div>
-      </div>
-
-      {/* ── 5. Redes sociales ─────────────────────────────────────────────── */}
-      <div className="panel" style={{ marginBottom: 16 }}>
-        <SectionHead n="05" title="Redes sociales" sub="Opcional" />
-
-        <div className="grid-2" style={{ marginBottom: 0 }}>
-          <div className="field">
-            <label>Instagram</label>
-            <input
-              type="url"
-              value={form.instagram}
-              onChange={(e) => set("instagram", e.target.value)}
-              placeholder="https://instagram.com/..."
-            />
-          </div>
-          <div className="field">
-            <label>TikTok</label>
-            <input
-              type="url"
-              value={form.tiktok}
-              onChange={(e) => set("tiktok", e.target.value)}
-              placeholder="https://tiktok.com/@..."
-            />
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>Facebook</label>
-            <input
-              type="url"
-              value={form.facebook}
-              onChange={(e) => set("facebook", e.target.value)}
-              placeholder="https://facebook.com/..."
-            />
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>X / Twitter</label>
-            <input
-              type="url"
-              value={form.twitter}
-              onChange={(e) => set("twitter", e.target.value)}
-              placeholder="https://x.com/..."
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* ── Sticky footer ─────────────────────────────────────────────────── */}
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        padding: "16px 32px",
-        borderTop: "1px solid var(--line)",
-        background: "color-mix(in oklab, var(--bg) 92%, transparent)",
-        backdropFilter: "blur(12px)",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-        zIndex: 20,
-      }}>
-        {/* Status selector */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={{ fontSize: 13, color: "var(--ink-3)" }}>Estado:</span>
-          <select
-            value={form.status}
-            onChange={(e) => set("status", e.target.value as FormData["status"])}
-            style={{
-              padding: "8px 12px", borderRadius: 8, fontSize: 13,
-              background: "var(--surface)", border: "1px solid var(--line)", color: "var(--ink)",
-            }}
-          >
-            <option value="APPROVED">Publicado (directo)</option>
-            <option value="PENDING_MODERATION">En revisión</option>
-            <option value="DRAFT">Borrador</option>
-          </select>
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: "flex", gap: 10 }}>
-          <Link href="/dashboard/events" className="btn ghost">Cancelar</Link>
-          <button
-            className="btn dark"
-            disabled={busy}
-            onClick={() => handleSubmit("DRAFT")}
-          >
-            Guardar borrador
-          </button>
-          <button
-            className="btn primary"
-            disabled={busy}
-            onClick={() => handleSubmit(form.status)}
-          >
-            {busy ? "Guardando…" : form.status === "APPROVED"
-              ? (mode === "create" ? "Crear y publicar →" : "Guardar y publicar →")
-              : form.status === "PENDING_MODERATION"
-                ? "Enviar a revisión →"
-                : "Guardar borrador →"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  // Temporary render (task 2 replaces this with panels + footer)
+  return <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: 100 }}>TODO: panels + footer</div>;
 }

@@ -80,6 +80,62 @@ model Tag {
   updatedAt DateTime  @updatedAt
 }
 
+// ─── Taxonomías separadas (Phase 18) ───
+// Aditivo-primero: coexisten con Category/Tag hasta el plan 18-04.
+
+model EventCategory {
+  id          Int      @id @default(autoincrement())
+  name        String?
+  slug        String   @unique
+  description String?
+  pricePerDay Int      @default(1000)
+  icon        String?
+  color       String?
+  minDays     Int      @default(1)
+  maxDays     Int      @default(30)
+  order       Int      @default(0)
+  events      Event[]
+  heroes      Hero[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("event_categories")
+}
+
+model EventTag {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  slug      String   @unique
+  events    Event[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("event_tags")
+}
+
+model ArticleCategory {
+  id          Int       @id @default(autoincrement())
+  name        String?
+  slug        String    @unique
+  description String?
+  articles    Article[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("article_categories")
+}
+
+model ArticleTag {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+  articles  Article[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("article_tags")
+}
+
 // ─────────────────────────── Contenido ───────────────────────────
 
 model Article {
@@ -97,6 +153,10 @@ model Article {
   owner        User?             @relation("ArticleOwner", fields: [userId], references: [id])
   userId       Int?
   tags      Tag[]
+  // Phase 18 — taxonomía separada (coexiste con tags mientras se migra)
+  articleCategory   ArticleCategory? @relation(fields: [articleCategoryId], references: [id])
+  articleCategoryId Int?
+  articleTags       ArticleTag[]
   events    Event[]
   likes     Like[]
   orderItems   OrderItem[]
@@ -105,6 +165,7 @@ model Article {
 
   @@index([userId])
   @@index([status])
+  @@index([articleCategoryId])
 }
 
 // ── Estado de publicación unificado para Event, Spot y Hero ──────
@@ -133,6 +194,9 @@ model Hero {
 
   category   Category? @relation(fields: [categoryId], references: [id])
   categoryId Int?
+  // Phase 18 — taxonomía separada (coexiste con category mientras se migra)
+  eventCategory   EventCategory? @relation(fields: [eventCategoryId], references: [id])
+  eventCategoryId Int?
 
   // Owner — any authenticated user can create a hero.
   owner      User        @relation("HeroOwner", fields: [userId], references: [id])
@@ -152,6 +216,7 @@ model Hero {
 
   @@index([userId])
   @@index([categoryId])
+  @@index([eventCategoryId])
 }
 
 // A paid ad shown among the event cards. No detail view: it is an image and/or a
@@ -222,6 +287,10 @@ model Event {
   cityId     Int?
   category   Category?  @relation(fields: [categoryId], references: [id])
   categoryId Int?
+  // Phase 18 — taxonomía separada (coexiste con category mientras se migra)
+  eventCategory   EventCategory? @relation(fields: [eventCategoryId], references: [id])
+  eventCategoryId Int?
+  eventTags       EventTag[]
   articles   Article[]
 
   // Componentes (repetibles en Strapi → tablas propias)
@@ -240,6 +309,7 @@ model Event {
   @@index([userId])
   @@index([approvedById])
   @@index([rejectedById])
+  @@index([eventCategoryId])
 }
 
 // ───────────────────── Componentes de Event ──────────────────────

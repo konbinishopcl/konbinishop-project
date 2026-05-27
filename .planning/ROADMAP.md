@@ -77,11 +77,11 @@ Plans:
 
 **Depends on:** Phase 17 (Articles CRUD), Phase 1 (API taxonomías original)
 
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 
-- [ ] 18-01-PLAN.md — Schema Prisma + migración aditiva sch08 con copia de datos preservando IDs (wave 1)
+- [x] 18-01-PLAN.md — Schema Prisma + migración aditiva sch08 con copia de datos preservando IDs (wave 1)
 - [ ] 18-02-PLAN.md — Backend API split: endpoints /event-categories /event-tags /article-categories /article-tags + OrdersService pricing migrado + EventsService/HeroesService/ArticlesService usando los nuevos modelos (wave 2)
 - [ ] 18-03-PLAN.md — Frontend split: api.ts tipos + Header/sitemap/CategoryView/SearchView/EventForm/ArticleForm/Step1Client (wave 3)
 - [ ] 18-04-PLAN.md — Dashboard CategoriesSection real + cleanup: drop tablas legacy con migración sch09, eliminar referencias `category` y `tags` (wave 4)

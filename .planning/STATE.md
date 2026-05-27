@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-27T18:25:57.299Z"
+last_updated: "2026-05-27T21:41:43.429Z"
 progress:
-  total_phases: 1
+  total_phases: 2
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 8
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 17 — articles-crud-completo
+**Current focus:** Phase 18 — separar-taxonomia-eventos-articulos
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-27T18:25:57.297Z
+**Last session:** 2026-05-27T21:41:43.427Z
 
 ## Phase Summary
 
@@ -147,6 +147,7 @@ administrador quedan visibles al público.
 - [Phase 17-04]: ArticleForm inline en UpsellView eliminado (payload roto videoUrl+isSponsored:true); botón 'Sí, agregar artículo' redirige a /crear-articulo via router.push (decisión D-#3 conectada)
 - [Phase 17-articles-crud]: Use slug (not id) for articles edit URLs — zero API proxy changes
 - [Phase 17-articles-crud]: AdminArticleEditor eliminado — era orphan llamando a /api/articles/edit (no existe)
+- [Phase 18-01]: Hero reutiliza EventCategory (opción A): Hero.eventCategoryId apunta a event_categories; categoría decorativa no de pricing. Migración sch08 hand-edited con orden A→B→C→D: CreateTable → ADD COLUMN → DML INSERT/UPDATE → AddForeignKey. Tablas legacy conservadas hasta plan 18-04.
 
 ## Quick Tasks Completed
 

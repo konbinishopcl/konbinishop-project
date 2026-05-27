@@ -56,7 +56,7 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
           ? "news"
           : pathname.startsWith("/nosotros")
             ? "about"
-            : pathname.startsWith("/ayuda")
+            : (pathname.startsWith("/ayuda") || pathname.startsWith("/preguntas-frecuentes") || pathname.startsWith("/terminos") || pathname.startsWith("/privacidad") || pathname.startsWith("/contacto"))
               ? "help"
               : "";
 
@@ -152,7 +152,7 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
             </button>
             <button
               className={active === "help" ? "active" : ""}
-              onClick={() => router.push("/ayuda")}
+              onClick={() => router.push("/contacto")}
             >
               Contacto
             </button>
@@ -245,7 +245,7 @@ export function Header({ categories = [] }: { categories?: ApiCategory[] }) {
             <div className="o-label">Konbini</div>
             <button onClick={() => go("/noticias")}>Noticias</button>
             <button onClick={() => go("/nosotros")}>About</button>
-            <button onClick={() => go("/ayuda")}>Contacto</button>
+            <button onClick={() => go("/contacto")}>Contacto</button>
             <button onClick={() => go("/busqueda")}>Buscar</button>
           </div>
           {user && (

@@ -204,7 +204,7 @@ function RegistroForm() {
                 <span className={`ck ${acceptTerms ? "on" : ""}`} style={{ flex: "0 0 18px", marginTop: 1 }}>
                   {acceptTerms && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
                 </span>
-                <span>Acepto los <Link href="/ayuda?tab=terms" target="_blank">Términos y condiciones</Link> y la <Link href="/ayuda?tab=privacy" target="_blank">Política de privacidad</Link> de Konbini. <span style={{ color: "var(--err)" }}>*</span></span>
+                <span>Acepto los <Link href="/terminos" target="_blank">Términos y condiciones</Link> y la <Link href="/privacidad" target="_blank">Política de privacidad</Link> de Konbini. <span style={{ color: "var(--err)" }}>*</span></span>
               </label>
               <label onClick={() => setAccept18(!accept18)}>
                 <span className={`ck ${accept18 ? "on" : ""}`} style={{ flex: "0 0 18px", marginTop: 1 }}>

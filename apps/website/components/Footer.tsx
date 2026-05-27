@@ -40,15 +40,15 @@ export function Footer() {
           <Link href="/precios">Publicar evento</Link>
           <Link href="/servicios/fotografia">Fotografía</Link>
           <Link href="/servicios/creadores">Creadores de contenido</Link>
-          <Link href="/ayuda">Soporte</Link>
+          <Link href="/preguntas-frecuentes">Soporte</Link>
         </div>
 
         <div className="foot-col">
           <h4>Ayuda</h4>
-          <Link href="/ayuda">Preguntas frecuentes</Link>
-          <Link href="/ayuda?tab=terms">Términos</Link>
-          <Link href="/ayuda?tab=privacy">Privacidad</Link>
-          <Link href="/ayuda?tab=contact">Contacto</Link>
+          <Link href="/preguntas-frecuentes">Preguntas frecuentes</Link>
+          <Link href="/terminos">Términos</Link>
+          <Link href="/privacidad">Privacidad</Link>
+          <Link href="/contacto">Contacto</Link>
         </div>
 
         <div className="foot-col">
@@ -56,7 +56,7 @@ export function Footer() {
           <a href="https://instagram.com/konbinishop.cl" target="_blank" rel="noopener noreferrer">Instagram</a>
           <a href="https://tiktok.com/@konbinishop.cl" target="_blank" rel="noopener noreferrer">TikTok</a>
           <a href="#">Discord</a>
-          <Link href="/ayuda?tab=contact">Newsletter</Link>
+          <Link href="/contacto">Newsletter</Link>
         </div>
       </div>
 

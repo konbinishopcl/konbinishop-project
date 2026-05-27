@@ -25,7 +25,7 @@ export function PricingView() {
           <Link href="/crear" className="btn primary lg">
             Publicar mi evento →
           </Link>
-          <Link href="/ayuda" className="btn ghost lg">
+          <Link href="/preguntas-frecuentes" className="btn ghost lg">
             Ver más info
           </Link>
         </div>
@@ -87,7 +87,7 @@ export function PricingView() {
             <li>Artículo patrocinado disponible</li>
           </ul>
           <div className="cta-row">
-            <Link href="/ayuda" className="btn ghost block">
+            <Link href="/preguntas-frecuentes" className="btn ghost block">
               Más info
             </Link>
           </div>

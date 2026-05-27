@@ -236,7 +236,7 @@ export default function NosotrosPage() {
           <Link href="/crear" className="btn primary lg">
             Publicar mi evento →
           </Link>
-          <Link href="/ayuda" className="btn ghost lg">
+          <Link href="/preguntas-frecuentes" className="btn ghost lg">
             Contactarnos
           </Link>
         </div>

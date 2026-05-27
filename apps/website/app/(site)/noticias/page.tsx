@@ -31,7 +31,7 @@ async function fetchArticles(): Promise<ApiArticle[]> {
     if (key) headers["X-API-Key"] = key;
     const res = await fetch(`${base}/articles?pageSize=24`, {
       headers,
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
     if (!res.ok) return [];
     const data = await res.json();

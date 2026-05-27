@@ -8,7 +8,7 @@ async function ssrFetch(path: string) {
   const headers: Record<string, string> = {};
   const key = process.env.API_KEY;
   if (key) headers["X-API-Key"] = key;
-  const res = await fetch(`${base}${path}`, { headers, next: { revalidate: 60 } });
+  const res = await fetch(`${base}${path}`, { headers, cache: 'no-store' });
   if (!res.ok) return null;
   return res.json();
 }

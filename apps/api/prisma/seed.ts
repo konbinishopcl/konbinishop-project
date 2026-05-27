@@ -251,6 +251,7 @@ async function main() {
     data: {
       title: 'Guía definitiva para tu primera convención de anime en Chile',
       slug: 'guia-primera-convencion-anime-chile',
+      image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&q=80',
       excerpt: 'Todo lo que necesitas saber: qué llevar, cómo vestirte, cómo moverte y cómo sacarle el máximo partido a tu primer evento otaku.',
       content: `Las convenciones de anime son mucho más que un punto de encuentro: son el lugar donde la cultura otaku chilena se hace visible, se celebra y crece. Si es tu primera vez asistiendo a una, el volumen de información, el ruido y la cantidad de personas puede resultar abrumadora. Esta guía existe para que llegues preparado y te vayas con la sensación de que fue uno de los mejores días del año.
 
@@ -286,6 +287,7 @@ Finalmente, lo más importante: preséntate con disposición de disfrutar y cono
     data: {
       title: 'El manga chileno está creciendo: cinco autores locales que deberías conocer',
       slug: 'manga-chileno-autores-locales',
+      image: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=800&q=80',
       excerpt: 'Una nueva generación de autores chilenos está publicando manga original con historias propias, mezclando el lenguaje visual japonés con referentes 100 % locales.',
       content: `Durante años, hablar de manga en Chile significaba hablar de importaciones: Shueisha, Kodansha, Shogakukan. Pero en la última década, y con más fuerza en los últimos tres años, ha emergido una escena de autores nacionales que están construyendo su propio camino dentro del lenguaje del manga, con historias que se desarrollan en poblaciones de Santiago, en el norte grande, en la Araucanía, con personajes que hablan como habla la gente en Chile.
 
@@ -319,6 +321,7 @@ La mayoría tiene presencia en Instagram bajo su nombre o el título de su obra.
     data: {
       title: 'Cine de animación japonesa en pantalla grande: las películas de Studio Ghibli que regresan a Chile',
       slug: 'ghibli-cine-pantalla-grande-chile',
+      image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&q=80',
       excerpt: 'Varias obras del estudio fundado por Hayao Miyazaki y Isao Takahata están programadas para funciones especiales en cines de Santiago y regiones.',
       content: `Hay algo que pasa con el cine de Studio Ghibli en pantalla grande que no ocurre ni siquiera en el televisor más grande del mundo: la sala oscura, el audio envolvente y la escala de la imagen amplifican la experiencia de una manera que parece hacer justicia a lo que Miyazaki y sus colaboradores diseñaron originalmente. Para quienes solo conocen estas películas en streaming o en DVD, verlas en cine por primera vez es, en el mejor sentido posible, una revelación.
 
@@ -352,6 +355,7 @@ Una de las cosas más particulares de ver Ghibli en el cine es el público. No e
     data: {
       title: 'Gaming en Chile 2025: el año en que los torneos locales dejaron de ser underground',
       slug: 'gaming-chile-2025-torneos-locales',
+      image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80',
       excerpt: 'Desde Valorant hasta Street Fighter 6, los torneos presenciales de videojuegos en Chile están atrayendo más público, más sponsors y más cobertura que nunca.',
       content: `Hace cinco años, hablar de esports y gaming competitivo en Chile era hablar de un fenómeno de nicho: torneos organizados en cafés internet, transmisiones de Twitch con 200 espectadores, y premios que apenas cubrían el pasaje al evento. En 2025, el panorama es otro. Los torneos presenciales más grandes convocan miles de personas, tienen transmisiones en vivo con producción comparable a la de canales de televisión, y algunos de los jugadores más destacados ya tienen contratos con organizaciones que les permiten vivir del juego.
 
@@ -385,6 +389,7 @@ Ese número va a crecer. La pregunta es si el ecosistema de apoyo — organizaci
     data: {
       title: 'K-Pop en Chile: cómo la comunidad local construyó una escena sin esperar a las grandes disqueras',
       slug: 'kpop-chile-comunidad-local-escena',
+      image: 'https://images.unsplash.com/photo-1540039155733-5bb30b4f11f2?w=800&q=80',
       excerpt: 'Antes de que cualquier artista coreano llegara al país, los fans chilenos ya organizaban eventos propios y construían redes que hoy tienen miles de miembros.',
       content: `En 2009, ver un video de K-Pop en Chile requería buscar activamente en foros de internet, descargar archivos de YouTube en calidad 360p y compartirlos en CD con los pocos amigos que entendían de qué hablabas. Hoy, Chile es uno de los países de América Latina con mayor densidad de fandoms organizados de K-Pop, y Santiago ha recibido en los últimos cinco años a artistas de la talla de BTS, BLACKPINK, TWICE, EXO y Stray Kids — en algunos casos antes que ciudades europeas.
 
@@ -420,6 +425,7 @@ Esta escena tiene su propio circuito: estudios de danza que ofrecen clases espec
     data: {
       title: 'El arte del cosplay en Chile: entre la artesanía, la comunidad y la identidad',
       slug: 'arte-cosplay-chile-artesania-comunidad',
+      image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800&q=80&sat=-30&hue=180',
       excerpt: 'Para los cosplayers chilenos, el traje es solo el inicio: hay meses de trabajo artesanal, investigación y una red de apoyo que va mucho más allá del evento.',
       content: `El cosplay, en su forma más superficial, es disfrazarse de un personaje. Pero quienes lo practican con seriedad en Chile saben que esa definición no alcanza para describir lo que hacen: investigar materiales, aprender técnicas de moldería, trabajar con EVA, termoplástico, resina y masilla; estudiar a los personajes con un nivel de detalle que a veces supera al del fandom promedio. El resultado, cuando sale bien, es una pieza de arte que tarda meses en construirse.
 
@@ -461,6 +467,7 @@ Esta realidad ha impulsado el desarrollo de un mercado informal pero activo de v
     data: {
       title: 'Reseña: "Dungeon Meshi" y por qué es el mejor manga de los últimos diez años',
       slug: 'resena-dungeon-meshi-mejor-manga',
+      image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80',
       excerpt: 'Ryoko Kui construyó algo que parecía imposible: comedia de cocina, ecología fantástica y uno de los estudios de personajes más profundos del manga contemporáneo.',
       content: `Cuando "Dungeon Meshi" —publicado en español bajo el nombre "Delicias de mazmorra" por Norma Editorial— terminó en 2023 después de nueve años de serialización, dejó un vacío que es difícil de describir. No porque sea una obra perfecta —tiene sus imperfecciones— sino porque hacía cosas que nadie más estaba haciendo, y las hacía con una calma y una confianza en el lector que se ha vuelto rara en el manga contemporáneo.
 
@@ -498,6 +505,7 @@ Si no has leído "Dungeon Meshi", empieza por el primer volumen. Si lo has visto
     data: {
       title: 'Las mejores salas de arcade y gaming retro de Santiago: guía actualizada 2025',
       slug: 'mejores-salas-arcade-gaming-retro-santiago-2025',
+      image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&q=80',
       excerpt: 'Santiago tiene una escena de arcades y gaming retro más activa de lo que parece. Aquí están los mejores lugares para jugar máquinas clásicas, flippers y consolas de época.',
       content: `El arcade, como espacio físico, parecía condenado a desaparecer con la llegada de las consolas domésticas de quinta generación. Que en 2025 exista no solo una sino varias salas de arcade en Santiago, con máquinas en buen estado y comunidades activas alrededor de ellas, es algo que merece reconocimiento y, sobre todo, que la gente sepa que existen.
 

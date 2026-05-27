@@ -200,10 +200,6 @@ function RegistroForm() {
               </div>
             </div>
             <div className="consent-block">
-              <div className="law-tag">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5l-9-4z"/></svg>
-                LEY 21.719 · OBLIGATORIO
-              </div>
               <label onClick={() => setAcceptTerms(!acceptTerms)}>
                 <span className={`ck ${acceptTerms ? "on" : ""}`} style={{ flex: "0 0 18px", marginTop: 1 }}>
                   {acceptTerms && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}

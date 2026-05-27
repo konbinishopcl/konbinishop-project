@@ -22,6 +22,14 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import { CreateEventCategoryDto } from './dto/create-event-category.dto';
+import { UpdateEventCategoryDto } from './dto/update-event-category.dto';
+import { CreateEventTagDto } from './dto/create-event-tag.dto';
+import { UpdateEventTagDto } from './dto/update-event-tag.dto';
+import { CreateArticleCategoryDto } from './dto/create-article-category.dto';
+import { UpdateArticleCategoryDto } from './dto/update-article-category.dto';
+import { CreateArticleTagDto } from './dto/create-article-tag.dto';
+import { UpdateArticleTagDto } from './dto/update-article-tag.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -167,7 +175,7 @@ export class CitiesController {
   }
 }
 
-// ── Categories ──
+// ── Categories (alias — devuelve EventCategory; escritura legacy hasta 18-04) ──
 
 @ApiTags('categories')
 @Controller('categories')
@@ -175,7 +183,7 @@ export class CategoriesController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar categorías' })
+  @ApiOperation({ summary: 'Listar categorías (alias de /event-categories desde Phase 18)' })
   findAll() {
     return this.catalog.categories();
   }
@@ -214,7 +222,7 @@ export class CategoriesController {
   }
 }
 
-// ── Tags ──
+// ── Tags (alias — devuelve ArticleTag; escritura legacy hasta 18-04) ──
 
 @ApiTags('tags')
 @Controller('tags')
@@ -222,7 +230,7 @@ export class TagsController {
   constructor(private readonly catalog: CatalogService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Listar tags' })
+  @ApiOperation({ summary: 'Listar tags (alias de /article-tags desde Phase 18)' })
   findAll() {
     return this.catalog.tags();
   }
@@ -258,5 +266,193 @@ export class TagsController {
   @ApiOperation({ summary: 'Eliminar un tag (ADMIN+)' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.catalog.removeTag(id);
+  }
+}
+
+// ── EventCategories ──
+
+@ApiTags('event-categories')
+@Controller('event-categories')
+export class EventCategoriesController {
+  constructor(private readonly catalog: CatalogService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar categorías de eventos' })
+  findAll() {
+    return this.catalog.eventCategories();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Ver una categoría de evento' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.findEventCategory(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Crear una categoría de evento (ADMIN+)' })
+  create(@Body() dto: CreateEventCategoryDto) {
+    return this.catalog.createEventCategory(dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Editar una categoría de evento (ADMIN+)' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateEventCategoryDto) {
+    return this.catalog.updateEventCategory(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar una categoría de evento (ADMIN+)' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.removeEventCategory(id);
+  }
+}
+
+// ── EventTags ──
+
+@ApiTags('event-tags')
+@Controller('event-tags')
+export class EventTagsController {
+  constructor(private readonly catalog: CatalogService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar tags de eventos' })
+  findAll() {
+    return this.catalog.eventTags();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Ver un tag de evento' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.findEventTag(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Crear un tag de evento (ADMIN+)' })
+  create(@Body() dto: CreateEventTagDto) {
+    return this.catalog.createEventTag(dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Editar un tag de evento (ADMIN+)' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateEventTagDto) {
+    return this.catalog.updateEventTag(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar un tag de evento (ADMIN+)' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.removeEventTag(id);
+  }
+}
+
+// ── ArticleCategories ──
+
+@ApiTags('article-categories')
+@Controller('article-categories')
+export class ArticleCategoriesController {
+  constructor(private readonly catalog: CatalogService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar categorías de artículos' })
+  findAll() {
+    return this.catalog.articleCategories();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Ver una categoría de artículo' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.findArticleCategory(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Crear una categoría de artículo (ADMIN+)' })
+  create(@Body() dto: CreateArticleCategoryDto) {
+    return this.catalog.createArticleCategory(dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Editar una categoría de artículo (ADMIN+)' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateArticleCategoryDto) {
+    return this.catalog.updateArticleCategory(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar una categoría de artículo (ADMIN+)' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.removeArticleCategory(id);
+  }
+}
+
+// ── ArticleTags ──
+
+@ApiTags('article-tags')
+@Controller('article-tags')
+export class ArticleTagsController {
+  constructor(private readonly catalog: CatalogService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar tags de artículos' })
+  findAll() {
+    return this.catalog.articleTags();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Ver un tag de artículo' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.findArticleTag(id);
+  }
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Crear un tag de artículo (ADMIN+)' })
+  create(@Body() dto: CreateArticleTagDto) {
+    return this.catalog.createArticleTag(dto);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Editar un tag de artículo (ADMIN+)' })
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateArticleTagDto) {
+    return this.catalog.updateArticleTag(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Eliminar un tag de artículo (ADMIN+)' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.catalog.removeArticleTag(id);
   }
 }

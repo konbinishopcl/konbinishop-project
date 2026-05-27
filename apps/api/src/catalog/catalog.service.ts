@@ -10,6 +10,14 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { CreateTagDto } from './dto/create-tag.dto';
 import { UpdateTagDto } from './dto/update-tag.dto';
+import { CreateEventCategoryDto } from './dto/create-event-category.dto';
+import { UpdateEventCategoryDto } from './dto/update-event-category.dto';
+import { CreateEventTagDto } from './dto/create-event-tag.dto';
+import { UpdateEventTagDto } from './dto/update-event-tag.dto';
+import { CreateArticleCategoryDto } from './dto/create-article-category.dto';
+import { UpdateArticleCategoryDto } from './dto/update-article-category.dto';
+import { CreateArticleTagDto } from './dto/create-article-tag.dto';
+import { UpdateArticleTagDto } from './dto/update-article-tag.dto';
 
 @Injectable()
 export class CatalogService {
@@ -143,10 +151,11 @@ export class CatalogService {
     return { deleted: true };
   }
 
-  // ── Categories ──
+  // ── Categories (legacy — escritura sigue en tabla Category hasta 18-04) ──
 
   categories() {
-    return this.prisma.category.findMany({ orderBy: { name: 'asc' } });
+    // BACKWARDS COMPAT: /categories ahora devuelve EventCategory (decisión Phase 18).
+    return this.prisma.eventCategory.findMany({ orderBy: [{ order: 'asc' }, { name: 'asc' }] });
   }
 
   async findCategory(id: number) {
@@ -172,10 +181,11 @@ export class CatalogService {
     return { deleted: true };
   }
 
-  // ── Tags ──
+  // ── Tags (legacy — escritura sigue en tabla Tag hasta 18-04) ──
 
   tags() {
-    return this.prisma.tag.findMany({ orderBy: { name: 'asc' } });
+    // BACKWARDS COMPAT: /tags ahora devuelve ArticleTag.
+    return this.prisma.articleTag.findMany({ orderBy: { name: 'asc' } });
   }
 
   async findTag(id: number) {
@@ -201,10 +211,126 @@ export class CatalogService {
     return { deleted: true };
   }
 
+  // ── EventCategories ──
+
+  eventCategories() {
+    return this.prisma.eventCategory.findMany({ orderBy: [{ order: 'asc' }, { name: 'asc' }] });
+  }
+
+  async findEventCategory(id: number) {
+    const c = await this.prisma.eventCategory.findUnique({ where: { id } });
+    if (!c) throw new NotFoundException('Categoría de evento no encontrada');
+    return c;
+  }
+
+  async createEventCategory(dto: CreateEventCategoryDto) {
+    await this.assertUniqueSlug('eventCategory', dto.slug);
+    return this.prisma.eventCategory.create({ data: dto });
+  }
+
+  async updateEventCategory(id: number, dto: UpdateEventCategoryDto) {
+    await this.findEventCategory(id);
+    if (dto.slug) await this.assertUniqueSlug('eventCategory', dto.slug, id);
+    return this.prisma.eventCategory.update({ where: { id }, data: dto });
+  }
+
+  async removeEventCategory(id: number) {
+    await this.findEventCategory(id);
+    await this.prisma.eventCategory.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  // ── EventTags ──
+
+  eventTags() {
+    return this.prisma.eventTag.findMany({ orderBy: { name: 'asc' } });
+  }
+
+  async findEventTag(id: number) {
+    const t = await this.prisma.eventTag.findUnique({ where: { id } });
+    if (!t) throw new NotFoundException('Tag de evento no encontrado');
+    return t;
+  }
+
+  async createEventTag(dto: CreateEventTagDto) {
+    await this.assertUniqueSlug('eventTag', dto.slug);
+    return this.prisma.eventTag.create({ data: dto });
+  }
+
+  async updateEventTag(id: number, dto: UpdateEventTagDto) {
+    await this.findEventTag(id);
+    if (dto.slug) await this.assertUniqueSlug('eventTag', dto.slug, id);
+    return this.prisma.eventTag.update({ where: { id }, data: dto });
+  }
+
+  async removeEventTag(id: number) {
+    await this.findEventTag(id);
+    await this.prisma.eventTag.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  // ── ArticleCategories ──
+
+  articleCategories() {
+    return this.prisma.articleCategory.findMany({ orderBy: { name: 'asc' } });
+  }
+
+  async findArticleCategory(id: number) {
+    const c = await this.prisma.articleCategory.findUnique({ where: { id } });
+    if (!c) throw new NotFoundException('Categoría de artículo no encontrada');
+    return c;
+  }
+
+  async createArticleCategory(dto: CreateArticleCategoryDto) {
+    await this.assertUniqueSlug('articleCategory', dto.slug);
+    return this.prisma.articleCategory.create({ data: dto });
+  }
+
+  async updateArticleCategory(id: number, dto: UpdateArticleCategoryDto) {
+    await this.findArticleCategory(id);
+    if (dto.slug) await this.assertUniqueSlug('articleCategory', dto.slug, id);
+    return this.prisma.articleCategory.update({ where: { id }, data: dto });
+  }
+
+  async removeArticleCategory(id: number) {
+    await this.findArticleCategory(id);
+    await this.prisma.articleCategory.delete({ where: { id } });
+    return { deleted: true };
+  }
+
+  // ── ArticleTags ──
+
+  articleTags() {
+    return this.prisma.articleTag.findMany({ orderBy: { name: 'asc' } });
+  }
+
+  async findArticleTag(id: number) {
+    const t = await this.prisma.articleTag.findUnique({ where: { id } });
+    if (!t) throw new NotFoundException('Tag de artículo no encontrado');
+    return t;
+  }
+
+  async createArticleTag(dto: CreateArticleTagDto) {
+    await this.assertUniqueSlug('articleTag', dto.slug);
+    return this.prisma.articleTag.create({ data: dto });
+  }
+
+  async updateArticleTag(id: number, dto: UpdateArticleTagDto) {
+    await this.findArticleTag(id);
+    if (dto.slug) await this.assertUniqueSlug('articleTag', dto.slug, id);
+    return this.prisma.articleTag.update({ where: { id }, data: dto });
+  }
+
+  async removeArticleTag(id: number) {
+    await this.findArticleTag(id);
+    await this.prisma.articleTag.delete({ where: { id } });
+    return { deleted: true };
+  }
+
   // ── Helper ──
 
   private async assertUniqueSlug(
-    model: 'country' | 'state' | 'city' | 'category' | 'tag',
+    model: 'country' | 'state' | 'city' | 'category' | 'tag' | 'eventCategory' | 'eventTag' | 'articleCategory' | 'articleTag',
     slug: string,
     excludeId?: number,
   ) {

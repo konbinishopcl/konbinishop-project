@@ -132,6 +132,18 @@ None — no se requiere configuración externa. La migración fue aplicada autom
 - **18-03 (frontend split):** Bloqueado hasta que 18-02 esté completo (necesita endpoints nuevos).
 - **18-04 (cleanup):** Bloqueado hasta que 18-02 y 18-03 hayan migrado TODAS las lecturas/escrituras a los nuevos modelos.
 
+## Self-Check: PASSED
+
+- `apps/api/prisma/schema.prisma` — FOUND
+- `apps/api/prisma/migrations/20260527213839_sch08_split_taxonomies/migration.sql` — FOUND
+- `.planning/phases/18-separar-taxonomia-eventos-articulos/18-01-SUMMARY.md` — FOUND
+- Commit `e9a162d` (Task 1) — FOUND
+- Commit `5c98b1d` (Task 2) — FOUND
+- Commit `40f369e` (docs metadata) — FOUND
+- Data parity: 5 EventCategories = 5 Categories, 10 ArticleTags = 10 Tags, 17 join links copied — VERIFIED
+- Backfill: 0 Events sin backfill, 0 Heroes sin backfill — VERIFIED
+- `npx prisma migrate status` → "Database schema is up to date!" — VERIFIED
+
 ---
 *Phase: 18-separar-taxonomia-eventos-articulos*
 *Completed: 2026-05-27*

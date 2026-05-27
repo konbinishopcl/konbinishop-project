@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type SelectField = {
@@ -83,6 +83,234 @@ const KINDS = {
 } as const;
 
 type KindKey = keyof typeof KINDS;
+
+// ── Helpers para las secciones con API real ─────────────────────────────────
+
+async function authedFetch(path: string, init: RequestInit = {}) {
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(init.headers as Record<string, string> | undefined),
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return fetch(path, { ...init, headers });
+}
+
+// ── Sección de Tags real (kind === "tags") ──────────────────────────────────
+
+const TAG_FIELDS = [
+  { k: "name", label: "Nombre del tag", required: true, placeholder: "shonen" },
+  { k: "slug", label: "Slug",           required: true, placeholder: "shonen" },
+] as const;
+
+type RealTagItem = { id: number; name: string; slug: string };
+
+type TagModalState =
+  | { type: "create" }
+  | { type: "edit";   item: RealTagItem }
+  | { type: "delete"; item: RealTagItem }
+  | null;
+
+function RealTagsSection() {
+  const [items, setItems] = useState<RealTagItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState<TagModalState>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/article-tags");
+      const data = await res.json();
+      setItems(Array.isArray(data) ? data : []);
+    } catch {
+      toast.error("No se pudieron cargar los tags");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onCreate = async (d: Record<string, string>) => {
+    const res = await authedFetch("/api/article-tags", {
+      method: "POST",
+      body: JSON.stringify({ name: d.name.trim(), slug: d.slug.trim() }),
+    });
+    if (!res.ok) { toast.error("No se pudo crear el tag"); return; }
+    toast.success("Tag creado", { description: `"${d.name}" agregado al sistema` });
+    load();
+  };
+
+  const onEdit = async (id: number, d: Record<string, string>) => {
+    const res = await authedFetch(`/api/article-tags/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: d.name.trim(), slug: d.slug.trim() }),
+    });
+    if (!res.ok) { toast.error("No se pudo actualizar el tag"); return; }
+    toast.success("Tag actualizado");
+    load();
+  };
+
+  const onDelete = async (id: number) => {
+    const res = await authedFetch(`/api/article-tags/${id}`, { method: "DELETE" });
+    if (!res.ok) { toast.error("No se pudo eliminar el tag"); return; }
+    toast.warning("Tag eliminado");
+    load();
+  };
+
+  return (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ color: "var(--ink-3)", fontSize: 13 }}>
+          {loading ? "Cargando…" : `${items.length} tags en el sistema`}
+        </div>
+        <button className="btn primary" onClick={() => setModal({ type: "create" })}>＋ Nuevo tag</button>
+      </div>
+
+      <div className="panel" style={{ padding: 0 }}>
+        <table className="a-table">
+          <thead>
+            <tr>
+              <th>NOMBRE</th>
+              <th>SLUG</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it) => (
+              <tr key={it.id}>
+                <td><strong>{it.name}</strong></td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>#{it.slug}</td>
+                <td>
+                  <div className="row-act">
+                    <button onClick={() => setModal({ type: "edit", item: it })}>Editar</button>
+                    <button className="bad" onClick={() => setModal({ type: "delete", item: it })}>Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!loading && items.length === 0 && (
+              <tr>
+                <td colSpan={3} style={{ textAlign: "center", color: "var(--ink-3)", padding: "24px 0" }}>
+                  No hay tags. Crea el primero.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {modal?.type === "create" && (
+        <TagsFormModal
+          title="Nuevo tag"
+          initial={{}}
+          onClose={() => setModal(null)}
+          onSave={onCreate}
+        />
+      )}
+      {modal?.type === "edit" && (
+        <TagsFormModal
+          title={`Editar ${modal.item.name}`}
+          initial={{ name: modal.item.name, slug: modal.item.slug }}
+          onClose={() => setModal(null)}
+          onSave={(d) => onEdit(modal.item.id, d)}
+        />
+      )}
+      {modal?.type === "delete" && (
+        <TagsConfirmDialog
+          title={`¿Eliminar tag "${modal.item.name}"?`}
+          message="Esta acción es permanente."
+          onConfirm={() => onDelete(modal.item.id)}
+          onClose={() => setModal(null)}
+        />
+      )}
+    </>
+  );
+}
+
+function TagsFormModal({
+  title,
+  initial = {},
+  onClose,
+  onSave,
+}: {
+  title: string;
+  initial?: Record<string, string>;
+  onClose: () => void;
+  onSave: (data: Record<string, string>) => void;
+}) {
+  const [data, setData] = useState<Record<string, string>>(initial);
+  const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
+        <h3 className="h">{title}</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
+          {TAG_FIELDS.map((f) => (
+            <div key={f.k} className="field" style={{ margin: 0 }}>
+              <label>
+                {f.label}
+                {f.required && <span style={{ color: "var(--err)" }}> *</span>}
+              </label>
+              <input
+                type="text"
+                value={data[f.k] || ""}
+                onChange={(e) => set(f.k, e.target.value)}
+                placeholder={f.placeholder}
+              />
+            </div>
+          ))}
+        </div>
+        <div className="row-act">
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn dark" onClick={() => { onSave(data); onClose(); }}>Guardar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TagsConfirmDialog({
+  title,
+  message,
+  onConfirm,
+  onClose,
+}: {
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onClose: () => void;
+}) {
+  const [typed, setTyped] = useState("");
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
+        <h3 className="h">{title}</h3>
+        <p className="p">{message}</p>
+        <div className="field" style={{ margin: "0 0 14px" }}>
+          <label>Escribe <strong>ELIMINAR</strong> para confirmar</label>
+          <input
+            type="text"
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            placeholder="ELIMINAR"
+          />
+        </div>
+        <div className="row-act">
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button
+            className="btn primary"
+            style={{ background: "var(--err)" }}
+            onClick={() => { onConfirm(); onClose(); }}
+            disabled={typed !== "ELIMINAR"}
+          >
+            Sí, eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AdminFormModal({
   title,
@@ -203,6 +431,9 @@ function renderCol3(kind: KindKey, item: Record<string, string>): string {
 }
 
 export default function SimpleCRUDSection({ kind }: { kind: KindKey }) {
+  // Rama real: kind === "tags" → CRUD contra /api/article-tags
+  if (kind === "tags") return <RealTagsSection />;
+
   const cfg = KINDS[kind];
   const [modal, setModal] = useState<ModalState | null>(null);
 

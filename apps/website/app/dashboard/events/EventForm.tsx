@@ -436,6 +436,17 @@ export function EventForm({ mode, initial }: Props) {
     }
   }
 
+  // Compute CTA label from mode × form.status — locked table per UI-SPEC
+  const ctaLabel = busy
+    ? "Guardando…"
+    : mode === "create"
+      ? form.status === "APPROVED"             ? "Crear y publicar →"
+        : form.status === "PENDING_MODERATION" ? "Crear en revisión →"
+        :                                        "Crear borrador →"
+      : form.status === "APPROVED"             ? "Guardar y publicar →"
+        : form.status === "PENDING_MODERATION" ? "Guardar en revisión →"
+        :                                        "Guardar borrador →";
+
   return (
     <div style={{ maxWidth: 900, margin: "0 auto", paddingBottom: 100 }}>
 
@@ -767,6 +778,39 @@ export function EventForm({ mode, initial }: Props) {
           </div>
         </div>
       )}
+
+      {/* ── Sticky footer ─────────────────────────────────────────────────── */}
+      <div className="form-foot">
+        <div className="container">
+          {/* LEFT: informational text only (NEVER a select) */}
+          <span style={{ fontSize: 13, color: "var(--ink-3)" }}>
+            {mode === "create"
+              ? "Creando como admin · sin checkout ni upsell."
+              : `Editando evento #${initial?.id} · no se notifica al organizador.`}
+          </span>
+
+          {/* RIGHT: 3 buttons in fixed order */}
+          <div style={{ display: "flex", gap: 10 }}>
+            <Link href="/dashboard/events" className="btn ghost">Cancelar</Link>
+            <button
+              type="button"
+              className="btn dark"
+              disabled={busy}
+              onClick={() => handleSubmit("DRAFT")}
+            >
+              Guardar borrador
+            </button>
+            <button
+              type="button"
+              className="btn primary"
+              disabled={busy}
+              onClick={() => handleSubmit(form.status)}
+            >
+              {ctaLabel}
+            </button>
+          </div>
+        </div>
+      </div>
 
     </div>
   );

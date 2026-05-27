@@ -13,12 +13,13 @@ import { MarkdownEditor } from "@/components/MarkdownEditor";
 // ── Zod schema ────────────────────────────────────────────────────────────────
 
 const articleSchema = z.object({
-  title:   z.string().min(3, "Mínimo 3 caracteres"),
-  slug:    z.string().optional().or(z.literal("")),
-  excerpt: z.string().optional().or(z.literal("")),
-  content: z.string().min(10, "El contenido es requerido (mín. 10 caracteres)"),
-  eventId: z.string().optional().or(z.literal("")),
-  status:  z.enum(["APPROVED", "PENDING_MODERATION", "DRAFT"]),
+  title:      z.string().min(3, "Mínimo 3 caracteres"),
+  slug:       z.string().optional().or(z.literal("")),
+  excerpt:    z.string().optional().or(z.literal("")),
+  content:    z.string().min(10, "El contenido es requerido (mín. 10 caracteres)"),
+  youtubeUrl: z.string().optional().or(z.literal("")),
+  eventId:    z.string().optional().or(z.literal("")),
+  status:     z.enum(["APPROVED", "PENDING_MODERATION", "DRAFT"]),
 });
 type ArticleValues = z.infer<typeof articleSchema>;
 
@@ -35,6 +36,7 @@ export type InitialArticle = {
   excerpt: string | null;
   content: string;
   image: string | null;
+  youtubeUrl: string | null;
   status: string;
   tags: Tag[];
   events?: { id: number; title: string }[];
@@ -118,12 +120,13 @@ export function ArticleForm({ mode, variant, initial }: Props) {
     resolver: zodResolver(articleSchema),
     mode: "onTouched",
     defaultValues: {
-      title:   initial?.title   ?? "",
-      slug:    initial?.slug    ?? "",
-      excerpt: initial?.excerpt ?? "",
-      content: initial?.content ?? "",
-      eventId: initial?.events?.[0]?.id ? String(initial.events[0].id) : "",
-      status:  initStatus,
+      title:      initial?.title      ?? "",
+      slug:       initial?.slug       ?? "",
+      excerpt:    initial?.excerpt    ?? "",
+      content:    initial?.content    ?? "",
+      youtubeUrl: initial?.youtubeUrl ?? "",
+      eventId:    initial?.events?.[0]?.id ? String(initial.events[0].id) : "",
+      status:     initStatus,
     },
   });
 
@@ -164,12 +167,13 @@ export function ArticleForm({ mode, variant, initial }: Props) {
 
       // 2) Build payload (campos comunes)
       const basePayload = {
-        title: values.title.trim(),
-        slug: values.slug?.trim() || undefined,
-        excerpt: values.excerpt?.trim() || undefined,
-        content: values.content.trim(),
-        image: imageUrlPath || undefined,
-        tagIds: selectedTagIds.length ? selectedTagIds : undefined,
+        title:      values.title.trim(),
+        slug:       values.slug?.trim() || undefined,
+        excerpt:    values.excerpt?.trim() || undefined,
+        content:    values.content.trim(),
+        image:      imageUrlPath || undefined,
+        youtubeUrl: values.youtubeUrl?.trim() || undefined,
+        tagIds:     selectedTagIds.length ? selectedTagIds : undefined,
       };
 
       // 3) Choose endpoint based on mode + variant
@@ -280,6 +284,12 @@ export function ArticleForm({ mode, variant, initial }: Props) {
             label="Sube una imagen horizontal"
             hint="JPG / PNG / WebP · 1600×900 · máx 5MB"
           />
+        </div>
+
+        <div className="field">
+          <label>URL de YouTube <small style={{ color: "var(--ink-3)" }}>(opcional)</small></label>
+          <input type="url" placeholder="https://www.youtube.com/watch?v=..." {...register("youtubeUrl")} />
+          <div className="help">Si hay un video asociado al artículo, se mostrará embebido debajo de la imagen principal.</div>
         </div>
 
         <div className="field">

@@ -28,15 +28,16 @@ export default function EditMyArticlePage() {
       })
       .then((data) => {
         setInitial({
-          id: data.id,
-          title: data.title,
-          slug: data.slug,
-          excerpt: data.excerpt,
-          content: data.content,
-          image: data.image,
-          status: data.status,
-          tags: data.tags ?? [],
-          events: data.events ?? [],
+          id:         data.id,
+          title:      data.title,
+          slug:       data.slug,
+          excerpt:    data.excerpt ?? null,
+          content:    data.content,
+          image:      data.image ?? null,
+          youtubeUrl: data.youtubeUrl ?? null,
+          status:     data.status,
+          tags:       data.tags ?? [],
+          events:     data.events ?? [],
         });
       })
       .catch((ex) => setError(ex instanceof Error ? ex.message : "Error al cargar"));

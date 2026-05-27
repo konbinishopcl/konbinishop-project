@@ -31,6 +31,11 @@ export class CreateArticleDto {
   @IsString()
   image?: string;
 
+  @ApiPropertyOptional({ example: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', description: 'URL de YouTube (watch o youtu.be)' })
+  @IsOptional()
+  @IsString()
+  youtubeUrl?: string;
+
   @ApiPropertyOptional({ type: [Number], example: [1, 4], description: 'IDs de tags a asociar' })
   @IsOptional()
   @IsArray()

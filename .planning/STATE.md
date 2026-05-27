@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-27T17:54:29.132Z"
+last_updated: "2026-05-27T18:23:12.079Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-27T17:54:29.130Z
+**Last session:** 2026-05-27T18:23:06.560Z
 
 ## Phase Summary
 
@@ -144,6 +144,7 @@ administrador quedan visibles al público.
 - [Phase 15-03]: Admin nav uses button+useRouter.push (CSS .admin-side button.nav-item); api.ts only has adminEvents/approveEvent/rejectEvent — other sections use fetch() directly; CRMSection uses mock data with /api/crm fallback; InboxSection receives kind prop routed by AdminPage
 - [Phase 15-05]: api.ts sin métodos articles/userByHandle — server pages usan fetch() directo con process.env.API_URL + API_KEY (NO TOCAR api.ts preservado)
 - [Phase 16]: Status-select movido al Panel 06 admin-only; footer limpio con texto + 3 botones; CTA labels exactos per UI-SPEC
+- [Phase 17-04]: ArticleForm inline en UpsellView eliminado (payload roto videoUrl+isSponsored:true); botón 'Sí, agregar artículo' redirige a /crear-articulo via router.push (decisión D-#3 conectada)
 
 ## Quick Tasks Completed
 

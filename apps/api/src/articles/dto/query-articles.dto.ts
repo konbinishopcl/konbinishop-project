@@ -9,12 +9,7 @@ export class QueryArticlesDto {
   @IsString()
   q?: string;
 
-  @ApiPropertyOptional({ description: 'Filtrar por slug de tag' })
-  @IsOptional()
-  @IsString()
-  tag?: string;
-
-  @ApiPropertyOptional({ description: 'Filtrar por slug de article-tag (alias de tag)' })
+  @ApiPropertyOptional({ description: 'Filtrar por slug de article-tag' })
   @IsOptional()
   @IsString()
   articleTag?: string;

@@ -35,17 +35,7 @@ export class UpdateArticleDto {
   @IsString()
   youtubeUrl?: string;
 
-  @ApiPropertyOptional({
-    type: [Number],
-    example: [1, 4],
-    description: 'IDs de tags a asociar (reemplaza los actuales)',
-  })
-  @IsOptional()
-  @IsArray()
-  @IsInt({ each: true })
-  tagIds?: number[];
-
-  @ApiPropertyOptional({ type: [Number], example: [1, 4], description: 'IDs de article-tags (Phase 18+, reemplaza tagIds)' })
+  @ApiPropertyOptional({ type: [Number], example: [1, 4], description: 'IDs de article-tags (reemplaza los actuales)' })
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })

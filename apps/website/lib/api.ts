@@ -83,14 +83,7 @@ export type AuthResponse = { token: string; user: ApiUser };
 
 // ─────────────────────────── Contenido ──────────────────────────
 
-export type ApiCategory = {
-  id: number;
-  name: string | null;
-  slug: string;
-  description: string | null;
-};
-
-// Phase 18+ — taxonomías separadas (las viejas ApiCategory/ApiTag se mantienen como alias)
+// Phase 18+ — taxonomías separadas
 export type ApiEventCategory = {
   id: number;
   name: string | null;
@@ -123,8 +116,6 @@ export type ApiArticleTag = {
   slug: string;
 };
 
-/** @deprecated usar ApiArticleTag — se eliminará en Phase 19+ */
-export type ApiTag = ApiArticleTag;
 
 export type ApiCountry = { id: number; name: string; slug: string };
 export type ApiRegion = { id: number; name: string; slug: string; countryId: number };
@@ -165,8 +156,7 @@ export type ApiEvent = {
   } | null;
   region: ApiRegion | null;
   commune: ApiCommune | null;
-  category: ApiCategory | null;          // legacy — backend lo sigue devolviendo durante la transición
-  eventCategory: ApiEventCategory | null; // Phase 18+
+  eventCategory: ApiEventCategory | null;
   eventTags?: ApiEventTag[];              // Phase 18+ (opcional — algunos endpoints viejos pueden no incluirlo)
   prices: ApiEventPrice[];
   dates: ApiEventDate[];
@@ -192,8 +182,7 @@ export type ApiHero = {
   date: string | null;
   place: string | null;
   link: string | null;
-  category: ApiCategory | null;           // legacy
-  eventCategory: ApiEventCategory | null; // Phase 18+
+  eventCategory: ApiEventCategory | null;
   days: number | null;
   amount: number | null;
   expirationDate: string | null;
@@ -203,8 +192,7 @@ export type EventsQuery = {
   page?: number;
   pageSize?: number;
   q?: string;
-  category?: string;
-  eventCategory?: string; // alias preferido de `category` en Phase 18+
+  eventCategory?: string;
   region?: string;
 };
 
@@ -223,12 +211,8 @@ export type CreateEventInput = {
   gallery?: string[];
   regionId?: number;
   communeId?: number;
-  /** @deprecated usar eventCategoryId — el backend acepta ambos durante la transición */
-  categoryId?: number;
-  /** @deprecated usar eventCategoryId — mantenido para compat con Step4Client legacy */
-  categoryIds?: number[];
-  eventCategoryId?: number; // Phase 18+
-  eventTagIds?: number[];   // Phase 18+
+  eventCategoryId?: number;
+  eventTagIds?: number[];
   prices?: { name: string; price?: number }[];
   dates?: { date?: string; startTime?: string; endTime?: string }[];
   socialLinks?: { link: string }[];
@@ -298,8 +282,6 @@ export const api = {
     return data as { url: string; filename: string };
   },
   countries: () => request<ApiCountry[]>("/countries"),
-  /** @deprecated usar api.eventCategories() — alias temporal hasta Phase 19+ */
-  categories: () => request<ApiEventCategory[]>("/event-categories"),
   eventCategories: () => request<ApiEventCategory[]>("/event-categories"),
   eventTags:       () => request<ApiEventTag[]>("/event-tags"),
   articleCategories: () => request<ApiArticleCategory[]>("/article-categories"),
@@ -366,8 +348,8 @@ export function toEventItem(e: ApiEvent): EventItem {
     id: e.id,
     slug: e.slug,
     title: e.title,
-    cat: (e.eventCategory?.name ?? e.category?.name) ?? "Evento",
-    catSlug: e.eventCategory?.slug ?? e.category?.slug,
+    cat: e.eventCategory?.name ?? "Evento",
+    catSlug: e.eventCategory?.slug,
     image: imageUrl(e.poster ?? e.banner),
     date: formatEventDate(e.dates),
     place: e.commune?.name ?? e.address,
@@ -393,7 +375,7 @@ export function toHeroSlide(h: ApiHero): HeroSlide {
     title: h.title,
     titleAccent: h.titleAccent ?? "",
     lead: h.lead ?? "",
-    category: (h.eventCategory?.name ?? h.category?.name) ?? "",
+    category: h.eventCategory?.name ?? "",
     date: h.date ? formatDateLabel(h.date) : "",
     place: h.place ?? "",
     image: imageUrl(h.image),

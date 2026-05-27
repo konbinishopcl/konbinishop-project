@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { HeroCarousel } from "@/components/HeroCarousel";
 import { Rail } from "@/components/Rail";
-import { imageUrl, type ApiCategory, type HeroSlide } from "@/lib/api";
+import { imageUrl, type ApiEventCategory, type HeroSlide } from "@/lib/api";
 import type { EventItem } from "@/lib/data";
 
 /* ─── tipos locales ─────────────────────────────────── */
@@ -223,7 +223,7 @@ function LastJoinedStrip() {
 /* ─── HomeView principal ─────────────────────────────── */
 type Props = {
   items: EventItem[];
-  categories: ApiCategory[];
+  categories: ApiEventCategory[];
   slides: HeroSlide[];
   spots: ApiSpot[];
   articles: ApiArticle[];
@@ -259,7 +259,7 @@ export function HomeView({ items, categories, slides, spots, articles }: Props) 
           <Rail
             key={cat.id}
             title={cat.name ?? cat.slug}
-            jp={(cat as ApiCategory & { metadata?: { ja?: string } }).metadata?.ja ?? ""}
+            jp={(cat as ApiEventCategory & { metadata?: { ja?: string } }).metadata?.ja ?? ""}
             items={catItems.slice(0, 12)}
             hrefSeeAll={`/categoria/${cat.slug}`}
           />

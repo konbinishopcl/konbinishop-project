@@ -44,12 +44,7 @@ export class UpdateHeroDto {
   @MinLength(3)
   link?: string;
 
-  @ApiPropertyOptional({ example: 1 })
-  @IsOptional()
-  @IsInt()
-  categoryId?: number;
-
-  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría de evento que reutiliza Hero (Phase 18+)' })
+  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría de evento asociada' })
   @IsOptional()
   @IsInt()
   eventCategoryId?: number;

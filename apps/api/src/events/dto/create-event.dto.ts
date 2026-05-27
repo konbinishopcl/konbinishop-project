@@ -118,12 +118,7 @@ export class CreateEventDto {
   @IsInt()
   cityId?: number;
 
-  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría' })
-  @IsOptional()
-  @IsInt()
-  categoryId?: number;
-
-  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría de evento (Phase 18+)' })
+  @ApiPropertyOptional({ example: 1, description: 'ID de la categoría de evento' })
   @IsOptional()
   @IsInt()
   eventCategoryId?: number;

@@ -15,9 +15,9 @@ import { AddItemDto, OrderItemType } from './dto/add-item.dto';
 import type { OrgContextDto } from '../common/org-context/org-context.types';
 
 const ITEM_INCLUDE = {
-  event: { include: { category: true, eventCategory: true } },
+  event: { include: { eventCategory: true } },
   spot: true,
-  hero: { include: { category: true, eventCategory: true } },
+  hero: { include: { eventCategory: true } },
   article: true,
 } as const;
 
@@ -103,12 +103,10 @@ export class OrdersService {
         where: { id: dto.eventId },
         select: {
           eventCategory: { select: { minDays: true, maxDays: true } },
-          category:      { select: { minDays: true, maxDays: true } },  // fallback
         },
       });
-      const cat = eventForCap?.eventCategory ?? eventForCap?.category;
-      categoryMinDays = cat?.minDays ?? null;
-      categoryMaxDays = cat?.maxDays ?? null;
+      categoryMinDays = eventForCap?.eventCategory?.minDays ?? null;
+      categoryMaxDays = eventForCap?.eventCategory?.maxDays ?? null;
     }
 
     if (needsDays && (dto.days === undefined || dto.days < 1)) {
@@ -253,7 +251,7 @@ export class OrdersService {
     if (!dto.eventId) throw new BadRequestException('eventId es requerido para ítems de tipo EVENT');
     const event = await this.prisma.event.findUnique({
       where: { id: dto.eventId },
-      include: { category: true, eventCategory: true },
+      include: { eventCategory: true },
     });
     if (!event) throw new NotFoundException('Evento no encontrado');
     if (event.userId !== ownerId) throw new ForbiddenException('Este evento no pertenece al contexto actual');
@@ -278,8 +276,8 @@ export class OrdersService {
       };
     }
 
-    // D-06: sin crédito → cobro normal. Usar eventCategory primero; category como fallback.
-    const unitPrice = event.eventCategory?.pricePerDay ?? event.category?.pricePerDay ?? 0;
+    // D-06: sin crédito → cobro normal por eventCategory.
+    const unitPrice = event.eventCategory?.pricePerDay ?? 0;
     return { unitPrice, eventId: dto.eventId, spotId: null, heroId: null, articleId: null, creditApplied: false };
   }
 

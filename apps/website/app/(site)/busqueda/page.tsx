@@ -26,7 +26,7 @@ export default async function BusquedaPage({ searchParams }: Props) {
 
   try {
     const [list, cats, regs] = await Promise.all([
-      api.events({ q, category, region, pageSize: 60 }),
+      api.events({ q, eventCategory: category, region, pageSize: 60 }),
       api.eventCategories(),
       api.regions(),
     ]);

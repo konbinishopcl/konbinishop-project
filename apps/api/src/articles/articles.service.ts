@@ -26,17 +26,15 @@ function slugify(text: string): string {
 }
 
 const ARTICLE_INCLUDE = {
-  tags: true,                  // legacy
-  articleTags: true,           // Phase 18+
-  articleCategory: true,       // Phase 18+
+  articleTags: true,
+  articleCategory: true,
   _count: { select: { likes: true } },
 } as const;
 
 // Incluye el primer evento vinculado (APPROVED) para la vista de detalle
 const ARTICLE_DETAIL_INCLUDE = {
-  tags: true,                  // legacy
-  articleTags: true,           // Phase 18+
-  articleCategory: true,       // Phase 18+
+  articleTags: true,
+  articleCategory: true,
   _count: { select: { likes: true } },
   events: {
     where: { status: PublicationStatus.APPROVED },
@@ -49,7 +47,6 @@ const ARTICLE_DETAIL_INCLUDE = {
       banner: true,
       dates: { take: 1, select: { id: true, date: true } },
       city: { select: { name: true } },
-      category: { select: { name: true, slug: true } },
       eventCategory: { select: { name: true, slug: true } },
     },
   },
@@ -72,10 +69,7 @@ export class ArticlesService {
       ...(!isAdmin && { status: PublicationStatus.APPROVED }),
       ...(isAdmin && query.status !== undefined && { status: query.status }),
       ...(query.q && { OR: [{ title: { contains: query.q } }, { excerpt: { contains: query.q } }] }),
-      ...(() => {
-        const tagSlug = query.articleTag ?? query.tag;
-        return tagSlug ? { articleTags: { some: { slug: tagSlug } } } : {};
-      })(),
+      ...(query.articleTag ? { articleTags: { some: { slug: query.articleTag } } } : {}),
       ...(query.articleCategory && { articleCategory: { slug: query.articleCategory } }),
     };
 
@@ -147,7 +141,6 @@ export class ArticlesService {
     const slug = dto.slug ?? slugify(dto.title);
     const existing = await this.prisma.article.findUnique({ where: { slug } });
     if (existing) throw new ConflictException(`Ya existe un artículo con el slug "${slug}"`);
-    const tagIds = dto.articleTagIds ?? dto.tagIds;
     const article = await this.prisma.article.create({
       data: {
         title: dto.title,
@@ -155,8 +148,7 @@ export class ArticlesService {
         excerpt: dto.excerpt,
         content: dto.content,
         image: dto.image,
-        tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
-        articleTags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
+        articleTags: dto.articleTagIds?.length ? { connect: dto.articleTagIds.map((id) => ({ id })) } : undefined,
         articleCategory: dto.articleCategoryId ? { connect: { id: dto.articleCategoryId } } : undefined,
       },
       include: ARTICLE_INCLUDE,
@@ -171,7 +163,7 @@ export class ArticlesService {
       const conflict = await this.prisma.article.findFirst({ where: { slug: dto.slug, NOT: { id } } });
       if (conflict) throw new ConflictException(`Ya existe un artículo con el slug "${dto.slug}"`);
     }
-    const incomingTagIds = dto.articleTagIds ?? dto.tagIds;
+    const incomingTagIds = dto.articleTagIds;
     const updated = await this.prisma.article.update({
       where: { id },
       data: {
@@ -181,7 +173,6 @@ export class ArticlesService {
         ...(dto.content !== undefined && { content: dto.content }),
         ...(dto.image !== undefined && { image: dto.image }),
         ...(incomingTagIds !== undefined && {
-          tags: { set: incomingTagIds.map((tagId) => ({ id: tagId })) },
           articleTags: { set: incomingTagIds.map((tagId) => ({ id: tagId })) },
         }),
         ...(dto.articleCategoryId !== undefined && {
@@ -215,7 +206,6 @@ export class ArticlesService {
     const existing = await this.prisma.article.findUnique({ where: { slug } });
     if (existing) throw new ConflictException(`Ya existe un artículo con el slug "${slug}"`);
 
-    const tagIds = dto.articleTagIds ?? dto.tagIds;
     const article = await this.prisma.article.create({
       data: {
         title: dto.title,
@@ -225,8 +215,7 @@ export class ArticlesService {
         image: dto.image,
         status: PublicationStatus.DRAFT,
         owner: { connect: { id: ownerId } },
-        tags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
-        articleTags: tagIds?.length ? { connect: tagIds.map((id) => ({ id })) } : undefined,
+        articleTags: dto.articleTagIds?.length ? { connect: dto.articleTagIds.map((id) => ({ id })) } : undefined,
         articleCategory: dto.articleCategoryId ? { connect: { id: dto.articleCategoryId } } : undefined,
         events: dto.eventId ? { connect: { id: dto.eventId } } : undefined,
       },

@@ -21,8 +21,8 @@ export default async function TagPage(
   const events: EventItem[] = data.items
     .filter((e) =>
       e.title.toLowerCase().includes(tag.toLowerCase()) ||
-      e.category?.slug === tag ||
-      e.category?.name?.toLowerCase() === tag.toLowerCase(),
+      e.eventCategory?.slug === tag ||
+      e.eventCategory?.name?.toLowerCase() === tag.toLowerCase(),
     )
     .map(toEventItem);
 

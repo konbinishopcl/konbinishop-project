@@ -28,12 +28,7 @@ export class QueryEventsDto {
   @IsString()
   q?: string;
 
-  @ApiPropertyOptional({ example: 'musica', description: 'Slug de categoría' })
-  @IsOptional()
-  @IsString()
-  category?: string;
-
-  @ApiPropertyOptional({ description: 'Filtrar por slug de categoría de evento (alias de category)' })
+  @ApiPropertyOptional({ example: 'musica', description: 'Filtrar por slug de categoría de evento' })
   @IsOptional()
   @IsString()
   eventCategory?: string;

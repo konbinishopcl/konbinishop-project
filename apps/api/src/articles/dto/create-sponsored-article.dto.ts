@@ -31,13 +31,7 @@ export class CreateSponsoredArticleDto {
   @IsString()
   image?: string;
 
-  @ApiPropertyOptional({ type: [Number], example: [1, 4], description: 'IDs de tags a asociar' })
-  @IsOptional()
-  @IsArray()
-  @IsInt({ each: true })
-  tagIds?: number[];
-
-  @ApiPropertyOptional({ type: [Number], example: [1, 4], description: 'IDs de article-tags (Phase 18+, reemplaza tagIds)' })
+  @ApiPropertyOptional({ type: [Number], example: [1, 4], description: 'IDs de article-tags' })
   @IsOptional()
   @IsArray()
   @IsInt({ each: true })

@@ -61,7 +61,7 @@ export function EventView({ event, related }: Props) {
     }
   };
 
-  const category = event.category?.name ?? "Evento";
+  const category = event.eventCategory?.name ?? "Evento";
   const place = [event.commune?.name, event.region?.name].filter(Boolean).join(", ");
   const firstDate = event.dates.find((d) => d.date)?.date;
   const dateLabel = firstDate ? fmtDate(firstDate).full : "Fecha por confirmar";
@@ -244,12 +244,12 @@ export function EventView({ event, related }: Props) {
           )}
 
           {/* Categoría */}
-          {event.category && (
+          {event.eventCategory && (
             <>
               <h2>Categoría</h2>
               <div className="row" style={{ flexWrap: "wrap", gap: 8 }}>
-                <Link className="pill" href={`/categoria/${event.category.slug}`}>
-                  {event.category.name ?? event.category.slug}
+                <Link className="pill" href={`/categoria/${event.eventCategory.slug}`}>
+                  {event.eventCategory.name ?? event.eventCategory.slug}
                 </Link>
               </div>
             </>

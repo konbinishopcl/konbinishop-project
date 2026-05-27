@@ -49,14 +49,14 @@ async function fetchArticles(): Promise<ApiArticle[]> {
 export default async function HomePage() {
   let items: ReturnType<typeof toEventItem>[] = [];
   let slides: ReturnType<typeof toHeroSlide>[] = [];
-  let categories: Awaited<ReturnType<typeof api.categories>> = [];
+  let categories: Awaited<ReturnType<typeof api.eventCategories>> = [];
   let spots: ApiSpot[] = [];
   let articles: ApiArticle[] = [];
 
   try {
     const [list, cats, heroes, fetchedSpots, fetchedArticles] = await Promise.all([
       api.events({ pageSize: 60 }),
-      api.categories(),
+      api.eventCategories(),
       api.heroes(),
       fetchSpots(),
       fetchArticles(),

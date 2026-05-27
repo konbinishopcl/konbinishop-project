@@ -6,10 +6,6 @@ import { CreateStateDto } from './dto/create-state.dto';
 import { UpdateStateDto } from './dto/update-state.dto';
 import { CreateCityDto } from './dto/create-city.dto';
 import { UpdateCityDto } from './dto/update-city.dto';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CreateTagDto } from './dto/create-tag.dto';
-import { UpdateTagDto } from './dto/update-tag.dto';
 import { CreateEventCategoryDto } from './dto/create-event-category.dto';
 import { UpdateEventCategoryDto } from './dto/update-event-category.dto';
 import { CreateEventTagDto } from './dto/create-event-tag.dto';
@@ -151,66 +147,6 @@ export class CatalogService {
     return { deleted: true };
   }
 
-  // ── Categories (legacy — escritura sigue en tabla Category hasta 18-04) ──
-
-  categories() {
-    // BACKWARDS COMPAT: /categories ahora devuelve EventCategory (decisión Phase 18).
-    return this.prisma.eventCategory.findMany({ orderBy: [{ order: 'asc' }, { name: 'asc' }] });
-  }
-
-  async findCategory(id: number) {
-    const category = await this.prisma.category.findUnique({ where: { id } });
-    if (!category) throw new NotFoundException('Categoría no encontrada');
-    return category;
-  }
-
-  async createCategory(dto: CreateCategoryDto) {
-    await this.assertUniqueSlug('category', dto.slug);
-    return this.prisma.category.create({ data: dto });
-  }
-
-  async updateCategory(id: number, dto: UpdateCategoryDto) {
-    await this.findCategory(id);
-    if (dto.slug) await this.assertUniqueSlug('category', dto.slug, id);
-    return this.prisma.category.update({ where: { id }, data: dto });
-  }
-
-  async removeCategory(id: number) {
-    await this.findCategory(id);
-    await this.prisma.category.delete({ where: { id } });
-    return { deleted: true };
-  }
-
-  // ── Tags (legacy — escritura sigue en tabla Tag hasta 18-04) ──
-
-  tags() {
-    // BACKWARDS COMPAT: /tags ahora devuelve ArticleTag.
-    return this.prisma.articleTag.findMany({ orderBy: { name: 'asc' } });
-  }
-
-  async findTag(id: number) {
-    const tag = await this.prisma.tag.findUnique({ where: { id } });
-    if (!tag) throw new NotFoundException('Tag no encontrado');
-    return tag;
-  }
-
-  async createTag(dto: CreateTagDto) {
-    await this.assertUniqueSlug('tag', dto.slug);
-    return this.prisma.tag.create({ data: dto });
-  }
-
-  async updateTag(id: number, dto: UpdateTagDto) {
-    await this.findTag(id);
-    if (dto.slug) await this.assertUniqueSlug('tag', dto.slug, id);
-    return this.prisma.tag.update({ where: { id }, data: dto });
-  }
-
-  async removeTag(id: number) {
-    await this.findTag(id);
-    await this.prisma.tag.delete({ where: { id } });
-    return { deleted: true };
-  }
-
   // ── EventCategories ──
 
   eventCategories() {
@@ -330,7 +266,7 @@ export class CatalogService {
   // ── Helper ──
 
   private async assertUniqueSlug(
-    model: 'country' | 'state' | 'city' | 'category' | 'tag' | 'eventCategory' | 'eventTag' | 'articleCategory' | 'articleTag',
+    model: 'country' | 'state' | 'city' | 'eventCategory' | 'eventTag' | 'articleCategory' | 'articleTag',
     slug: string,
     excludeId?: number,
   ) {

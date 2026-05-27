@@ -48,7 +48,7 @@ export class HeroesService {
   findActive() {
     return this.prisma.hero.findMany({
       where: { status: PublicationStatus.APPROVED, expirationDate: { gte: new Date() } },
-      include: { category: true, eventCategory: true },
+      include: { eventCategory: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -58,7 +58,7 @@ export class HeroesService {
     const ownerId = orgContext?.orgId ?? user.sub;
     return this.prisma.hero.findMany({
       where: { userId: ownerId },
-      include: { category: true, eventCategory: true },
+      include: { eventCategory: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -83,7 +83,6 @@ export class HeroesService {
   /** Crea un hero en DRAFT. Los días, monto y expiración se asignan al confirmar el pago. */
   async create(dto: CreateHeroDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
     const ownerId = orgContext?.orgId ?? user.sub;
-    const catId = dto.eventCategoryId ?? dto.categoryId;
     return this.prisma.hero.create({
       data: {
         title: dto.title,
@@ -93,20 +92,17 @@ export class HeroesService {
         date: dto.date ? new Date(dto.date) : null,
         place: dto.place,
         link: dto.link,
-        category: catId ? { connect: { id: catId } } : undefined,
-        eventCategory: catId ? { connect: { id: catId } } : undefined,
+        eventCategory: dto.eventCategoryId ? { connect: { id: dto.eventCategoryId } } : undefined,
         owner: { connect: { id: ownerId } },
         status: PublicationStatus.DRAFT,
       },
-      include: { category: true, eventCategory: true },
+      include: { eventCategory: true },
     });
   }
 
   async update(id: number, dto: UpdateHeroDto, user: JwtUser) {
     const hero = await this.ensure(id);
     this.assertCanManage(hero, user);
-    const catId = dto.eventCategoryId ?? dto.categoryId;
-    const catChanged = dto.categoryId !== undefined || dto.eventCategoryId !== undefined;
     return this.prisma.hero.update({
       where: { id },
       data: {
@@ -117,14 +113,11 @@ export class HeroesService {
         place: dto.place,
         link: dto.link,
         ...(dto.date !== undefined ? { date: dto.date ? new Date(dto.date) : null } : {}),
-        ...(catChanged
-          ? {
-              category: catId ? { connect: { id: catId } } : { disconnect: true },
-              eventCategory: catId ? { connect: { id: catId } } : { disconnect: true },
-            }
+        ...(dto.eventCategoryId !== undefined
+          ? { eventCategory: dto.eventCategoryId ? { connect: { id: dto.eventCategoryId } } : { disconnect: true } }
           : {}),
       },
-      include: { category: true, eventCategory: true },
+      include: { eventCategory: true },
     });
   }
 

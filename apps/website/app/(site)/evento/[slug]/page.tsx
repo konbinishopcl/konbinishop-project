@@ -13,7 +13,7 @@ export async function generateMetadata(
     const event = await api.event(slug);
     const image = imageUrl(event.banner ?? event.poster);
     const place = [event.commune?.name, event.region?.name].filter(Boolean).join(", ");
-    const category = event.category?.name;
+    const category = event.eventCategory?.name;
     const description = event.description.slice(0, 160);
     return {
       title: event.title,
@@ -45,7 +45,7 @@ export default async function EventPage({ params }: { params: Promise<{ slug: st
   if (!event) notFound();
 
   const relatedRes = await api
-    .events({ category: event.category?.slug, pageSize: 8 })
+    .events({ eventCategory: event.eventCategory?.slug, pageSize: 8 })
     .catch(() => ({ items: [] }));
   const related = relatedRes.items
     .filter((e) => e.id !== event.id)

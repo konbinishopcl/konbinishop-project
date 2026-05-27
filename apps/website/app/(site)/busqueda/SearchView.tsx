@@ -49,7 +49,7 @@ export function SearchView({ initialResults, initialCategories, initialRegions }
     }
     setLoading(true);
     api
-      .events({ q: q || undefined, category: category || undefined, region: region || undefined, pageSize: 60 })
+      .events({ q: q || undefined, eventCategory: category || undefined, region: region || undefined, pageSize: 60 })
       .then((r) => setResults(r.items.map(toEventItem)))
       .catch(() => setResults([]))
       .finally(() => setLoading(false));

@@ -34,7 +34,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ cat: 
   try {
     const [cats, list] = await Promise.all([
       api.eventCategories(),
-      api.events({ category: cat, pageSize: 60 }),
+      api.events({ eventCategory: cat, pageSize: 60 }),
     ]);
     categories = cats;
     category = cats.find((c) => c.slug === cat);

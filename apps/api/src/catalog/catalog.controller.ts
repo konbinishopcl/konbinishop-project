@@ -18,10 +18,6 @@ import { CreateStateDto } from './dto/create-state.dto';
 import { UpdateStateDto } from './dto/update-state.dto';
 import { CreateCityDto } from './dto/create-city.dto';
 import { UpdateCityDto } from './dto/update-city.dto';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
-import { CreateTagDto } from './dto/create-tag.dto';
-import { UpdateTagDto } from './dto/update-tag.dto';
 import { CreateEventCategoryDto } from './dto/create-event-category.dto';
 import { UpdateEventCategoryDto } from './dto/update-event-category.dto';
 import { CreateEventTagDto } from './dto/create-event-tag.dto';
@@ -172,100 +168,6 @@ export class CitiesController {
   @ApiOperation({ summary: 'Eliminar una ciudad/comuna (ADMIN+)' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.catalog.removeCity(id);
-  }
-}
-
-// ── Categories (alias — devuelve EventCategory; escritura legacy hasta 18-04) ──
-
-@ApiTags('categories')
-@Controller('categories')
-export class CategoriesController {
-  constructor(private readonly catalog: CatalogService) {}
-
-  @Get()
-  @ApiOperation({ summary: 'Listar categorías (alias de /event-categories desde Phase 18)' })
-  findAll() {
-    return this.catalog.categories();
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Ver una categoría' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.catalog.findCategory(id);
-  }
-
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Crear una categoría (ADMIN+)' })
-  create(@Body() dto: CreateCategoryDto) {
-    return this.catalog.createCategory(dto);
-  }
-
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Editar una categoría (ADMIN+)' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateCategoryDto) {
-    return this.catalog.updateCategory(id, dto);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Eliminar una categoría (ADMIN+)' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.catalog.removeCategory(id);
-  }
-}
-
-// ── Tags (alias — devuelve ArticleTag; escritura legacy hasta 18-04) ──
-
-@ApiTags('tags')
-@Controller('tags')
-export class TagsController {
-  constructor(private readonly catalog: CatalogService) {}
-
-  @Get()
-  @ApiOperation({ summary: 'Listar tags (alias de /article-tags desde Phase 18)' })
-  findAll() {
-    return this.catalog.tags();
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Ver un tag' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.catalog.findTag(id);
-  }
-
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Crear un tag (ADMIN+)' })
-  create(@Body() dto: CreateTagDto) {
-    return this.catalog.createTag(dto);
-  }
-
-  @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Editar un tag (ADMIN+)' })
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTagDto) {
-    return this.catalog.updateTag(id, dto);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SUPER_ADMIN')
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Eliminar un tag (ADMIN+)' })
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.catalog.removeTag(id);
   }
 }
 

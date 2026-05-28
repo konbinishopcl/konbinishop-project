@@ -12,15 +12,10 @@ import { UpdateEventDto } from './dto/update-event.dto';
 import { QueryEventsDto, SortBy } from './dto/query-events.dto';
 import type { OrgContextDto } from '../common/org-context/org-context.types';
 
-/** Genera un slug url-safe: minúsculas, sin acentos, separado por guiones. */
+import _slugify from 'slugify';
+
 function slugify(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  return _slugify(text, { lower: true, strict: true, locale: 'es' });
 }
 
 // Relaciones y componentes que se devuelven con cada evento.

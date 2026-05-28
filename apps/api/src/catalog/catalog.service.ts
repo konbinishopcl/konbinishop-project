@@ -1,4 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import _slugify from 'slugify';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { CreateCountryDto } from './dto/create-country.dto';
 import { UpdateCountryDto } from './dto/update-country.dto';
@@ -32,7 +33,7 @@ export class CatalogService {
   }
 
   async createCountry(dto: CreateCountryDto) {
-    const slug = dto.slug ?? dto.name.toLowerCase().replace(/\s+/g, '-');
+    const slug = dto.slug ?? _slugify(dto.name, { lower: true, strict: true, locale: 'es' });
     await this.assertUniqueSlug('country', slug);
     return this.prisma.country.create({ data: { name: dto.name, slug } });
   }

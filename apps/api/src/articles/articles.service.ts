@@ -14,15 +14,10 @@ import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { QueryArticlesDto } from './dto/query-articles.dto';
 import { CreateSponsoredArticleDto } from './dto/create-sponsored-article.dto';
+import _slugify from 'slugify';
 
 function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
+  return _slugify(text, { lower: true, strict: true, locale: 'es' });
 }
 
 const ARTICLE_INCLUDE = {

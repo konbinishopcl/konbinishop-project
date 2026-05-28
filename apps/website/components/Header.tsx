@@ -9,14 +9,16 @@ import { NewsMegaMenu } from "./NewsMegaMenu";
 import { SearchLightbox } from "./SearchLightbox";
 import { useTheme, useUser } from "./providers";
 import { UserMenu } from "./UserMenu";
-import type { ApiEventCategory, ApiArticleCategory } from "@/lib/api";
+import type { ApiEventCategory, ApiArticleCategory, ApiArticleTag } from "@/lib/api";
 
 export function Header({
   categories = [],
   articleCategories = [],
+  topTags = [],
 }: {
   categories?: ApiEventCategory[];
   articleCategories?: ApiArticleCategory[];
+  topTags?: ApiArticleTag[];
 }) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useUser();
@@ -330,7 +332,7 @@ export function Header({
     {newsMenuOpen && (
       <NewsMegaMenu categories={articleCategories} onClose={() => setNewsMenuOpen(false)} />
     )}
-    <SearchLightbox open={searchOpen} onClose={() => setSearchOpen(false)} />
+    <SearchLightbox open={searchOpen} onClose={() => setSearchOpen(false)} articleCategories={articleCategories} topTags={topTags} />
     </>
   );
 }

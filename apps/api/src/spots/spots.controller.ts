@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -24,10 +25,12 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { RejectEventDto } from '../events/dto/reject-event.dto';
 import { OrgContextGuard } from '../common/org-context/org-context.guard';
 import { OrgContext } from '../common/org-context/org-context.decorator';
 import type { OrgContextDto } from '../common/org-context/org-context.types';
+import { QuerySpotsDto } from './dto/query-spots.dto';
 
 // Spots: paid ads shown among the event cards. No detail view.
 @ApiTags('spots')
@@ -36,9 +39,11 @@ export class SpotsController {
   constructor(private readonly spots: SpotsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List active spots (public)' })
-  findActive() {
-    return this.spots.findActive();
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List spots. Public: APPROVED + active only. Admin: all statuses, filter by ?status=.' })
+  findAll(@Query() query: QuerySpotsDto, @CurrentUser() user: JwtUser | null) {
+    return this.spots.findAll(query, user);
   }
 
   @Get('quota')

@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PublicationStatus, UserType } from '@prisma/client';
+import { Prisma, PublicationStatus, UserType } from '@prisma/client';
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -61,15 +61,42 @@ export class SpotsService {
     };
   }
 
-  /** Spots aprobados y no expirados — visibles públicamente. */
-  findActive() {
-    return this.prisma.spot.findMany({
-      where: {
+  /** List spots. Public: APPROVED + non-expired only. Admin: all statuses (or filtered by ?status=), includes owner. */
+  async findAll(
+    query: { status?: PublicationStatus; page?: number; pageSize?: number },
+    user?: JwtUser | null,
+  ) {
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+    const page = query.page ?? 1;
+    const pageSize = Math.min(query.pageSize ?? (isAdmin ? 20 : 12), isAdmin ? 100 : 50);
+
+    const where: Prisma.SpotWhereInput = {
+      ...(!isAdmin && {
         status: PublicationStatus.APPROVED,
         OR: [{ expirationDate: null }, { expirationDate: { gte: new Date() } }],
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+      }),
+      ...(isAdmin && query.status
+        ? { status: query.status }
+        : isAdmin
+          ? { status: { not: PublicationStatus.PENDING_PAYMENT } }
+          : {}),
+    };
+
+    const include = isAdmin
+      ? { owner: { select: { id: true, firstname: true, lastname: true, email: true, handle: true } } }
+      : undefined;
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.spot.findMany({
+        where,
+        include,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.spot.count({ where }),
+    ]);
+    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }
 
   /** Spots del usuario actual o de la org (cualquier estado). */

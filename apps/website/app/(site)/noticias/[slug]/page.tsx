@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleView } from "./ArticleView";
-import type { ApiArticle, ApiArticleEvent } from "../page";
+import type { ApiArticle, ApiArticleEvent } from "@/lib/api";
 
 async function ssrFetch(path: string) {
   const base = process.env.API_URL || "http://localhost:3333/api";

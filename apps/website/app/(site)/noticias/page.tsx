@@ -1,39 +1,12 @@
 import type { Metadata } from "next";
 import { NoticiasListView } from "./NoticiasListView";
-import type { ApiArticleCategory } from "@/lib/api";
+import type { ApiArticle, ApiArticleCategory } from "@/lib/api";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Noticias — Konbini",
   description: "Cobertura editorial de anime, manga, cine, gaming y cultura otaku chilena.",
-};
-
-export type ApiArticleEvent = {
-  id: number;
-  slug: string;
-  title: string;
-  poster: string | null;
-  banner: string | null;
-  dates: { id: number; date: string | null }[];
-  city: { name: string } | null;
-  category: { name: string; slug: string } | null;
-};
-
-export type ApiArticle = {
-  id: number;
-  title: string;
-  slug: string;
-  excerpt: string | null;
-  content: string;
-  image: string | null;
-  status: string;
-  userId: number | null;
-  isSponsored: boolean;
-  createdAt: string;
-  articleCategory: ApiArticleCategory | null;
-  articleTags: { id: number; name: string; slug: string }[];
-  tags: { id: number; name: string; slug: string }[];
-  // Evento vinculado (solo en vista detalle, undefined en lista)
-  events?: ApiArticleEvent[];
 };
 
 const BASE =
@@ -48,17 +21,23 @@ function apiHeaders(): Record<string, string> {
   return h;
 }
 
-async function fetchArticles(): Promise<ApiArticle[]> {
+const PAGE_SIZE = 50;
+
+async function fetchArticlesPage(): Promise<{ items: ApiArticle[]; total: number; totalPages: number }> {
   try {
-    const res = await fetch(`${BASE}/articles?pageSize=24`, {
+    const res = await fetch(`${BASE}/articles?pageSize=${PAGE_SIZE}`, {
       headers: apiHeaders(),
       cache: "no-store",
     });
-    if (!res.ok) return [];
+    if (!res.ok) return { items: [], total: 0, totalPages: 1 };
     const data = await res.json();
-    return data.items ?? [];
+    return {
+      items:      data.items      ?? [],
+      total:      data.total      ?? 0,
+      totalPages: data.totalPages ?? 1,
+    };
   } catch {
-    return [];
+    return { items: [], total: 0, totalPages: 1 };
   }
 }
 
@@ -76,9 +55,17 @@ async function fetchArticleCategories(): Promise<ApiArticleCategory[]> {
 }
 
 export default async function NoticiasPage() {
-  const [articles, categories] = await Promise.all([
-    fetchArticles(),
+  const [{ items, total, totalPages }, categories] = await Promise.all([
+    fetchArticlesPage(),
     fetchArticleCategories(),
   ]);
-  return <NoticiasListView articles={articles} categories={categories} />;
+  return (
+    <NoticiasListView
+      initialArticles={items}
+      initialTotal={total}
+      initialTotalPages={totalPages}
+      pageSize={PAGE_SIZE}
+      categories={categories}
+    />
+  );
 }

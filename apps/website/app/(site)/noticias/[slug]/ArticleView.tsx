@@ -7,7 +7,7 @@ import { imageUrl } from "@/lib/api";
 import { EventCard } from "@/components/EventCard";
 import { Ic } from "@/components/icons";
 import type { EventItem } from "@/lib/data";
-import type { ApiArticle, ApiArticleEvent } from "../page";
+import type { ApiArticle, ApiArticleEvent } from "@/lib/api";
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -24,7 +24,9 @@ function formatEventDate(dates: { id: number; date: string | null }[]): string {
 }
 
 function getCat(a: ApiArticle): string {
-  if (a.tags.length > 0) return a.tags[0].name;
+  if (a.articleCategory?.name) return a.articleCategory.name;
+  if (a.articleTags?.length)   return a.articleTags[0].name;
+  if (a.tags?.length)          return a.tags[0].name;
   return "Noticias";
 }
 
@@ -169,7 +171,7 @@ export function ArticleView({ article, related, linkedEvent, relatedEvents }: Ar
           />
 
           {/* Tags */}
-          {article.tags.length > 0 && (
+          {(article.articleTags?.length ?? 0) > 0 && (
             <div
               className="tags-row"
               style={{
@@ -181,9 +183,9 @@ export function ArticleView({ article, related, linkedEvent, relatedEvents }: Ar
                 borderTop: "1px solid var(--line)",
               }}
             >
-              {article.tags.map((t) => (
+              {article.articleTags.map((t) => (
                 <Link key={t.id} href="/noticias" className="pill">
-                  #{t.name}
+                  {t.name}
                 </Link>
               ))}
             </div>

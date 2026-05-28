@@ -1,6 +1,12 @@
 "use client";
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@/components/providers";
+import { api, type ApiOrder } from "@/lib/api";
+
+function formatCLP(n: number): string {
+  return `$${n.toLocaleString("es-CL")}`;
+}
 
 function SatisfactionForm() {
   const [rating, setRating] = useState(0);
@@ -55,6 +61,16 @@ export default function CartExitoPage({
 }) {
   const params = use(searchParams);
   const orderId = params.orderId;
+  const { token } = useUser();
+
+  const [order, setOrder] = useState<ApiOrder | null>(null);
+
+  useEffect(() => {
+    if (!orderId || !token) return;
+    api.getOrder(Number(orderId), token).then(setOrder).catch(() => {/* fall back to generic copy */});
+  }, [orderId, token]);
+
+  const N = order?.items.filter((i) => i.type !== "SUBSCRIPTION").length ?? 0;
 
   return (
     <main className="container" style={{ paddingTop: 36, paddingBottom: 80 }}>
@@ -113,8 +129,15 @@ export default function CartExitoPage({
             lineHeight: 1.55,
           }}
         >
-          Un admin de Konbini revisará tu contenido en menos de 24 horas hábiles.
-          Te notificaremos por email cuando esté aprobado.
+          {order ? (
+            <>
+              Pagaste <strong>{formatCLP(order.total)} CLP</strong>.{" "}
+              Un admin revisará {N === 1 ? "tu" : "tus"} {N}{" "}
+              {N === 1 ? "publicación" : "publicaciones"} en menos de 24 horas hábiles.
+            </>
+          ) : (
+            "Un admin de Konbini revisará tu contenido en menos de 24 horas hábiles. Te notificaremos por email cuando esté aprobado."
+          )}
         </p>
       </div>
 

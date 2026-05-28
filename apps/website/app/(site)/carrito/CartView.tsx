@@ -38,6 +38,7 @@ export function CartView() {
   const [order, setOrder] = useState<ApiOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<OrderItemKind | null>(null);
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
 
   // Base prices for discount row (fetched from settings)
   const [basePrices, setBasePrices] = useState<{ spot: number; hero: number } | null>(null);
@@ -353,13 +354,23 @@ export function CartView() {
             </div>
           </div>
 
-          {/* Pagar button — wired in 21-06 */}
           <button
             className="btn primary block lg"
             style={{ marginTop: 12 }}
-            disabled
+            disabled={checkoutBusy || !!busy || !order || !token}
+            onClick={async () => {
+              if (!order || !token || checkoutBusy) return;
+              setCheckoutBusy(true);
+              try {
+                const { redirectUrl } = await api.checkout(order.id, "TRANSBANK", token);
+                window.location.href = redirectUrl;
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Error al iniciar el pago");
+                setCheckoutBusy(false);
+              }
+            }}
           >
-            Pagar {formatCLP(order?.total ?? 0)} →
+            {checkoutBusy ? "Redirigiendo…" : `Pagar ${formatCLP(order?.total ?? 0)} →`}
           </button>
           <div
             style={{

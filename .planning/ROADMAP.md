@@ -129,4 +129,25 @@ Plans:
 
 ---
 
+### Phase 21: Dynamic content + complete checkout flow
+
+**Goal:** (1) Expose a public `GET /settings/public` endpoint so the frontend can consume real prices and quotas — remove all hardcoded prices/quotas from PricingView, CreateProductView, UpsellView, upgrade, and subscription pages. (2) Rewrite CartView to load from `GET /orders/draft` and manage items via the real API. (3) Wire the full Transbank payment flow: "Pagar" button calls `POST /payments/:orderId/checkout`, receives redirectUrl, navigates to Transbank; success/error pages load and display real order data. (4) Move social links and contact emails to NEXT_PUBLIC env vars; connect about-page stats to real DB counts.
+
+**Requirements**: PAY-01..PAY-08, DYN-01..DYN-06
+
+**Depends on:** Phase 12 (orders/payments backend), Phase 20 (spots/heroes types in lib/api.ts)
+
+**Plans:** 6 plans
+
+Plans:
+
+- [ ] 21-01-PLAN.md — Public settings/stats endpoints + lib/api.ts methods + NEXT_PUBLIC env vars (wave 1)
+- [ ] 21-02-PLAN.md — Dynamic pricing: PricingView + HomeView + upgrade + subscription (wave 2)
+- [ ] 21-03-PLAN.md — Dynamic price/quota in CreateProductView + UpsellView (wave 2)
+- [ ] 21-04-PLAN.md — Site config: Footer + contact emails + about stats from env/DB (wave 2)
+- [ ] 21-05-PLAN.md — CartView bound to real /orders/draft (load, adjust, remove, discount) (wave 3)
+- [ ] 21-06-PLAN.md — Transbank payment flow + route reconciliation + dynamic result pages (wave 4)
+
+---
+
 *Roadmap creado: 2026-03-23 · v1.0 shipped: 2026-05-27*

@@ -126,7 +126,15 @@ export function Step4Client() {
         videos:      values.videos.filter((v) => v.trim()).map((v) => ({ link: v.trim() })),
       };
 
-      await api.createEvent(payload, token);
+      const created = await api.createEvent(payload, token);
+      // Add event to draft cart so it appears in /carrito
+      try {
+        const draft = await api.ordersDraft(token);
+        const minDays = 10;
+        await api.addOrderItem(draft.id, { type: "EVENT", eventId: created.id, days: minDays }, token);
+      } catch {
+        // Cart add failing should not block the flow — user can adjust in /carrito
+      }
       resetForm();
       router.push("/crear/upsell");
     } catch (err) {

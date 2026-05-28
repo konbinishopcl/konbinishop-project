@@ -319,9 +319,10 @@
   }
   .field input[type=date]::-webkit-calendar-picker-indicator,
   .field input[type=time]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
-  input[type=range] { accent-color: var(--accent); cursor: pointer; }
-  input[type=range]::-webkit-slider-runnable-track { border: none; }
-  input[type=range]::-moz-range-track { border: none; }
+  input[type=range] { accent-color: var(--accent); cursor: pointer; outline: none; }
+  input[type=range]::-webkit-slider-runnable-track { border: none; outline: none; box-shadow: none; }
+  input[type=range]::-webkit-slider-container { border: none; }
+  input[type=range]::-moz-range-track { border: none; outline: none; box-shadow: none; }
   .field input:focus, .field textarea:focus, .field select:focus { outline: 0; border-color: var(--ink-2); background: var(--surface); }
   .field textarea { min-height: 96px; resize: vertical; line-height: 1.55; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }

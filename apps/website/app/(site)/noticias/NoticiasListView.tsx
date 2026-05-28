@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { imageUrl } from "@/lib/api";
+import type { ApiArticleCategory } from "@/lib/api";
 import type { ApiArticle } from "./page";
 
 function formatDate(iso: string): string {
@@ -11,21 +12,24 @@ function formatDate(iso: string): string {
 }
 
 function getCat(a: ApiArticle): string {
-  if (a.tags.length > 0) return a.tags[0].name;
+  if (a.articleCategory?.name) return a.articleCategory.name;
+  if (a.articleTags?.length) return a.articleTags[0].name;
+  if (a.tags?.length) return a.tags[0].name;
   return "Noticias";
 }
 
-const CATS = ["Todas", "Anime", "Manga", "Cine", "Gaming", "K-Pop", "Cosplay"];
+interface Props {
+  articles: ApiArticle[];
+  categories: ApiArticleCategory[];
+}
 
-export function NoticiasListView({ articles }: { articles: ApiArticle[] }) {
-  const [cat, setCat] = useState("Todas");
+export function NoticiasListView({ articles, categories }: Props) {
+  const [cat, setCat] = useState<string>("Todas");
 
   const filtered =
     cat === "Todas"
       ? articles
-      : articles.filter((a) =>
-          a.tags.some((t) => t.name.toLowerCase() === cat.toLowerCase()),
-        );
+      : articles.filter((a) => a.articleCategory?.slug === cat);
 
   return (
     <main className="container">
@@ -42,21 +46,29 @@ export function NoticiasListView({ articles }: { articles: ApiArticle[] }) {
         </p>
       </div>
 
-      <div className="fbar-sticky">
-        <div className="fbar-inner">
-          <div className="group">
-            {CATS.map((c) => (
+      {categories.length > 0 && (
+        <div className="fbar-sticky">
+          <div className="fbar-inner">
+            <div className="group">
               <button
-                key={c}
-                className={`sel ${cat === c ? "on" : ""}`}
-                onClick={() => setCat(c)}
+                className={`sel ${cat === "Todas" ? "on" : ""}`}
+                onClick={() => setCat("Todas")}
               >
-                {c}
+                Todas
               </button>
-            ))}
+              {categories.map((c) => (
+                <button
+                  key={c.slug}
+                  className={`sel ${cat === c.slug ? "on" : ""}`}
+                  onClick={() => setCat(c.slug)}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="empty" style={{ margin: "60px 0" }}>

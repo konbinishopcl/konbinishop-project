@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { NoticiasListView } from "./NoticiasListView";
+import type { ApiArticleCategory } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Noticias — Konbini",
@@ -28,23 +29,30 @@ export type ApiArticle = {
   userId: number | null;
   isSponsored: boolean;
   createdAt: string;
+  articleCategory: ApiArticleCategory | null;
+  articleTags: { id: number; name: string; slug: string }[];
   tags: { id: number; name: string; slug: string }[];
   // Evento vinculado (solo en vista detalle, undefined en lista)
   events?: ApiArticleEvent[];
 };
 
+const BASE =
+  typeof window === "undefined"
+    ? process.env.API_URL || "http://localhost:3333/api"
+    : "/api";
+
+function apiHeaders(): Record<string, string> {
+  const h: Record<string, string> = {};
+  const key = process.env.API_KEY;
+  if (key) h["X-API-Key"] = key;
+  return h;
+}
+
 async function fetchArticles(): Promise<ApiArticle[]> {
-  const base =
-    typeof window === "undefined"
-      ? process.env.API_URL || "http://localhost:3333/api"
-      : "/api";
   try {
-    const headers: Record<string, string> = {};
-    const key = process.env.API_KEY;
-    if (key) headers["X-API-Key"] = key;
-    const res = await fetch(`${base}/articles?pageSize=24`, {
-      headers,
-      cache: 'no-store',
+    const res = await fetch(`${BASE}/articles?pageSize=24`, {
+      headers: apiHeaders(),
+      cache: "no-store",
     });
     if (!res.ok) return [];
     const data = await res.json();
@@ -54,7 +62,23 @@ async function fetchArticles(): Promise<ApiArticle[]> {
   }
 }
 
+async function fetchArticleCategories(): Promise<ApiArticleCategory[]> {
+  try {
+    const res = await fetch(`${BASE}/article-categories`, {
+      headers: apiHeaders(),
+      next: { revalidate: 3600 },
+    });
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
 export default async function NoticiasPage() {
-  const articles = await fetchArticles();
-  return <NoticiasListView articles={articles} />;
+  const [articles, categories] = await Promise.all([
+    fetchArticles(),
+    fetchArticleCategories(),
+  ]);
+  return <NoticiasListView articles={articles} categories={categories} />;
 }

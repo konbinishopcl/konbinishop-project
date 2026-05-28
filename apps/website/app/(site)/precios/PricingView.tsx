@@ -2,15 +2,26 @@
 import Link from "next/link";
 
 const FAQS = [
-  ["¿Cuánto cuesta publicar un evento?", "Desde $4.990 CLP por día. El precio varía según la categoría (Anime, Conciertos, Convenciones, etc.). Puedes elegir publicarlo entre 10 y 60 días — mientras más días, más tiempo está visible y descubrible."],
+  ["¿Cuánto cuesta publicar un evento?", "El precio varía según la categoría (Anime, Conciertos, Convenciones, etc.). Puedes elegir publicarlo entre 10 y 60 días — mientras más días, más tiempo está visible y descubrible."],
   ["¿Cuándo se publica mi evento?", "Tras enviarlo entra a revisión. Un admin lo aprueba (o rechaza con motivo) en menos de 24 horas hábiles. Te notificamos por email y en tu centro de mensajes."],
   ["¿Puedo editar un evento publicado?", "Una vez aprobado, no. Por eso te pedimos revisar bien antes de enviar. Si necesitas corregir algo importante después, contáctanos y vemos qué se puede hacer."],
-  ["¿Qué pasa si compro suscripción y no uso los 10 créditos?", "Los créditos no utilizados se pierden al final del mes — no se acumulan. Recomendamos la suscripción solo si publicas eventos seguido."],
+  ["¿Qué pasa si compro suscripción y no uso los créditos?", "Los créditos no utilizados se pierden al final del mes — no se acumulan. Recomendamos la suscripción solo si publicas eventos seguido."],
   ["¿Qué diferencia hay entre Aviso y Portada?", "Una Portada aparece en el carrusel principal del home (máx 5 simultáneas). Un Aviso es un banner que aparece en home y al final de las categorías (máx 12 simultáneos). Las portadas son más exclusivas y caras."],
   ["¿Puedo pagar con tarjeta extranjera?", "Por ahora aceptamos solo tarjetas chilenas a través de WebPay (Transbank). Próximamente integraremos Mercado Pago para pagos internacionales."],
 ];
 
-export function PricingView() {
+function formatCLP(value: number): string {
+  return `$${value.toLocaleString("es-CL")}`;
+}
+
+type Props = {
+  settings: Record<string, string>;
+  eventMinPrice: number;
+};
+
+export function PricingView({ settings, eventMinPrice }: Props) {
+  const n = (k: string, fb: number) => parseInt(settings[k] ?? "", 10) || fb;
+
   return (
     <main className="container">
       <div className="price-hero">
@@ -35,12 +46,12 @@ export function PricingView() {
         <div className="price-card">
           <div className="nm">Publicación de evento</div>
           <div className="price">
-            <span className="v">$4.990</span>
+            <span className="v">desde {formatCLP(eventMinPrice)}</span>
             <span className="u">CLP / día</span>
           </div>
           <p className="desc">Pago por publicación. Eliges los días que quieras estar visible. El precio varía según la categoría.</p>
           <ul>
-            <li>Publicación de 10 a 60 días</li>
+            <li>Publicación de 10 a {n("EVENT_MAX_DAYS", 60)} días</li>
             <li>Aparece en el listado y en la categoría</li>
             <li>Métricas de vistas y guardados</li>
             <li>Botón compartir nativo</li>
@@ -56,14 +67,14 @@ export function PricingView() {
           <div className="b">RECOMENDADO</div>
           <div className="nm">Suscripción mensual</div>
           <div className="price">
-            <span className="v">$29.990</span>
+            <span className="v">{formatCLP(n("SUBSCRIPTION_PRICE", 9990))}</span>
             <span className="u">CLP / mes</span>
           </div>
-          <p className="desc">Para organizadores frecuentes. Publica hasta 10 eventos al mes y obtén descuento en avisos y portadas.</p>
+          <p className="desc">Para organizadores frecuentes. Publica hasta {n("SUBSCRIPTION_CREDITS", 10)} eventos al mes y obtén descuento en avisos y portadas.</p>
           <ul>
-            <li><strong>10 créditos</strong> de publicación al mes</li>
+            <li><strong>{n("SUBSCRIPTION_CREDITS", 10)} créditos</strong> de publicación al mes</li>
             <li>Cada crédito = 45 días de publicación</li>
-            <li><strong>20% off</strong> en avisos y portadas</li>
+            <li><strong>{n("SUBSCRIPTION_SPOT_DISCOUNT", 20)}% off</strong> en avisos y portadas</li>
             <li>Cancela cuando quieras</li>
           </ul>
           <div className="cta-row">
@@ -76,14 +87,14 @@ export function PricingView() {
         <div className="price-card">
           <div className="nm">Avisos y portadas</div>
           <div className="price">
-            <span className="v">desde $8.000</span>
+            <span className="v">desde {formatCLP(n("SPOT_PRICE_PER_DAY", 8000))}</span>
             <span className="u">CLP / día</span>
           </div>
           <p className="desc">Productos pagados premium para destacar tu evento en el home y categorías.</p>
           <ul>
-            <li>Avisos: 12 cupos globales</li>
-            <li>Portadas: 5 cupos en home</li>
-            <li>Mínimo 10 días, máximo 30</li>
+            <li>Avisos: {n("SPOT_MAX_ACTIVE", 12)} cupos globales</li>
+            <li>Portadas: {n("HERO_MAX_ACTIVE", 5)} cupos en home</li>
+            <li>Mínimo {n("SPOT_MIN_DAYS", 10)} días, máximo {n("SPOT_MAX_DAYS", 30)}</li>
             <li>Artículo patrocinado disponible</li>
           </ul>
           <div className="cta-row">

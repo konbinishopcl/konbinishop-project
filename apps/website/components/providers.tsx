@@ -5,6 +5,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { NavigationProgress } from "./NavigationProgress";
 import { OneTap } from "./OneTap";
 import type { User } from "@/lib/data";
+import { toUser, type ApiUser } from "@/lib/api";
 
 type Theme = "dark" | "light";
 
@@ -61,7 +62,15 @@ function UserProvider({ children }: { children: ReactNode }) {
       try {
         const u = localStorage.getItem("kb-user");
         const t = localStorage.getItem("kb-token");
-        if (u && u !== "null") setUserState(JSON.parse(u));
+        if (u && u !== "null") {
+          const parsed = JSON.parse(u) as User;
+          // Re-computa initials por si quedaron vacías (ej. usuarios Google sin nombre)
+          if (!parsed.initials) {
+            const local = parsed.email?.split("@")[0] ?? parsed.email ?? "";
+            parsed.initials = (parsed.name?.split(/\s+/).filter(Boolean).map((s: string) => s[0]).slice(0, 2).join("").toUpperCase()) || local.slice(0, 2).toUpperCase() || "?";
+          }
+          setUserState(parsed);
+        }
         if (t) { setToken(t); storedToken = t; }
       } catch {
         /* ignore */
@@ -78,10 +87,11 @@ function UserProvider({ children }: { children: ReactNode }) {
           });
           if (cancelled) return;
           if (r.ok) {
-            const data = await r.json() as { token: string; user: unknown };
-            setUserState(data.user as Parameters<typeof setUserState>[0]);
+            const data = await r.json() as { token: string; user: ApiUser };
+            const mappedUser = toUser(data.user);
+            setUserState(mappedUser);
             setToken(data.token);
-            localStorage.setItem("kb-user", JSON.stringify(data.user));
+            localStorage.setItem("kb-user", JSON.stringify(mappedUser));
             localStorage.setItem("kb-token", data.token);
           } else if (r.status === 401) {
             // Token expirado o inválido → cerrar sesión

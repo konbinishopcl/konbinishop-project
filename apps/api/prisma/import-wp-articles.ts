@@ -146,7 +146,7 @@ async function fetchAllWpPosts() {
   while (page <= totalPages) {
     const url =
       `${WP_API}/posts?per_page=${PER_PAGE}&page=${page}&status=publish` +
-      `&_embed=true&_fields=id,slug,title,content,excerpt,date,categories,featured_media`;
+      `&_fields=id,slug,title,content,excerpt,date,categories,featured_media`;
     const res = await fetch(url);
     if (!res.ok) { console.error(`  WP API page ${page} error: ${res.status}`); break; }
     if (page === 1) {
@@ -161,6 +161,27 @@ async function fetchAllWpPosts() {
     if (page <= totalPages) await sleep(DELAY_MS);
   }
   return posts;
+}
+
+/** Fetch source_url for a batch of media IDs. Returns map mediaId → url. */
+async function fetchMediaUrls(mediaIds: number[]): Promise<Record<number, string>> {
+  const map: Record<number, string> = {};
+  const unique = [...new Set(mediaIds.filter(id => id > 0))];
+  const BATCH = 100;
+
+  for (let i = 0; i < unique.length; i += BATCH) {
+    const chunk = unique.slice(i, i + BATCH);
+    const url = `${WP_API}/media?include=${chunk.join(',')}&per_page=${BATCH}&_fields=id,source_url`;
+    const res = await fetch(url);
+    if (!res.ok) { console.error(`  Media fetch error: ${res.status}`); continue; }
+    const items: any[] = await res.json();
+    for (const m of items) {
+      if (m.source_url) map[m.id] = m.source_url;
+    }
+    console.log(`  Media batch ${Math.floor(i / BATCH) + 1}: ${items.length} URLs fetched`);
+    await sleep(DELAY_MS);
+  }
+  return map;
 }
 
 async function fetchWpCategories(): Promise<{ id: number; slug: string }[]> {
@@ -186,7 +207,14 @@ async function main() {
   // 3. Fetch all WP posts
   console.log('Fetching WordPress posts...');
   const posts = await fetchAllWpPosts();
-  console.log(`\nImporting ${posts.length} posts...\n`);
+
+  // 4. Batch-fetch all featured media URLs
+  const mediaIds = posts.map((p: any) => p.featured_media ?? 0).filter((id: number) => id > 0);
+  console.log(`\nFetching media URLs for ${mediaIds.length} posts...`);
+  const mediaUrlMap = await fetchMediaUrls(mediaIds);
+  console.log(`  Resolved ${Object.keys(mediaUrlMap).length} media URLs\n`);
+
+  console.log(`Importing ${posts.length} posts...\n`);
 
   let created = 0, updated = 0, failed = 0;
 
@@ -206,14 +234,8 @@ async function main() {
 
       if (!content || content.length < 5) { failed++; continue; }
 
-      // Featured image from _embedded
-      let image: string | null = null;
-      const media = post._embedded?.['wp:featuredmedia']?.[0];
-      if (media) {
-        image = media.source_url
-          ?? media.media_details?.sizes?.full?.source_url
-          ?? null;
-      }
+      // Featured image from media URL map (fetched separately — _embed unreliable on this WP)
+      const image: string | null = mediaUrlMap[post.featured_media] ?? null;
 
       // Article category (first WP category that maps to ours)
       let articleCategoryId: number | null = null;

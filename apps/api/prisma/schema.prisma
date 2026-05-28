@@ -86,6 +86,7 @@ model EventTag {
 model ArticleCategory {
   id          Int       @id @default(autoincrement())
   name        String?
+  nameJa      String?
   slug        String    @unique
   description String?
   articles    Article[]

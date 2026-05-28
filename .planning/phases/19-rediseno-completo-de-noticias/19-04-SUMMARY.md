@@ -115,6 +115,15 @@ None - no external service configuration required.
 - Los enlaces a categorías desde `/noticias` (si los hay) ya pueden apuntar a esta ruta
 - Phase 19 planes 01–04 completos
 
+## Self-Check: PASSED
+
+- FOUND: apps/website/app/(site)/noticias/categoria/[slug]/page.tsx
+- FOUND: apps/website/app/(site)/noticias/categoria/[slug]/NewsCategoryView.tsx
+- FOUND: .planning/phases/19-rediseno-completo-de-noticias/19-04-SUMMARY.md
+- FOUND commit: 5ad06e8 (Task 1)
+- FOUND commit: e528254 (Task 2)
+- TypeScript: 0 errors
+
 ---
 *Phase: 19-rediseno-completo-de-noticias*
 *Completed: 2026-05-28*

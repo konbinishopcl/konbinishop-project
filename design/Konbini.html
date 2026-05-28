@@ -607,6 +607,10 @@
   .art-card:hover .a-img { transform: translateY(-3px); }
   .art-card .a-img .pic { position: absolute; inset: 0; background-size: cover; background-position: center; }
   .art-card .a-img .sponsor { position: absolute; top: 12px; left: 12px; background: rgba(15,12,10,.75); color: #fff; backdrop-filter: blur(8px); padding: 6px 11px; border-radius: 999px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .12em; border: 1px solid rgba(255,255,255,.08); }
+  .art-card .a-img .a-like { position: absolute; top: 12px; right: 12px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px 6px 9px; border-radius: 999px; background: rgba(15,12,10,.7); color: #fff; backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.1); font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; cursor: pointer; transition: background .15s, transform .15s; }
+  .art-card .a-img .a-like:hover { background: rgba(15,12,10,.9); transform: scale(1.04); }
+  .art-card .a-img .a-like.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .art-card .a-img .a-like.on:hover { background: color-mix(in oklab, var(--accent) 88%, #000); }
   .art-card .a-cat { font-family: var(--font-mono); font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
   .art-card .a-title { font-family: var(--font-display); font-weight: 700; font-size: 22px; line-height: 1.2; letter-spacing: -.015em; color: var(--ink); text-wrap: pretty;
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -640,7 +644,7 @@
   .lj-stack .more { background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 12px; }
 
   /* ─────────── STICKY FILTERS ─────────── */
-  .fbar-sticky { position: sticky; top: 72px; z-index: 40; background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); margin: 0 -24px 32px; padding: 14px 24px; }
+  .fbar-sticky { position: sticky; top: 72px; z-index: 40; background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 999px; margin: 0 0 32px; padding: 10px 16px; }
   .fbar-inner { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .fbar-inner .group { display: flex; gap: 8px; align-items: center; }
   .fbar-inner .vline { width: 1px; height: 22px; background: var(--line); }
@@ -971,7 +975,40 @@
   .modal-lg .mf .left { color: var(--ink-3); font-size: 12px; }
   .modal-lg .mf .right { display: flex; gap: 10px; }
 
-  /* ─────────── TOASTS ─────────── */
+  /* ─────────── MEGA MENU (news) ─────────── */
+  .mega-bg { position: fixed; left: 0; right: 0; top: var(--mega-top, 72px); z-index: 70; background: color-mix(in oklab, var(--surface) 96%, transparent); backdrop-filter: blur(24px) saturate(160%); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); box-shadow: 0 24px 60px -20px rgba(0,0,0,.4); animation: megaIn .18s cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes megaIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .mega-inner { max-width: 1280px; margin: 0 auto; padding: 28px 32px; display: grid; grid-template-columns: 280px 1fr; gap: 36px; }
+  .mega-aside { border-right: 1px solid var(--line); padding-right: 28px; }
+  .mega-aside .label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; color: var(--ink-3); text-transform: uppercase; margin-bottom: 14px; }
+  .mega-aside h3 { font-family: var(--font-display); font-size: 32px; letter-spacing: -.02em; margin: 0 0 8px; line-height: 1.05; }
+  .mega-aside p { color: var(--ink-3); font-size: 13px; line-height: 1.55; margin: 0 0 22px; }
+  .mega-aside .mega-cta { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; }
+  .mega-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 36px; align-items: start; }
+  .mega-flat { columns: 4; column-gap: 32px; }
+  .mega-flat button { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px; border-radius: 8px; color: var(--ink-2); font-size: 14px; font-weight: 500; text-align: left; transition: background .12s, color .12s; width: 100%; break-inside: avoid; }
+  .mega-flat button:hover { background: var(--surface-2); color: var(--ink); }
+  .mega-flat button.on { color: var(--ink); background: var(--surface-2); }
+  .mega-flat button .ja { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); letter-spacing: .04em; flex-shrink: 0; }
+  .mega-flat button.on .ja { color: var(--accent); }
+  .mega-col { display: flex; flex-direction: column; gap: 2px; }
+  .mega-col .gtl { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; color: var(--accent); text-transform: uppercase; margin: 0 0 10px; padding: 4px 0; border-bottom: 1px dashed var(--line); }
+  .mega-col button { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px; border-radius: 8px; color: var(--ink-2); font-size: 14px; font-weight: 500; text-align: left; transition: background .12s, color .12s; }
+  .mega-col button:hover { background: var(--surface-2); color: var(--ink); }
+  .mega-col button.on { color: var(--ink); background: var(--surface-2); }
+  .mega-col button .ja { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); letter-spacing: .04em; flex-shrink: 0; }
+  .mega-col button.on .ja { color: var(--accent); }
+
+  @media (max-width: 960px) {
+    .mega-inner { grid-template-columns: 1fr; gap: 22px; padding: 22px; }
+    .mega-aside { border-right: 0; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: 18px; }
+    .mega-grid { grid-template-columns: 1fr 1fr; gap: 8px 18px; }
+    .mega-flat { columns: 2; }
+  }
+  @media (max-width: 640px) {
+    .mega-bg { display: none; }
+    .explore-cats { columns: 2 !important; column-gap: 24px !important; }
+  }
   .toast-stack { position: fixed; right: 20px; bottom: 96px; z-index: 95; display: flex; flex-direction: column; gap: 10px; max-width: 360px; pointer-events: none; }
   .toast { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; box-shadow: var(--shadow); pointer-events: auto; animation: toast-in .25s cubic-bezier(.2,.7,.3,1.2) both; }
   @keyframes toast-in { from { transform: translateY(8px) scale(.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
@@ -1195,6 +1232,8 @@
 
   /* ─────────── TABLET (≤960) ─────────── */
   @media (max-width: 960px) {
+    .news-hero { grid-template-columns: 1fr !important; }
+    .sponsored-feature { grid-template-columns: 1fr !important; }
     .nav-hamb { display: inline-flex; }
     nav.cats { display: none; }
     .head-actions .btn { display: none; }
@@ -1210,7 +1249,7 @@
     .event-grid { gap: 24px; }
     .ticket-panel { position: static; }
     .art-grid { gap: 32px; }
-    .fbar-sticky { margin: 0 -16px 24px; padding: 12px 16px; overflow-x: auto; }
+    .fbar-sticky { margin: 0 0 24px; padding: 8px 12px; overflow-x: auto; border-radius: 24px; }
     .fbar-inner { flex-wrap: nowrap; min-width: max-content; }
     .pag-bar { flex-direction: column; align-items: stretch; gap: 14px; }
     .pag-info { justify-content: center; }
@@ -1397,6 +1436,47 @@ const CATEGORIES = [
   { id: "convenciones", label: "Convenciones", ja: "コンベンション" },
   { id: "streamings", label: "Streamings", ja: "配信" },
   { id: "ferias", label: "Ferias", ja: "フェア" },
+];
+const NEWS_CATEGORIES = [
+  { id: "Anime", label: "Anime", ja: "アニメ", grp: "Anime & Manga" },
+  { id: "Manga", label: "Manga", ja: "マンガ", grp: "Anime & Manga" },
+  { id: "Shonen", label: "Shonen", ja: "少年", grp: "Anime & Manga" },
+  { id: "Seinen", label: "Seinen", ja: "青年", grp: "Anime & Manga" },
+  { id: "Shojo", label: "Shojo", ja: "少女", grp: "Anime & Manga" },
+  { id: "Isekai", label: "Isekai", ja: "異世界", grp: "Anime & Manga" },
+  { id: "Mecha", label: "Mecha", ja: "メカ", grp: "Anime & Manga" },
+  { id: "Doujinshi", label: "Doujinshi", ja: "同人誌", grp: "Anime & Manga" },
+
+  { id: "Cine", label: "Cine", ja: "映画", grp: "Cine & TV" },
+  { id: "Estrenos", label: "Estrenos", ja: "公開", grp: "Cine & TV" },
+  { id: "Reseñas", label: "Reseñas", ja: "レビュー", grp: "Cine & TV" },
+  { id: "Tráilers", label: "Tráilers", ja: "予告編", grp: "Cine & TV" },
+  { id: "Live Action", label: "Live Action", ja: "実写", grp: "Cine & TV" },
+
+  { id: "Gaming", label: "Gaming", ja: "ゲーム", grp: "Gaming" },
+  { id: "Esports", label: "Esports", ja: "eスポーツ", grp: "Gaming" },
+  { id: "Indies", label: "Indies", ja: "インディー", grp: "Gaming" },
+  { id: "Retro", label: "Retro", ja: "レトロ", grp: "Gaming" },
+  { id: "Hardware", label: "Hardware", ja: "ハードウェア", grp: "Gaming" },
+  { id: "Mobile", label: "Móvil", ja: "モバイル", grp: "Gaming" },
+
+  { id: "K-Pop", label: "K-Pop", ja: "ケーポップ", grp: "Música" },
+  { id: "J-Rock", label: "J-Rock", ja: "ジェイロック", grp: "Música" },
+  { id: "J-Pop", label: "J-Pop", ja: "ジェイポップ", grp: "Música" },
+  { id: "Vocaloid", label: "Vocaloid", ja: "ボーカロイド", grp: "Música" },
+  { id: "City Pop", label: "City Pop", ja: "シティポップ", grp: "Música" },
+
+  { id: "Cosplay", label: "Cosplay", ja: "コスプレ", grp: "Comunidad" },
+  { id: "Conventions", label: "Conventions", ja: "コンベンション", grp: "Comunidad" },
+  { id: "Tutoriales", label: "Tutoriales", ja: "チュートリアル", grp: "Comunidad" },
+  { id: "Concursos", label: "Concursos", ja: "コンテスト", grp: "Comunidad" },
+  { id: "Meetups", label: "Meetups", ja: "ミートアップ", grp: "Comunidad" },
+
+  { id: "Cultura", label: "Cultura", ja: "カルチャー", grp: "Cultura" },
+  { id: "Comida", label: "Comida", ja: "料理", grp: "Cultura" },
+  { id: "Viajes", label: "Viajes", ja: "旅行", grp: "Cultura" },
+  { id: "Tradición", label: "Tradición", ja: "伝統", grp: "Cultura" },
+  { id: "Opinión", label: "Opinión", ja: "意見", grp: "Cultura" },
 ];
 
 const EVENTS = [
@@ -1655,6 +1735,7 @@ function Header() {
   const { user, setUser, activeOrg, setActiveOrg } = useUser();
   const [menu, setMenu] = useState(false);
   const [catsOpen, setCatsOpen] = useState(false);
+  const [newsOpen, setNewsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const active = route.params?.cat || (route.name === "home" ? "home" : route.name === "category" ? route.params?.cat : "");
@@ -1662,7 +1743,7 @@ function Header() {
   const moreCats = CATEGORIES.filter(c => c.id !== "home").slice(4);
   const go = (n, p) => { setMobileOpen(false); nav(n, p); };
 
-  return (
+  return (<>
     <header className="app">
       <div className="container nav-wrap">
         <div className="row" style={{ gap: 28 }}>
@@ -1690,7 +1771,12 @@ function Header() {
               )}
             </div>
             <div style={{ width: 1, height: 22, background: "var(--line)", margin: "0 8px", alignSelf: "center" }}></div>
-            <button onClick={() => nav("news")} className={route.name === "news" || route.name === "article" ? "active" : ""}>Noticias</button>
+            <div style={{ position: "relative" }} onMouseLeave={() => setNewsOpen(false)}>
+              <button onClick={() => nav("news")} onMouseEnter={() => setNewsOpen(true)} className={route.name === "news" || route.name === "article" ? "active" : ""}>Noticias</button>
+              <button onMouseEnter={() => setNewsOpen(true)} onClick={() => setNewsOpen(o => !o)} style={{ padding: "10px 6px", marginLeft: -4 }} title="Categorías de noticias">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+            </div>
             <button onClick={() => nav("about")} className={route.name === "about" ? "active" : ""}>About</button>
             <button onClick={() => nav("help", { tab: "contact" })} className={route.name === "help" ? "active" : ""}>Contacto</button>
           </nav>
@@ -1798,6 +1884,34 @@ function Header() {
         </div>
       )}
     </header>
+    {newsOpen && <NewsMegaMenu open={newsOpen} onClose={() => setNewsOpen(false)} currentCat={route.params?.cat} />}
+    </>);
+}
+
+function NewsMegaMenu({ open, onClose, currentCat }) {
+  const { nav } = useRouter();
+  if (!open) return null;
+  const sorted = [...NEWS_CATEGORIES].sort((a, b) => a.label.localeCompare(b.label));
+  const go = (id) => { onClose(); if (id === null) nav("news"); else nav("news", { cat: id }); };
+  return (
+    <div className="mega-bg" onMouseLeave={onClose} style={{ "--mega-top": "72px" }}>
+      <div className="mega-inner">
+        <aside className="mega-aside">
+          <div className="label">NOTICIAS · ニュース</div>
+          <h3>Lo último<span style={{ color: "var(--accent)" }}>.</span></h3>
+          <p>Cobertura editorial diaria de anime, manga, gaming y cultura otaku — donde la comunidad llega primero.</p>
+          <button className="mega-cta" onClick={() => go(null)}>Ver todas las noticias {Ic.arrow}</button>
+        </aside>
+        <div className="mega-flat">
+          {sorted.map(c => (
+            <button key={c.id} className={currentCat === c.id ? "on" : ""} onClick={() => go(c.id)}>
+              <span>{c.label}</span>
+              <span className="ja">{c.ja}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2001,11 +2115,28 @@ function SpotsStrip({ section = "Avisos", ja = "広告" }) {
 }
 
 function ArticleCard({ a, big = false, onOpen }) {
+  const toast = useToast();
+  const seed = (a.id || "").charCodeAt(2) || 7;
+  const [likes, setLikes] = useState(120 + seed * 13);
+  const [liked, setLiked] = useState(false);
+  const toggleLike = ev => {
+    ev.stopPropagation();
+    setLiked(l => {
+      const next = !l;
+      setLikes(c => c + (next ? 1 : -1));
+      if (next) toast?.ok("¡Te gustó este artículo!"); else toast?.info("Like quitado");
+      return next;
+    });
+  };
   return (
     <article className="art-card" onClick={() => onOpen && onOpen(a)}>
       <div className="a-img">
         <div className={`pic poster-art ${a.art}`} />
         {a.sponsored && <span className="sponsor">ARTÍCULO PATROCINADO</span>}
+        <button className={`a-like ${liked ? "on" : ""}`} onClick={toggleLike} title={liked ? "Quitar like" : "Me gusta"}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 22V11"/><path d="M2 13a2 2 0 0 1 2-2h3v11H4a2 2 0 0 1-2-2v-7z"/><path d="M22 11.5a2.5 2.5 0 0 0-2.5-2.5h-5l1-4.5a2 2 0 0 0-3.9-.9L7 11v11h11.4a2 2 0 0 0 2-1.7l1.5-7.3a2.5 2.5 0 0 0 .1-1.5z"/></svg>
+          <span>{likes >= 1000 ? (likes / 1000).toFixed(1) + "k" : likes}</span>
+        </button>
       </div>
       <div className="a-cat">{a.cat}</div>
       <h3 className="a-title" style={ big ? { fontSize: 28 } : null }>{a.title}</h3>
@@ -2350,37 +2481,280 @@ function SearchPage() {
 }
 
 /* ───────────────── news list ───────────────── */
+/* ───────────────── news list (router) ───────────────── */
 function NewsListPage() {
+  const { route } = useRouter();
+  const cat = route.params?.cat;
+  return cat ? <NewsCategoryPage cat={cat} /> : <NewsHubPage />;
+}
+
+/* ───────────────── news hub (no category) ───────────────── */
+function NewsHubPage() {
   const { nav } = useRouter();
-  const [cat, setCat] = useState("Todas");
-  const cats = ["Todas", "Anime", "Manga", "Cine", "Gaming", "K-Pop", "Cosplay"];
-  const items = cat === "Todas" ? ARTICLES : ARTICLES.filter(a => a.cat === cat);
+  const featured = ARTICLES[0];
+  const editorPicks = ARTICLES.slice(1, 4);
+  const latest = ARTICLES.slice(0, 8);
+  const sponsored = ARTICLES.filter(a => a.sponsored)[0] || ARTICLES[1];
+  // group articles for the section rails
+  const byCat = {};
+  ARTICLES.forEach(a => { (byCat[a.cat] = byCat[a.cat] || []).push(a); });
+  const rails = ["Anime", "Cine", "Gaming", "K-Pop"];
+
   return (
     <main className="container">
-      <div style={{ margin: "32px 0 24px" }}>
-        <div className="eyebrow">NOTICIAS · ニュース</div>
-        <h1 className="display" style={{ fontSize: 64, margin: "12px 0 6px" }}>Lo último<span style={{ color: "var(--accent)" }}>.</span></h1>
-        <p style={{ color: "var(--ink-2)", margin: 0, maxWidth: "60ch" }}>
-          Cobertura editorial de anime, manga, cine, gaming y cultura otaku.
-        </p>
+      {/* HERO: featured article */}
+      <section style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 360px", gap: 28, margin: "28px 0 56px" }} className="news-hero">
+        <div style={{ position: "relative", aspectRatio: "16/10", borderRadius: "var(--r-xl)", overflow: "hidden", cursor: "pointer" }} onClick={() => nav("article", { id: featured.id })}>
+          <div className={`poster-art ${featured.art}`} style={{ position: "absolute", inset: 0 }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg, rgba(0,0,0,.85) 0%, rgba(0,0,0,0) 60%)" }}></div>
+          <div style={{ position: "absolute", left: 36, right: 36, bottom: 36, color: "#fff", zIndex: 2 }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: ".2em", color: "rgba(255,255,255,.78)", marginBottom: 14, display: "flex", alignItems: "center", gap: 12 }}>
+              <span>DESTACADO · {featured.cat.toUpperCase()}</span>
+              <span style={{ opacity: .5 }}>·</span>
+              <span>{featured.date} · {featured.reading} lectura</span>
+            </div>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px, 4.6vw, 56px)", lineHeight: 1.05, letterSpacing: "-.025em", margin: "0 0 14px", fontWeight: 700, textWrap: "pretty" }}>{featured.title}</h1>
+            <p style={{ color: "rgba(255,255,255,.85)", fontSize: 16, lineHeight: 1.55, margin: "0 0 18px", maxWidth: "62ch" }}>{featured.excerpt}</p>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 999, background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 600 }}>Leer artículo {Ic.arrow}</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".18em", color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 4 }}>Picks de la redacción</div>
+          {editorPicks.map((a, i) => (
+            <div key={a.id} onClick={() => nav("article", { id: a.id })} style={{ display: "flex", gap: 14, cursor: "pointer", padding: "10px 0", borderTop: i > 0 ? "1px solid var(--line)" : 0 }}>
+              <div style={{ flex: "0 0 28px", fontFamily: "var(--font-display)", fontSize: 28, fontWeight: 700, color: "var(--accent)", lineHeight: 1, paddingTop: 4 }}>0{i + 1}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".12em", color: "var(--accent)", marginBottom: 4 }}>{a.cat.toUpperCase()}</div>
+                <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 17, lineHeight: 1.25, letterSpacing: "-.01em", marginBottom: 6, textWrap: "pretty" }}>{a.title}</div>
+                <div style={{ color: "var(--ink-3)", fontSize: 12 }}>{a.date} · {a.reading} lectura</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* LATEST GRID */}
+      <SectionHead title="Lo último" ja="最新" moreLabel="Ver todas las noticias" onMore={() => nav("news", { cat: "Anime" })} />
+      <div className="card-grid" style={{ marginBottom: 56 }}>
+        {latest.slice(0, 4).map(a => <ArticleCard key={a.id} a={a} onOpen={x => nav("article", { id: x.id })} />)}
+      </div>
+
+      {/* SPONSORED ARTICLE — feature row */}
+      <section style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-xl)", padding: 32, margin: "0 0 56px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 32 }} onClick={() => nav("article", { id: sponsored.id })} className="sponsored-feature">
+        <div style={{ position: "relative", aspectRatio: "16/10", borderRadius: "var(--r-lg)", overflow: "hidden", cursor: "pointer" }}>
+          <div className={`poster-art ${sponsored.art}`} style={{ position: "absolute", inset: 0 }} />
+          <span style={{ position: "absolute", top: 14, left: 14, background: "rgba(15,12,10,.75)", color: "#fff", padding: "6px 12px", borderRadius: 999, fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700, letterSpacing: ".14em" }}>ARTÍCULO PATROCINADO</span>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", cursor: "pointer" }}>
+          <div className="eyebrow" style={{ color: "var(--accent)", marginBottom: 12 }}>{sponsored.cat} · PATROCINADO</div>
+          <h3 style={{ fontFamily: "var(--font-display)", fontSize: 32, letterSpacing: "-.02em", lineHeight: 1.1, margin: "0 0 12px", fontWeight: 700, textWrap: "pretty" }}>{sponsored.title}</h3>
+          <p style={{ color: "var(--ink-2)", fontSize: 15, lineHeight: 1.6, margin: "0 0 20px" }}>{sponsored.excerpt}</p>
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <button className="btn primary">Leer artículo {Ic.arrow}</button>
+            <span style={{ color: "var(--ink-3)", fontSize: 12 }}>{sponsored.date} · {sponsored.reading} lectura</span>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTIONS BY CATEGORY */}
+      {rails.map(c => {
+        const items = (byCat[c] || []).concat(latest).slice(0, 4);
+        if (items.length === 0) return null;
+        const cMeta = NEWS_CATEGORIES.find(x => x.id === c);
+        return (
+          <section key={c} style={{ marginBottom: 56 }}>
+            <SectionHead title={c} ja={cMeta?.ja || ""} moreLabel={`Ver más de ${c}`} onMore={() => nav("news", { cat: c })} />
+            <div className="card-grid">
+              {items.map((a, i) => <ArticleCard key={`${c}-${a.id}-${i}`} a={a} onOpen={x => nav("article", { id: x.id })} />)}
+            </div>
+          </section>
+        );
+      })}
+
+      {/* Explore all categories — flat list */}
+      <section style={{ marginBottom: 32, padding: 36, border: "1px solid var(--line)", borderRadius: "var(--r-xl)" }}>
+        <div style={{ marginBottom: 28 }}>
+          <div className="eyebrow">CATEGORÍAS · カテゴリ</div>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 44, letterSpacing: "-.025em", margin: "10px 0 0", fontWeight: 700, lineHeight: 1.05 }}>{NEWS_CATEGORIES.length} categorías editoriales</h2>
+        </div>
+        <div style={{ columns: 4, columnGap: 40 }} className="explore-cats">
+          {[...NEWS_CATEGORIES].sort((a, b) => a.label.localeCompare(b.label)).map(c => (
+            <button key={c.id} onClick={() => nav("news", { cat: c.id })} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "8px 0", color: "var(--ink)", textAlign: "left", background: "transparent", border: 0, cursor: "pointer", transition: "color .12s, transform .12s", borderRadius: 0, width: "100%", breakInside: "avoid" }} onMouseOver={ev => { ev.currentTarget.style.color = "var(--accent)"; ev.currentTarget.style.transform = "translateX(4px)"; }} onMouseOut={ev => { ev.currentTarget.style.color = "var(--ink)"; ev.currentTarget.style.transform = ""; }}>
+              <span style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, letterSpacing: "-.01em" }}>{c.label}</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)", letterSpacing: ".06em" }}>{c.ja}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+/* ───────────────── news category list ───────────────── */
+function NewsCategoryPage({ cat }) {
+  const { route, nav } = useRouter();
+  const [open, setOpen] = useState(null);
+  const [sort, setSort] = useState("Más recientes");
+  const [type, setType] = useState("Todos");
+  const [sponsored, setSponsored] = useState("Todos");
+  const [period, setPeriod] = useState(null);
+  const [q, setQ] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [view, setView] = useState("grid");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(12);
+
+  const sorts = ["Más recientes", "Más leídas", "A-Z"];
+  const types = ["Todos", "Artículos", "Entrevistas", "Reseñas"];
+  const sponsoredOpts = ["Todos", "Editoriales", "Patrocinados"];
+
+  let items = ARTICLES.filter(a => a.cat === cat);
+  if (items.length === 0) items = ARTICLES.slice();
+  if (sponsored === "Patrocinados") items = items.filter(a => a.sponsored);
+  if (sponsored === "Editoriales") items = items.filter(a => !a.sponsored);
+  if (q.trim()) items = items.filter(a => a.title.toLowerCase().includes(q.toLowerCase()));
+  const allItems = items.length ? [...items, ...items, ...items].slice(0, 12) : [];
+  const cMeta = NEWS_CATEGORIES.find(c => c.id === cat);
+
+  const Pop = ({ id, label, options, value, onPick, icon, dflt }) => (
+    <div style={{ position: "relative" }}>
+      <button className={`sel ${open === id ? "on" : ""} ${value !== dflt ? "on" : ""}`} onClick={() => setOpen(open === id ? null : id)} title={label}>
+        {icon}<strong style={{ fontWeight: 600 }}>{value}</strong> {Ic.chev}
+      </button>
+      {open === id && (
+        <div className="menu" style={{ top: 44, left: 0, minWidth: 200 }} onMouseLeave={() => setOpen(null)}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", textTransform: "uppercase", padding: "8px 12px 4px" }}>{label}</div>
+          {options.map(o => (
+            <button key={o} onClick={() => { onPick(o); setOpen(null); }} style={value === o ? { background: "var(--surface-2)", color: "var(--ink)" } : null}>
+              {value === o && <span style={{ color: "var(--accent)", marginRight: 2 }}>✓</span>}
+              {o}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const activeCount = (type !== "Todos" ? 1 : 0) + (sponsored !== "Todos" ? 1 : 0) + (period ? 1 : 0) + (q.trim() ? 1 : 0);
+  const clearAll = () => { setType("Todos"); setSponsored("Todos"); setPeriod(null); setQ(""); };
+
+  return (
+    <main className="container">
+      <a onClick={() => nav("news")} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginTop: 24, marginBottom: 4, cursor: "pointer" }}>{Ic.chevL} Volver a todas las noticias</a>
+      <div style={{ margin: "8px 0 24px", display: "flex", justifyContent: "space-between", alignItems: "end", flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <div className="eyebrow">NOTICIAS · {cMeta?.ja || ""}</div>
+          <h1 className="display" style={{ fontSize: 64, margin: "12px 0 6px" }}>{cat}<span style={{ color: "var(--accent)" }}>.</span></h1>
+          <p style={{ color: "var(--ink-2)", margin: 0, maxWidth: "60ch" }}>
+            <strong style={{ color: "var(--ink)" }}>{allItems.length} artículos</strong> · cobertura editorial de {cat.toLowerCase()} en Konbini.
+          </p>
+        </div>
+        <div className="jp" style={{ fontSize: 80, color: "var(--ink-3)", opacity: .3, lineHeight: .9, fontWeight: 900 }}>{cMeta?.ja || "ニュース"}</div>
       </div>
 
       <div className="fbar-sticky">
         <div className="fbar-inner">
           <div className="group">
-            {cats.map(c => (
-              <button key={c} className={`sel ${cat === c ? "on" : ""}`} onClick={() => setCat(c)}>{c}</button>
+            {["Hoy", "Esta semana"].map(p => (
+              <button key={p} className={`sel ${period === p ? "on" : ""}`} onClick={() => setPeriod(period === p ? null : p)}>{p}</button>
             ))}
           </div>
+          <div className="vline"></div>
+          <div className="group">
+            <Pop id="type" label="Tipo" options={types} value={type} onPick={setType} icon={<span style={{ display: "inline-flex", marginRight: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h12M4 18h8"/></svg></span>} dflt="Todos" />
+            <Pop id="sponsored" label="Origen" options={sponsoredOpts} value={sponsored} onPick={setSponsored} icon={<span style={{ display: "inline-flex", marginRight: 6, fontWeight: 700 }}>✦</span>} dflt="Todos" />
+            {activeCount > 0 && <button className="sel" style={{ color: "var(--accent)" }} onClick={clearAll}>✕ Limpiar ({activeCount})</button>}
+          </div>
           <div className="group" style={{ marginLeft: "auto" }}>
-            <div className="sel">{Ic.search} Buscar en noticias</div>
+            <div style={{ position: "relative" }}>
+              <button className={`sel ${searchOpen ? "on" : ""} ${q ? "on" : ""}`} onClick={() => setSearchOpen(o => !o)} title="Buscar">
+                <span style={{ display: "inline-flex", marginRight: 6 }}>{Ic.search}</span>
+                <strong style={{ fontWeight: 600 }}>{q || "Buscar"}</strong>
+              </button>
+              {searchOpen && (
+                <div className="menu" style={{ top: 44, right: 0, left: "auto", minWidth: 280, padding: 12 }} onMouseLeave={() => setSearchOpen(false)}>
+                  <div className="search-input" style={{ padding: "10px 14px", margin: 0 }}>
+                    {Ic.search}
+                    <input autoFocus placeholder={`Buscar en ${cat}…`} value={q} onChange={e => setQ(e.target.value)} style={{ padding: 0, background: "transparent" }} />
+                    {q && <button onClick={() => setQ("")} className="icon-btn" style={{ width: 28, height: 28 }}>{Ic.close}</button>}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={{ display: "inline-flex", border: "1px solid var(--line)", borderRadius: 999, padding: 3, background: "var(--surface)" }}>
+              <button className={`sel ${view === "grid" ? "on" : ""}`} onClick={() => setView("grid")} title="Grilla" style={{ border: 0, padding: "6px 10px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              </button>
+              <button className={`sel ${view === "list" ? "on" : ""}`} onClick={() => setView("list")} title="Lista" style={{ border: 0, padding: "6px 10px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+              </button>
+            </div>
+            <Pop id="sort" label="Ordenar" options={sorts} value={sort} onPick={setSort} icon={<span style={{ display: "inline-flex", marginRight: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h13M3 12h9M3 18h5M17 8V4l3 3M17 16v4l3-3"/></svg></span>} dflt="Más recientes" />
           </div>
         </div>
       </div>
 
-      <div className="card-grid" style={{ marginTop: 16, marginBottom: 60 }}>
-        {items.map(a => <ArticleCard key={a.id} a={a} onOpen={x => nav("article", { id: x.id })} />)}
-      </div>
+      {allItems.length === 0 ? (
+        <div className="acc-empty" style={{ margin: "40px 0 60px" }}>
+          <div className="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+          <h3>No hay artículos con esos filtros</h3>
+          <p>Prueba ampliando los filtros o quitando alguno.</p>
+          <button className="btn ghost" onClick={clearAll}>Limpiar filtros</button>
+        </div>
+      ) : <>
+        {view === "grid" ? (
+          <div className="card-grid" style={{ marginTop: 16, marginBottom: 24 }}>
+            {allItems.map((a, i) => <ArticleCard key={a.id + "-" + i} a={a} onOpen={x => nav("article", { id: x.id })} />)}
+          </div>
+        ) : (
+          <div className="list-grid">
+            {allItems.map((a, i) => (
+              <div key={a.id + "-" + i} className="list-row" onClick={() => nav("article", { id: a.id })}>
+                <div className="l-img">
+                  <div className={`pic poster-art ${a.art}`} />
+                  <span className="cat-tag">{a.cat.toUpperCase()}</span>
+                </div>
+                <div className="l-info">
+                  <div className="l-date">{a.date} · {a.reading} lectura</div>
+                  <h3 className="l-title">{a.title}</h3>
+                  <div className="l-place" style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 0 }}>{a.excerpt}</div>
+                  <div className="l-orgs" style={{ marginTop: 8 }}>
+                    <span className="ob" style={{ background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", fontSize: 10 }}>{a.author.split(" ").map(w => w[0]).slice(0, 2).join("")}</span>
+                    <span style={{ marginLeft: 8, color: "var(--ink-3)", fontSize: 12 }}>{a.author}</span>
+                    {a.sponsored && <span style={{ marginLeft: 12 }} className="pill">ARTÍCULO PATROCINADO</span>}
+                  </div>
+                </div>
+                <div></div>
+                <span style={{ color: "var(--ink-3)" }}>{Ic.arrow}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="pag-bar">
+          <div className="pag-info">
+            <span>Mostrando <strong style={{ color: "var(--ink)" }}>{(page - 1) * perPage + 1}–{Math.min(page * perPage, allItems.length * 4)}</strong> de <strong style={{ color: "var(--ink)" }}>{allItems.length * 4}</strong> artículos</span>
+            <span style={{ color: "var(--line-2)" }}>·</span>
+            <span className="ips">
+              <span>Mostrar</span>
+              <select value={perPage} onChange={e => { setPerPage(+e.target.value); setPage(1); }}>
+                <option value="12">12</option>
+                <option value="24">24</option>
+                <option value="48">48</option>
+              </select>
+              <span>por página</span>
+            </span>
+          </div>
+          <div className="pag-pages">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} title="Anterior">{Ic.chevL}</button>
+            {[1, 2, 3, 4].map(p => (
+              <button key={p} className={page === p ? "on" : ""} onClick={() => setPage(p)}>{p}</button>
+            ))}
+            <span className="ell">…</span>
+            <button onClick={() => setPage(p => p + 1)}>{Ic.chevR}</button>
+          </div>
+        </div>
+      </>}
     </main>
   );
 }
@@ -3723,22 +4097,37 @@ const ACC_SECTIONS = [
 ];
 function AccountPage() {
   const { route, nav } = useRouter();
-  const { user, setUser } = useUser();
+  const { user, setUser, activeOrg } = useUser();
   const sel = route.params?.tab || "perfil";
-  const u = user || MOCK_USER;
+  const u = activeOrg ? { name: activeOrg.name, email: "@" + activeOrg.handle, initials: activeOrg.initials } : (user || MOCK_USER);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  // Build sections — switch "Organizador" ↔ "Miembros" based on context
+  const sections = activeOrg ? [
+    { id: "perfil",    label: "Perfil de la org" },
+    { id: "miembros",  label: "Miembros", count: 3 },
+    { id: "orgs",      label: "Cambiar a personal" },
+    { id: "subs",      label: "Suscripción" },
+    { id: "eventos",   label: "Eventos de la org", count: 8 },
+    { id: "avisos",    label: "Avisos", count: 2 },
+    { id: "portadas",  label: "Portadas", count: 1 },
+    { id: "articulos", label: "Artículos" },
+    { id: "favoritos", label: "Favoritos", count: 5 },
+    { id: "mensajes",  label: "Mensajes", count: 3 },
+    { id: "pagos",     label: "Historial de pagos" },
+  ] : ACC_SECTIONS;
   return (
     <main className="container acc-shell">
       <aside className="acc-side">
         <div className="who">
-          <div className="av">{u.initials || "K"}</div>
+          <div className="av" style={activeOrg ? { background: `linear-gradient(135deg, ${activeOrg.pal[0]}, ${activeOrg.pal[1]})` } : null}>{u.initials || "K"}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="nm">{u.name}</div>
             <div className="em">{u.email}</div>
+            {activeOrg && <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".12em", color: "var(--accent)", marginTop: 2 }}>OPERANDO COMO ORG · {activeOrg.role.toUpperCase()}</div>}
           </div>
         </div>
         <nav className="acc-nav">
-          {ACC_SECTIONS.map(s => (
+          {sections.map(s => (
             <button key={s.id} className={sel === s.id ? "on" : ""} onClick={() => nav("account", { tab: s.id })}>
               {s.label}
               {s.count != null && <span className="ct">{s.count}</span>}
@@ -3752,6 +4141,7 @@ function AccountPage() {
         {sel === "perfil" && <AccPerfil u={u} setUser={setUser} />}
         {sel === "org" && <AccOrg />}
         {sel === "orgs" && <AccOrgs />}
+        {sel === "miembros" && <AccMiembros />}
         {sel === "subs" && <AccSubs />}
         {sel === "eventos" && <AccEventos />}
         {sel === "avisos" && <AccCupo kind="avisos" max={12} used={9} />}
@@ -3770,6 +4160,89 @@ function AccountPage() {
       />}
     </main>
   );
+}
+
+function AccMiembros() {
+  const toast = useToast();
+  const { activeOrg } = useUser();
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [members, setMembers] = useState([
+    { ch: "ET", nm: "Edgardo Toro",      em: "edgardo.toro@gmail.com", role: "Owner",   status: "active", pal: ["#a25cff", "#5b39ff"] },
+    { ch: "MS", nm: "Marcela Soto",      em: "marcela.s@email.cl",     role: "Member",  status: "active", pal: ["#ff5b8a", "#ff2a59"] },
+    { ch: "DP", nm: "Daniela Pérez",     em: "danielapb@email.cl",     role: "Member",  status: "pending", pal: ["#3bbf8a", "#1e8a5b"] },
+  ]);
+  const [confirm, setConfirm] = useState(null);
+  const isOwner = activeOrg?.role === "Owner";
+  return (<>
+    <h1>Miembros</h1>
+    <p className="lead">Personas que pueden crear contenido en nombre de <strong style={{ color: "var(--ink)" }}>{activeOrg?.name || "esta organización"}</strong>.</p>
+
+    <div className="acc-section">
+      <h3>Invitar a un miembro</h3>
+      <p style={{ color: "var(--ink-3)", fontSize: 13, margin: "0 0 14px" }}>El invitado recibirá un email con link para aceptar. Hasta aceptar aparecerá como "Pendiente".</p>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <input type="email" placeholder="email@ejemplo.cl" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} style={{ flex: 1, minWidth: 240, padding: "12px 14px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--line)" }} />
+        <select defaultValue="Member" style={{ padding: "12px 14px", borderRadius: 10, background: "var(--surface-2)", border: "1px solid var(--line)" }}>
+          <option value="Member">Member</option>
+          <option value="Owner">Owner</option>
+        </select>
+        <button className="btn primary lg" disabled={!inviteEmail.trim()} onClick={() => { setMembers(m => [...m, { ch: inviteEmail[0].toUpperCase(), nm: inviteEmail.split("@")[0], em: inviteEmail, role: "Member", status: "pending", pal: ["#3b9eff", "#2a5bff"] }]); toast.ok("Invitación enviada", `${inviteEmail} recibirá un email`); setInviteEmail(""); }}>Enviar invitación {Ic.arrow}</button>
+      </div>
+    </div>
+
+    <div className="acc-section">
+      <h3>{members.length} miembro{members.length === 1 ? "" : "s"}</h3>
+      {members.map((m, i) => (
+        <div key={m.em} className="acc-list-row">
+          <div className="av" style={{ background: `linear-gradient(135deg, ${m.pal[0]}, ${m.pal[1]})` }}>{m.ch}</div>
+          <div className="main">
+            <div className="t" style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {m.nm}
+              {m.status === "pending" && <span className="pill" style={{ fontSize: 10, padding: "2px 8px", color: "var(--warn)", borderColor: "color-mix(in oklab, var(--warn) 30%, transparent)", background: "color-mix(in oklab, var(--warn) 10%, transparent)" }}>PENDIENTE</span>}
+            </div>
+            <div className="m">{m.em}</div>
+          </div>
+          <select defaultValue={m.role} disabled={!isOwner || (m.role === "Owner" && members.filter(x => x.role === "Owner").length === 1)} style={{ padding: "6px 10px", borderRadius: 8, background: "var(--surface)", border: "1px solid var(--line)", fontSize: 12 }} onChange={e => { setMembers(arr => arr.map(x => x.em === m.em ? { ...x, role: e.target.value } : x)); toast.ok(`Rol cambiado a ${e.target.value}`); }}>
+            <option value="Owner">Owner</option>
+            <option value="Member">Member</option>
+          </select>
+          {isOwner && i !== 0 && <button className="btn ghost" style={{ fontSize: 12, padding: "8px 12px", color: "var(--err)", borderColor: "color-mix(in oklab, var(--err) 30%, var(--line))" }} onClick={() => setConfirm({ type: "remove", member: m })}>Eliminar</button>}
+          {m.status === "pending" && <button className="btn ghost" style={{ fontSize: 12, padding: "8px 12px" }} onClick={() => toast.info("Invitación reenviada")}>Reenviar</button>}
+        </div>
+      ))}
+    </div>
+
+    {isOwner && (
+      <div className="acc-section acc-danger">
+        <h3>Zona Danger</h3>
+        <div className="acc-list-row">
+          <div className="main">
+            <div className="t">Eliminar organización</div>
+            <div className="m">Borra la organización, todos sus eventos, avisos, portadas, suscripción e historial. Los miembros pierden acceso. Acción permanente.</div>
+          </div>
+          <button className="btn ghost" style={{ borderColor: "var(--err)", color: "var(--err)" }} onClick={() => setConfirm({ type: "deleteOrg" })}>Eliminar org</button>
+        </div>
+      </div>
+    )}
+
+    {confirm?.type === "remove" && <ConfirmDialog
+      danger
+      title={`¿Eliminar a ${confirm.member.nm}?`}
+      message="Perderá acceso inmediatamente. El contenido que haya creado seguirá perteneciendo a la organización."
+      confirmLabel="Sí, eliminar miembro"
+      onConfirm={() => { setMembers(arr => arr.filter(x => x.em !== confirm.member.em)); toast.warn("Miembro eliminado"); setConfirm(null); }}
+      onClose={() => setConfirm(null)}
+    />}
+    {confirm?.type === "deleteOrg" && <ConfirmDialog
+      danger
+      title={`¿Eliminar "${activeOrg?.name}"?`}
+      message="Esta acción es permanente e irreversible. Toda la organización, su contenido, su suscripción y su historial se borrarán."
+      typeToConfirm="ELIMINAR"
+      confirmLabel="Sí, eliminar la organización"
+      onConfirm={() => { toast.warn("Organización eliminada"); setConfirm(null); }}
+      onClose={() => setConfirm(null)}
+    />}
+  </>);
 }
 
 function AccPerfil({ u }) {
@@ -4063,28 +4536,83 @@ function AccFavoritos() {
 }
 
 function AccMensajes() {
-  const msgs = [
-    { type: "ok", t: "Tu evento «Anime Crunchyroll Fest» fue aprobado", time: "Hace 2 horas", unread: true },
-    { type: "err", t: "Tu aviso «Cosplay Atelier» fue rechazado", time: "Hace 1 día", unread: true, motive: "La imagen no cumple con las dimensiones mínimas (1200×800)." },
-    { type: "info", t: "Recordatorio: 3 créditos disponibles este mes", time: "Hace 3 días", unread: false },
-    { type: "ok", t: "Tu portada «Demon Slayer Premiere» fue aprobada", time: "Hace 1 semana", unread: false },
-  ];
+  const toast = useToast();
+  const { nav } = useRouter();
+  const [msgs, setMsgs] = useState([
+    { id: "m1", kind: "invite", t: "Konbini Editorial te invitó a ser Member", from: { nm: "Konbini Editorial", ch: "K", pal: ["#ff5b8a", "#ff2a59"] }, time: "Hace 1 hora", unread: true, body: "Como Member podrás crear borradores de eventos, avisos y portadas en nombre de la organización." },
+    { id: "m2", kind: "transfer", t: "Solicitud: transferir «Cosplay Meetup Junio» a Cinépolis Chile", from: { nm: "Marcela Soto", ch: "MS", pal: ["#a25cff", "#5b39ff"] }, time: "Hace 3 horas", unread: true, body: "Marcela pidió mover este evento a la organización Cinépolis Chile (donde es Member). Como Owner, debes aprobar la transferencia." },
+    { id: "m3", kind: "ok",  t: "Tu evento «Anime Crunchyroll Fest» fue aprobado", time: "Hace 2 horas", unread: true, body: "El admin verificó tu evento y ya está público en Konbini." },
+    { id: "m4", kind: "err", t: "Tu aviso «Cosplay Atelier» fue rechazado", time: "Hace 1 día", unread: false, motive: "La imagen no cumple con las dimensiones mínimas (1200×800).", body: "Corrige el problema y vuelve a enviarlo desde Mis avisos." },
+    { id: "m5", kind: "info", t: "Recordatorio: 3 créditos disponibles este mes", time: "Hace 3 días", unread: false, body: "Te quedan 3 créditos de suscripción que expiran al final del mes." },
+    { id: "m6", kind: "ok", t: "Tu portada «Demon Slayer Premiere» fue aprobada", time: "Hace 1 semana", unread: false, body: "Ya está activa en el carrusel principal del home." },
+  ]);
+  const [filter, setFilter] = useState("all");
+  const counts = { all: msgs.length, unread: msgs.filter(m => m.unread).length, actions: msgs.filter(m => m.kind === "invite" || m.kind === "transfer").length };
+  const shown = filter === "unread" ? msgs.filter(m => m.unread) : filter === "actions" ? msgs.filter(m => m.kind === "invite" || m.kind === "transfer") : msgs;
+  const markRead = id => setMsgs(arr => arr.map(m => m.id === id ? { ...m, unread: false } : m));
+  const remove = id => setMsgs(arr => arr.filter(m => m.id !== id));
+
+  const ic = k => ({ ok: { bg: "var(--ok)", g: "✓" }, err: { bg: "var(--err)", g: "✕" }, info: { bg: "var(--accent-3)", g: "i" }, invite: { bg: "var(--accent)", g: "✉" }, transfer: { bg: "var(--accent-2)", g: "⇄" } })[k];
+
   return (<>
     <h1>Mensajes</h1>
-    <p className="lead">Aprobaciones, rechazos y comunicaciones de Konbini.</p>
-    <div className="acc-section">
-      {msgs.map((m, i) => (
-        <div key={i} className="acc-list-row" style={ m.unread ? { background: "color-mix(in oklab, var(--accent) 4%, transparent)", borderRadius: 10, padding: "16px 12px", marginBottom: 4, borderBottom: 0 } : null }>
-          <div className="av" style={{ background: m.type === "ok" ? "var(--ok)" : m.type === "err" ? "var(--err)" : "var(--accent-3)", flex: "0 0 32px", width: 32, height: 32, fontSize: 14 }}>
-            {m.type === "ok" ? "✓" : m.type === "err" ? "✕" : "i"}
+    <p className="lead">Aprobaciones, rechazos, invitaciones y solicitudes pendientes.</p>
+
+    <div style={{ display: "flex", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
+      <button className={`sel ${filter === "all" ? "on" : ""}`} onClick={() => setFilter("all")}>Todos <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, marginLeft: 4, opacity: .7 }}>{counts.all}</span></button>
+      <button className={`sel ${filter === "unread" ? "on" : ""}`} onClick={() => setFilter("unread")}>No leídos <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, marginLeft: 4, opacity: .7 }}>{counts.unread}</span></button>
+      <button className={`sel ${filter === "actions" ? "on" : ""}`} onClick={() => setFilter("actions")}>Requieren acción <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, marginLeft: 4, opacity: .7 }}>{counts.actions}</span></button>
+    </div>
+
+    <div className="acc-section" style={{ padding: 8 }}>
+      {shown.length === 0 ? (
+        <div style={{ padding: 40, textAlign: "center", color: "var(--ink-3)" }}>Sin mensajes en este filtro.</div>
+      ) : shown.map(m => {
+        const icon = ic(m.kind);
+        const hasActions = m.kind === "invite" || m.kind === "transfer";
+        return (
+          <div key={m.id} style={{ background: m.unread ? "color-mix(in oklab, var(--accent) 4%, transparent)" : "transparent", borderRadius: 10, padding: 14, marginBottom: 6, display: "flex", gap: 14, alignItems: "flex-start", borderLeft: hasActions ? "3px solid var(--accent)" : "3px solid transparent" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 999, background: m.from ? `linear-gradient(135deg, ${m.from.pal[0]}, ${m.from.pal[1]})` : icon.bg, color: m.kind === "transfer" ? "#14110d" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 14, flex: "0 0 36px" }}>{m.from ? m.from.ch : icon.g}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 4, flexWrap: "wrap" }}>
+                <span style={{ fontWeight: 600, fontSize: 14, color: "var(--ink)" }}>{m.t}</span>
+                {hasActions && <span className="pill" style={{ fontSize: 10, padding: "2px 8px", color: "var(--accent)", borderColor: "color-mix(in oklab, var(--accent) 30%, transparent)", background: "color-mix(in oklab, var(--accent) 10%, transparent)" }}>REQUIERE ACCIÓN</span>}
+                {m.unread && <span style={{ width: 8, height: 8, borderRadius: 999, background: "var(--accent)" }}></span>}
+              </div>
+              <div style={{ color: "var(--ink-2)", fontSize: 13, lineHeight: 1.55, marginBottom: m.motive ? 6 : 10 }}>{m.body}</div>
+              {m.motive && <div style={{ background: "color-mix(in oklab, var(--err) 8%, var(--surface-2))", border: "1px solid color-mix(in oklab, var(--err) 25%, var(--line))", borderRadius: 8, padding: "8px 12px", marginBottom: 10, fontSize: 12, color: "var(--err)" }}><strong>Motivo:</strong> {m.motive}</div>}
+
+              {/* INVITE actions */}
+              {m.kind === "invite" && (
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <button className="btn primary" style={{ padding: "8px 16px", fontSize: 13, background: "var(--ok)" }} onClick={() => { toast.ok("Invitación aceptada", "Ya eres Member de Konbini Editorial"); markRead(m.id); remove(m.id); }}>✓ Aceptar invitación</button>
+                  <button className="btn ghost" style={{ padding: "8px 16px", fontSize: 13 }} onClick={() => { toast.info("Invitación rechazada"); remove(m.id); }}>Rechazar</button>
+                  <span style={{ fontSize: 11, color: "var(--ink-3)", marginLeft: "auto" }}>{m.time}</span>
+                </div>
+              )}
+
+              {/* TRANSFER actions */}
+              {m.kind === "transfer" && (
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <button className="btn primary" style={{ padding: "8px 16px", fontSize: 13, background: "var(--ok)" }} onClick={() => { toast.ok("Transferencia aprobada", "El evento ahora es de Cinépolis Chile"); remove(m.id); }}>✓ Aprobar transferencia</button>
+                  <button className="btn ghost" style={{ padding: "8px 16px", fontSize: 13 }} onClick={() => { toast.info("Transferencia rechazada"); remove(m.id); }}>Rechazar</button>
+                  <button className="btn ghost" style={{ padding: "8px 12px", fontSize: 12, color: "var(--ink-3)" }} onClick={() => { nav("event", { id: 5 }); markRead(m.id); }}>Ver evento</button>
+                  <span style={{ fontSize: 11, color: "var(--ink-3)", marginLeft: "auto" }}>{m.time}</span>
+                </div>
+              )}
+
+              {/* SIMPLE messages */}
+              {!hasActions && (
+                <div style={{ display: "flex", gap: 12, alignItems: "center", fontSize: 11, color: "var(--ink-3)" }}>
+                  <span>{m.time}</span>
+                  {m.unread && <button onClick={() => markRead(m.id)} style={{ color: "var(--accent)", fontSize: 12 }}>Marcar como leído</button>}
+                  <button onClick={() => remove(m.id)} style={{ color: "var(--ink-3)", marginLeft: "auto" }}>Eliminar</button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="main">
-            <div className="t">{m.t}</div>
-            <div className="m">{m.time}{m.motive ? ` · Motivo: ${m.motive}` : ""}</div>
-          </div>
-          {m.unread && <span style={{ width: 8, height: 8, borderRadius: 999, background: "var(--accent)" }}></span>}
-        </div>
-      ))}
+        );
+      })}
     </div>
   </>);
 }

@@ -103,8 +103,18 @@ None — both sections are fully wired to real API data.
 None — no external service configuration required.
 
 ## Next Phase Readiness
-- Task 3 (checkpoint:human-verify) is next: admin must log in and manually verify the moderation dashboard with real spots and heroes in PENDING_MODERATION status.
-- Prerequisite: at least one spot and one hero in PENDING_MODERATION (run through Plan 03/04 forms or set status directly in DB).
+
+- Plan 20-05 is COMPLETE. Checkpoint approved by user.
+- Phase 20 (all 5 plans) is complete: backend filters, api.ts types, creation forms (public + upsell), and moderation dashboard all wired to real API.
+- Ready for Phase 21: dynamic pricing, cart, and Transbank payment flow.
+
+## Self-Check: PASSED
+
+- FOUND: apps/website/app/dashboard/sections/SpotsSection.tsx
+- FOUND: apps/website/app/dashboard/sections/HeroesSection.tsx
+- FOUND: .planning/phases/20-flujo-completo-avisos-portadas/20-05-SUMMARY.md
+- FOUND: e5de25e (Task 1 commit)
+- FOUND: 8a0fe4a (Task 2 commit)
 
 ---
 *Phase: 20-flujo-completo-avisos-portadas*

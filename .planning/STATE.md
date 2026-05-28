@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-28T20:50:26.976Z"
+last_updated: "2026-05-28T20:51:51.353Z"
 progress:
   total_phases: 5
   completed_phases: 4
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28T20:50:26.973Z
+**Last session:** 2026-05-28T20:51:43.196Z
 
 ## Phase Summary
 
@@ -170,6 +170,8 @@ administrador quedan visibles al público.
 - [Phase 21]: PUBLIC_PREFIXES extended to SPOT_/HERO_/EVENT_/SUBSCRIPTION_; ARTICLE_PRICE stays private
 - [Phase 21]: GET /stats/public (no guard) declared above admin GET /stats in StatsController to prevent route shadowing
 - [Phase 21]: lib/site.ts social/contact constants use NEXT_PUBLIC env vars with hardcoded fallbacks so render never breaks on missing env
+- [Phase 20-05]: Quota badge refreshed after every action (not only on mount) to keep active/max count current
+- [Phase 20-05]: AdminRejectModal reused for ban (kind='aviso/portada (ban)') because /ban endpoint requires { reason } >= 3 chars; ConfirmDialog deleted as it became unused
 
 ## Quick Tasks Completed
 

@@ -1,11 +1,15 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Ic } from "@/components/icons";
-import { api, imageUrl } from "@/lib/api";
+import { api, imageUrl, type ApiQuota } from "@/lib/api";
 import { useUser } from "@/components/providers";
+
+function formatCLP(amount: number): string {
+  return "$" + amount.toLocaleString("es-CL");
+}
 
 /* ─── Zod Schemas ───────────────────────────────────────────────────────────── */
 const SpotSchema = z.object({
@@ -24,7 +28,7 @@ const HeroSchema = z.object({
 });
 
 /* ─── SpotForm ───────────────────────────────────────────────────────────── */
-function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void }) {
+function SpotForm({ onAdd, onCancel, pricePerDay = 8000 }: { onAdd: () => void; onCancel: () => void; pricePerDay?: number }) {
   const { token } = useUser();
   const [busy, setBusy] = useState(false);
   const [linkType, setLinkType] = useState<"url" | "email" | "tel">("url");
@@ -127,7 +131,7 @@ function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
           <input type="range" min={10} max={30} value={days} onChange={e => setDays(Number(e.target.value))} style={{ flex: 1 }} />
           <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, minWidth: 80, textAlign: "right" }}>{days} días</div>
         </div>
-        <div className="help">Mínimo 10, máximo 30 · $8.000 CLP / día → <strong>${(days * 8000).toLocaleString("es-CL")} CLP total</strong></div>
+        <div className="help">Mínimo 10, máximo 30 · {formatCLP(pricePerDay)} CLP / día → <strong>{formatCLP(days * pricePerDay)} CLP total</strong></div>
       </div>
       <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
         <button className="btn primary" onClick={handleAdd} disabled={busy || uploading}>{busy ? "Agregando…" : <>Agregar aviso al carrito {Ic.arrow}</>}</button>
@@ -138,7 +142,7 @@ function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
 }
 
 /* ─── HeroForm ───────────────────────────────────────────────────────────── */
-function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void }) {
+function HeroForm({ onAdd, onCancel, pricePerDay = 15000 }: { onAdd: () => void; onCancel: () => void; pricePerDay?: number }) {
   const { token } = useUser();
   const [busy, setBusy] = useState(false);
   const [days, setDays] = useState(14);
@@ -249,7 +253,7 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
           <input type="range" min={10} max={30} value={days} onChange={e => setDays(Number(e.target.value))} style={{ flex: 1 }} />
           <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, minWidth: 80, textAlign: "right" }}>{days} días</div>
         </div>
-        <div className="help">Mínimo 10, máximo 30 · $15.000 CLP / día → <strong>${(days * 15000).toLocaleString("es-CL")} CLP total</strong></div>
+        <div className="help">Mínimo 10, máximo 30 · {formatCLP(pricePerDay)} CLP / día → <strong>{formatCLP(days * pricePerDay)} CLP total</strong></div>
       </div>
       <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
         <button className="btn primary" onClick={handleAdd} disabled={busy || uploading}>{busy ? "Agregando…" : <>Agregar portada al carrito {Ic.arrow}</>}</button>
@@ -264,6 +268,13 @@ export function UpsellView() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [open, setOpen] = useState<{ spot?: boolean; hero?: boolean }>({});
+  const [spotQuota, setSpotQuota] = useState<ApiQuota | null>(null);
+  const [heroQuota, setHeroQuota] = useState<ApiQuota | null>(null);
+
+  useEffect(() => {
+    api.spotsQuota().then(setSpotQuota).catch(() => {});
+    api.heroesQuota().then(setHeroQuota).catch(() => {});
+  }, []);
 
   const advance = (n: number) => setStep(n + 1);
   const goCart = () => router.push("/carrito");
@@ -285,14 +296,14 @@ export function UpsellView() {
       <div className={`ups-step ${step > 1 ? "done" : ""}`}>
         <div className="num">PASO 1 / 3 · OPCIONAL</div>
         <h2>¿Quieres agregar un aviso?</h2>
-        <p className="av">Banner pagado en home y al final de todas las páginas de categoría. Cupo: 9 / 12 ocupados.</p>
+        <p className="av">Banner pagado en home y al final de todas las páginas de categoría. Cupo: {spotQuota ? `${spotQuota.active} / ${spotQuota.max}` : "9 / 12"} ocupados.</p>
         {step === 1 && (
           <div className="body">
             {!open.spot ? (
               <>
                 <div style={{ background: "var(--surface-2)", borderRadius: 12, padding: 16, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div><div style={{ fontWeight: 600 }}>Precio</div><div style={{ color: "var(--ink-3)", fontSize: 12 }}>10 días mínimo, 30 máximo</div></div>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>$8.000 / día</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>{formatCLP(spotQuota?.pricePerDay ?? 8000)} / día</div>
                 </div>
                 <div className="ups-cta-row">
                   <button className="btn primary" onClick={() => setOpen({ ...open, spot: true })}>Sí, agregar aviso</button>
@@ -300,7 +311,7 @@ export function UpsellView() {
                 </div>
               </>
             ) : (
-              <SpotForm onAdd={() => advance(1)} onCancel={() => setOpen({ ...open, spot: false })} />
+              <SpotForm onAdd={() => advance(1)} onCancel={() => setOpen({ ...open, spot: false })} pricePerDay={spotQuota?.pricePerDay ?? 8000} />
             )}
           </div>
         )}
@@ -310,14 +321,14 @@ export function UpsellView() {
       <div className={`ups-step ${step > 2 ? "done" : ""}`} style={step < 2 ? { opacity: 0.35, pointerEvents: "none" } : undefined}>
         <div className="num">PASO 2 / 3 · OPCIONAL</div>
         <h2>¿Quieres agregar una portada?</h2>
-        <p className="av">Aparición en el carrusel principal del home. Cupo: 3 / 5 ocupados — escasez de verdad.</p>
+        <p className="av">Aparición en el carrusel principal del home. Cupo: {heroQuota ? `${heroQuota.active} / ${heroQuota.max}` : "3 / 5"} ocupados — escasez de verdad.</p>
         {step === 2 && (
           <div className="body">
             {!open.hero ? (
               <>
                 <div style={{ background: "var(--surface-2)", borderRadius: 12, padding: 16, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div><div style={{ fontWeight: 600 }}>Precio</div><div style={{ color: "var(--ink-3)", fontSize: 12 }}>10 días mínimo, 30 máximo</div></div>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>$15.000 / día</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>{formatCLP(heroQuota?.pricePerDay ?? 15000)} / día</div>
                 </div>
                 <div className="ups-cta-row">
                   <button className="btn primary" onClick={() => setOpen({ ...open, hero: true })}>Sí, agregar portada</button>
@@ -325,7 +336,7 @@ export function UpsellView() {
                 </div>
               </>
             ) : (
-              <HeroForm onAdd={() => advance(2)} onCancel={() => setOpen({ ...open, hero: false })} />
+              <HeroForm onAdd={() => advance(2)} onCancel={() => setOpen({ ...open, hero: false })} pricePerDay={heroQuota?.pricePerDay ?? 15000} />
             )}
           </div>
         )}

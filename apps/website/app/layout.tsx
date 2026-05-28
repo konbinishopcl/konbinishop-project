@@ -75,7 +75,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
         <Providers>{children}</Providers>
-        <Toaster position="bottom-right" richColors theme="dark" />
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: "color-mix(in srgb, var(--surface) 82%, transparent)",
+              backdropFilter: "blur(16px)",
+              WebkitBackdropFilter: "blur(16px)",
+              border: "1px solid var(--line)",
+              color: "var(--ink)",
+              borderRadius: "12px",
+              fontSize: "13px",
+              fontFamily: "var(--font-body)",
+              boxShadow: "0 8px 32px rgba(0,0,0,.28)",
+            },
+          }}
+        />
       </body>
     </html>
   );

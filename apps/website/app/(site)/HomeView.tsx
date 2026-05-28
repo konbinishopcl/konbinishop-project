@@ -29,7 +29,7 @@ export type ApiArticle = {
 };
 
 /* ─── SpotCard ───────────────────────────────────────── */
-function SpotCard({ s }: { s: ApiSpot | null }) {
+function SpotCard({ s, emptyText }: { s: ApiSpot | null; emptyText: string }) {
   if (!s) {
     return (
       <Link href="/precios" className="spot empty">
@@ -40,7 +40,7 @@ function SpotCard({ s }: { s: ApiSpot | null }) {
             </svg>
           </div>
           <div className="h">Tu aviso aquí</div>
-          <div className="p">12 cupos · placement global en home y categorías.</div>
+          <div className="p">{emptyText}</div>
           <div className="e-cta">
             Contratar
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
@@ -72,7 +72,7 @@ function SpotCard({ s }: { s: ApiSpot | null }) {
 }
 
 /* ─── SpotsStrip ─────────────────────────────────────── */
-function SpotsStrip({ spots }: { spots: ApiSpot[] }) {
+function SpotsStrip({ spots, settings }: { spots: ApiSpot[]; settings: Record<string, string> }) {
   const MAX = 8;
   const filled = spots.slice(0, MAX);
   const empties = Math.max(0, 4 - filled.length); // mínimo 4 slots; vacíos como CTA
@@ -80,6 +80,7 @@ function SpotsStrip({ spots }: { spots: ApiSpot[] }) {
     ...filled,
     ...Array(empties).fill(null),
   ].slice(0, MAX);
+  const emptyText = spotEmptyText(settings);
 
   return (
     <section>
@@ -94,7 +95,7 @@ function SpotsStrip({ spots }: { spots: ApiSpot[] }) {
       </div>
       <div className="spots-grid">
         {items.map((s, i) => (
-          <SpotCard key={s ? s.id : `empty-${i}`} s={s} />
+          <SpotCard key={s ? s.id : `empty-${i}`} s={s} emptyText={emptyText} />
         ))}
       </div>
     </section>
@@ -187,13 +188,30 @@ const ORG_PALETTE: [string, string][] = [
   ["#f3c053", "#d18a1f"],
 ];
 
-function LastJoinedStrip() {
+function formatCLP(value: number): string {
+  return `$${value.toLocaleString("es-CL")}`;
+}
+
+function LastJoinedStrip({
+  settings,
+  stats,
+  eventMinPrice,
+}: {
+  settings: Record<string, string>;
+  stats?: { approvedEvents: number; organizers: number };
+  eventMinPrice: number;
+}) {
+  const n = (k: string, fb: number) => parseInt(settings[k] ?? "", 10) || fb;
+  const organizerCount = stats?.organizers ?? 500;
+  const credits = n("SUBSCRIPTION_CREDITS", 10);
+  const spotsMax = n("SPOT_MAX_ACTIVE", 12);
+
   return (
     <section className="lj">
       <div className="text">
-        <h3>Únete a +500 organizadores</h3>
+        <h3>Únete a +{organizerCount} organizadores</h3>
         <p>
-          Llega a miles de fans geek y otaku en Chile. Publica desde $4.990 / día o suscríbete y publica hasta 10 eventos al mes.
+          Llega a miles de fans geek y otaku en Chile. Publica desde {formatCLP(eventMinPrice)} / día o suscríbete y publica hasta {credits} eventos al mes.
         </p>
       </div>
       <div className="right">
@@ -207,7 +225,7 @@ function LastJoinedStrip() {
               {String.fromCharCode(65 + i)}
             </span>
           ))}
-          <span className="ob more">+500</span>
+          <span className="ob more">+{organizerCount}</span>
         </div>
         <Link className="btn primary lg" href="/crear">
           Publicar mi evento{" "}
@@ -220,6 +238,12 @@ function LastJoinedStrip() {
   );
 }
 
+/* ─── SpotCard empty text ─────────────────────────────── */
+function spotEmptyText(settings: Record<string, string>): string {
+  const n = (k: string, fb: number) => parseInt(settings[k] ?? "", 10) || fb;
+  return `${n("SPOT_MAX_ACTIVE", 12)} cupos · placement global en home y categorías.`;
+}
+
 /* ─── HomeView principal ─────────────────────────────── */
 type Props = {
   items: EventItem[];
@@ -227,9 +251,12 @@ type Props = {
   slides: HeroSlide[];
   spots: ApiSpot[];
   articles: ApiArticle[];
+  settings?: Record<string, string>;
+  stats?: { approvedEvents: number; organizers: number };
+  eventMinPrice?: number;
 };
 
-export function HomeView({ items, categories, slides, spots, articles }: Props) {
+export function HomeView({ items, categories, slides, spots, articles, settings = {}, stats, eventMinPrice = 4990 }: Props) {
   const byCategory = (slug: string) => items.filter((e) => e.catSlug === slug);
 
   // Top 4 categorías con eventos
@@ -250,7 +277,7 @@ export function HomeView({ items, categories, slides, spots, articles }: Props) 
       )}
 
       {/* Avisos — spots con CTAs de "Contratar aviso" en slots vacíos */}
-      <SpotsStrip spots={spots} />
+      <SpotsStrip spots={spots} settings={settings} />
 
       {/* Rails por categoría */}
       {topCats.map((cat) => {
@@ -273,7 +300,7 @@ export function HomeView({ items, categories, slides, spots, articles }: Props) 
       <ServicesStrip />
 
       {/* CTA organizadores */}
-      <LastJoinedStrip />
+      <LastJoinedStrip settings={settings} stats={stats} eventMinPrice={eventMinPrice} />
     </main>
   );
 }

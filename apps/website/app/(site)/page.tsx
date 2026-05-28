@@ -52,20 +52,30 @@ export default async function HomePage() {
   let categories: Awaited<ReturnType<typeof api.eventCategories>> = [];
   let spots: ApiSpot[] = [];
   let articles: ApiArticle[] = [];
+  let settings: Record<string, string> = {};
+  let stats: { approvedEvents: number; organizers: number } | undefined;
+  let eventMinPrice = 4990;
 
   try {
-    const [list, cats, heroes, fetchedSpots, fetchedArticles] = await Promise.all([
+    const [list, cats, heroes, fetchedSpots, fetchedArticles, fetchedSettings, fetchedStats] = await Promise.all([
       api.events({ pageSize: 60 }),
       api.eventCategories(),
       api.heroes(),
       fetchSpots(),
       fetchArticles(),
+      api.settingsPublic().catch(() => ({} as Record<string, string>)),
+      api.statsPublic().catch(() => undefined as { approvedEvents: number; organizers: number } | undefined),
     ]);
     items = list.items.map(toEventItem);
     slides = heroes.map(toHeroSlide);
     categories = cats;
     spots = fetchedSpots;
     articles = fetchedArticles;
+    settings = fetchedSettings;
+    stats = fetchedStats;
+    if (cats.length > 0) {
+      eventMinPrice = Math.min(...cats.map((c) => c.pricePerDay));
+    }
   } catch {
     // API no disponible — la home se muestra sin contenido.
   }
@@ -77,6 +87,9 @@ export default async function HomePage() {
       slides={slides}
       spots={spots}
       articles={articles}
+      settings={settings}
+      stats={stats}
+      eventMinPrice={eventMinPrice}
     />
   );
 }

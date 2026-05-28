@@ -3,9 +3,9 @@ import { PrismaService } from '../../utils/prisma/prisma.service';
 
 /**
  * Prefijos de claves expuestas en GET /settings/public.
- * Cualquier otra clave (SUBSCRIPTION_*, futuros admin-only) NO se expone.
+ * ARTICLE_PRICE y cualquier otra clave admin-only NO se expone.
  */
-const PUBLIC_PREFIXES = ['SPOT_', 'HERO_'] as const;
+const PUBLIC_PREFIXES = ['SPOT_', 'HERO_', 'EVENT_', 'SUBSCRIPTION_'] as const;
 
 @Injectable()
 export class SettingsService {
@@ -55,8 +55,8 @@ export class SettingsService {
   }
 
   /**
-   * Mapa público {key: value} de las claves SPOT_* y HERO_*. Sin auth.
-   * El frontend lo consume para mostrar precios y cupos al usuario.
+   * Mapa público {key: value} de las claves SPOT_*, HERO_*, EVENT_* y SUBSCRIPTION_*. Sin auth.
+   * El frontend lo consume para mostrar precios, cupos y opciones de suscripción al usuario.
    */
   async getPublic(): Promise<Record<string, string>> {
     const all = await this.prisma.settings.findMany();

@@ -10,9 +10,6 @@ interface Props {
   categories: ApiArticleCategory[];
 }
 
-// Slugs de categorías que muestran rails, en orden de aparición
-const RAIL_SLUGS = ["anime", "manga", "cine", "gaming"];
-
 export function NoticiasHubView({ articles, categories }: Props) {
   const router = useRouter();
 
@@ -26,8 +23,19 @@ export function NoticiasHubView({ articles, categories }: Props) {
   // Patrocinado = primer artículo con isSponsored: true
   const sponsored = articles.find((a) => a.isSponsored);
 
-  // Rails por categoría
-  const railsData = RAIL_SLUGS.map((slug) => {
+  // Top 5 categorías con más artículos en el batch (dinámico)
+  const catCounts: Record<string, number> = {};
+  for (const a of articles) {
+    const slug = a.articleCategory?.slug;
+    if (slug) catCounts[slug] = (catCounts[slug] ?? 0) + 1;
+  }
+  const topSlugs = Object.entries(catCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([slug]) => slug);
+
+  // Rails por las top 5 categorías
+  const railsData = topSlugs.map((slug) => {
     const cat = categories.find((c) => c.slug === slug);
     const items = articles
       .filter((a) => a.articleCategory?.slug === slug)

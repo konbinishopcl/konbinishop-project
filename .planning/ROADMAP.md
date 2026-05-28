@@ -109,4 +109,24 @@ Plans:
 
 ---
 
+### Phase 20: Flujo completo de Avisos y Portadas — Spots y Heroes end-to-end
+
+**Goal:** Implementar el flujo completo de Avisos (Spots) y Portadas (Heroes) de punta a punta: (1) formularios públicos /crear-producto/spot y /crear-producto/hero con validación Zod, errores bajo cada campo, subida de imagen real, y envío correcto a la API; (2) flujo upsell /crear/upsell con mismas validaciones; (3) SpotsSection y HeroesSection del dashboard conectadas a API real (listar, aprobar, rechazar, banear); (4) tipos ApiSpot/ApiHero completos en lib/api.ts; (5) campos description y buttonText del Spot agregados al DTO si son relevantes o removidos del frontend si no.
+
+**Requirements**: SPOT-01..SPOT-10, HERO-01..HERO-08
+
+**Depends on:** Phase 15 (UI system), Phase 13 (sponsored articles pattern), Phase 12 (orders/cart integration)
+
+**Plans:** 5 plans (3 waves)
+
+Plans:
+
+- [ ] 20-01-PLAN.md — Backend: optional ?status= filter on GET /spots + /heroes (admin list) (wave 1)
+- [ ] 20-02-PLAN.md — lib/api.ts ApiSpot/ApiHero types + spot/hero methods + .field-error CSS (wave 1)
+- [ ] 20-03-PLAN.md — CreateProductView spot + hero forms: upload, Zod, days-to-cart (wave 2)
+- [ ] 20-04-PLAN.md — UpsellView SpotForm + HeroForm: same fixes (wave 2)
+- [ ] 20-05-PLAN.md — SpotsSection + HeroesSection dashboard wired to real API (wave 3)
+
+---
+
 *Roadmap creado: 2026-03-23 · v1.0 shipped: 2026-05-27*

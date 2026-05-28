@@ -184,7 +184,7 @@ export function ArticleView({ article, related, linkedEvent, relatedEvents }: Ar
               }}
             >
               {article.articleTags.map((t) => (
-                <Link key={t.id} href="/noticias" className="pill">
+                <Link key={t.id} href={`/noticias/tags/${t.slug}`} className="pill">
                   {t.name}
                 </Link>
               ))}

@@ -106,8 +106,38 @@ export type ApiEventTag = {
 export type ApiArticleCategory = {
   id: number;
   name: string | null;
+  nameJa?: string | null;
   slug: string;
   description: string | null;
+};
+
+export type ApiArticleEvent = {
+  id: number;
+  slug: string;
+  title: string;
+  poster: string | null;
+  banner: string | null;
+  dates: { id: number; date: string | null }[];
+  city: { name: string } | null;
+  category: { name: string; slug: string } | null;
+};
+
+export type ApiArticle = {
+  id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  content: string;
+  image: string | null;
+  status: string;
+  userId: number | null;
+  isSponsored: boolean;
+  createdAt: string;
+  articleCategory: ApiArticleCategory | null;
+  articleTags: { id: number; name: string; slug: string }[];
+  tags: { id: number; name: string; slug: string }[];
+  events?: ApiArticleEvent[];
+  _count?: { likes: number };
 };
 
 export type ApiArticleTag = {
@@ -286,6 +316,15 @@ export const api = {
   eventTags:       () => request<ApiEventTag[]>("/event-tags"),
   articleCategories: () => request<ApiArticleCategory[]>("/article-categories"),
   articleTags:     () => request<ApiArticleTag[]>("/article-tags"),
+  articles: (query?: { page?: number; pageSize?: number; articleCategory?: string }) =>
+    request<{ items: ApiArticle[]; total: number; page: number; pageSize: number; totalPages: number }>(
+      `/articles${qs(query ?? {})}`
+    ),
+  article: (slug: string) => request<ApiArticle>(`/articles/${slug}`),
+  likeArticle: (id: number, token: string) =>
+    request<{ ok: boolean }>(`/articles/${id}/like`, { method: "POST" }, token),
+  unlikeArticle: (id: number, token: string) =>
+    request<{ ok: boolean }>(`/articles/${id}/like`, { method: "DELETE" }, token),
   regions: (country?: string) => request<ApiRegion[]>(`/states${country ? `?country=${encodeURIComponent(country)}` : ""}`),
   communes: (region?: string) =>
     request<ApiCommune[]>(`/cities${region ? `?state=${encodeURIComponent(region)}` : ""}`),

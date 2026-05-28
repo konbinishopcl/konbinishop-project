@@ -1380,3 +1380,34 @@
 /* list-row used as Link anchor needs display:block */
 a.list-row { display: grid; text-decoration: none; color: inherit; }
 a.list-row:hover { transform: translateY(-2px); border-color: var(--line-2); }
+
+/* ───── news mega menu ───── */
+.mega-bg { position: fixed; left: 0; right: 0; top: var(--mega-top, 72px); z-index: 70; background: color-mix(in oklab, var(--surface) 96%, transparent); backdrop-filter: blur(24px) saturate(160%); border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); box-shadow: 0 24px 60px -20px rgba(0,0,0,.4); animation: megaIn .18s cubic-bezier(.2,.7,.3,1) both; }
+@keyframes megaIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.mega-inner { max-width: 1280px; margin: 0 auto; padding: 28px 32px; display: grid; grid-template-columns: 280px 1fr; gap: 36px; }
+.mega-aside { border-right: 1px solid var(--line); padding-right: 28px; }
+.mega-aside .label { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; color: var(--ink-3); text-transform: uppercase; margin-bottom: 14px; }
+.mega-aside h3 { font-family: var(--font-display); font-size: 32px; letter-spacing: -.02em; margin: 0 0 8px; line-height: 1.05; }
+.mega-aside p { color: var(--ink-3); font-size: 13px; line-height: 1.55; margin: 0 0 22px; }
+.mega-aside .mega-cta { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; }
+.mega-flat { columns: 4; column-gap: 32px; }
+.mega-flat button { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px; border-radius: 8px; color: var(--ink-2); font-size: 14px; font-weight: 500; text-align: left; transition: background .12s, color .12s; width: 100%; break-inside: avoid; }
+.mega-flat button:hover { background: var(--surface-2); color: var(--ink); }
+.mega-flat button.on { color: var(--ink); background: var(--surface-2); }
+.mega-flat button .ja { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); letter-spacing: .04em; flex-shrink: 0; }
+.mega-flat button.on .ja { color: var(--accent); }
+@media (max-width: 960px) {
+  .mega-inner { grid-template-columns: 1fr; gap: 22px; padding: 22px; }
+  .mega-aside { border-right: 0; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: 18px; }
+  .mega-flat { columns: 2; }
+}
+@media (max-width: 640px) {
+  .mega-bg { display: none; }
+}
+
+/* ───── article card like button ───── */
+.a-like { position: absolute; bottom: 10px; right: 10px; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: rgba(0,0,0,.55); backdrop-filter: blur(8px); color: #fff; font-size: 12px; font-weight: 600; border: 1px solid rgba(255,255,255,.15); transition: background .15s, color .15s; }
+.a-like:hover { background: rgba(0,0,0,.75); }
+.a-like.on { background: var(--accent); border-color: var(--accent); }
+.a-like.on svg { fill: #fff; }
+.a-rel { display: inline-flex; align-items: center; gap: 4px; }

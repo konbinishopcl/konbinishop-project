@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { api, imageUrl, type ApiOrder, type ApiOrderItem, type OrderItemKind } from "@/lib/api";
@@ -33,7 +33,15 @@ function itemImage(item: ApiOrderItem): string | null {
 
 export function CartView() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, token, ready } = useUser();
+
+  // Show feedback when returning from a failed/aborted payment
+  useEffect(() => {
+    const reason = searchParams.get("reason");
+    if (reason === "aborted") toast.info("Pago cancelado. Tu carrito sigue intacto.");
+    else if (reason === "failed") toast.error("El pago fue rechazado. Puedes reintentar.");
+  }, []);
 
   const [order, setOrder] = useState<ApiOrder | null>(null);
   const [loading, setLoading] = useState(true);

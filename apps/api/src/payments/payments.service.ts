@@ -83,7 +83,20 @@ export class PaymentsService {
     // tbkToken presente = transacción abortada por el usuario
     if (!tokenWs) {
       this.logger.warn('Transbank callback without token_ws (aborted)');
-      return `${frontendUrl}/carrito/error?reason=aborted`;
+      // Revert order back to DRAFT so the cart can be used again
+      if (tbkToken) {
+        const abortedOrder = await this.prisma.order.findFirst({
+          where: { externalId: tbkToken },
+        });
+        if (abortedOrder && abortedOrder.status === OrderStatus.PENDING_PAYMENT) {
+          await this.prisma.order.update({
+            where: { id: abortedOrder.id },
+            data: { status: OrderStatus.DRAFT, externalId: null },
+          });
+          this.logger.log(`Order ${abortedOrder.id} reverted to DRAFT after user abort`);
+        }
+      }
+      return `${frontendUrl}/carrito?reason=aborted`;
     }
 
     const order = await this.prisma.order.findFirst({
@@ -117,12 +130,13 @@ export class PaymentsService {
     const confirmation = await pg.confirm(tokenWs);
 
     if (!confirmation.success) {
+      // Revert to DRAFT so the user can retry with the same cart
       await this.prisma.order.update({
         where: { id: order.id },
-        data: { status: OrderStatus.FAILED },
+        data: { status: OrderStatus.DRAFT, externalId: null },
       });
-      this.logger.warn(`Order ${order.id} payment failed — code ${confirmation.responseCode}`);
-      return `${frontendUrl}/carrito/error?orderId=${order.id}&code=${confirmation.responseCode}`;
+      this.logger.warn(`Order ${order.id} payment failed — code ${confirmation.responseCode} — reverted to DRAFT`);
+      return `${frontendUrl}/carrito?reason=failed&code=${confirmation.responseCode}`;
     }
 
     // Pago exitoso → activar ítems (incluye increment de creditsUsed si aplica)

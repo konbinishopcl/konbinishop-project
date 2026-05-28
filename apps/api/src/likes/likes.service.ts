@@ -21,6 +21,14 @@ export class LikesService {
     return { liked: true, likes: count };
   }
 
+  async status(target: LikeTarget, targetId: number, user: JwtUser) {
+    const existing = await this.prisma.like.findFirst({
+      where: { userId: user.sub, [`${target}Id`]: targetId },
+    });
+    const count = await this.countLikes(target, targetId);
+    return { liked: !!existing, likes: count };
+  }
+
   async unlike(target: LikeTarget, targetId: number, user: JwtUser) {
     const existing = await this.prisma.like.findFirst({
       where: { userId: user.sub, [`${target}Id`]: targetId },

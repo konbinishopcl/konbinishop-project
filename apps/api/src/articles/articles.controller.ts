@@ -162,4 +162,12 @@ export class ArticlesController {
   unlike(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
     return this.likes.unlike('article', id, user);
   }
+
+  @Get(':id/like')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Estado de like del usuario actual para un artículo' })
+  likeStatus(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: JwtUser) {
+    return this.likes.status('article', id, user);
+  }
 }

@@ -10,6 +10,13 @@ import { Roles } from '../auth/roles.decorator';
 export class StatsController {
   constructor(private readonly stats: StatsService) {}
 
+  // CRÍTICO: 'public' declarado ANTES del @Get() admin — sin @UseGuards.
+  @Get('public')
+  @ApiOperation({ summary: 'KPIs públicos (sin auth)' })
+  getPublic() {
+    return this.stats.getPublicStats();
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SUPER_ADMIN')

@@ -1,30 +1,24 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import type { ApiArticleCategory } from "@/lib/api";
 
 interface Props {
+  categories: ApiArticleCategory[];
   onClose: () => void;
 }
 
-export function NewsMegaMenu({ onClose }: Props) {
+export function NewsMegaMenu({ categories, onClose }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const [categories, setCategories] = useState<ApiArticleCategory[]>([]);
 
-  // Fetch categories on mount
-  useEffect(() => {
-    fetch("/api/article-categories")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: ApiArticleCategory[]) => {
-        // Sort alphabetically by name
-        const sorted = [...data].sort((a, b) =>
-          (a.name ?? a.slug).localeCompare(b.name ?? b.slug, "es")
-        );
-        setCategories(sorted);
-      })
-      .catch(() => setCategories([]));
-  }, []);
+  // Sort alphabetically — memoized, no fetch needed
+  const sorted = useMemo(
+    () => [...categories].sort((a, b) =>
+      (a.name ?? a.slug).localeCompare(b.name ?? b.slug, "es")
+    ),
+    [categories]
+  );
 
   // Detect current category slug from pathname (e.g. /noticias/categoria/anime)
   const currentSlug = pathname.startsWith("/noticias/categoria/")
@@ -65,7 +59,7 @@ export function NewsMegaMenu({ onClose }: Props) {
         </aside>
 
         <div className="mega-flat">
-          {categories.map((c) => (
+          {sorted.map((c) => (
             <button
               key={c.slug}
               className={currentSlug === c.slug ? "on" : ""}

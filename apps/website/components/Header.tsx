@@ -8,9 +8,15 @@ import { Ic } from "./icons";
 import { NewsMegaMenu } from "./NewsMegaMenu";
 import { useTheme, useUser } from "./providers";
 import { UserMenu } from "./UserMenu";
-import type { ApiEventCategory } from "@/lib/api";
+import type { ApiEventCategory, ApiArticleCategory } from "@/lib/api";
 
-export function Header({ categories = [] }: { categories?: ApiEventCategory[] }) {
+export function Header({
+  categories = [],
+  articleCategories = [],
+}: {
+  categories?: ApiEventCategory[];
+  articleCategories?: ApiArticleCategory[];
+}) {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useUser();
   const router = useRouter();
@@ -320,7 +326,7 @@ export function Header({ categories = [] }: { categories?: ApiEventCategory[] })
       )}
     </header>
     {newsMenuOpen && (
-      <NewsMegaMenu onClose={() => setNewsMenuOpen(false)} />
+      <NewsMegaMenu categories={articleCategories} onClose={() => setNewsMenuOpen(false)} />
     )}
     </>
   );

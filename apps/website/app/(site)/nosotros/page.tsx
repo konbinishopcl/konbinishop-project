@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { api } from "@/lib/api";
+import { INSTAGRAM_FOLLOWERS } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Sobre Konbini — El directorio de cultura geek en Chile",
@@ -11,7 +13,8 @@ const TEAM = [
   { initials: "G", name: "Gabriel B.", role: "Tecnología", color: "#3b9eff" },
 ];
 
-export default function NosotrosPage() {
+export default async function NosotrosPage() {
+  const stats = await api.statsPublic().catch(() => ({ approvedEvents: 1200, organizers: 300 }));
   return (
     <main className="container" style={{ paddingBottom: 80 }}>
       {/* Hero */}
@@ -120,9 +123,9 @@ export default function NosotrosPage() {
         }}
       >
         {[
-          ["244K+", "SEGUIDORES INSTAGRAM"],
-          ["1.200+", "EVENTOS PUBLICADOS"],
-          ["300+", "ORGANIZADORES"],
+          [`${INSTAGRAM_FOLLOWERS}+`, "SEGUIDORES INSTAGRAM"],
+          [`${stats.approvedEvents.toLocaleString("es-CL")}+`, "EVENTOS PUBLICADOS"],
+          [`${stats.organizers.toLocaleString("es-CL")}+`, "ORGANIZADORES"],
           ["2024", "AÑO DE FUNDACIÓN"],
         ].map((s, i, arr) => (
           <div

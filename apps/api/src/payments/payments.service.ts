@@ -83,7 +83,7 @@ export class PaymentsService {
     // tbkToken presente = transacción abortada por el usuario
     if (!tokenWs) {
       this.logger.warn('Transbank callback without token_ws (aborted)');
-      return `${frontendUrl}/checkout/failed?reason=aborted`;
+      return `${frontendUrl}/carrito/error?reason=aborted`;
     }
 
     const order = await this.prisma.order.findFirst({
@@ -98,19 +98,19 @@ export class PaymentsService {
 
     if (!order) {
       this.logger.error(`No order found for Transbank token: ${tokenWs}`);
-      return `${frontendUrl}/checkout/failed?reason=not_found`;
+      return `${frontendUrl}/carrito/error?reason=not_found`;
     }
 
     // Idempotencia: si el callback llega duplicado después de un pago exitoso,
     // devolvemos success sin volver a llamar a Transbank (evita que marque como FAILED).
     if (order.status === OrderStatus.PAID) {
       this.logger.warn(`Duplicate callback for already-paid order ${order.id}`);
-      return `${frontendUrl}/checkout/success?orderId=${order.id}`;
+      return `${frontendUrl}/carrito/exito?orderId=${order.id}`;
     }
 
     if (order.status !== OrderStatus.PENDING_PAYMENT) {
       this.logger.warn(`Callback for order ${order.id} in unexpected status: ${order.status}`);
-      return `${frontendUrl}/checkout/failed?reason=invalid_state`;
+      return `${frontendUrl}/carrito/error?reason=invalid_state`;
     }
 
     const pg = this.gatewayFactory.get(GatewayType.TRANSBANK);
@@ -122,7 +122,7 @@ export class PaymentsService {
         data: { status: OrderStatus.FAILED },
       });
       this.logger.warn(`Order ${order.id} payment failed — code ${confirmation.responseCode}`);
-      return `${frontendUrl}/checkout/failed?orderId=${order.id}&code=${confirmation.responseCode}`;
+      return `${frontendUrl}/carrito/error?orderId=${order.id}&code=${confirmation.responseCode}`;
     }
 
     // Pago exitoso → activar ítems (incluye increment de creditsUsed si aplica)
@@ -143,7 +143,7 @@ export class PaymentsService {
       );
     }
 
-    return `${frontendUrl}/checkout/success?orderId=${order.id}`;
+    return `${frontendUrl}/carrito/exito?orderId=${order.id}`;
   }
 
   // ── Activación de ítems al confirmar el pago ──

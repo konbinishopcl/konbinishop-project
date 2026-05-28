@@ -235,7 +235,7 @@ export function NoticiasHubView({ articles, categories }: Props) {
               {sortedCats.length} categorías editoriales
             </h2>
           </div>
-          <div style={{ columns: 4, columnGap: 40 }} className="explore-cats">
+          <div style={{ columns: 3, columnGap: 40 }} className="explore-cats">
             {sortedCats.map((c) => (
               <button
                 key={c.slug}

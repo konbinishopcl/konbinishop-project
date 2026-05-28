@@ -13,6 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import { useUser } from "./providers";
+import { setOrgContext } from "@/lib/api";
 
 type OrgEntry = { id: number; name: string | null; handle: string | null };
 
@@ -22,6 +23,7 @@ export function UserMenu({ size = 40 }: { size?: number }) {
   const pathname  = usePathname();
   const [open, setOpen] = useState(false);
   const [orgs, setOrgs] = useState<OrgEntry[]>([]);
+  const [activeOrg, setActiveOrg] = useState<OrgEntry | null>(null);
 
   // Load user's organizations when menu opens
   useEffect(() => {
@@ -61,12 +63,14 @@ export function UserMenu({ size = 40 }: { size?: number }) {
               Operando como
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
-                {user.initials}
+              <div style={{ width: 32, height: 32, borderRadius: 999, background: activeOrg ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
+                {activeOrg ? (activeOrg.name ?? "O")[0].toUpperCase() : user.initials}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="nm">{user.name}</div>
-                <div className="em" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+                <div className="nm">{activeOrg ? (activeOrg.name ?? activeOrg.handle) : user.name}</div>
+                <div className="em" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {activeOrg ? (activeOrg.handle ? `@${activeOrg.handle}` : "Organización") : user.email}
+                </div>
               </div>
             </div>
           </div>
@@ -75,22 +79,32 @@ export function UserMenu({ size = 40 }: { size?: number }) {
           <div style={{ padding: "4px 10px 2px", fontFamily: "var(--font-mono)", fontSize: 9, letterSpacing: ".18em", color: "var(--ink-3)", textTransform: "uppercase" }}>
             Cambiar de cuenta
           </div>
-          <button style={{ background: "var(--surface-2)", color: "var(--ink)" }}>
+          <button
+            style={{ background: !activeOrg ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
+            onClick={() => { setActiveOrg(null); setOrgContext(null); close(); }}
+          >
             <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
               {user.initials}
             </span>
             <span style={{ flex: 1 }}>Cuenta personal</span>
-            <Check size={14} style={{ color: "var(--accent)" }} />
+            {!activeOrg && <Check size={14} style={{ color: "var(--accent)" }} />}
           </button>
           {orgs.map(org => (
-            <button key={org.id} onClick={() => go("/cuenta/organizaciones")} style={{ color: "var(--ink)" }}>
+            <button
+              key={org.id}
+              style={{ background: activeOrg?.id === org.id ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
+              onClick={() => { setActiveOrg(org); setOrgContext(org.id); close(); }}
+            >
               <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
                 {(org.name ?? "O")[0].toUpperCase()}
               </span>
               <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {org.name ?? org.handle ?? "Organización"}
               </span>
-              {org.handle && <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)" }}>@{org.handle}</span>}
+              {activeOrg?.id === org.id
+                ? <Check size={14} style={{ color: "var(--accent)" }} />
+                : org.handle && <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)" }}>@{org.handle}</span>
+              }
             </button>
           ))}
           <button onClick={() => go("/cuenta/organizaciones")} style={{ color: "var(--ink-3)", fontSize: 12 }}>

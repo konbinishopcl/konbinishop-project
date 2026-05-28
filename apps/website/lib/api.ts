@@ -9,6 +9,11 @@ function apiBase(): string {
     : "/api";
 }
 
+// Active org context — set by UserMenu when switching accounts
+let _activeOrgId: number | null = null;
+export function setOrgContext(orgId: number | null) { _activeOrgId = orgId; }
+export function getOrgContext(): number | null { return _activeOrgId; }
+
 function buildHeaders(token?: string): Record<string, string> {
   const h: Record<string, string> = { "Content-Type": "application/json" };
   if (typeof window === "undefined") {
@@ -16,6 +21,7 @@ function buildHeaders(token?: string): Record<string, string> {
     if (key) h["X-API-Key"] = key;
   }
   if (token) h["Authorization"] = `Bearer ${token}`;
+  if (_activeOrgId) h["X-Org-Context"] = String(_activeOrgId);
   return h;
 }
 

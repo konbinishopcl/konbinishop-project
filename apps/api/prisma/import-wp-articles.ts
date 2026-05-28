@@ -10,6 +10,7 @@
  * Run: npx ts-node prisma/import-wp-articles.ts
  */
 import { PrismaClient } from '@prisma/client';
+import slugify from 'slugify';
 
 const prisma = new PrismaClient();
 const WP_API   = 'https://konbinishop.com/wp-json/wp/v2';
@@ -128,12 +129,15 @@ function extractHashtags(text: string): string[] {
 }
 
 function slugifyTag(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  return slugify(name, { lower: true, strict: true, locale: 'es' });
+}
+
+function cleanWpSlug(wpSlug: string): string {
+  try {
+    return slugify(decodeURIComponent(wpSlug), { lower: true, strict: true, locale: 'es' });
+  } catch {
+    return slugify(wpSlug, { lower: true, strict: true, locale: 'es' });
+  }
 }
 
 // ── WP API helpers ─────────────────────────────────────────────────────────
@@ -265,12 +269,13 @@ async function main() {
       }
 
       // Upsert article
-      const existing = await prisma.article.findUnique({ where: { slug: post.slug } });
+      const articleSlug = cleanWpSlug(post.slug);
+      const existing = await prisma.article.findUnique({ where: { slug: articleSlug } });
       const postDate = new Date(post.date);
 
       if (existing) {
         await prisma.article.update({
-          where: { slug: post.slug },
+          where: { slug: articleSlug },
           data: {
             title,
             content,
@@ -288,7 +293,7 @@ async function main() {
         await prisma.article.create({
           data: {
             title,
-            slug: post.slug,
+            slug: articleSlug,
             content,
             excerpt,
             image,
@@ -306,7 +311,7 @@ async function main() {
       process.stdout.write(existing ? 'u' : '+');
     } catch (e: any) {
       process.stdout.write('!');
-      console.error(`\n  Error on "${post.slug}": ${e.message}`);
+      console.error(`\n  Error on "${cleanWpSlug(post.slug)}": ${e.message}`);
       failed++;
     }
   }

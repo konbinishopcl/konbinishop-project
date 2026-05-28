@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -14,17 +14,31 @@ import {
 } from "lucide-react";
 import { useUser } from "./providers";
 
+type OrgEntry = { id: number; name: string | null; handle: string | null };
+
 export function UserMenu({ size = 40 }: { size?: number }) {
-  const { user, logout } = useUser();
-  const router   = useRouter();
-  const pathname = usePathname();
+  const { user, token, logout } = useUser();
+  const router    = useRouter();
+  const pathname  = usePathname();
   const [open, setOpen] = useState(false);
+  const [orgs, setOrgs] = useState<OrgEntry[]>([]);
+
+  // Load user's organizations when menu opens
+  useEffect(() => {
+    if (!open || !token) return;
+    fetch("/api/organizations/mine", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: { id: number; firstname?: string | null; name?: string | null; handle?: string | null }[]) =>
+        setOrgs(data.map(o => ({ id: o.id, name: o.firstname ?? o.name ?? null, handle: o.handle ?? null })))
+      )
+      .catch(() => {});
+  }, [open, token]);
 
   if (!user) return null;
 
-  const close      = () => setOpen(false);
-  const go         = (href: string) => { close(); router.push(href); };
-  const isAdmin    = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
+  const close       = () => setOpen(false);
+  const go          = (href: string) => { close(); router.push(href); };
+  const isAdmin     = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
   const inDashboard = pathname?.startsWith("/dashboard");
 
   return (
@@ -68,6 +82,17 @@ export function UserMenu({ size = 40 }: { size?: number }) {
             <span style={{ flex: 1 }}>Cuenta personal</span>
             <Check size={14} style={{ color: "var(--accent)" }} />
           </button>
+          {orgs.map(org => (
+            <button key={org.id} onClick={() => go("/cuenta/organizaciones")} style={{ color: "var(--ink)" }}>
+              <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
+                {(org.name ?? "O")[0].toUpperCase()}
+              </span>
+              <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {org.name ?? org.handle ?? "Organización"}
+              </span>
+              {org.handle && <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)" }}>@{org.handle}</span>}
+            </button>
+          ))}
           <button onClick={() => go("/cuenta/organizaciones")} style={{ color: "var(--ink-3)", fontSize: 12 }}>
             <span style={{ width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
               <Plus size={14} />

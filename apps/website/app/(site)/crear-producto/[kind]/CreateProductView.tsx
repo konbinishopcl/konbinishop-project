@@ -174,7 +174,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
               <div className="field">
                 <label>Días de publicación <span style={{ color: "var(--err)" }}>*</span></label>
                 <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                  <input type="range" min="10" max="30" value={days} onChange={e => setDays(+e.target.value)} style={{ flex: 1 }} />
+                  <input type="range" min="10" max="30" value={days} onChange={e => setDays(+e.target.value)} style={{ flex: 1, "--fill": `${((days - 10) / 20) * 100}%` } as React.CSSProperties} />
                   <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, minWidth: 80, textAlign: "right" }}>{days} días</div>
                 </div>
                 <div className="help">$8.000 CLP / día → <strong>${(days * 8000).toLocaleString("es-CL")} CLP total</strong></div>
@@ -227,7 +227,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
               <div className="field">
                 <label>Días de publicación <span style={{ color: "var(--err)" }}>*</span></label>
                 <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                  <input type="range" min="10" max="30" value={days} onChange={e => setDays(+e.target.value)} style={{ flex: 1 }} />
+                  <input type="range" min="10" max="30" value={days} onChange={e => setDays(+e.target.value)} style={{ flex: 1, "--fill": `${((days - 10) / 20) * 100}%` } as React.CSSProperties} />
                   <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, minWidth: 80, textAlign: "right" }}>{days} días</div>
                 </div>
                 <div className="help">$15.000 CLP / día → <strong>${(days * 15000).toLocaleString("es-CL")} CLP total</strong></div>

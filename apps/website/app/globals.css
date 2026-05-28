@@ -353,6 +353,8 @@
   .upload-box .ic { width: 36px; height: 36px; border-radius: 999px; background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); }
   .upload-box small { font-size: 11px; }
 
+  .field-error { color: var(--err); font-size: 12px; margin-top: 5px; line-height: 1.4; }
+
   .form-foot {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
     padding: 18px 0;

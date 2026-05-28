@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-28T20:46:07.556Z"
+last_updated: "2026-05-28T20:49:30.119Z"
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 23
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28T20:46:07.553Z
+**Last session:** 2026-05-28T20:49:24.252Z
 
 ## Phase Summary
 
@@ -165,6 +165,8 @@ administrador quedan visibles al público.
 - [Phase 20-01]: Admin list returns paginated { items, total, page, pageSize, totalPages } shape — same as events. Hero eventCategory always included in both public and admin responses.
 - [Phase 20-04]: Zod schemas at module scope above components to avoid recreation on every render; SITE_HOST import removed as neither form needs it; subtitle state kept but titleAccent used as key in API call
 - [Phase 20-03]: Zod schemas at module scope above components to avoid recreation on every render; SITE_HOST import removed; subtitle state kept but titleAccent used as key in createHero API call
+- [Phase 20-05]: Quota badge refreshed after every moderation action (approve/reject/ban) not only on mount, to keep active/max count current
+- [Phase 20-05]: AdminRejectModal reused for ban (kind='aviso/portada (ban)') because /ban endpoint requires { reason } >= 3 chars; ConfirmDialog deleted as it became unused
 
 ## Quick Tasks Completed
 

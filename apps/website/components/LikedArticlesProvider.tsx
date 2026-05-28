@@ -29,12 +29,15 @@ export function LikedArticlesProvider({
 
   useEffect(() => {
     if (!token || !ids.length) return;
+    const controller = new AbortController();
     fetch(`/api/articles/liked-ids?ids=${idsKey}`, {
       headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal,
     })
       .then((r) => (r.ok ? r.json() : []))
       .then((data: number[]) => setLikedSet(new Set(data)))
       .catch(() => {});
+    return () => controller.abort();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, idsKey]);
 

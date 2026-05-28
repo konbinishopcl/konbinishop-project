@@ -641,7 +641,7 @@
 .lj-stack .more { background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 12px; }
 
 /* ─────────── STICKY FILTERS ─────────── */
-.fbar-sticky { position: sticky; top: 72px; z-index: 40; background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); margin: 0 -24px 32px; padding: 14px 24px; }
+.fbar-sticky { position: sticky; top: 72px; z-index: 40; background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 999px; margin: 0 0 32px; padding: 10px 16px; }
 .fbar-inner { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .fbar-inner .group { display: flex; gap: 8px; align-items: center; }
 .fbar-inner .vline { width: 1px; height: 22px; background: var(--line); }
@@ -1195,7 +1195,7 @@
   .event-grid { gap: 24px; }
   .ticket-panel { position: static; }
   .art-grid { gap: 32px; }
-  .fbar-sticky { margin: 0 -16px 24px; padding: 12px 16px; overflow-x: auto; }
+  .fbar-sticky { margin: 0 0 24px; padding: 8px 12px; overflow-x: auto; border-radius: 24px; }
   .fbar-inner { flex-wrap: nowrap; min-width: max-content; }
   .pag-bar { flex-direction: column; align-items: stretch; gap: 14px; }
   .pag-info { justify-content: center; }

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { ApiEventCategory } from "@/lib/api";
+import { SITE_HOST } from "@/lib/site";
 
 type Field = {
   k: string;
@@ -14,7 +15,7 @@ type Field = {
 
 const FIELDS: Field[] = [
   { k: "name",        label: "Nombre",             required: true, placeholder: "Anime" },
-  { k: "slug",        label: "Slug (URL)",          required: true, prefix: "konbini.cl/", placeholder: "anime" },
+  { k: "slug",        label: "Slug (URL)",          required: true, prefix: `${SITE_HOST}/`, placeholder: "anime" },
   { k: "icon",        label: "Icono (Lucide)",      placeholder: "calendar" },
   { k: "color",       label: "Color (hex)",         placeholder: "#FF6B00" },
   { k: "pricePerDay", label: "Precio por día CLP",  type: "number", required: true, placeholder: "4990" },

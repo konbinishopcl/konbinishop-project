@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
+import { SITE_HOST } from "@/lib/site";
 import { Ic } from "@/components/icons";
 
 type Kind = "spot" | "hero" | "articulo";
@@ -48,7 +49,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
   const [spotLinkValue, setSpotLinkValue] = useState("");
   const [spotBtnText, setSpotBtnText]     = useState("");
 
-  const spotLinkPrefix      = spotLinkType === "url" ? "https://" : spotLinkType === "internal" ? "konbini.cl/" : spotLinkType === "email" ? "✉" : "☎";
+  const spotLinkPrefix      = spotLinkType === "url" ? "https://" : spotLinkType === "internal" ? `${SITE_HOST}/` : spotLinkType === "email" ? "✉" : "☎";
   const spotLinkPlaceholder = spotLinkType === "url" ? "tu-sitio.cl/oferta" : spotLinkType === "internal" ? "@cinepolis" : spotLinkType === "email" ? "ventas@empresa.cl" : "+56 9 1234 5678";
   const spotBtnPlaceholder  = spotLinkType === "url" ? "Ver oferta" : spotLinkType === "email" ? "Escribir" : spotLinkType === "tel" ? "Llamar" : "Ver";
 

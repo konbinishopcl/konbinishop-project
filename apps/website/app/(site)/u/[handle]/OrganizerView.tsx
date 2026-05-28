@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { imageUrl, toEventItem } from "@/lib/api";
+import { SITE_HOST } from "@/lib/site";
 import type { OrganizerProfile } from "./page";
 import type { ApiEvent } from "@/lib/api";
 
@@ -130,7 +131,7 @@ export function OrganizerView({ profile }: { profile: OrganizerProfile }) {
               </span>
             )}
           </h1>
-          <div className="handle">konbini.cl/u/{profile.handle}</div>
+          <div className="handle">{SITE_HOST}/u/{profile.handle}</div>
           {profile.profile?.bio && <p className="bio">{profile.profile.bio}</p>}
           {profile.profile?.website && (
             <a

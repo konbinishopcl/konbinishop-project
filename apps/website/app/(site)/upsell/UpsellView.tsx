@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Ic } from "@/components/icons";
+import { SITE_HOST } from "@/lib/site";
 import { useUser } from "@/components/providers";
 
 /* ─── SpotForm ───────────────────────────────────────────────────────────── */
@@ -17,7 +18,7 @@ function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
   const [buttonText, setButtonText] = useState("");
 
   const linkPlaceholder = linkType === "url" ? "tu-sitio.cl/oferta" : linkType === "internal" ? "@cinepolis" : linkType === "email" ? "ventas@tu-sitio.cl" : "+56 9 1234 5678";
-  const linkPrefix = linkType === "url" ? "https://" : linkType === "internal" ? "konbini.cl/" : linkType === "email" ? "✉" : "☎";
+  const linkPrefix = linkType === "url" ? "https://" : linkType === "internal" ? `${SITE_HOST}/` : linkType === "email" ? "✉" : "☎";
   const btnPlaceholder = linkType === "url" ? "Ver oferta" : linkType === "email" ? "Escribir" : linkType === "tel" ? "Llamar" : "Ver";
 
   const handleAdd = async () => {
@@ -175,7 +176,7 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
         <label>URL de destino al hacer clic</label>
         <div className="input-prefix">
           <span>https://</span>
-          <input type="text" placeholder="konbini.cl/evento/mi-evento" value={link} onChange={e => setLink(e.target.value)} />
+          <input type="text" placeholder={`${SITE_HOST}/evento/mi-evento`} value={link} onChange={e => setLink(e.target.value)} />
         </div>
         <div className="help">Si no la pones, el carrusel solo muestra el banner sin link.</div>
       </div>

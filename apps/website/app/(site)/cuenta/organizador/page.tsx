@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { AccountShell } from "../AccountShell";
 import { useUser } from "@/components/providers";
+import { SITE_HOST } from "@/lib/site";
 
 export default function OrganizadorPage() {
   const { user, token, ready } = useUser();
@@ -68,7 +69,7 @@ export default function OrganizadorPage() {
               <span>/@</span>
               <input type="text" placeholder="mi-organizacion" value={handle} onChange={e => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} />
             </div>
-            <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Tu perfil público: konbini.cl/@{handle || "tu-handle"}</div>
+            <div style={{ fontSize: 11, color: "var(--ink-3)", marginTop: 4 }}>Tu perfil público: {SITE_HOST}/@{handle || "tu-handle"}</div>
           </div>
         </div>
         <div className="field">

@@ -1391,7 +1391,8 @@ a.list-row:hover { transform: translateY(-2px); border-color: var(--line-2); }
 .mega-aside p { color: var(--ink-3); font-size: 13px; line-height: 1.55; margin: 0 0 22px; }
 .mega-aside .mega-cta { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; }
 .mega-flat { columns: 3; column-gap: 40px; }
-.mega-flat button { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px; border-radius: 8px; color: var(--ink-2); font-size: 14px; font-weight: 500; text-align: left; transition: background .12s, color .12s; width: 100%; break-inside: avoid; }
+.mega-flat button { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 8px; border-radius: 8px; color: var(--ink-2); font-size: 14px; font-weight: 500; text-align: left; transition: background .12s, color .12s; width: 100%; break-inside: avoid; overflow: hidden; }
+.mega-flat button span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .mega-flat button:hover { background: var(--surface-2); color: var(--ink); }
 .mega-flat button.on { color: var(--ink); background: var(--surface-2); }
 .mega-flat button .ja { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); letter-spacing: .04em; flex-shrink: 0; }

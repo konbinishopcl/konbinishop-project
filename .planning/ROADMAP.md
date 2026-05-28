@@ -117,13 +117,13 @@ Plans:
 
 **Depends on:** Phase 15 (UI system), Phase 13 (sponsored articles pattern), Phase 12 (orders/cart integration)
 
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 
 - [x] 20-01-PLAN.md — Backend: optional ?status= filter on GET /spots + /heroes (admin list) (wave 1)
 - [x] 20-02-PLAN.md — lib/api.ts ApiSpot/ApiHero types + spot/hero methods + .field-error CSS (wave 1)
-- [ ] 20-03-PLAN.md — CreateProductView spot + hero forms: upload, Zod, days-to-cart (wave 2)
+- [x] 20-03-PLAN.md — CreateProductView spot + hero forms: upload, Zod, days-to-cart (wave 2)
 - [x] 20-04-PLAN.md — UpsellView SpotForm + HeroForm: same fixes (wave 2)
 - [ ] 20-05-PLAN.md — SpotsSection + HeroesSection dashboard wired to real API (wave 3)
 

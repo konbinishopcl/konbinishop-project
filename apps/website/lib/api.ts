@@ -204,6 +204,41 @@ export type ApiEventList = {
   totalPages: number;
 };
 
+export type ApiOwner = {
+  id: number;
+  firstname: string | null;
+  lastname: string | null;
+  email: string;
+  handle?: string | null;
+};
+
+export type ApiSpot = {
+  id: number;
+  title: string;
+  image: string | null;
+  linkType: "URL" | "PHONE" | "EMAIL";
+  linkValue: string;
+  status: "DRAFT" | "PENDING_PAYMENT" | "PENDING_MODERATION" | "APPROVED" | "REJECTED" | "BANNED";
+  statusReason: string | null;
+  days: number | null;
+  amount: number | null;
+  expirationDate: string | null;
+  userId: number;
+  createdAt: string;
+  updatedAt: string;
+  owner?: ApiOwner | null;
+};
+
+export type ApiQuota = {
+  max: number;
+  active: number;
+  available: number;
+  pricePerDay: number;
+  maxDays: number;
+};
+
+export type ApiList<T> = { items: T[]; total: number; page: number; pageSize: number; totalPages: number };
+
 // A paid placement shown in the home hero carousel.
 export type ApiHero = {
   id: number;
@@ -218,6 +253,12 @@ export type ApiHero = {
   days: number | null;
   amount: number | null;
   expirationDate: string | null;
+  // Phase 20 additions:
+  status: "DRAFT" | "PENDING_PAYMENT" | "PENDING_MODERATION" | "APPROVED" | "REJECTED" | "BANNED";
+  statusReason: string | null;
+  userId: number;
+  createdAt: string;
+  owner?: ApiOwner | null;
 };
 
 export type EventsQuery = {

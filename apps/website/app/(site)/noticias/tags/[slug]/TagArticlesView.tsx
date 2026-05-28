@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArticleCard } from "@/components/ArticleCard";
 import type { ApiArticle, ApiArticleTag } from "@/lib/api";
@@ -27,14 +27,12 @@ export function TagArticlesView({ tag, initialArticles, initialTotal, initialTot
   const [total, setTotal]           = useState(initialTotal);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading, setLoading]       = useState(false);
-  const [mounted, setMounted]       = useState(false);
+  const firstRender                  = useRef(true);
   const [page, setPage]             = useState(1);
   const PAGE_SIZE = 24;
 
-  useEffect(() => { setMounted(true); }, []);
-
   useEffect(() => {
-    if (!mounted) return;
+    if (firstRender.current) { firstRender.current = false; return; }
     let cancelled = false;
     setLoading(true);
 
@@ -58,7 +56,7 @@ export function TagArticlesView({ tag, initialArticles, initialTotal, initialTot
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [mounted, tag.slug, page]);
+  }, [tag.slug, page]);
 
   const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to   = Math.min(page * PAGE_SIZE, total);

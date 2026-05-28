@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { imageUrl } from "@/lib/api";
 import { ArticleCard, formatDate, getCat, readingTime } from "@/components/ArticleCard";
@@ -59,7 +59,7 @@ export function NewsCategoryView({
   const [total, setTotal]           = useState(initialTotal);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading, setLoading]       = useState(false);
-  const [mounted, setMounted]       = useState(false);
+  const firstRender                  = useRef(true);
 
   // Filters (client-side)
   const [period, setPeriod]         = useState<string | null>(null);
@@ -77,11 +77,9 @@ export function NewsCategoryView({
   // Pop dropdown state
   const [openPop, setOpenPop]       = useState<string | null>(null);
 
-  useEffect(() => { setMounted(true); }, []);
-
   // ── Fetch ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!mounted) return;
+    if (firstRender.current) { firstRender.current = false; return; }
     let cancelled = false;
     setLoading(true);
 
@@ -105,7 +103,7 @@ export function NewsCategoryView({
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [mounted, category.slug, page, perPage]);
+  }, [category.slug, page, perPage]);
 
   // ── Client-side filters ────────────────────────────────────────────────
   let filtered = [...articles];

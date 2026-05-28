@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ApiArticleCategory } from "@/lib/api";
 import type { ApiArticle } from "@/lib/api";
 import { ArticleCard } from "@/components/ArticleCard";
@@ -56,14 +56,12 @@ export function NoticiasListView({
   const [total,      setTotal]      = useState(initialTotal);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading,    setLoading]    = useState(false);
-  const [mounted,    setMounted]    = useState(false);
+  // useRef: no dispara re-render, evita el fetch duplicado del primer mount
+  const firstRender = useRef(true);
 
-  // Primer render: marca como montado para activar fetches en cliente
-  useEffect(() => { setMounted(true); }, []);
-
-  // Fetch cada vez que cambia page, perPage o cat (sólo después del montaje)
+  // Fetch solo cuando cambia page, perPage o cat (nunca en el primer render)
   useEffect(() => {
-    if (!mounted) return;
+    if (firstRender.current) { firstRender.current = false; return; }
 
     let cancelled = false;
     setLoading(true);
@@ -88,7 +86,7 @@ export function NoticiasListView({
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [mounted, page, perPage, cat]);
+  }, [page, perPage, cat]);
 
   // Handlers
   function changeCat(slug: string) {

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-28T19:23:46.126Z"
+last_updated: "2026-05-28T19:28:37.060Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 17
-  completed_plans: 14
+  completed_plans: 15
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28T19:23:46.124Z
+**Last session:** 2026-05-28T19:28:37.057Z
 
 ## Phase Summary
 
@@ -163,6 +163,7 @@ administrador quedan visibles al público.
 - [Phase 19-03]: NoticiasListView.tsx conservada como archivo dormido; page.tsx simplificado sin total/totalPages
 - [Phase 20]: orgId omitted from ApiSpot/ApiHero — Prisma schema has no orgId column; api.heroes()/spots() adapt paginated response via .then(r => r.items); .field-error CSS owned in Plan 02 so Plans 03/04 don't conflict on globals.css
 - [Phase 20-01]: Admin list returns paginated { items, total, page, pageSize, totalPages } shape — same as events. Hero eventCategory always included in both public and admin responses.
+- [Phase 20-04]: Zod schemas at module scope above components to avoid recreation on every render; SITE_HOST import removed as neither form needs it; subtitle state kept but titleAccent used as key in API call
 
 ## Quick Tasks Completed
 

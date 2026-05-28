@@ -1,11 +1,15 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useUser } from "@/components/providers";
-import { api, imageUrl } from "@/lib/api";
+import { api, imageUrl, type ApiQuota } from "@/lib/api";
 import { Ic } from "@/components/icons";
+
+function formatCLP(amount: number): string {
+  return "$" + amount.toLocaleString("es-CL");
+}
 
 type Kind = "spot" | "hero" | "articulo";
 
@@ -14,8 +18,8 @@ interface CreateProductViewProps {
 }
 
 const TITLES: Record<Kind, [string, string]> = {
-  spot:     ["Crear aviso",                  "Aparición en home y al final de las categorías. Cupo: 9 / 12."],
-  hero:     ["Crear portada",                "Aparición en el carrusel principal del home. Cupo: 3 / 5."],
+  spot:     ["Crear aviso",                  "Aparición en home y al final de las categorías."],
+  hero:     ["Crear portada",                "Aparición en el carrusel principal del home."],
   articulo: ["Solicitar artículo patrocinado","Konbini escribirá y publicará el artículo según el contenido que entregues."],
 };
 
@@ -31,11 +35,6 @@ const BACK_HREF: Record<Kind, string> = {
   articulo: "/cuenta/articulos",
 };
 
-const PRICE: Record<Kind, number | null> = {
-  spot:     8000,
-  hero:     15000,
-  articulo: null,
-};
 
 /* ── Zod schemas (module scope) ─────────────────────────────────────────── */
 
@@ -61,6 +60,12 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
   const { token } = useUser();
   const [busy, setBusy]   = useState(false);
   const [days, setDays]   = useState(14);
+  const [quota, setQuota] = useState<ApiQuota | null>(null);
+
+  useEffect(() => {
+    if (kind === "spot") api.spotsQuota().then(setQuota).catch(() => {});
+    else if (kind === "hero") api.heroesQuota().then(setQuota).catch(() => {});
+  }, [kind]);
 
   /* ── Shared upload/error state ──────────────────────────────────────────── */
   const [uploading, setUploading] = useState(false);
@@ -211,7 +216,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
   };
 
   const [title, sub] = TITLES[kind];
-  const pricePerDay  = PRICE[kind];
+  const pricePerDay  = kind === "articulo" ? null : (quota?.pricePerDay ?? (kind === "spot" ? 8000 : 15000));
   const total        = pricePerDay ? pricePerDay * days : null;
 
   return (
@@ -224,7 +229,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
       <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(32px,4vw,48px)", letterSpacing: "-.025em", margin: "0 0 8px" }}>
         {title}
       </h1>
-      <p style={{ color: "var(--ink-3)", marginBottom: 28 }}>{sub}</p>
+      <p style={{ color: "var(--ink-3)", marginBottom: 28 }}>{sub}{quota ? ` Cupo: ${quota.active} / ${quota.max} ocupados.` : ""}</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 28, alignItems: "start" }}>
 
@@ -282,7 +287,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
                   <input type="range" min="10" max="30" value={days} onChange={e => setDays(+e.target.value)} style={{ flex: 1, "--fill": `${((days - 10) / 20) * 100}%` } as React.CSSProperties} />
                   <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, minWidth: 80, textAlign: "right" }}>{days} días</div>
                 </div>
-                <div className="help">$8.000 CLP / día → <strong>${(days * 8000).toLocaleString("es-CL")} CLP total</strong></div>
+                <div className="help">{formatCLP(pricePerDay ?? 0)} CLP / día → <strong>{formatCLP((pricePerDay ?? 0) * days)} CLP total</strong></div>
               </div>
             </form>
           )}
@@ -346,7 +351,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
                   <input type="range" min="10" max="30" value={days} onChange={e => setDays(+e.target.value)} style={{ flex: 1, "--fill": `${((days - 10) / 20) * 100}%` } as React.CSSProperties} />
                   <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 18, minWidth: 80, textAlign: "right" }}>{days} días</div>
                 </div>
-                <div className="help">$15.000 CLP / día → <strong>${(days * 15000).toLocaleString("es-CL")} CLP total</strong></div>
+                <div className="help">{formatCLP(pricePerDay ?? 0)} CLP / día → <strong>{formatCLP((pricePerDay ?? 0) * days)} CLP total</strong></div>
               </div>
             </form>
           )}

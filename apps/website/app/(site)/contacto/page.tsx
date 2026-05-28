@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { HelpShell } from "@/components/HelpShell";
 import { Ic } from "@/components/icons";
+import { CONTACT_EMAIL, ABUSE_EMAIL, INSTAGRAM_URL, INSTAGRAM_HANDLE } from "@/lib/site";
 
 function ContactForm() {
   const router = useRouter();
@@ -72,19 +73,19 @@ function ContactForm() {
       <aside style={{ display: "flex", flexDirection: "column", gap: 28, paddingTop: 8 }}>
         <div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 10 }}>EMAIL DIRECTO</div>
-          <a href="mailto:hola@konbini.cl" style={{ fontFamily: "var(--font-display)", fontSize: 22, letterSpacing: "-.01em", color: "var(--ink)", textDecoration: "none" }}>hola@konbini.cl</a>
+          <a href={`mailto:${CONTACT_EMAIL}`} style={{ fontFamily: "var(--font-display)", fontSize: 22, letterSpacing: "-.01em", color: "var(--ink)", textDecoration: "none" }}>{CONTACT_EMAIL}</a>
           <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 4 }}>Respondemos en 48h hábiles</div>
         </div>
         <div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 10 }}>RESPUESTA RÁPIDA</div>
-          <a href="https://instagram.com/konbinishop.cl" style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--ink-2)", fontWeight: 600, textDecoration: "none" }}>
-            {Ic.insta} @konbinishop.cl
+          <a href={INSTAGRAM_URL} style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--ink-2)", fontWeight: 600, textDecoration: "none" }}>
+            {Ic.insta} {INSTAGRAM_HANDLE}
           </a>
           <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 6 }}>DM en Instagram · 244K seguidores</div>
         </div>
         <div>
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 10 }}>REPORTAR CONTENIDO</div>
-          <a href="mailto:abuso@konbini.cl" style={{ color: "var(--ink-2)", fontFamily: "var(--font-mono)", fontSize: 14, textDecoration: "none" }}>abuso@konbini.cl</a>
+          <a href={`mailto:${ABUSE_EMAIL}`} style={{ color: "var(--ink-2)", fontFamily: "var(--font-mono)", fontSize: 14, textDecoration: "none" }}>{ABUSE_EMAIL}</a>
           <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 4 }}>Para reportar contenido que viole las reglas</div>
         </div>
         <div>

@@ -1,16 +1,34 @@
 "use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
-const BENEFITS = [
-  { ic: "🎟", t: "10 créditos al mes", d: "Publica hasta 10 eventos al mes con 45 días de visibilidad cada uno." },
-  { ic: "💰", t: "20% descuento", d: "En avisos y portadas. Amplifica tus eventos a un precio especial." },
-  { ic: "⚡", t: "Acceso prioritario", d: "Revisión de eventos en menos de 12 horas para suscriptores Pro." },
-  { ic: "📊", t: "Métricas avanzadas", d: "Ve cuántas personas ven, guardan y comparten tus eventos." },
-  { ic: "🏅", t: "Badge de organizador", d: "Perfil destacado con badge Pro en el directorio de organizadores." },
-  { ic: "🔔", t: "Notificaciones push", d: "Avisa a tus seguidores cuando publicas un nuevo evento." },
-];
+function formatCLP(value: number): string {
+  return `$${value.toLocaleString("es-CL")}`;
+}
 
 export default function UpgradePage() {
+  const [settings, setSettings] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    api.settingsPublic().then(setSettings).catch(() => {});
+  }, []);
+
+  const n = (k: string, fb: number) => parseInt(settings[k] ?? "", 10) || fb;
+
+  const credits = n("SUBSCRIPTION_CREDITS", 10);
+  const discount = n("SUBSCRIPTION_SPOT_DISCOUNT", 20);
+  const price = n("SUBSCRIPTION_PRICE", 9990);
+
+  const BENEFITS = [
+    { ic: "🎟", t: `${credits} créditos al mes`, d: `Publica hasta ${credits} eventos al mes con 45 días de visibilidad cada uno.` },
+    { ic: "💰", t: `${discount}% descuento`, d: "En avisos y portadas. Amplifica tus eventos a un precio especial." },
+    { ic: "⚡", t: "Acceso prioritario", d: "Revisión de eventos en menos de 12 horas para suscriptores Pro." },
+    { ic: "📊", t: "Métricas avanzadas", d: "Ve cuántas personas ven, guardan y comparten tus eventos." },
+    { ic: "🏅", t: "Badge de organizador", d: "Perfil destacado con badge Pro en el directorio de organizadores." },
+    { ic: "🔔", t: "Notificaciones push", d: "Avisa a tus seguidores cuando publicas un nuevo evento." },
+  ];
+
   return (
     <main className="ups-shell">
       {/* Hero banner */}
@@ -50,7 +68,7 @@ export default function UpgradePage() {
         </p>
         <div style={{ display: "inline-flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
           <Link href="/cuenta?tab=subs" className="btn primary lg">
-            Suscribirme por $29.990/mes →
+            Suscribirme por {formatCLP(price)}/mes →
           </Link>
           <Link href="/precios" className="btn ghost lg">
             Ver todos los precios

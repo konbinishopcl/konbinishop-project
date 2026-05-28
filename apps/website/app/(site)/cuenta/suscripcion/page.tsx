@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 import { AccountShell } from "../AccountShell";
 import { useUser } from "@/components/providers";
 
@@ -22,6 +23,13 @@ export default function SuscripcionPage() {
   const [sub, setSub] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [settings, setSettings] = useState<Record<string, string>>({});
+
+  const n = (k: string, fb: number) => parseInt(settings[k] ?? "", 10) || fb;
+
+  useEffect(() => {
+    api.settingsPublic().then(setSettings).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (ready && !user) {
@@ -87,7 +95,7 @@ export default function SuscripcionPage() {
   return (
     <AccountShell>
       <h1>Suscripción</h1>
-      <p className="lead">Plan mensual de 10 créditos. Cada crédito = una publicación de 45 días.</p>
+      <p className="lead">Plan mensual de {n("SUBSCRIPTION_CREDITS", 10)} créditos. Cada crédito = una publicación de 45 días.</p>
 
       {loading ? (
         <div className="acc-section" style={{ color: "var(--ink-3)", fontSize: 14 }}>Cargando suscripción…</div>
@@ -109,7 +117,7 @@ export default function SuscripcionPage() {
             <h3>Beneficios activos</h3>
             <div style={{ color: "var(--ink-2)", fontSize: 14, lineHeight: 1.8 }}>
               ✓ {sub.creditsTotal} créditos de publicación al mes<br />
-              ✓ 20% off en avisos y portadas<br />
+              ✓ {n("SUBSCRIPTION_SPOT_DISCOUNT", 20)}% off en avisos y portadas<br />
               ✓ Soporte prioritario
             </div>
           </div>

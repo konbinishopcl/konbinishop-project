@@ -373,7 +373,54 @@ export const api = {
   regions: (country?: string) => request<ApiRegion[]>(`/states${country ? `?country=${encodeURIComponent(country)}` : ""}`),
   communes: (region?: string) =>
     request<ApiCommune[]>(`/cities${region ? `?state=${encodeURIComponent(region)}` : ""}`),
-  heroes: () => request<ApiHero[]>("/heroes"),
+  heroes: () => request<ApiList<ApiHero>>("/heroes").then((r) => r.items),
+  spots:  () => request<ApiList<ApiSpot>>("/spots").then((r) => r.items),
+
+  // Spots
+  spotsQuota: () => request<ApiQuota>("/spots/quota"),
+  mySpots: (token: string) => request<ApiSpot[]>("/spots/mine", {}, token),
+  adminSpots: (token: string, query?: { status?: string; page?: number; pageSize?: number }) =>
+    request<ApiList<ApiSpot>>(`/spots${qs(query ?? {})}`, {}, token),
+  createSpot: (
+    body: { title: string; image?: string; linkType: "URL" | "PHONE" | "EMAIL"; linkValue: string },
+    token: string,
+  ) => request<ApiSpot>("/spots", { method: "POST", body: JSON.stringify(body) }, token),
+  updateSpot: (
+    id: number,
+    body: { title?: string; image?: string; linkType?: "URL" | "PHONE" | "EMAIL"; linkValue?: string },
+    token: string,
+  ) => request<ApiSpot>(`/spots/${id}`, { method: "PATCH", body: JSON.stringify(body) }, token),
+  deleteSpot: (id: number, token: string) =>
+    request<{ deleted: boolean }>(`/spots/${id}`, { method: "DELETE" }, token),
+  approveSpot: (id: number, token: string) =>
+    request<ApiSpot>(`/spots/${id}/approve`, { method: "PATCH" }, token),
+  rejectSpot: (id: number, reason: string, token: string) =>
+    request<ApiSpot>(`/spots/${id}/reject`, { method: "PATCH", body: JSON.stringify({ reason }) }, token),
+  banSpot: (id: number, reason: string, token: string) =>
+    request<ApiSpot>(`/spots/${id}/ban`, { method: "PATCH", body: JSON.stringify({ reason }) }, token),
+
+  // Heroes
+  heroesQuota: () => request<ApiQuota>("/heroes/quota"),
+  myHeroes: (token: string) => request<ApiHero[]>("/heroes/mine", {}, token),
+  adminHeroes: (token: string, query?: { status?: string; page?: number; pageSize?: number }) =>
+    request<ApiList<ApiHero>>(`/heroes${qs(query ?? {})}`, {}, token),
+  createHero: (
+    body: { title: string; titleAccent?: string; lead?: string; image: string; date?: string; place?: string; link?: string; eventCategoryId?: number },
+    token: string,
+  ) => request<ApiHero>("/heroes", { method: "POST", body: JSON.stringify(body) }, token),
+  updateHero: (
+    id: number,
+    body: { title?: string; titleAccent?: string; lead?: string; image?: string; date?: string; place?: string; link?: string; eventCategoryId?: number },
+    token: string,
+  ) => request<ApiHero>(`/heroes/${id}`, { method: "PATCH", body: JSON.stringify(body) }, token),
+  deleteHero: (id: number, token: string) =>
+    request<{ deleted: boolean }>(`/heroes/${id}`, { method: "DELETE" }, token),
+  approveHero: (id: number, token: string) =>
+    request<ApiHero>(`/heroes/${id}/approve`, { method: "PATCH" }, token),
+  rejectHero: (id: number, reason: string, token: string) =>
+    request<ApiHero>(`/heroes/${id}/reject`, { method: "PATCH", body: JSON.stringify({ reason }) }, token),
+  banHero: (id: number, reason: string, token: string) =>
+    request<ApiHero>(`/heroes/${id}/ban`, { method: "PATCH", body: JSON.stringify({ reason }) }, token),
 };
 
 // ───────────────────────────── Mappers ──────────────────────────

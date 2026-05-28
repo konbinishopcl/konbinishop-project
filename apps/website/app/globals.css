@@ -20,6 +20,7 @@
     --err: #ff5b5b;
     --shadow: 0 30px 60px -20px rgba(0,0,0,.6), 0 8px 20px -10px rgba(0,0,0,.5);
     --ring: 0 0 0 1px var(--line);
+    --surface-blur: rgba(28, 26, 23, 0.82);
     --r-sm: 8px; --r: 14px; --r-lg: 22px; --r-xl: 30px;
     --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
     --font-body: "Inter", system-ui, sans-serif;
@@ -41,6 +42,7 @@
     --accent-2: #c08410;
     --accent-3: #3a2bd7;
     --shadow: 0 24px 50px -24px rgba(40,30,15,.18), 0 4px 14px -6px rgba(40,30,15,.10);
+    --surface-blur: rgba(255, 255, 255, 0.82);
   }
 
   * { box-sizing: border-box; }
@@ -1418,4 +1420,25 @@ a.list-row:hover { transform: translateY(-2px); border-color: var(--line-2); }
   .news-hero { grid-template-columns: 1fr !important; }
   .sponsored-feature { grid-template-columns: 1fr !important; }
   .explore-cats { columns: 2 !important; column-gap: 24px !important; }
+}
+
+/* ───── Sonner toast — glassmorphism ───── */
+[data-sonner-toaster] [data-sonner-toast] {
+  background: var(--surface-blur) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22) !important;
+  font-family: var(--font-body) !important;
+  font-size: 13px !important;
+}
+[data-sonner-toaster] [data-sonner-toast] [data-description] {
+  color: var(--ink-2) !important;
+}
+[data-sonner-toaster] [data-sonner-toast] [data-close-button] {
+  background: var(--surface-2) !important;
+  border-color: var(--line) !important;
+  color: var(--ink-2) !important;
 }

@@ -23,23 +23,23 @@ function CreateOrgModal({ token, onClose, onCreated }: {
   onClose:   () => void;
   onCreated: (org: Org) => void;
 }) {
-  const [name,   setName]   = useState("");
-  const [email,  setEmail]  = useState("");
-  const [handle, setHandle] = useState("");
-  const [busy,   setBusy]   = useState(false);
+  const [name,          setName]          = useState("");
+  const [email,         setEmail]         = useState("");
+  const [handle,        setHandle]        = useState("");
+  const [handleEdited,  setHandleEdited]  = useState(false);
+  const [busy,          setBusy]          = useState(false);
 
-  // Auto-genera el handle desde el nombre
+  const toHandle = (val: string) =>
+    val.toLowerCase()
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 30);
+
+  // Auto-generate handle from name until user manually edits it
   const suggestHandle = (val: string) => {
     setName(val);
-    if (!handle) {
-      setHandle(
-        val.toLowerCase()
-          .normalize("NFD").replace(/[̀-ͯ]/g, "")
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .slice(0, 30)
-      );
-    }
+    if (!handleEdited) setHandle(toHandle(val));
   };
 
   const handleSubmit = async () => {
@@ -111,7 +111,10 @@ function CreateOrgModal({ token, onClose, onCreated }: {
             <input
               type="text"
               value={handle}
-              onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30))}
+              onChange={(e) => {
+                setHandleEdited(true);
+                setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 30));
+              }}
               placeholder="mi-organizacion"
               maxLength={30}
             />

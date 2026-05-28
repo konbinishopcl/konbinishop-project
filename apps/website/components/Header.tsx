@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { Ic } from "./icons";
+import { NewsMegaMenu } from "./NewsMegaMenu";
 import { useTheme, useUser } from "./providers";
 import { UserMenu } from "./UserMenu";
 import type { ApiEventCategory } from "@/lib/api";
@@ -16,6 +17,7 @@ export function Header({ categories = [] }: { categories?: ApiEventCategory[] })
   const pathname = usePathname();
   const [catsOpen, setCatsOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [newsMenuOpen, setNewsMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
   // Headroom: hide on scroll down, show on scroll up
@@ -69,6 +71,7 @@ export function Header({ categories = [] }: { categories?: ApiEventCategory[] })
   };
 
   return (
+    <>
     <header className="app" ref={headerRef}>
       <div className="container nav-wrap">
         <div className="row" style={{ gap: 28 }}>
@@ -138,12 +141,29 @@ export function Header({ categories = [] }: { categories?: ApiEventCategory[] })
                 alignSelf: "center",
               }}
             />
-            <button
-              className={active === "news" ? "active" : ""}
-              onClick={() => router.push("/noticias")}
+            <div
+              style={{ position: "relative" }}
+              onMouseEnter={() => setNewsMenuOpen(true)}
             >
-              Noticias
-            </button>
+              <button
+                className={active === "news" ? "active" : ""}
+                onClick={() => router.push("/noticias")}
+              >
+                Noticias
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  style={{ marginLeft: 4, opacity: 0.6, transform: newsMenuOpen ? "rotate(180deg)" : "none", transition: "transform .2s" }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+            </div>
             <button
               className={active === "about" ? "active" : ""}
               onClick={() => router.push("/nosotros")}
@@ -299,5 +319,9 @@ export function Header({ categories = [] }: { categories?: ApiEventCategory[] })
         </div>
       )}
     </header>
+    {newsMenuOpen && (
+      <NewsMegaMenu onClose={() => setNewsMenuOpen(false)} />
+    )}
+    </>
   );
 }

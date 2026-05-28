@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-28T02:28:54.114Z"
+last_updated: "2026-05-28T02:35:17.312Z"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 12
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28T02:28:54.112Z
+**Last session:** 2026-05-28T02:35:17.309Z
 
 ## Phase Summary
 
@@ -159,6 +159,8 @@ administrador quedan visibles al público.
 - [Phase 19-01]: ApiArticle/ApiArticleEvent movidos de noticias/page.tsx a lib/api.ts como tipos exportados globales
 - [Phase 19-01]: ArticleCard extrae la card inline de NoticiasListView; agrega like optimistic + reading time
 - [Phase 19-02]: onMouseEnter trigger (no CSS hover puro) para controlar estado React del mega menú y animar chevron; mega menú renderizado fuera de <header> en fragment; z-index 70 sin ajuste necesario (header z-50)
+- [Phase 19-rediseno-completo-de-noticias]: [Phase 19-04]: useRef eliminado del import en NewsCategoryView — no utilizado; Pop definido inline para compartir estado openPop sin prop drilling
+- [Phase 19-03]: NoticiasListView.tsx conservada como archivo dormido; page.tsx simplificado sin total/totalPages
 
 ## Quick Tasks Completed
 

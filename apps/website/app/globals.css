@@ -1411,3 +1411,10 @@ a.list-row:hover { transform: translateY(-2px); border-color: var(--line-2); }
 .a-like.on { background: var(--accent); border-color: var(--accent); }
 .a-like.on svg { fill: #fff; }
 .a-rel { display: inline-flex; align-items: center; gap: 4px; }
+
+/* ───── news hub page responsive (Phase 19-03) ───── */
+@media (max-width: 768px) {
+  .news-hero { grid-template-columns: 1fr !important; }
+  .sponsored-feature { grid-template-columns: 1fr !important; }
+  .explore-cats { columns: 2 !important; column-gap: 24px !important; }
+}

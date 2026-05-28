@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -23,10 +24,12 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { RejectEventDto } from '../events/dto/reject-event.dto';
 import { OrgContextGuard } from '../common/org-context/org-context.guard';
 import { OrgContext } from '../common/org-context/org-context.decorator';
 import type { OrgContextDto } from '../common/org-context/org-context.types';
+import { QueryHeroesDto } from './dto/query-heroes.dto';
 
 // Heroes: paid placements shown in the home hero carousel.
 @ApiTags('heroes')
@@ -35,9 +38,11 @@ export class HeroesController {
   constructor(private readonly heroes: HeroesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List active heroes (public)' })
-  findActive() {
-    return this.heroes.findActive();
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'List heroes. Public: APPROVED + active only. Admin: all statuses, filter by ?status=.' })
+  findAll(@Query() query: QueryHeroesDto, @CurrentUser() user: JwtUser | null) {
+    return this.heroes.findAll(query, user);
   }
 
   @Get('quota')

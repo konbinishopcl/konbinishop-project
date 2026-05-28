@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PublicationStatus, UserType } from '@prisma/client';
+import { Prisma, PublicationStatus, UserType } from '@prisma/client';
 import type { Request } from 'express';
 import { PrismaService } from '../../utils/prisma/prisma.service';
 import { AuditService } from '../audit/audit.service';
@@ -44,13 +44,45 @@ export class HeroesService {
     });
   }
 
-  /** Active heroes — approved and not expired. Shown in the home hero carousel. */
-  findActive() {
-    return this.prisma.hero.findMany({
-      where: { status: PublicationStatus.APPROVED, expirationDate: { gte: new Date() } },
-      include: { eventCategory: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  /** List heroes. Public: APPROVED + non-expired only. Admin: all statuses (or filtered by ?status=), includes owner. eventCategory always included. */
+  async findAll(
+    query: { status?: PublicationStatus; page?: number; pageSize?: number },
+    user?: JwtUser | null,
+  ) {
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN';
+    const page = query.page ?? 1;
+    const pageSize = Math.min(query.pageSize ?? (isAdmin ? 20 : 12), isAdmin ? 100 : 50);
+
+    const where: Prisma.HeroWhereInput = {
+      ...(!isAdmin && {
+        status: PublicationStatus.APPROVED,
+        OR: [{ expirationDate: null }, { expirationDate: { gte: new Date() } }],
+      }),
+      ...(isAdmin && query.status
+        ? { status: query.status }
+        : isAdmin
+          ? { status: { not: PublicationStatus.PENDING_PAYMENT } }
+          : {}),
+    };
+
+    const include = isAdmin
+      ? {
+          eventCategory: true,
+          owner: { select: { id: true, firstname: true, lastname: true, email: true, handle: true } },
+        }
+      : { eventCategory: true };
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.hero.findMany({
+        where,
+        include,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.hero.count({ where }),
+    ]);
+    return { items, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
   }
 
   /** Heroes owned by the current user or org (any status). */

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandMark } from "./BrandMark";
 import { Ic } from "./icons";
+import { INSTAGRAM_URL, TIKTOK_URL, DISCORD_URL, FACEBOOK_URL } from "@/lib/site";
 
 export function Footer() {
   return (
@@ -21,8 +22,8 @@ export function Footer() {
           </p>
           <div className="row" style={{ marginTop: 18, gap: 10 }}>
             <a className="icon-btn" href="#" aria-label="Google">{Ic.google}</a>
-            <a className="icon-btn" href="https://instagram.com/konbinishop.cl" aria-label="Instagram" target="_blank" rel="noopener noreferrer">{Ic.insta}</a>
-            <a className="icon-btn" href="https://facebook.com/konbinishop" aria-label="Facebook" target="_blank" rel="noopener noreferrer">{Ic.fb}</a>
+            <a className="icon-btn" href={INSTAGRAM_URL} aria-label="Instagram" target="_blank" rel="noopener noreferrer">{Ic.insta}</a>
+            <a className="icon-btn" href={FACEBOOK_URL} aria-label="Facebook" target="_blank" rel="noopener noreferrer">{Ic.fb}</a>
             <a className="icon-btn" href="#" aria-label="Apple">{Ic.apple}</a>
           </div>
         </div>
@@ -53,9 +54,9 @@ export function Footer() {
 
         <div className="foot-col">
           <h4>Comunidad</h4>
-          <a href="https://instagram.com/konbinishop.cl" target="_blank" rel="noopener noreferrer">Instagram</a>
-          <a href="https://tiktok.com/@konbinishop.cl" target="_blank" rel="noopener noreferrer">TikTok</a>
-          <a href="#">Discord</a>
+          <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href={TIKTOK_URL} target="_blank" rel="noopener noreferrer">TikTok</a>
+          <a href={DISCORD_URL || "#"}>Discord</a>
           <Link href="/contacto">Newsletter</Link>
         </div>
       </div>

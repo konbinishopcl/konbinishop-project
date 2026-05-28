@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-28T02:40:40.056Z"
+last_updated: "2026-05-28T19:23:25.861Z"
 progress:
-  total_phases: 3
+  total_phases: 4
   completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 17
+  completed_plans: 14
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 19 — Rediseño completo de Noticias
+**Current focus:** Phase 20 — flujo-completo-avisos-portadas
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28 - Completed quick task 260528-d82: hacer funcionar los likes de las cards de noticias
+**Last session:** 2026-05-28T19:23:25.859Z
 
 ## Phase Summary
 
@@ -161,6 +161,7 @@ administrador quedan visibles al público.
 - [Phase 19-02]: onMouseEnter trigger (no CSS hover puro) para controlar estado React del mega menú y animar chevron; mega menú renderizado fuera de <header> en fragment; z-index 70 sin ajuste necesario (header z-50)
 - [Phase 19-rediseno-completo-de-noticias]: [Phase 19-04]: useRef eliminado del import en NewsCategoryView — no utilizado; Pop definido inline para compartir estado openPop sin prop drilling
 - [Phase 19-03]: NoticiasListView.tsx conservada como archivo dormido; page.tsx simplificado sin total/totalPages
+- [Phase 20]: orgId omitted from ApiSpot/ApiHero — Prisma schema has no orgId column; api.heroes()/spots() adapt paginated response via .then(r => r.items); .field-error CSS owned in Plan 02 so Plans 03/04 don't conflict on globals.css
 
 ## Quick Tasks Completed
 

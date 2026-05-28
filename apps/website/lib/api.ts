@@ -337,27 +337,28 @@ export const api = {
 
 // ───────────────────────────── Mappers ──────────────────────────
 
-function initialsOf(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((s) => s[0])
-      .slice(0, 2)
-      .join("")
-      .toUpperCase() || "?"
-  );
+function initialsOf(name: string | null | undefined, email: string): string {
+  const fromName = (name ?? "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((s) => s[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+  if (fromName) return fromName;
+  // Fallback: primeras 2 letras de la parte local del email
+  return (email.split("@")[0] ?? email).slice(0, 2).toUpperCase() || "?";
 }
 
 /** Mapea el usuario de la API al shape de User que usa el website. */
 export function toUser(u: ApiUser): User {
-  const name = [u.firstname, u.lastname].filter(Boolean).join(" ") || u.email;
+  const name = [u.firstname, u.lastname].filter(Boolean).join(" ");
   return {
     id: u.id,
-    name,
+    name: name || u.email,
     email: u.email,
     phone: "",
-    initials: initialsOf(name),
+    initials: initialsOf(name, u.email),
     role: u.role,
   };
 }

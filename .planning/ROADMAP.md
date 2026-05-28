@@ -98,11 +98,11 @@ Plans:
 
 **Depends on:** Phase 18 (ArticleCategory, ArticleTag), Phase 17 (Articles CRUD), Phase 15 (UI system)
 
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 
-- [ ] 19-01-PLAN.md — CSS globals (.mega-*, .a-like) + tipos lib/api.ts (ApiArticle, nameJa) + ArticleCard compartido con like + reading time (wave 1)
+- [x] 19-01-PLAN.md — CSS globals (.mega-*, .a-like) + tipos lib/api.ts (ApiArticle, nameJa) + ArticleCard compartido con like + reading time (wave 1)
 - [ ] 19-02-PLAN.md — Navbar mega menú: NewsMegaMenu.tsx + trigger hover en Header.tsx (wave 2)
 - [ ] 19-03-PLAN.md — Hub page /noticias: NoticiasHubView con hero + picks + grid + sponsored + rails + explore (wave 3)
 - [ ] 19-04-PLAN.md — Nueva ruta /noticias/categoria/[slug]: page.tsx + NewsCategoryView con fbar + grid/lista + paginación (wave 3)

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-27T22:32:50.221Z"
+last_updated: "2026-05-28T02:21:15.297Z"
 progress:
-  total_phases: 2
+  total_phases: 3
   completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 12
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 18 — separar-taxonomia-eventos-articulos
+**Current focus:** Phase 19 — Rediseño completo de Noticias
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-27T22:32:50.219Z
+**Last session:** 2026-05-28T02:21:15.294Z
 
 ## Phase Summary
 
@@ -156,6 +156,8 @@ administrador quedan visibles al público.
 - [Phase 18-03]: ArticleForm usa /api/article-tags y envía articleTagIds al backend — migración completa desde /api/tags
 - [Phase 18]: Endpoints /categories y /tags eliminados definitivamente (no mantenidos como aliases permanentes)
 - [Phase 18]: Migración sch09_drop_legacy_taxonomy creada manualmente con prisma migrate resolve --applied por restricción de entorno non-interactive
+- [Phase 19-01]: ApiArticle/ApiArticleEvent movidos de noticias/page.tsx a lib/api.ts como tipos exportados globales
+- [Phase 19-01]: ArticleCard extrae la card inline de NoticiasListView; agrega like optimistic + reading time
 
 ## Quick Tasks Completed
 

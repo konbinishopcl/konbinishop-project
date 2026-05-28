@@ -86,6 +86,27 @@ Plans:
 - [x] 18-03-PLAN.md — Frontend split: api.ts tipos + Header/sitemap/CategoryView/SearchView/EventForm/ArticleForm/Step1Client (wave 3)
 - [x] 18-04-PLAN.md — Dashboard CategoriesSection real + cleanup: drop tablas legacy con migración sch09, eliminar referencias `category` y `tags` (wave 4)
 
+### Rediseño y UX de Noticias
+
+- [ ] Phase 19: Rediseño completo de Noticias (4/4 plans) — Mega menú en navbar, hub page con hero + rails por categoría + sección patrocinado, nueva ruta /noticias/categoria/[slug], filtros renovados (Tipo + Origen + Buscar + Lista/Grid), ArticleCard con likes y read-time
+
+### Phase 19: Rediseño completo de Noticias — Mega menú, hub redesign, categorías, filtros avanzados
+
+**Goal:** Implementar el rediseño completo de la sección Noticias según design/Konbini.html: (1) mega menú hover en el navbar con grid de categorías agrupadas, (2) hub page /noticias con hero destacado + picks de redacción + rails por categoría + sección artículo patrocinado + CTA explora por categoría, (3) nueva ruta /noticias/categoria/[slug] con header de categoría + filtros avanzados (Tipo, Origen, Buscar, Grid/Lista, Ordenar) + paginación, (4) ArticleCard actualizado con botón like + contador + tiempo de lectura.
+
+**Requirements**: NEWS-01..NEWS-10 (distribuidos en los 4 PLAN.md de la fase)
+
+**Depends on:** Phase 18 (ArticleCategory, ArticleTag), Phase 17 (Articles CRUD), Phase 15 (UI system)
+
+**Plans:** 4 plans
+
+Plans:
+
+- [ ] 19-01-PLAN.md — CSS globals (.mega-*, .a-like) + tipos lib/api.ts (ApiArticle, nameJa) + ArticleCard compartido con like + reading time (wave 1)
+- [ ] 19-02-PLAN.md — Navbar mega menú: NewsMegaMenu.tsx + trigger hover en Header.tsx (wave 2)
+- [ ] 19-03-PLAN.md — Hub page /noticias: NoticiasHubView con hero + picks + grid + sponsored + rails + explore (wave 3)
+- [ ] 19-04-PLAN.md — Nueva ruta /noticias/categoria/[slug]: page.tsx + NewsCategoryView con fbar + grid/lista + paginación (wave 3)
+
 ---
 
 *Roadmap creado: 2026-03-23 · v1.0 shipped: 2026-05-27*

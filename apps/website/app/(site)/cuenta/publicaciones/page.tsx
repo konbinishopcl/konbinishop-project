@@ -18,8 +18,8 @@ function statusOf(e: ApiEvent): Status {
 
 const STATUS_META: Record<Status, { label: string; cls: string }> = {
   rev: { label: "En revisión", cls: "st-rev" },
-  pub: { label: "Publicado", cls: "st-pub" },
-  rej: { label: "Rechazado", cls: "st-rej" },
+  pub: { label: "Publicado",   cls: "st-pub" },
+  rej: { label: "Rechazado",   cls: "st-rej" },
 };
 
 export default function PublicacionesPage() {
@@ -30,22 +30,15 @@ export default function PublicacionesPage() {
   const [tab, setTab] = useState<"all" | Status>("all");
 
   useEffect(() => {
-    if (ready && !user) {
-      router.replace("/login?returnTo=/cuenta/publicaciones");
-      return;
-    }
+    if (ready && !user) { router.replace("/login?returnTo=/cuenta/publicaciones"); return; }
     if (!token) return;
-    api
-      .myEvents(token)
-      .then(setEvents)
-      .catch(() => setEvents([]))
-      .finally(() => setLoading(false));
+    api.myEvents(token).then(setEvents).catch(() => setEvents([])).finally(() => setLoading(false));
   }, [ready, user, token, router]);
 
   if (!ready || !user) {
     return (
       <main style={{ minHeight: "60vh", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink-3)" }}>
-        {ready ? "Redirigiendo al inicio de sesión…" : "Verificando acceso…"}
+        {ready ? "Redirigiendo…" : "Verificando acceso…"}
       </main>
     );
   }
@@ -63,10 +56,7 @@ export default function PublicacionesPage() {
     if (!token) return;
     if (!confirm("¿Eliminar este evento? Esta acción no se puede deshacer.")) return;
     try {
-      await fetch(`/api/events/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await fetch(`/api/events/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       setEvents((prev) => prev.filter((e) => e.id !== id));
       toast.success("Evento eliminado");
     } catch {
@@ -80,7 +70,7 @@ export default function PublicacionesPage() {
         <h1>Mis eventos</h1>
         <Link className="btn primary" href="/crear">＋ Crear evento</Link>
       </div>
-      <p className="lead">Te quedan créditos este mes. Revisa el estado de tus eventos.</p>
+      <p className="lead">Revisa el estado de tus publicaciones.</p>
 
       <div className="tabs">
         {(["all", "rev", "pub", "rej"] as const).map((t) => (
@@ -96,13 +86,7 @@ export default function PublicacionesPage() {
       ) : filtered.length === 0 ? (
         <div className="dash-empty">
           {events.length === 0 ? (
-            <>
-              Todavía no has publicado eventos.{" "}
-              <Link href="/crear" style={{ textDecoration: "underline" }}>
-                Crea el primero
-              </Link>
-              .
-            </>
+            <>Todavía no has publicado eventos. <Link href="/crear" style={{ textDecoration: "underline" }}>Crea el primero</Link>.</>
           ) : (
             "No hay publicaciones en esta categoría."
           )}
@@ -110,48 +94,49 @@ export default function PublicacionesPage() {
       ) : (
         <div className="pub-grid">
           {filtered.map((e) => {
-            const item = toEventItem(e);
+            const item   = toEventItem(e);
             const status = statusOf(e);
-            const m = STATUS_META[status];
+            const m      = STATUS_META[status];
+            const firstDate = e.dates?.[0]?.date
+              ? new Date(e.dates[0].date).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" }).toUpperCase()
+              : item.date;
+            const place = item.place ? item.place.split(",")[0] : null;
             return (
               <div key={e.id} className="pub-card">
                 <div className="img">
-                  {item.image && (
-                    <img
-                      src={item.image}
-                      alt=""
-                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                    />
+                  {item.image
+                    ? <img src={item.image} alt="" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                    : <div className="poster-art pa-1" style={{ position: "absolute", inset: 0 }} />
+                  }
+                  {e.eventCategory?.name && (
+                    <div className="stamp">{e.eventCategory.name.toUpperCase()}</div>
                   )}
                 </div>
                 <div className="body">
                   <div className={`status ${m.cls}`}>
-                    <span className="dot" />
-                    {m.label}
+                    <span className="dot" />{m.label}
                   </div>
-                  {status === "rej" && e.rejectedReason && (
-                    <div style={{ color: "var(--err)", fontSize: 12, marginBottom: 8 }}>
-                      Motivo: {e.rejectedReason}
-                    </div>
-                  )}
                   <div className="ttl">{item.title}</div>
-                  <div className="meta">{item.date} · {item.place}</div>
-                  <div className="pub-actions" style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                    {status === "pub" && (
-                      <Link className="btn ghost" href={`/evento/${e.slug}`} style={{ fontSize: 12, padding: "6px 12px" }}>
-                        Ver
-                      </Link>
+                  <div className="meta">{firstDate}{place ? ` · ${place}` : ""}</div>
+                  {e.eventCategory?.pricePerDay && (
+                    <div className="price">${e.eventCategory.pricePerDay.toLocaleString("es-CL")} / día</div>
+                  )}
+                  {status === "rej" && e.rejectedReason && (
+                    <div style={{ color: "var(--err)", fontSize: 11, marginTop: 6 }}>Motivo: {e.rejectedReason}</div>
+                  )}
+                  <div className="pub-actions">
+                    {status === "pub" ? (
+                      <>
+                        <button onClick={() => router.push(`/evento/${e.slug}`)}>Ver evento</button>
+                        <button onClick={() => toast.info("Próximamente")}>Métricas</button>
+                        <button className="primary-act" onClick={() => toast.info("Próximamente")}>Renovar</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => router.push(`/crear?id=${e.id}`)}>Editar</button>
+                        <button style={{ color: "var(--err)" }} onClick={() => handleDelete(e.id)}>Eliminar</button>
+                      </>
                     )}
-                    <Link className="btn ghost" href={`/crear?id=${e.id}`} style={{ fontSize: 12, padding: "6px 12px" }}>
-                      Editar
-                    </Link>
-                    <button
-                      className="btn ghost"
-                      style={{ fontSize: 12, padding: "6px 12px", color: "var(--err)" }}
-                      onClick={() => handleDelete(e.id)}
-                    >
-                      Eliminar
-                    </button>
                   </div>
                 </div>
               </div>

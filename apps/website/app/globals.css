@@ -426,8 +426,8 @@
   .st-pub .dot { background: var(--ok); }
   .st-rej { color: var(--err); }
   .st-rej .dot { background: var(--err); }
-  .pub-card .ttl { font-weight: 600; font-size: 15px; margin: 0 0 4px; }
-  .pub-card .meta { color: var(--ink-3); font-size: 12px; }
+  .pub-card .ttl { font-weight: 600; font-size: 15px; margin: 0 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pub-card .meta { color: var(--ink-3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pub-card .price { font-family: var(--font-mono); font-size: 13px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
   .pub-actions { display: flex; gap: 6px; margin-top: 10px; }
   .pub-actions button { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--line); font-size: 12px; color: var(--ink-2); background: transparent; }

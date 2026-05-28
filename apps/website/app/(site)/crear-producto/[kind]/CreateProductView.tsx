@@ -144,7 +144,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
               </div>
               <div className="field">
                 <label>Imagen del aviso <span style={{ color: "var(--err)" }}>*</span></label>
-                <div className="upload-box" style={{ minHeight: 160 }}>
+                <div className="upload-box" style={{ aspectRatio: "unset", minHeight: 160 }}>
                   <div className="ic">{Ic.upl}</div>
                   <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube una imagen</div>
                   <small>JPG / PNG · 1200×1500 mín · máx 5MB</small>

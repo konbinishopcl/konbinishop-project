@@ -1407,7 +1407,7 @@ a.list-row:hover { transform: translateY(-2px); border-color: var(--line-2); }
 }
 
 /* ───── article card like button ───── */
-.a-like { position: absolute; bottom: 10px; right: 10px; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: rgba(0,0,0,.55); backdrop-filter: blur(8px); color: #fff; font-size: 12px; font-weight: 600; border: 1px solid rgba(255,255,255,.15); transition: background .15s, color .15s; }
+.a-like { position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; background: rgba(0,0,0,.55); backdrop-filter: blur(8px); color: #fff; font-size: 12px; font-weight: 600; border: 1px solid rgba(255,255,255,.15); transition: background .15s, color .15s; }
 .a-like:hover { background: rgba(0,0,0,.75); }
 .a-like.on { background: var(--accent); border-color: var(--accent); }
 .a-like.on svg { fill: #fff; }

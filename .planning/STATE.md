@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-28T20:55:03.166Z"
+last_updated: "2026-05-28T20:55:14.255Z"
 progress:
   total_phases: 5
   completed_phases: 4
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28T20:54:59.570Z
+**Last session:** 2026-05-28T20:55:14.252Z
 
 ## Phase Summary
 
@@ -173,6 +173,7 @@ administrador quedan visibles al público.
 - [Phase 20-05]: Quota badge refreshed after every action (not only on mount) to keep active/max count current
 - [Phase 20-05]: AdminRejectModal reused for ban (kind='aviso/portada (ban)') because /ban endpoint requires { reason } >= 3 chars; ConfirmDialog deleted as it became unused
 - [Phase 21-04]: Prose '244.000 seguidores' in nosotros/Historia kept as editorial copy; INSTAGRAM_FOLLOWERS env var is abbreviated ('244K') and incompatible with prose style
+- [Phase 21]: Discount row gated on unitPrice < base price from settingsPublic; signal-via-zero credit detection; adjustDays debounced 400ms per item; Pagar button disabled placeholder (21-06 wires payment)
 
 ## Quick Tasks Completed
 

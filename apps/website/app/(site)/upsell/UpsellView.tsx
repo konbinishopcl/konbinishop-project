@@ -1,45 +1,81 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { z } from "zod";
 import { Ic } from "@/components/icons";
-import { SITE_HOST } from "@/lib/site";
+import { api, imageUrl } from "@/lib/api";
 import { useUser } from "@/components/providers";
+
+/* ─── Zod Schemas ───────────────────────────────────────────────────────────── */
+const SpotSchema = z.object({
+  title:     z.string().trim().min(2, "Mínimo 2 caracteres").max(120, "Máximo 120 caracteres"),
+  image:     z.string().min(1, "La imagen es requerida"),
+  linkType:  z.enum(["URL", "EMAIL", "PHONE"]),
+  linkValue: z.string().trim().min(3, "El enlace es requerido"),
+});
+
+const HeroSchema = z.object({
+  title:       z.string().trim().min(2, "Mínimo 2 caracteres").max(120, "Máximo 120 caracteres"),
+  titleAccent: z.string().trim().max(120, "Máximo 120 caracteres").optional(),
+  lead:        z.string().trim().max(240, "Máximo 240 caracteres").optional(),
+  image:       z.string().min(3, "La imagen es requerida"),
+  link:        z.string().trim().optional(),
+});
 
 /* ─── SpotForm ───────────────────────────────────────────────────────────── */
 function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void }) {
   const { token } = useUser();
   const [busy, setBusy] = useState(false);
-  const [linkType, setLinkType] = useState<"url" | "internal" | "email" | "tel">("url");
+  const [linkType, setLinkType] = useState<"url" | "email" | "tel">("url");
   const [days, setDays] = useState(14);
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [linkValue, setLinkValue] = useState("");
-  const [buttonText, setButtonText] = useState("");
+  const [image, setImage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const linkPlaceholder = linkType === "url" ? "tu-sitio.cl/oferta" : linkType === "internal" ? "@cinepolis" : linkType === "email" ? "ventas@tu-sitio.cl" : "+56 9 1234 5678";
-  const linkPrefix = linkType === "url" ? "https://" : linkType === "internal" ? `${SITE_HOST}/` : linkType === "email" ? "✉" : "☎";
-  const btnPlaceholder = linkType === "url" ? "Ver oferta" : linkType === "email" ? "Escribir" : linkType === "tel" ? "Llamar" : "Ver";
+  const linkPlaceholder = linkType === "url" ? "tu-sitio.cl/oferta" : linkType === "email" ? "ventas@tu-sitio.cl" : "+56 9 1234 5678";
+  const linkPrefix = linkType === "url" ? "https://" : linkType === "email" ? "✉" : "☎";
+
+  const handlePick = async (file: File) => {
+    if (!token) { toast.error("Debes iniciar sesión"); return; }
+    setUploading(true);
+    try { const { url } = await api.uploadImage(file, token); setImage(url); }
+    catch (ex) { toast.error(ex instanceof Error ? ex.message : "Error al subir imagen"); }
+    finally { setUploading(false); }
+  };
 
   const handleAdd = async () => {
-    if (!title.trim()) { toast.error("El título es requerido"); return; }
-    if (!linkValue.trim()) { toast.error("El enlace del CTA es requerido"); return; }
     if (!token) { toast.error("Debes iniciar sesión"); return; }
+    const LINK_MAP = { url: "URL", email: "EMAIL", tel: "PHONE" } as const;
+    const parsed = SpotSchema.safeParse({ title, image, linkType: LINK_MAP[linkType], linkValue });
+    if (!parsed.success) {
+      const fe: Record<string, string> = {};
+      for (const i of parsed.error.issues) fe[String(i.path[0])] = i.message;
+      setErrors(fe);
+      return;
+    }
+    setErrors({});
     setBusy(true);
     try {
-      const res = await fetch("/api/spots", {
-        method: "POST",
+      const created = await api.createSpot({
+        title: parsed.data.title, image: parsed.data.image,
+        linkType: parsed.data.linkType, linkValue: parsed.data.linkValue,
+      }, token);
+      const draft = await fetch("/api/orders/draft", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
+      const addRes = await fetch(`/api/orders/${draft.id}/items`, {
+        method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), description: description.trim() || undefined, linkType, linkValue: linkValue.trim(), buttonText: buttonText.trim() || undefined, days }),
+        body: JSON.stringify({ type: "SPOT", spotId: created.id, days }),
       });
-      if (!res.ok) throw new Error("Error al crear aviso");
+      if (!addRes.ok) { const e = await addRes.json().catch(() => ({})); throw new Error((e as { message?: string }).message ?? "Error al agregar al carrito"); }
       toast.success("Aviso agregado al carrito");
       onAdd();
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "Error");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   };
 
   return (
@@ -48,31 +84,29 @@ function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
         <label>Título del aviso <span style={{ color: "var(--err)" }}>*</span></label>
         <input type="text" placeholder="Ej: Cosplay Premium Atelier — Descuento" value={title} onChange={e => setTitle(e.target.value)} />
         <div className="help">Aparece en la card del aviso, máx 60 caracteres.</div>
-      </div>
-      <div className="field">
-        <label>Descripción corta</label>
-        <input type="text" placeholder="Texto breve que acompaña al título" value={description} onChange={e => setDescription(e.target.value)} />
+        {errors.title && <p className="field-error">{errors.title}</p>}
       </div>
       <div className="field">
         <label>Imagen del aviso <span style={{ color: "var(--err)" }}>*</span></label>
-        <div className="upload-box" style={{ aspectRatio: "4/5" }}>
-          <div className="ic">{Ic.upl}</div>
-          <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube una imagen</div>
-          <small>JPG / PNG · 1200×1500 mín · máx 5MB</small>
+        <div className="upload-box" onClick={() => fileRef.current?.click()} style={{ aspectRatio: "4/5" }}>
+          {image ? (<img src={imageUrl(image)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)
+                 : (<><div className="ic">{Ic.upl}</div><div style={{ fontWeight: 500, color: "var(--ink-2)" }}>{uploading ? "Subiendo…" : "Sube una imagen"}</div><small>JPG / PNG · máx 5MB</small></>)}
         </div>
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePick(f); e.target.value = ""; }} />
+        {errors.image && <p className="field-error">{errors.image}</p>}
       </div>
       <div className="field">
         <label>Tipo de enlace del CTA <span style={{ color: "var(--err)" }}>*</span></label>
         <div className="pill-pick">
           <button type="button" className={linkType === "url" ? "on" : ""} onClick={() => setLinkType("url")}>URL externa</button>
-          <button type="button" className={linkType === "internal" ? "on" : ""} onClick={() => setLinkType("internal")}>URL interna</button>
           <button type="button" className={linkType === "email" ? "on" : ""} onClick={() => setLinkType("email")}>Email</button>
           <button type="button" className={linkType === "tel" ? "on" : ""} onClick={() => setLinkType("tel")}>Teléfono</button>
         </div>
       </div>
       <div className="field">
         <label>
-          {linkType === "url" ? "URL externa" : linkType === "internal" ? "Ruta interna" : linkType === "email" ? "Email" : "Teléfono"}
+          {linkType === "url" ? "URL externa" : linkType === "email" ? "Email" : "Teléfono"}
           {" "}<span style={{ color: "var(--err)" }}>*</span>
         </label>
         <div className="input-prefix">
@@ -85,10 +119,7 @@ function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
           />
         </div>
         <div className="help">El botón del aviso cambia su ícono y texto según el tipo de enlace.</div>
-      </div>
-      <div className="field">
-        <label>Texto del botón</label>
-        <input type="text" placeholder={btnPlaceholder} value={buttonText} onChange={e => setButtonText(e.target.value)} />
+        {errors.linkValue && <p className="field-error">{errors.linkValue}</p>}
       </div>
       <div className="field">
         <label>Días de publicación <span style={{ color: "var(--err)" }}>*</span></label>
@@ -99,7 +130,7 @@ function SpotForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
         <div className="help">Mínimo 10, máximo 30 · $8.000 CLP / día → <strong>${(days * 8000).toLocaleString("es-CL")} CLP total</strong></div>
       </div>
       <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : <>Agregar aviso al carrito {Ic.arrow}</>}</button>
+        <button className="btn primary" onClick={handleAdd} disabled={busy || uploading}>{busy ? "Agregando…" : <>Agregar aviso al carrito {Ic.arrow}</>}</button>
         <button className="btn ghost" onClick={onCancel}>Cancelar</button>
       </div>
     </div>
@@ -117,25 +148,54 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
   const [date, setDate] = useState("");
   const [place, setPlace] = useState("");
   const [link, setLink] = useState("");
+  const [image, setImage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const handlePick = async (file: File) => {
+    if (!token) { toast.error("Debes iniciar sesión"); return; }
+    setUploading(true);
+    try { const { url } = await api.uploadImage(file, token); setImage(url); }
+    catch (ex) { toast.error(ex instanceof Error ? ex.message : "Error al subir imagen"); }
+    finally { setUploading(false); }
+  };
 
   const handleAdd = async () => {
-    if (!title.trim()) { toast.error("El título es requerido"); return; }
     if (!token) { toast.error("Debes iniciar sesión"); return; }
+    const parsed = HeroSchema.safeParse({
+      title, titleAccent: subtitle || undefined, lead: lead || undefined, image, link: link || undefined,
+    });
+    if (!parsed.success) {
+      const fe: Record<string, string> = {};
+      for (const i of parsed.error.issues) fe[String(i.path[0])] = i.message;
+      setErrors(fe);
+      return;
+    }
+    setErrors({});
     setBusy(true);
     try {
-      const res = await fetch("/api/heroes", {
-        method: "POST",
+      const created = await api.createHero({
+        title: parsed.data.title,
+        titleAccent: parsed.data.titleAccent,
+        lead: parsed.data.lead,
+        image: parsed.data.image,
+        date: date.trim() || undefined,
+        place: place.trim() || undefined,
+        link: parsed.data.link,
+      }, token);
+      const draft = await fetch("/api/orders/draft", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
+      const addRes = await fetch(`/api/orders/${draft.id}/items`, {
+        method: "PUT",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ title: title.trim(), subtitle: subtitle.trim() || undefined, lead: lead.trim() || undefined, date: date.trim() || undefined, place: place.trim() || undefined, link: link.trim() || undefined, days }),
+        body: JSON.stringify({ type: "HERO", heroId: created.id, days }),
       });
-      if (!res.ok) throw new Error("Error al crear portada");
+      if (!addRes.ok) { const e = await addRes.json().catch(() => ({})); throw new Error((e as { message?: string }).message ?? "Error al agregar al carrito"); }
       toast.success("Portada agregada al carrito");
       onAdd();
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "Error");
-    } finally {
-      setBusy(false);
-    }
+    } finally { setBusy(false); }
   };
 
   return (
@@ -144,6 +204,7 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
         <label>Título principal <span style={{ color: "var(--err)" }}>*</span></label>
         <input type="text" placeholder="Ej: Demon Slayer" value={title} onChange={e => setTitle(e.target.value)} />
         <div className="help">La parte grande del título en el carrusel.</div>
+        {errors.title && <p className="field-error">{errors.title}</p>}
       </div>
       <div className="field">
         <label>Subtítulo en color de acento</label>
@@ -156,11 +217,13 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
       </div>
       <div className="field">
         <label>Imagen de fondo (pantalla completa) <span style={{ color: "var(--err)" }}>*</span></label>
-        <div className="upload-box" style={{ aspectRatio: "21/9" }}>
-          <div className="ic">{Ic.upl}</div>
-          <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube imagen horizontal</div>
-          <small>JPG · 2400×1080 mín · máx 8MB · sin texto</small>
+        <div className="upload-box" onClick={() => fileRef.current?.click()} style={{ aspectRatio: "21/9" }}>
+          {image ? (<img src={imageUrl(image)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />)
+                 : (<><div className="ic">{Ic.upl}</div><div style={{ fontWeight: 500, color: "var(--ink-2)" }}>{uploading ? "Subiendo…" : "Sube imagen horizontal"}</div><small>JPG · 2400×1080 mín · máx 8MB · sin texto</small></>)}
         </div>
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePick(f); e.target.value = ""; }} />
+        {errors.image && <p className="field-error">{errors.image}</p>}
       </div>
       <div className="grid-2">
         <div className="field">
@@ -176,7 +239,7 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
         <label>URL de destino al hacer clic</label>
         <div className="input-prefix">
           <span>https://</span>
-          <input type="text" placeholder={`${SITE_HOST}/evento/mi-evento`} value={link} onChange={e => setLink(e.target.value)} />
+          <input type="text" placeholder="konbini.cl/evento/mi-evento" value={link} onChange={e => setLink(e.target.value)} />
         </div>
         <div className="help">Si no la pones, el carrusel solo muestra el banner sin link.</div>
       </div>
@@ -189,7 +252,7 @@ function HeroForm({ onAdd, onCancel }: { onAdd: () => void; onCancel: () => void
         <div className="help">Mínimo 10, máximo 30 · $15.000 CLP / día → <strong>${(days * 15000).toLocaleString("es-CL")} CLP total</strong></div>
       </div>
       <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-        <button className="btn primary" onClick={handleAdd} disabled={busy}>{busy ? "Agregando…" : <>Agregar portada al carrito {Ic.arrow}</>}</button>
+        <button className="btn primary" onClick={handleAdd} disabled={busy || uploading}>{busy ? "Agregando…" : <>Agregar portada al carrito {Ic.arrow}</>}</button>
         <button className="btn ghost" onClick={onCancel}>Cancelar</button>
       </div>
     </div>

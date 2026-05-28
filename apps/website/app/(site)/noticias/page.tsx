@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { NoticiasListView } from "./NoticiasListView";
 import type { ApiArticle, ApiArticleCategory } from "@/lib/api";
+import { NoticiasHubView } from "./NoticiasHubView";
 
 export const dynamic = "force-dynamic";
 
@@ -21,23 +21,17 @@ function apiHeaders(): Record<string, string> {
   return h;
 }
 
-const PAGE_SIZE = 50;
-
-async function fetchArticlesPage(): Promise<{ items: ApiArticle[]; total: number; totalPages: number }> {
+async function fetchArticles(): Promise<ApiArticle[]> {
   try {
-    const res = await fetch(`${BASE}/articles?pageSize=${PAGE_SIZE}`, {
+    const res = await fetch(`${BASE}/articles?pageSize=50`, {
       headers: apiHeaders(),
       cache: "no-store",
     });
-    if (!res.ok) return { items: [], total: 0, totalPages: 1 };
+    if (!res.ok) return [];
     const data = await res.json();
-    return {
-      items:      data.items      ?? [],
-      total:      data.total      ?? 0,
-      totalPages: data.totalPages ?? 1,
-    };
+    return data.items ?? [];
   } catch {
-    return { items: [], total: 0, totalPages: 1 };
+    return [];
   }
 }
 
@@ -55,17 +49,12 @@ async function fetchArticleCategories(): Promise<ApiArticleCategory[]> {
 }
 
 export default async function NoticiasPage() {
-  const [{ items, total, totalPages }, categories] = await Promise.all([
-    fetchArticlesPage(),
+  const [articles, categories] = await Promise.all([
+    fetchArticles(),
     fetchArticleCategories(),
   ]);
+
   return (
-    <NoticiasListView
-      initialArticles={items}
-      initialTotal={total}
-      initialTotalPages={totalPages}
-      pageSize={PAGE_SIZE}
-      categories={categories}
-    />
+    <NoticiasHubView articles={articles} categories={categories} />
   );
 }

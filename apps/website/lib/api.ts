@@ -109,6 +109,7 @@ export type ApiArticleCategory = {
   nameJa?: string | null;
   slug: string;
   description: string | null;
+  _count?: { articles?: number };
 };
 
 export type ApiArticleEvent = {
@@ -316,7 +317,7 @@ export const api = {
   eventTags:       () => request<ApiEventTag[]>("/event-tags"),
   articleCategories: () => request<ApiArticleCategory[]>("/article-categories"),
   articleTags:     () => request<ApiArticleTag[]>("/article-tags"),
-  articles: (query?: { page?: number; pageSize?: number; articleCategory?: string }) =>
+  articles: (query?: { page?: number; pageSize?: number; articleCategory?: string; articleTag?: string }) =>
     request<{ items: ApiArticle[]; total: number; page: number; pageSize: number; totalPages: number }>(
       `/articles${qs(query ?? {})}`
     ),

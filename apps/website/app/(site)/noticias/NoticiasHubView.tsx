@@ -214,7 +214,7 @@ export function NoticiasHubView({ articles, categories }: Props) {
               <h2>{cat?.name ?? slug}</h2>
               {cat?.nameJa && <span className="ja">{cat.nameJa}</span>}
             </div>
-            <Link className="more" href={`/noticias/categoria/${slug}`}>
+            <Link className="more" href={`/noticias/categorias/${slug}`}>
               Ver más de {cat?.name ?? slug} →
             </Link>
           </div>
@@ -229,17 +229,20 @@ export function NoticiasHubView({ articles, categories }: Props) {
       {/* ── EXPLORA POR CATEGORÍA ─────────────────────────────────── */}
       {sortedCats.length > 0 && (
         <section style={{ marginBottom: 60, padding: 36, border: "1px solid var(--line)", borderRadius: "var(--r-xl)" }}>
-          <div style={{ marginBottom: 28 }}>
-            <div className="eyebrow">CATEGORÍAS · カテゴリ</div>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 44, letterSpacing: "-.025em", margin: "10px 0 0", fontWeight: 700, lineHeight: 1.05 }}>
-              {sortedCats.length} categorías editoriales
-            </h2>
+          <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <div className="eyebrow">CATEGORÍAS · カテゴリ</div>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: 44, letterSpacing: "-.025em", margin: "10px 0 0", fontWeight: 700, lineHeight: 1.05 }}>
+                {sortedCats.length} categorías editoriales
+              </h2>
+            </div>
+            <Link className="more" href="/noticias/categorias">Ver todas las categorías →</Link>
           </div>
           <div style={{ columns: 3, columnGap: 40 }} className="explore-cats">
             {sortedCats.map((c) => (
               <button
                 key={c.slug}
-                onClick={() => router.push(`/noticias/categoria/${c.slug}`)}
+                onClick={() => router.push(`/noticias/categorias/${c.slug}`)}
                 style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "8px 0", color: "var(--ink)", textAlign: "left", background: "transparent", border: 0, cursor: "pointer", transition: "color .12s, transform .12s", width: "100%", breakInside: "avoid", overflow: "hidden" }}
                 onMouseOver={(ev) => { ev.currentTarget.style.color = "var(--accent)"; ev.currentTarget.style.transform = "translateX(4px)"; }}
                 onMouseOut={(ev) => { ev.currentTarget.style.color = "var(--ink)"; ev.currentTarget.style.transform = ""; }}

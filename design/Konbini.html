@@ -2571,11 +2571,39 @@ function NewsHubPage() {
         );
       })}
 
+      {/* TRENDING TAGS */}
+      <section style={{ marginBottom: 32 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16, flexWrap: "wrap", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+            <div className="eyebrow">TAGS · タグ</div>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 28, letterSpacing: "-.02em", margin: 0, fontWeight: 700 }}>Más leídos esta semana</h2>
+          </div>
+          <a onClick={() => nav("newsTags")} className="more" style={{ cursor: "pointer" }}>Ver todos los tags {Ic.arrow}</a>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+          {(() => {
+            const counts = {};
+            ARTICLES.forEach(a => (a.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+            // synthesize counts to look richer
+            const list = Object.entries(counts).map(([t, c]) => [t, c * 13 + 12]).sort((a, b) => b[1] - a[1]).slice(0, 14);
+            return list.map(([t, c], i) => (
+              <button key={t} className="sel" style={{ padding: i < 3 ? "10px 18px" : "9px 16px", fontSize: i < 3 ? 15 : 13, background: i < 3 ? "color-mix(in oklab, var(--accent) 14%, var(--surface))" : "var(--surface)", color: i < 3 ? "var(--accent)" : "var(--ink-2)", borderColor: i < 3 ? "color-mix(in oklab, var(--accent) 30%, var(--line))" : "var(--line)", fontWeight: 600 }} onClick={() => nav("tag", { tag: t })}>
+                <span style={{ marginRight: 6 }}>#</span>{t}
+                <span style={{ marginLeft: 8, fontFamily: "var(--font-mono)", fontSize: 10, opacity: .7, letterSpacing: ".05em" }}>{c}</span>
+              </button>
+            ));
+          })()}
+        </div>
+      </section>
+
       {/* Explore all categories — flat list */}
       <section style={{ marginBottom: 32, padding: 36, border: "1px solid var(--line)", borderRadius: "var(--r-xl)" }}>
-        <div style={{ marginBottom: 28 }}>
-          <div className="eyebrow">CATEGORÍAS · カテゴリ</div>
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: 44, letterSpacing: "-.025em", margin: "10px 0 0", fontWeight: 700, lineHeight: 1.05 }}>{NEWS_CATEGORIES.length} categorías editoriales</h2>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end", flexWrap: "wrap", gap: 12, marginBottom: 28 }}>
+          <div>
+            <div className="eyebrow">CATEGORÍAS · カテゴリ</div>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: 44, letterSpacing: "-.025em", margin: "10px 0 0", fontWeight: 700, lineHeight: 1.05 }}>{NEWS_CATEGORIES.length} categorías editoriales</h2>
+          </div>
+          <a onClick={() => nav("newsCats")} className="more" style={{ cursor: "pointer" }}>Ver todas las categorías {Ic.arrow}</a>
         </div>
         <div style={{ columns: 4, columnGap: 40 }} className="explore-cats">
           {[...NEWS_CATEGORIES].sort((a, b) => a.label.localeCompare(b.label)).map(c => (
@@ -2586,6 +2614,137 @@ function NewsHubPage() {
           ))}
         </div>
       </section>
+    </main>
+  );
+}
+
+/* ───────────────── news: all categories ───────────────── */
+function NewsCatsAllPage() {
+  const { nav } = useRouter();
+  const [q, setQ] = useState("");
+  const list = NEWS_CATEGORIES.filter(c => !q.trim() || c.label.toLowerCase().includes(q.toLowerCase())).sort((a, b) => a.label.localeCompare(b.label));
+  // count articles by category (synthesized for prototype feel)
+  const counts = {};
+  ARTICLES.forEach(a => { counts[a.cat] = (counts[a.cat] || 0) + 1; });
+  const articleCount = c => (counts[c] || 0) * 7 + ((c.length * 3) % 13) + 2;
+  return (
+    <main className="container">
+      <a onClick={() => nav("news")} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginTop: 24, marginBottom: 4, cursor: "pointer" }}>{Ic.chevL} Volver a noticias</a>
+      <div style={{ margin: "8px 0 36px", display: "flex", justifyContent: "space-between", alignItems: "end", flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <div className="eyebrow">NOTICIAS · カテゴリ</div>
+          <h1 className="display" style={{ fontSize: 80, margin: "12px 0 8px", letterSpacing: "-.035em", lineHeight: .95 }}>Categorías<span style={{ color: "var(--accent)" }}>.</span></h1>
+          <p style={{ color: "var(--ink-2)", margin: 0, maxWidth: "62ch", fontSize: 16 }}>
+            <strong style={{ color: "var(--ink)" }}>{NEWS_CATEGORIES.length} secciones editoriales</strong> · cada artículo se cataloga en una categoría al ser publicado.
+          </p>
+        </div>
+      </div>
+
+      <div className="fbar-sticky">
+        <div className="fbar-inner" style={{ gap: 12 }}>
+          <div className="search-input" style={{ padding: "8px 16px", margin: 0, flex: 1, minWidth: 280, background: "transparent", border: 0 }}>
+            {Ic.search}
+            <input placeholder="Buscar categoría…" value={q} onChange={e => setQ(e.target.value)} style={{ padding: 0, background: "transparent" }} />
+            {q && <button onClick={() => setQ("")} className="icon-btn" style={{ width: 28, height: 28 }}>{Ic.close}</button>}
+          </div>
+          <div className="group" style={{ marginLeft: "auto" }}>
+            <span className="sel" style={{ background: "transparent", border: 0, color: "var(--ink-3)" }}>{list.length} resultados</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+        {list.map(c => (
+          <button key={c.id} onClick={() => nav("news", { cat: c.id })} style={{ display: "flex", flexDirection: "column", gap: 10, alignItems: "stretch", padding: "20px 22px", borderRadius: 18, background: "var(--surface)", border: "1px solid var(--line)", color: "var(--ink)", textAlign: "left", cursor: "pointer", transition: "transform .15s, border-color .15s" }} onMouseOver={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.transform = "translateY(-3px)"; }} onMouseOut={e => { e.currentTarget.style.borderColor = "var(--line)"; e.currentTarget.style.transform = ""; }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+              <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 22, letterSpacing: "-.015em" }}>{c.label}</span>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-3)", letterSpacing: ".06em" }}>{c.ja}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 4 }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--ink-3)", letterSpacing: ".1em" }}>{articleCount(c.id)} artículos</span>
+              <span style={{ color: "var(--accent)" }}>{Ic.arrow}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {list.length === 0 && (
+        <div className="acc-empty" style={{ margin: "40px 0 60px" }}>
+          <div className="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+          <h3>Sin categorías que coincidan con "{q}"</h3>
+          <button className="btn ghost" onClick={() => setQ("")}>Limpiar búsqueda</button>
+        </div>
+      )}
+    </main>
+  );
+}
+
+/* ───────────────── news: all tags ───────────────── */
+function NewsTagsAllPage() {
+  const { nav } = useRouter();
+  const [q, setQ] = useState("");
+  const [sort, setSort] = useState("Más usados");
+  const counts = {};
+  ARTICLES.forEach(a => (a.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+  let entries = Object.entries(counts).map(([t, c]) => [t, c * 13 + 12]); // synthesize
+  if (q.trim()) entries = entries.filter(([t]) => t.toLowerCase().includes(q.toLowerCase()));
+  if (sort === "Más usados") entries.sort((a, b) => b[1] - a[1]);
+  else if (sort === "A-Z") entries.sort((a, b) => a[0].localeCompare(b[0]));
+  else if (sort === "Recientes") entries.sort((a, b) => a[0].length - b[0].length);
+
+  // Tag cloud sizing based on rank
+  const max = entries[0]?.[1] || 1;
+  const min = entries[entries.length - 1]?.[1] || 1;
+  const sizeOf = c => {
+    if (max === min) return 18;
+    return 14 + Math.round(((c - min) / (max - min)) * 22); // 14..36px
+  };
+
+  return (
+    <main className="container">
+      <a onClick={() => nav("news")} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginTop: 24, marginBottom: 4, cursor: "pointer" }}>{Ic.chevL} Volver a noticias</a>
+      <div style={{ margin: "8px 0 36px" }}>
+        <div className="eyebrow">NOTICIAS · タグ</div>
+        <h1 className="display" style={{ fontSize: 80, margin: "12px 0 8px", letterSpacing: "-.035em", lineHeight: .95 }}>Tags<span style={{ color: "var(--accent)" }}>.</span></h1>
+        <p style={{ color: "var(--ink-2)", margin: 0, maxWidth: "62ch", fontSize: 16 }}>
+          <strong style={{ color: "var(--ink)" }}>{entries.length} tags activos</strong> · generados por IA al aprobar artículos. Hacer clic abre el archivo de noticias con ese tag.
+        </p>
+      </div>
+
+      <div className="fbar-sticky">
+        <div className="fbar-inner" style={{ gap: 12 }}>
+          <div className="search-input" style={{ padding: "8px 16px", margin: 0, flex: 1, minWidth: 280, background: "transparent", border: 0 }}>
+            {Ic.search}
+            <input placeholder="Buscar tag…" value={q} onChange={e => setQ(e.target.value)} style={{ padding: 0, background: "transparent" }} />
+            {q && <button onClick={() => setQ("")} className="icon-btn" style={{ width: 28, height: 28 }}>{Ic.close}</button>}
+          </div>
+          <div className="group" style={{ marginLeft: "auto" }}>
+            {["Más usados", "A-Z", "Recientes"].map(s => (
+              <button key={s} className={`sel ${sort === s ? "on" : ""}`} onClick={() => setSort(s)}>{s}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* TAG CLOUD */}
+      <section style={{ padding: 36, border: "1px solid var(--line)", borderRadius: "var(--r-xl)", marginBottom: 32 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "14px 18px", alignItems: "baseline" }}>
+          {entries.map(([t, c]) => (
+            <button key={t} onClick={() => nav("tag", { tag: t })} style={{ display: "inline-flex", alignItems: "baseline", gap: 6, padding: "4px 0", color: "var(--ink)", background: "transparent", border: 0, cursor: "pointer", transition: "color .12s, transform .12s", fontFamily: "var(--font-display)", fontWeight: 600, fontSize: sizeOf(c), letterSpacing: "-.01em", lineHeight: 1.1 }} onMouseOver={e => { e.currentTarget.style.color = "var(--accent)"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseOut={e => { e.currentTarget.style.color = "var(--ink)"; e.currentTarget.style.transform = ""; }}>
+              <span style={{ color: "var(--accent)" }}>#</span>{t}
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)", fontWeight: 500, letterSpacing: ".05em", marginLeft: 2 }}>{c}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {entries.length === 0 && (
+        <div className="acc-empty" style={{ margin: "40px 0 60px" }}>
+          <div className="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+          <h3>Sin tags que coincidan con "{q}"</h3>
+          <button className="btn ghost" onClick={() => setQ("")}>Limpiar búsqueda</button>
+        </div>
+      )}
     </main>
   );
 }
@@ -5525,19 +5684,159 @@ function ExpiredEventPage() {
 function TagPage() {
   const { route, nav } = useRouter();
   const tag = route.params?.tag || "shonen";
-  const events = EVENTS.slice(0, 4);
-  const articles = ARTICLES.filter(a => (a.tags || []).some(t => t.includes(tag))).slice(0, 3);
+  const [view, setView] = useState("grid");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(12);
+  const [open, setOpen] = useState(null);
+  const [sort, setSort] = useState("Más recientes");
+  const [type, setType] = useState("Todos");
+  const [sponsored, setSponsored] = useState("Todos");
+  const [period, setPeriod] = useState(null);
+  const [q, setQ] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const sorts = ["Más recientes", "Más leídas", "A-Z"];
+  const types = ["Todos", "Artículos", "Entrevistas", "Reseñas"];
+  const sponsoredOpts = ["Todos", "Editoriales", "Patrocinados"];
+
+  const norm = s => (s || "").toLowerCase();
+  const q0 = norm(tag);
+  let articles = ARTICLES.filter(a => (a.tags || []).some(t => norm(t).includes(q0)) || norm(a.title).includes(q0) || norm(a.cat).includes(q0));
+  if (sponsored === "Patrocinados") articles = articles.filter(a => a.sponsored);
+  if (sponsored === "Editoriales") articles = articles.filter(a => !a.sponsored);
+  if (q.trim()) articles = articles.filter(a => a.title.toLowerCase().includes(q.toLowerCase()));
+  const allArticles = articles.length ? [...articles, ...articles, ...articles].slice(0, 9) : ARTICLES.slice(0, 6);
+  const events = EVENTS.filter(e => norm(e.title).includes(q0) || norm(e.cat).includes(q0));
+
+  const Pop = ({ id, label, options, value, onPick, icon, dflt }) => (
+    <div style={{ position: "relative" }}>
+      <button className={`sel ${open === id ? "on" : ""} ${value !== dflt ? "on" : ""}`} onClick={() => setOpen(open === id ? null : id)} title={label}>
+        {icon}<strong style={{ fontWeight: 600 }}>{value}</strong> {Ic.chev}
+      </button>
+      {open === id && (
+        <div className="menu" style={{ top: 44, left: 0, minWidth: 200 }} onMouseLeave={() => setOpen(null)}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", textTransform: "uppercase", padding: "8px 12px 4px" }}>{label}</div>
+          {options.map(o => (
+            <button key={o} onClick={() => { onPick(o); setOpen(null); }} style={value === o ? { background: "var(--surface-2)", color: "var(--ink)" } : null}>
+              {value === o && <span style={{ color: "var(--accent)", marginRight: 2 }}>✓</span>}
+              {o}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const activeCount = (type !== "Todos" ? 1 : 0) + (sponsored !== "Todos" ? 1 : 0) + (period ? 1 : 0) + (q.trim() ? 1 : 0);
+  const clearAll = () => { setType("Todos"); setSponsored("Todos"); setPeriod(null); setQ(""); };
+
   return (
     <main className="container">
-      <div style={{ margin: "32px 0 24px" }}>
+      <a onClick={() => nav("news")} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginTop: 24, marginBottom: 4, cursor: "pointer" }}>{Ic.chevL} Volver a noticias</a>
+      <div style={{ margin: "8px 0 36px" }}>
         <div className="eyebrow">TAG · タグ</div>
-        <h1 className="display" style={{ fontSize: 64, margin: "12px 0 6px" }}>#{tag}</h1>
-        <p style={{ color: "var(--ink-2)", margin: 0 }}>{events.length + articles.length} resultados · contenido etiquetado por IA al aprobar.</p>
+        <h1 className="display" style={{ fontSize: 80, margin: "12px 0 8px", letterSpacing: "-.035em", lineHeight: .95 }}>
+          <span style={{ color: "var(--accent)", marginRight: 4 }}>#</span>{tag}
+        </h1>
+        <p style={{ color: "var(--ink-2)", margin: 0, maxWidth: "60ch", fontSize: 16 }}>
+          <strong style={{ color: "var(--ink)" }}>{allArticles.length} artículos</strong> y <strong style={{ color: "var(--ink)" }}>{events.length} eventos</strong> etiquetados con <strong>#{tag}</strong>. Tags generados por IA al aprobar el contenido.
+        </p>
       </div>
-      <SectionHead title="Eventos" ja="イベント" />
-      <div className="card-grid" style={{ marginBottom: 36 }}>{events.map(e => <EventCard key={e.id} e={e} />)}</div>
-      <SectionHead title="Noticias" ja="ニュース" />
-      <div className="card-grid" style={{ marginBottom: 60 }}>{articles.map(a => <ArticleCard key={a.id} a={a} onOpen={x => nav("article", { id: x.id })} />)}</div>
+
+      <div className="fbar-sticky">
+        <div className="fbar-inner">
+          <div className="group">
+            {["Hoy", "Esta semana"].map(p => (
+              <button key={p} className={`sel ${period === p ? "on" : ""}`} onClick={() => setPeriod(period === p ? null : p)}>{p}</button>
+            ))}
+          </div>
+          <div className="vline"></div>
+          <div className="group">
+            <Pop id="type" label="Tipo" options={types} value={type} onPick={setType} icon={<span style={{ display: "inline-flex", marginRight: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h12M4 18h8"/></svg></span>} dflt="Todos" />
+            <Pop id="sponsored" label="Origen" options={sponsoredOpts} value={sponsored} onPick={setSponsored} icon={<span style={{ display: "inline-flex", marginRight: 6, fontWeight: 700 }}>✦</span>} dflt="Todos" />
+            {activeCount > 0 && <button className="sel" style={{ color: "var(--accent)" }} onClick={clearAll}>✕ Limpiar ({activeCount})</button>}
+          </div>
+          <div className="group" style={{ marginLeft: "auto" }}>
+            <div style={{ position: "relative" }}>
+              <button className={`sel ${searchOpen ? "on" : ""} ${q ? "on" : ""}`} onClick={() => setSearchOpen(o => !o)} title="Buscar">
+                <span style={{ display: "inline-flex", marginRight: 6 }}>{Ic.search}</span>
+                <strong style={{ fontWeight: 600 }}>{q || "Buscar"}</strong>
+              </button>
+              {searchOpen && (
+                <div className="menu" style={{ top: 44, right: 0, left: "auto", minWidth: 280, padding: 12 }} onMouseLeave={() => setSearchOpen(false)}>
+                  <div className="search-input" style={{ padding: "10px 14px", margin: 0 }}>
+                    {Ic.search}
+                    <input autoFocus placeholder={`Buscar en #${tag}…`} value={q} onChange={e => setQ(e.target.value)} style={{ padding: 0, background: "transparent" }} />
+                    {q && <button onClick={() => setQ("")} className="icon-btn" style={{ width: 28, height: 28 }}>{Ic.close}</button>}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={{ display: "inline-flex", border: "1px solid var(--line)", borderRadius: 999, padding: 3, background: "var(--surface)" }}>
+              <button className={`sel ${view === "grid" ? "on" : ""}`} onClick={() => setView("grid")} title="Grilla" style={{ border: 0, padding: "6px 10px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              </button>
+              <button className={`sel ${view === "list" ? "on" : ""}`} onClick={() => setView("list")} title="Lista" style={{ border: 0, padding: "6px 10px" }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+              </button>
+            </div>
+            <Pop id="sort" label="Ordenar" options={sorts} value={sort} onPick={setSort} icon={<span style={{ display: "inline-flex", marginRight: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h13M3 12h9M3 18h5M17 8V4l3 3M17 16v4l3-3"/></svg></span>} dflt="Más recientes" />
+          </div>
+        </div>
+      </div>
+
+      {view === "grid" ? (
+        <div className="card-grid" style={{ marginBottom: 24 }}>
+          {allArticles.map((a, i) => <ArticleCard key={`${a.id}-${i}`} a={a} onOpen={x => nav("article", { id: x.id })} />)}
+        </div>
+      ) : (
+        <div className="list-grid">
+          {allArticles.map((a, i) => (
+            <div key={`${a.id}-${i}`} className="list-row" onClick={() => nav("article", { id: a.id })}>
+              <div className="l-img">
+                <div className={`pic poster-art ${a.art}`} />
+                <span className="cat-tag">{a.cat.toUpperCase()}</span>
+              </div>
+              <div className="l-info">
+                <div className="l-date">{a.date} · {a.reading} lectura</div>
+                <h3 className="l-title">{a.title}</h3>
+                <div className="l-place" style={{ color: "var(--ink-2)", fontSize: 14, marginBottom: 0 }}>{a.excerpt}</div>
+              </div>
+              <div></div>
+              <span style={{ color: "var(--ink-3)" }}>{Ic.arrow}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="pag-bar">
+        <div className="pag-info">
+          <span>Mostrando <strong style={{ color: "var(--ink)" }}>{(page - 1) * perPage + 1}–{Math.min(page * perPage, allArticles.length * 3)}</strong> de <strong style={{ color: "var(--ink)" }}>{allArticles.length * 3}</strong> artículos</span>
+          <span style={{ color: "var(--line-2)" }}>·</span>
+          <span className="ips">
+            <span>Mostrar</span>
+            <select value={perPage} onChange={e => { setPerPage(+e.target.value); setPage(1); }}>
+              <option value="12">12</option>
+              <option value="24">24</option>
+              <option value="48">48</option>
+            </select>
+            <span>por página</span>
+          </span>
+        </div>
+        <div className="pag-pages">
+          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} title="Anterior">{Ic.chevL}</button>
+          {[1, 2, 3, 4].map(p => <button key={p} className={page === p ? "on" : ""} onClick={() => setPage(p)}>{p}</button>)}
+          <span className="ell">…</span>
+          <button onClick={() => setPage(p => p + 1)}>{Ic.chevR}</button>
+        </div>
+      </div>
+
+      {events.length > 0 && (
+        <section style={{ margin: "56px 0 60px" }}>
+          <SectionHead title="Eventos relacionados" ja="関連イベント" moreLabel="Ver todos los eventos" onMore={() => nav("category", { cat: "anime" })} />
+          <div className="card-grid">{events.slice(0, 4).map(e => <EventCard key={e.id} e={e} />)}</div>
+        </section>
+      )}
     </main>
   );
 }
@@ -6902,6 +7201,8 @@ function Shell() {
       {route.name === "checkout" && <CheckoutPage />}
       {route.name === "search" && <SearchPage />}
       {route.name === "news" && <NewsListPage />}
+      {route.name === "newsCats" && <NewsCatsAllPage />}
+      {route.name === "newsTags" && <NewsTagsAllPage />}
       {route.name === "article" && <ArticlePage />}
       {route.name === "organizer" && <OrganizerPage />}
       {route.name === "pricing" && <PricingPage />}

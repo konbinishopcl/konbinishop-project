@@ -1442,3 +1442,27 @@ a.list-row:hover { transform: translateY(-2px); border-color: var(--line-2); }
   border-color: var(--line) !important;
   color: var(--ink-2) !important;
 }
+
+/* ───── Search lightbox overlay ───── */
+.search-lightbox { position: fixed; inset: 0; z-index: 300; background: color-mix(in oklab, var(--bg) 94%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); overflow-y: auto; animation: fadein .18s ease; }
+.search-lightbox .slb-inner { max-width: 740px; margin: 0 auto; padding: 48px 24px 80px; position: relative; }
+.search-lightbox .slb-close { position: fixed; top: 20px; right: 20px; width: 40px; height: 40px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 301; }
+.search-lightbox .slb-close:hover { color: var(--ink); }
+.search-input { display: flex; align-items: center; gap: 12px; padding: 18px 24px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 22px; }
+.search-input input { flex: 1; background: transparent; border: 0; outline: 0; font-size: 18px; font-weight: 500; color: var(--ink); }
+.search-input input::placeholder { color: var(--ink-3); }
+.search-input kbd { font-family: var(--font-mono); font-size: 11px; padding: 4px 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-3); }
+.search-tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
+.search-tabs button { padding: 14px 0; font-size: 14px; color: var(--ink-3); font-weight: 500; border-bottom: 2px solid transparent; transform: translateY(1px); background: none; }
+.search-tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
+.search-tabs button .ct { margin-left: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); }
+.search-row { display: flex; gap: 18px; align-items: center; padding: 18px 20px; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); margin-bottom: 12px; cursor: pointer; transition: transform .15s, border-color .15s; }
+.search-row:hover { transform: translateY(-2px); border-color: var(--line-2); }
+.search-row .thumb { width: 110px; aspect-ratio: 16/10; flex: 0 0 110px; border-radius: 12px; overflow: hidden; position: relative; background: #1a1714; }
+.search-row .thumb .pic { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.search-row .info { flex: 1; min-width: 0; }
+.search-row .info .badge { display: inline-flex; padding: 4px 9px; border-radius: 999px; font-family: var(--font-mono); font-size: 10px; font-weight: 600; letter-spacing: .12em; margin-bottom: 6px; }
+.search-row .info .badge.ev { background: color-mix(in oklab, var(--accent) 14%, transparent); color: var(--accent); }
+.search-row .info .badge.no { background: color-mix(in oklab, var(--accent-3) 18%, transparent); color: var(--accent-3); }
+.search-row .info .t { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -.01em; margin: 0 0 4px; }
+.search-row .info .m { color: var(--ink-3); font-size: 13px; }

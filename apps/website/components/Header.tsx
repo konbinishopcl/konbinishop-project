@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { Ic } from "./icons";
 import { NewsMegaMenu } from "./NewsMegaMenu";
+import { SearchLightbox } from "./SearchLightbox";
 import { useTheme, useUser } from "./providers";
 import { UserMenu } from "./UserMenu";
 import type { ApiEventCategory, ApiArticleCategory } from "@/lib/api";
@@ -24,6 +25,7 @@ export function Header({
   const [catsOpen, setCatsOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newsMenuOpen, setNewsMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
 
   // Headroom: hide on scroll down, show on scroll up
@@ -208,7 +210,7 @@ export function Header({
           <button
             className="icon-btn"
             title="Buscar"
-            onClick={() => router.push("/busqueda")}
+            onClick={() => setSearchOpen(true)}
           >
             {Ic.search}
           </button>
@@ -272,7 +274,7 @@ export function Header({
             <button onClick={() => go("/noticias")}>Noticias</button>
             <button onClick={() => go("/nosotros")}>About</button>
             <button onClick={() => go("/contacto")}>Contacto</button>
-            <button onClick={() => go("/busqueda")}>Buscar</button>
+            <button onClick={() => { setMobileOpen(false); setSearchOpen(true); }}>Buscar</button>
           </div>
           {user && (
             <div className="o-section">
@@ -328,6 +330,7 @@ export function Header({
     {newsMenuOpen && (
       <NewsMegaMenu categories={articleCategories} onClose={() => setNewsMenuOpen(false)} />
     )}
+    <SearchLightbox open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }

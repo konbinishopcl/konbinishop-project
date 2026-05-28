@@ -240,11 +240,11 @@ export function NoticiasHubView({ articles, categories }: Props) {
               <button
                 key={c.slug}
                 onClick={() => router.push(`/noticias/categoria/${c.slug}`)}
-                style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "8px 0", color: "var(--ink)", textAlign: "left", background: "transparent", border: 0, cursor: "pointer", transition: "color .12s, transform .12s", width: "100%", breakInside: "avoid" }}
+                style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, padding: "8px 0", color: "var(--ink)", textAlign: "left", background: "transparent", border: 0, cursor: "pointer", transition: "color .12s, transform .12s", width: "100%", breakInside: "avoid", overflow: "hidden" }}
                 onMouseOver={(ev) => { ev.currentTarget.style.color = "var(--accent)"; ev.currentTarget.style.transform = "translateX(4px)"; }}
                 onMouseOut={(ev) => { ev.currentTarget.style.color = "var(--ink)"; ev.currentTarget.style.transform = ""; }}
               >
-                <span style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, letterSpacing: "-.01em" }}>
+                <span style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: 17, letterSpacing: "-.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
                   {c.name ?? c.slug}
                 </span>
                 {c.nameJa && (

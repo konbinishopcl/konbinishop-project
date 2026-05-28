@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28T02:35:17.309Z
+**Last session:** 2026-05-28 - Completed quick task 260528-d82: hacer funcionar los likes de las cards de noticias
 
 ## Phase Summary
 
@@ -177,6 +177,7 @@ administrador quedan visibles al público.
 | 260521-kcl | Actualizar WEBSITE-VIEWS.md con reglas de negocio completas | 2026-05-21 | [dir](./quick/260521-kcl-actualizar-website-views-md-con-reglas-d/) |
 | 260521-mkj | Implementar envío de emails transaccionales con Mailgun + MJML | 2026-05-21 | [dir](./quick/260521-mkj-implementar-envio-de-emails-mailgun-mjml/) |
 | 260522-lu2 | Corregir validación del formulario de creación de eventos (/crear) | 2026-05-22 | [dir](./quick/260522-lu2-corregir-validaci-n-del-formulario-de-cr/) |
+| 260528-d82 | hacer funcionar los likes de las cards de noticias | 2026-05-28 | [260528-d82-hacer-funcionar-los-likes-de-las-cards-d](./quick/260528-d82-hacer-funcionar-los-likes-de-las-cards-d/) |
 
 ## Accumulated Context
 

@@ -16,8 +16,8 @@ export function NoticiasHubView({ articles, categories }: Props) {
   // Derivar artículos para cada sección
   const featured = articles.find((a) => a.image !== null) ?? articles[0];
   const featuredIdx = featured ? articles.indexOf(featured) : -1;
-  // Picks = siguientes 3 después del featured
-  const editorPicks = articles.filter((_, i) => i !== featuredIdx).slice(0, 3);
+  // Picks = siguientes 4 después del featured
+  const editorPicks = articles.filter((_, i) => i !== featuredIdx).slice(0, 4);
   // "Lo último" = primeros 4 artículos que no son el featured
   const latest = articles.filter((_, i) => i !== featuredIdx).slice(0, 4);
   // Patrocinado = primer artículo con isSponsored: true
@@ -92,21 +92,21 @@ export function NoticiasHubView({ articles, categories }: Props) {
           ) : (
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg,#2a1410,#4a1820)" }} />
           )}
-          {/* Gradient overlay */}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg, rgba(0,0,0,.85) 0%, rgba(0,0,0,0) 60%)" }} />
-          {/* Content */}
-          <div style={{ position: "absolute", left: 36, right: 36, bottom: 36, color: "#fff", zIndex: 2 }}>
-            <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: ".2em", color: "rgba(255,255,255,.78)", marginBottom: 14, display: "flex", alignItems: "center", gap: 12 }}>
+          {/* Gradient overlay — cubre más área para legibilidad */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(0deg, rgba(0,0,0,.88) 0%, rgba(0,0,0,.35) 55%, rgba(0,0,0,0) 80%)" }} />
+          {/* Content — subido un poco */}
+          <div style={{ position: "absolute", left: 36, right: 36, bottom: 48, color: "#fff", zIndex: 2 }}>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".2em", color: "rgba(255,255,255,.72)", marginBottom: 10, display: "flex", alignItems: "center", gap: 12 }}>
               <span>DESTACADO · {(featured.articleCategory?.name ?? "NOTICIAS").toUpperCase()}</span>
               <span style={{ opacity: .5 }}>·</span>
               <span>{formatDate(featured.createdAt)} · {readingTime(featured.content ?? "")} lectura</span>
             </div>
-            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px, 4.6vw, 56px)", lineHeight: 1.05, letterSpacing: "-.025em", margin: "0 0 14px", fontWeight: 700 }}>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 3.4vw, 44px)", lineHeight: 1.08, letterSpacing: "-.025em", margin: "0 0 10px", fontWeight: 700 }}>
               {featured.title}
             </h1>
             {featured.excerpt && (
-              <p style={{ color: "rgba(255,255,255,.85)", fontSize: 16, lineHeight: 1.55, margin: "0 0 18px", maxWidth: "62ch" }}>
-                {featured.excerpt}
+              <p style={{ color: "rgba(255,255,255,.82)", fontSize: 14, lineHeight: 1.5, margin: "0 0 16px", maxWidth: "58ch" }}>
+                {[...featured.excerpt].slice(0, 100).join("") + (featured.excerpt.length > 100 ? "…" : "")}
               </p>
             )}
             <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "10px 16px", borderRadius: 999, background: "var(--accent)", color: "#fff", fontSize: 13, fontWeight: 600 }}>

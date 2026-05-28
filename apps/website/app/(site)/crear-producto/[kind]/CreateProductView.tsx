@@ -296,33 +296,34 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
         <aside style={{ position: "sticky", top: 90 }}>
           <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-xl)", padding: 24 }}>
             <h3 style={{ fontFamily: "var(--font-display)", fontSize: 20, margin: "0 0 16px", letterSpacing: "-.01em" }}>Resumen</h3>
-            <div className="sum-row">
-              <span>Producto</span>
-              <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>
-                {kind === "spot" ? "Aviso" : kind === "hero" ? "Portada" : "Artículo"}
-              </span>
-            </div>
-            {pricePerDay && (
+            <div className="ck-summary">
               <div className="sum-row">
-                <span>Precio por día</span>
-                <span style={{ fontFamily: "var(--font-mono)" }}>${pricePerDay.toLocaleString("es-CL")}</span>
+                <span>Producto</span>
+                <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>
+                  {kind === "spot" ? "Aviso" : kind === "hero" ? "Portada" : "Artículo"}
+                </span>
               </div>
-            )}
-            {total && (
-              <>
+              {pricePerDay && (
                 <div className="sum-row">
-                  <span>Días</span>
-                  <span style={{ fontFamily: "var(--font-mono)" }}>{days}</span>
+                  <span>Precio por día</span>
+                  <span style={{ fontFamily: "var(--font-mono)" }}>${pricePerDay.toLocaleString("es-CL")}</span>
                 </div>
-                <div style={{ height: 1, background: "var(--line)", margin: "10px 0" }} />
-                <div className="sum-row" style={{ fontWeight: 700 }}>
-                  <span>Total</span>
-                  <span style={{ fontFamily: "var(--font-mono)", color: "var(--accent)", fontSize: 18 }}>
-                    ${total.toLocaleString("es-CL")}
-                  </span>
-                </div>
-              </>
-            )}
+              )}
+              {total && (
+                <>
+                  <div className="sum-row">
+                    <span>Días</span>
+                    <span style={{ fontFamily: "var(--font-mono)" }}>{days}</span>
+                  </div>
+                  <div className="sum-row tot">
+                    <span>Total</span>
+                    <span style={{ color: "var(--accent)" }}>
+                      ${total.toLocaleString("es-CL")}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
             {!pricePerDay && (
               <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 12, marginTop: 12, fontSize: 12, color: "var(--ink-3)", lineHeight: 1.5 }}>
                 Sin cupo limitado · precio a convenir con el equipo de Konbini.

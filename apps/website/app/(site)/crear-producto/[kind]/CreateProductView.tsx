@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { z } from "zod";
 import { useUser } from "@/components/providers";
-import { SITE_HOST } from "@/lib/site";
+import { api, imageUrl } from "@/lib/api";
 import { Ic } from "@/components/icons";
 
 type Kind = "spot" | "hero" | "articulo";
@@ -36,22 +37,44 @@ const PRICE: Record<Kind, number | null> = {
   articulo: null,
 };
 
+/* ── Zod schemas (module scope) ─────────────────────────────────────────── */
+
+const SpotSchema = z.object({
+  title:     z.string().trim().min(2, "Mínimo 2 caracteres").max(120, "Máximo 120 caracteres"),
+  image:     z.string().min(1, "La imagen es requerida"),
+  linkType:  z.enum(["URL", "EMAIL", "PHONE"]),
+  linkValue: z.string().trim().min(3, "El enlace es requerido"),
+});
+
+const HeroSchema = z.object({
+  title:       z.string().trim().min(2, "Mínimo 2 caracteres").max(120, "Máximo 120 caracteres"),
+  titleAccent: z.string().trim().max(120, "Máximo 120 caracteres").optional(),
+  lead:        z.string().trim().max(240, "Máximo 240 caracteres").optional(),
+  image:       z.string().min(3, "La imagen es requerida"),
+  link:        z.string().trim().optional(),
+});
+
+const LINK_MAP = { url: "URL", email: "EMAIL", tel: "PHONE" } as const;
+
 export function CreateProductView({ kind }: CreateProductViewProps) {
   const router = useRouter();
   const { token } = useUser();
   const [busy, setBusy]   = useState(false);
   const [days, setDays]   = useState(14);
 
+  /* ── Shared upload/error state ──────────────────────────────────────────── */
+  const [uploading, setUploading] = useState(false);
+  const [errors, setErrors]       = useState<Record<string, string>>({});
+
   /* ── Spot state ─────────────────────────────────────────────────────────── */
   const [spotTitle, setSpotTitle]         = useState("");
-  const [spotDesc, setSpotDesc]           = useState("");
-  const [spotLinkType, setSpotLinkType]   = useState<"url" | "internal" | "email" | "tel">("url");
+  const [spotLinkType, setSpotLinkType]   = useState<"url" | "email" | "tel">("url");
   const [spotLinkValue, setSpotLinkValue] = useState("");
-  const [spotBtnText, setSpotBtnText]     = useState("");
+  const [spotImage, setSpotImage]         = useState("");
+  const spotFileRef                        = useRef<HTMLInputElement>(null);
 
-  const spotLinkPrefix      = spotLinkType === "url" ? "https://" : spotLinkType === "internal" ? `${SITE_HOST}/` : spotLinkType === "email" ? "✉" : "☎";
-  const spotLinkPlaceholder = spotLinkType === "url" ? "tu-sitio.cl/oferta" : spotLinkType === "internal" ? "@cinepolis" : spotLinkType === "email" ? "ventas@empresa.cl" : "+56 9 1234 5678";
-  const spotBtnPlaceholder  = spotLinkType === "url" ? "Ver oferta" : spotLinkType === "email" ? "Escribir" : spotLinkType === "tel" ? "Llamar" : "Ver";
+  const spotLinkPrefix      = spotLinkType === "url" ? "https://" : spotLinkType === "email" ? "✉" : "☎";
+  const spotLinkPlaceholder = spotLinkType === "url" ? "tu-sitio.cl/oferta" : spotLinkType === "email" ? "ventas@empresa.cl" : "+56 9 1234 5678";
 
   /* ── Hero state ─────────────────────────────────────────────────────────── */
   const [heroTitle, setHeroTitle]     = useState("");
@@ -60,11 +83,36 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
   const [heroDate, setHeroDate]       = useState("");
   const [heroPlace, setHeroPlace]     = useState("");
   const [heroLink, setHeroLink]       = useState("");
+  const [heroImage, setHeroImage]     = useState("");
+  const heroFileRef                    = useRef<HTMLInputElement>(null);
 
   /* ── Article state ──────────────────────────────────────────────────────── */
   const [artTitle, setArtTitle]     = useState("");
   const [artContent, setArtContent] = useState("");
   const [artVideo, setArtVideo]     = useState("");
+
+  /* ── Image upload handler ───────────────────────────────────────────────── */
+  const handlePickSpot = async (file: File) => {
+    if (!token) { toast.error("Debes iniciar sesión"); return; }
+    setUploading(true);
+    try {
+      const { url } = await api.uploadImage(file, token);
+      setSpotImage(url);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al subir imagen");
+    } finally { setUploading(false); }
+  };
+
+  const handlePickHero = async (file: File) => {
+    if (!token) { toast.error("Debes iniciar sesión"); return; }
+    setUploading(true);
+    try {
+      const { url } = await api.uploadImage(file, token);
+      setHeroImage(url);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al subir imagen");
+    } finally { setUploading(false); }
+  };
 
   /* ── Handlers ───────────────────────────────────────────────────────────── */
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,23 +121,75 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
     setBusy(true);
     try {
       if (kind === "spot") {
-        if (!spotTitle.trim()) { toast.error("El título es requerido"); setBusy(false); return; }
-        const res = await fetch("/api/spots", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ title: spotTitle.trim(), description: spotDesc.trim() || undefined, linkType: spotLinkType, linkValue: spotLinkValue.trim() || undefined, buttonText: spotBtnText.trim() || undefined, days }),
+        const parsed = SpotSchema.safeParse({
+          title: spotTitle,
+          image: spotImage,
+          linkType: LINK_MAP[spotLinkType],
+          linkValue: spotLinkValue,
         });
-        if (!res.ok) throw new Error("Error al crear aviso");
+        if (!parsed.success) {
+          const fieldErrors: Record<string, string> = {};
+          for (const issue of parsed.error.issues) fieldErrors[String(issue.path[0])] = issue.message;
+          setErrors(fieldErrors);
+          setBusy(false);
+          return;
+        }
+        setErrors({});
+        // 1) create spot in DRAFT — NO days here
+        const created = await api.createSpot({
+          title: parsed.data.title,
+          image: parsed.data.image,
+          linkType: parsed.data.linkType,
+          linkValue: parsed.data.linkValue,
+        }, token);
+        // 2) get draft cart, 3) add item WITH days (PUT)
+        const draft = await fetch("/api/orders/draft", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
+        const addRes = await fetch(`/api/orders/${draft.id}/items`, {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "SPOT", spotId: created.id, days }),
+        });
+        if (!addRes.ok) {
+          const e = await addRes.json().catch(() => ({}));
+          throw new Error((e as { message?: string }).message ?? "Error al agregar al carrito");
+        }
         toast.success("Aviso creado y agregado al carrito");
         router.push("/carrito");
       } else if (kind === "hero") {
-        if (!heroTitle.trim()) { toast.error("El título es requerido"); setBusy(false); return; }
-        const res = await fetch("/api/heroes", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ title: heroTitle.trim(), titleAccent: heroSubtitle.trim() || undefined, lead: heroLead.trim() || undefined, date: heroDate || undefined, place: heroPlace.trim() || undefined, link: heroLink.trim() || undefined, days }),
+        const parsed = HeroSchema.safeParse({
+          title: heroTitle,
+          titleAccent: heroSubtitle || undefined,
+          lead: heroLead || undefined,
+          image: heroImage,
+          link: heroLink || undefined,
         });
-        if (!res.ok) throw new Error("Error al crear portada");
+        if (!parsed.success) {
+          const fieldErrors: Record<string, string> = {};
+          for (const issue of parsed.error.issues) fieldErrors[String(issue.path[0])] = issue.message;
+          setErrors(fieldErrors);
+          setBusy(false);
+          return;
+        }
+        setErrors({});
+        const created = await api.createHero({
+          title: parsed.data.title,
+          titleAccent: parsed.data.titleAccent,
+          lead: parsed.data.lead,
+          image: parsed.data.image,
+          date: heroDate || undefined,
+          place: heroPlace.trim() || undefined,
+          link: parsed.data.link,
+        }, token);
+        const draft = await fetch("/api/orders/draft", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
+        const addRes = await fetch(`/api/orders/${draft.id}/items`, {
+          method: "PUT",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ type: "HERO", heroId: created.id, days }),
+        });
+        if (!addRes.ok) {
+          const e = await addRes.json().catch(() => ({}));
+          throw new Error((e as { message?: string }).message ?? "Error al agregar al carrito");
+        }
         toast.success("Portada creada y agregada al carrito");
         router.push("/carrito");
       } else {
@@ -137,26 +237,33 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
               <div className="field">
                 <label>Título del aviso <span style={{ color: "var(--err)" }}>*</span></label>
                 <input type="text" placeholder="Ej: Cosplay Premium Atelier — Descuento especial" value={spotTitle} onChange={e => setSpotTitle(e.target.value)} />
+                {errors.title && <p className="field-error">{errors.title}</p>}
                 <div className="help">Aparece en la card del aviso, máx 60 caracteres.</div>
               </div>
               <div className="field">
-                <label>Descripción corta</label>
-                <input type="text" placeholder="Texto breve que acompaña al título" value={spotDesc} onChange={e => setSpotDesc(e.target.value)} />
-              </div>
-              <div className="field">
                 <label>Imagen del aviso <span style={{ color: "var(--err)" }}>*</span></label>
-                <div className="upload-box" style={{ aspectRatio: "unset", minHeight: 160 }}>
-                  <div className="ic">{Ic.upl}</div>
-                  <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube una imagen</div>
-                  <small>JPG / PNG · 1200×1500 mín · máx 5MB</small>
+                <div className="upload-box" onClick={() => spotFileRef.current?.click()} style={{ aspectRatio: "unset", minHeight: 160 }}>
+                  {spotImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imageUrl(spotImage)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <>
+                      <div className="ic">{Ic.upl}</div>
+                      <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>{uploading ? "Subiendo…" : "Sube una imagen"}</div>
+                      <small>JPG / PNG · máx 5MB</small>
+                    </>
+                  )}
                 </div>
+                <input ref={spotFileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePickSpot(f); e.target.value = ""; }} />
+                {errors.image && <p className="field-error">{errors.image}</p>}
               </div>
               <div className="field">
                 <label>Tipo de enlace CTA</label>
                 <div className="pill-pick">
-                  {(["url", "internal", "email", "tel"] as const).map(t => (
+                  {(["url", "email", "tel"] as const).map(t => (
                     <button key={t} type="button" className={spotLinkType === t ? "on" : ""} onClick={() => setSpotLinkType(t)}>
-                      {t === "url" ? "URL externa" : t === "internal" ? "URL interna" : t === "email" ? "Email" : "Teléfono"}
+                      {t === "url" ? "URL externa" : t === "email" ? "Email" : "Teléfono"}
                     </button>
                   ))}
                 </div>
@@ -167,10 +274,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
                   <span>{spotLinkPrefix}</span>
                   <input type={spotLinkType === "email" ? "email" : spotLinkType === "tel" ? "tel" : "text"} placeholder={spotLinkPlaceholder} value={spotLinkValue} onChange={e => setSpotLinkValue(e.target.value)} />
                 </div>
-              </div>
-              <div className="field">
-                <label>Texto del botón</label>
-                <input type="text" placeholder={spotBtnPlaceholder} value={spotBtnText} onChange={e => setSpotBtnText(e.target.value)} />
+                {errors.linkValue && <p className="field-error">{errors.linkValue}</p>}
               </div>
               <div className="field">
                 <label>Días de publicación <span style={{ color: "var(--err)" }}>*</span></label>
@@ -189,6 +293,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
               <div className="field">
                 <label>Título principal <span style={{ color: "var(--err)" }}>*</span></label>
                 <input type="text" placeholder="Ej: Demon Slayer" value={heroTitle} onChange={e => setHeroTitle(e.target.value)} />
+                {errors.title && <p className="field-error">{errors.title}</p>}
                 <div className="help">La parte grande del título en el carrusel.</div>
               </div>
               <div className="field">
@@ -202,11 +307,21 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
               </div>
               <div className="field">
                 <label>Imagen de fondo (pantalla completa) <span style={{ color: "var(--err)" }}>*</span></label>
-                <div className="upload-box" style={{ aspectRatio: "21/9" }}>
-                  <div className="ic">{Ic.upl}</div>
-                  <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube imagen de fondo</div>
-                  <small>JPG / PNG · 2400×1000 mín · máx 8MB</small>
+                <div className="upload-box" onClick={() => heroFileRef.current?.click()} style={{ aspectRatio: "21/9" }}>
+                  {heroImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={imageUrl(heroImage)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <>
+                      <div className="ic">{Ic.upl}</div>
+                      <div style={{ fontWeight: 500, color: "var(--ink-2)" }}>{uploading ? "Subiendo…" : "Sube imagen de fondo"}</div>
+                      <small>JPG / PNG · 2400×1000 mín · máx 8MB</small>
+                    </>
+                  )}
                 </div>
+                <input ref={heroFileRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePickHero(f); e.target.value = ""; }} />
+                {errors.image && <p className="field-error">{errors.image}</p>}
               </div>
               <div className="grid-2">
                 <div className="field">
@@ -335,7 +450,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
                 type="submit"
                 form="product-form"
                 className="btn primary block"
-                disabled={busy}
+                disabled={busy || uploading}
               >
                 {busy ? "Enviando…" : <>Agregar al carrito {Ic.arrow}</>}
               </button>

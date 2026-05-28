@@ -137,15 +137,15 @@ Plans:
 
 **Depends on:** Phase 12 (orders/payments backend), Phase 20 (spots/heroes types in lib/api.ts)
 
-**Plans:** 1/6 plans executed
+**Plans:** 3/6 plans executed
 
 Plans:
 
 - [x] 21-01-PLAN.md — Public settings/stats endpoints + lib/api.ts methods + NEXT_PUBLIC env vars (wave 1)
 - [ ] 21-02-PLAN.md — Dynamic pricing: PricingView + HomeView + upgrade + subscription (wave 2)
 - [ ] 21-03-PLAN.md — Dynamic price/quota in CreateProductView + UpsellView (wave 2)
-- [ ] 21-04-PLAN.md — Site config: Footer + contact emails + about stats from env/DB (wave 2)
-- [ ] 21-05-PLAN.md — CartView bound to real /orders/draft (load, adjust, remove, discount) (wave 2)
+- [x] 21-04-PLAN.md — Site config: Footer + contact emails + about stats from env/DB (wave 2)
+- [x] 21-05-PLAN.md — CartView bound to real /orders/draft (load, adjust, remove, discount) (wave 2)
 - [ ] 21-06-PLAN.md — Transbank payment flow + route reconciliation + dynamic result pages (wave 3)
 
 ---

@@ -294,7 +294,7 @@ export function CreateProductView({ kind }: CreateProductViewProps) {
 
         {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
         <aside style={{ position: "sticky", top: 90 }}>
-          <div style={{ background: "var(--surface)", border: "1px solid var(--line)", borderRadius: "var(--r-xl)", padding: 24 }}>
+          <div style={{ background: "var(--surface)", borderRadius: "var(--r-xl)", padding: 24 }}>
             <h3 style={{ fontFamily: "var(--font-display)", fontSize: 20, margin: "0 0 16px", letterSpacing: "-.01em" }}>Resumen</h3>
             <div className="ck-summary">
               <div className="sum-row">

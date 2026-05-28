@@ -145,6 +145,7 @@ export type ApiArticleTag = {
   id: number;
   name: string;
   slug: string;
+  _count?: { articles?: number };
 };
 
 

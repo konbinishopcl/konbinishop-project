@@ -237,7 +237,10 @@ export class CatalogService {
   // ── ArticleTags ──
 
   articleTags() {
-    return this.prisma.articleTag.findMany({ orderBy: { name: 'asc' } });
+    return this.prisma.articleTag.findMany({
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { articles: true } } },
+    });
   }
 
   async findArticleTag(id: number) {

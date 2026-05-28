@@ -261,6 +261,46 @@ export type ApiHero = {
   owner?: ApiOwner | null;
 };
 
+// ─────────────────────────── Orders / Payments ──────────────────────────
+
+export type OrderItemKind = "EVENT" | "SPOT" | "HERO" | "ARTICLE" | "SUBSCRIPTION";
+
+export type ApiOrderItem = {
+  id: number;
+  type: OrderItemKind;
+  days: number;
+  unitPrice: number;
+  subtotal: number;
+  eventId: number | null;
+  spotId: number | null;
+  heroId: number | null;
+  articleId: number | null;
+  event?: { id: number; title: string; slug: string; poster: string | null; banner: string | null; eventCategory: ApiEventCategory | null } | null;
+  spot?: { id: number; title: string; image: string | null } | null;
+  hero?: { id: number; title: string; image: string; eventCategory: ApiEventCategory | null } | null;
+  article?: { id: number; title: string } | null;
+};
+
+export type ApiOrder = {
+  id: number;
+  userId: number;
+  orgId: number | null;
+  status: "DRAFT" | "PENDING_PAYMENT" | "PAID" | "FAILED";
+  total: number;
+  gateway: string | null;
+  externalId: string | null;
+  items: ApiOrderItem[];
+};
+
+export type AddOrderItemInput = {
+  type: OrderItemKind;
+  days?: number;
+  eventId?: number;
+  spotId?: number;
+  heroId?: number;
+  articleId?: number;
+};
+
 export type EventsQuery = {
   page?: number;
   pageSize?: number;
@@ -421,6 +461,22 @@ export const api = {
     request<ApiHero>(`/heroes/${id}/reject`, { method: "PATCH", body: JSON.stringify({ reason }) }, token),
   banHero: (id: number, reason: string, token: string) =>
     request<ApiHero>(`/heroes/${id}/ban`, { method: "PATCH", body: JSON.stringify({ reason }) }, token),
+
+  // Settings / Stats (no token required)
+  settingsPublic: () => request<Record<string, string>>("/settings/public"),
+  statsPublic:    () => request<{ approvedEvents: number; organizers: number }>("/stats/public"),
+
+  // Orders (require user JWT)
+  ordersDraft:    (token: string) => request<ApiOrder>("/orders/draft", {}, token),
+  getOrder:       (id: number, token: string) => request<ApiOrder>(`/orders/${id}`, {}, token),
+  addOrderItem:   (orderId: number, body: AddOrderItemInput, token: string) =>
+    request<ApiOrder>(`/orders/${orderId}/items`, { method: "PUT", body: JSON.stringify(body) }, token),
+  removeOrderItem: (orderId: number, type: OrderItemKind, token: string) =>
+    request<ApiOrder>(`/orders/${orderId}/items/${type}`, { method: "DELETE" }, token),
+
+  // Payments (require user JWT)
+  checkout:       (orderId: number, gateway: "TRANSBANK", token: string) =>
+    request<{ redirectUrl: string; externalId: string }>(`/payments/${orderId}/checkout`, { method: "POST", body: JSON.stringify({ gateway }) }, token),
 };
 
 // ───────────────────────────── Mappers ──────────────────────────

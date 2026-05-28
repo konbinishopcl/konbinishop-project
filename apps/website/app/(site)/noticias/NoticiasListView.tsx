@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ApiArticleCategory } from "@/lib/api";
 import type { ApiArticle } from "@/lib/api";
 import { ArticleCard } from "@/components/ArticleCard";
+import { LikedArticlesProvider } from "@/components/LikedArticlesProvider";
 
 /** Genera array de páginas con ellipsis. Ej: [1, "…", 4, 5, 6, "…", 12] */
 function pageWindows(current: number, total: number): (number | "…")[] {
@@ -103,6 +104,7 @@ export function NoticiasListView({
   const to   = Math.min(page * perPage, total);
 
   return (
+    <LikedArticlesProvider ids={articles.map((a) => a.id)}>
     <main className="container">
       {/* Header */}
       <div style={{ margin: "32px 0 24px" }}>
@@ -202,5 +204,6 @@ export function NoticiasListView({
         </div>
       )}
     </main>
+    </LikedArticlesProvider>
   );
 }

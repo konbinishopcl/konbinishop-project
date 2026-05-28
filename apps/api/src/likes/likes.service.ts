@@ -21,6 +21,15 @@ export class LikesService {
     return { liked: true, likes: count };
   }
 
+  async likedBatch(articleIds: number[], user: JwtUser): Promise<number[]> {
+    if (!articleIds.length) return [];
+    const rows = await this.prisma.like.findMany({
+      where: { userId: user.sub, articleId: { in: articleIds } },
+      select: { articleId: true },
+    });
+    return rows.map((r) => r.articleId!);
+  }
+
   async status(target: LikeTarget, targetId: number, user: JwtUser) {
     const existing = await this.prisma.like.findFirst({
       where: { userId: user.sub, [`${target}Id`]: targetId },

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArticleCard, formatDate, readingTime } from "@/components/ArticleCard";
+import { LikedArticlesProvider } from "@/components/LikedArticlesProvider";
 import { imageUrl } from "@/lib/api";
 import type { ApiArticle, ApiArticleCategory } from "@/lib/api";
 
@@ -61,6 +62,7 @@ export function NoticiasHubView({ articles, categories }: Props) {
   }
 
   return (
+    <LikedArticlesProvider ids={articles.map((a) => a.id)}>
     <main className="container">
       {/* ── HERO + PICKS ─────────────────────────────────────────── */}
       <section
@@ -261,5 +263,6 @@ export function NoticiasHubView({ articles, categories }: Props) {
         </section>
       )}
     </main>
+    </LikedArticlesProvider>
   );
 }

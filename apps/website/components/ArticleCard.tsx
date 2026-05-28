@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { imageUrl } from "@/lib/api";
 import type { ApiArticle } from "@/lib/api";
 import { useUser } from "@/components/providers";
+import { useLiked } from "@/components/LikedArticlesProvider";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -37,24 +38,14 @@ interface Props {
 
 export function ArticleCard({ article: a, big = false }: Props) {
   const { user, token } = useUser();
-  const [liked, setLiked]   = useState(false);
-  const [likes, setLikes]   = useState(a._count?.likes ?? 0);
+  const { isLiked, setLiked: persistLiked } = useLiked();
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState(a._count?.likes ?? 0);
 
+  // Sync con el contexto cuando el batch fetch resuelva
   useEffect(() => {
-    if (!token) return;
-    let cancelled = false;
-    fetch(`/api/articles/${a.id}/like`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data: { liked: boolean; likes: number } | null) => {
-        if (cancelled || !data) return;
-        setLiked(data.liked);
-        setLikes(data.likes);
-      })
-      .catch(() => { /* silencioso: deja el estado inicial */ });
-    return () => { cancelled = true; };
-  }, [token, a.id]);
+    setLiked(isLiked(a.id));
+  }, [isLiked, a.id]);
 
   async function toggleLike(ev: React.MouseEvent) {
     ev.preventDefault();
@@ -65,7 +56,6 @@ export function ArticleCard({ article: a, big = false }: Props) {
       return;
     }
 
-    // Optimistic update
     const next = !liked;
     setLiked(next);
     setLikes((c) => c + (next ? 1 : -1));
@@ -78,9 +68,9 @@ export function ArticleCard({ article: a, big = false }: Props) {
       if (!res.ok) throw new Error("request failed");
       const data = (await res.json()) as { liked: boolean; likes: number };
       setLiked(data.liked);
+      persistLiked(a.id, data.liked);
       setLikes(data.likes);
     } catch {
-      // Revertir el optimistic update y avisar
       setLiked(!next);
       setLikes((c) => c + (next ? -1 : 1));
       toast.error("No se pudo actualizar el like");

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { imageUrl } from "@/lib/api";
 import { ArticleCard, formatDate, getCat, readingTime } from "@/components/ArticleCard";
+import { LikedArticlesProvider } from "@/components/LikedArticlesProvider";
 import type { ApiArticle, ApiArticleCategory } from "@/lib/api";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -195,6 +196,7 @@ export function NewsCategoryView({
   }
 
   return (
+    <LikedArticlesProvider ids={articles.map((a) => a.id)}>
     <main className="container">
       {/* ── BACK LINK ──────────────────────────────────────────────── */}
       <Link
@@ -482,5 +484,6 @@ export function NewsCategoryView({
         </div>
       )}
     </main>
+    </LikedArticlesProvider>
   );
 }

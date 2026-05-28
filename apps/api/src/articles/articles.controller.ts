@@ -51,6 +51,15 @@ export class ArticlesController {
     return this.articles.findMine(user, ctx);
   }
 
+  @Get('liked-ids')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'IDs de artículos que el usuario actual ha likeado (batch)' })
+  likedBatch(@Query('ids') ids: string, @CurrentUser() user: JwtUser) {
+    const articleIds = (ids ?? '').split(',').map(Number).filter(Boolean);
+    return this.likes.likedBatch(articleIds, user);
+  }
+
   @Get(':slug')
   @UseGuards(OptionalJwtAuthGuard)
   @ApiBearerAuth()

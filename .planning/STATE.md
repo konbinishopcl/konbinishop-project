@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-28T20:55:14.255Z"
+last_updated: "2026-05-28T20:56:24.547Z"
 progress:
   total_phases: 5
   completed_phases: 4
   total_plans: 23
-  completed_plans: 20
+  completed_plans: 22
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28T20:55:14.252Z
+**Last session:** 2026-05-28T20:56:24.544Z
 
 ## Phase Summary
 
@@ -174,6 +174,9 @@ administrador quedan visibles al público.
 - [Phase 20-05]: AdminRejectModal reused for ban (kind='aviso/portada (ban)') because /ban endpoint requires { reason } >= 3 chars; ConfirmDialog deleted as it became unused
 - [Phase 21-04]: Prose '244.000 seguidores' in nosotros/Historia kept as editorial copy; INSTAGRAM_FOLLOWERS env var is abbreviated ('244K') and incompatible with prose style
 - [Phase 21]: Discount row gated on unitPrice < base price from settingsPublic; signal-via-zero credit detection; adjustDays debounced 400ms per item; Pagar button disabled placeholder (21-06 wires payment)
+- [Phase 21-03]: TITLES quota text moved to rendered subtitle paragraph — module scope cannot access React state; formatCLP added locally per view; pricePerDay prop-drilled from UpsellView to SpotForm/HeroForm
+- [Phase 21]: precios/page.tsx converted to async SSR; PricingView is 'use client' and receives props from server parent
+- [Phase 21]: Home stats and settings fully wired from Promise.all in page.tsx; eventMinPrice from Math.min(categories[].pricePerDay)
 
 ## Quick Tasks Completed
 

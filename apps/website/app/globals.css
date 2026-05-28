@@ -319,6 +319,7 @@
   }
   .field input[type=date]::-webkit-calendar-picker-indicator,
   .field input[type=time]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+  input[type=range] { accent-color: var(--accent); cursor: pointer; }
   .field input:focus, .field textarea:focus, .field select:focus { outline: 0; border-color: var(--ink-2); background: var(--surface); }
   .field textarea { min-height: 96px; resize: vertical; line-height: 1.55; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }

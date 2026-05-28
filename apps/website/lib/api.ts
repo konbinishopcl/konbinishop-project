@@ -324,9 +324,11 @@ export const api = {
     ),
   article: (slug: string) => request<ApiArticle>(`/articles/${slug}`),
   likeArticle: (id: number, token: string) =>
-    request<{ ok: boolean }>(`/articles/${id}/like`, { method: "POST" }, token),
+    request<{ liked: boolean; likes: number }>(`/articles/${id}/like`, { method: "POST" }, token),
   unlikeArticle: (id: number, token: string) =>
-    request<{ ok: boolean }>(`/articles/${id}/like`, { method: "DELETE" }, token),
+    request<{ liked: boolean; likes: number }>(`/articles/${id}/like`, { method: "DELETE" }, token),
+  likeStatus: (id: number, token: string) =>
+    request<{ liked: boolean; likes: number }>(`/articles/${id}/like`, {}, token),
   regions: (country?: string) => request<ApiRegion[]>(`/states${country ? `?country=${encodeURIComponent(country)}` : ""}`),
   communes: (region?: string) =>
     request<ApiCommune[]>(`/cities${region ? `?state=${encodeURIComponent(region)}` : ""}`),

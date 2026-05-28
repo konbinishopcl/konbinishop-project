@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { imageUrl } from "@/lib/api";
 import type { ApiArticle } from "@/lib/api";
@@ -39,6 +39,23 @@ export function ArticleCard({ article: a, big = false }: Props) {
   const { user, token } = useUser();
   const [liked, setLiked]   = useState(false);
   const [likes, setLikes]   = useState(a._count?.likes ?? 0);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    fetch(`/api/articles/${a.id}/like`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { liked: boolean; likes: number } | null) => {
+        if (cancelled || !data) return;
+        setLiked(data.liked);
+        setLikes(data.likes);
+      })
+      .catch(() => { /* silencioso: deja el estado inicial */ });
+    return () => { cancelled = true; };
+  }, [token, a.id]);
+
   async function toggleLike(ev: React.MouseEvent) {
     ev.preventDefault();
     ev.stopPropagation();
@@ -54,14 +71,19 @@ export function ArticleCard({ article: a, big = false }: Props) {
     setLikes((c) => c + (next ? 1 : -1));
 
     try {
-      await fetch(`/api/articles/${a.id}/like`, {
+      const res = await fetch(`/api/articles/${a.id}/like`, {
         method: next ? "POST" : "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as { liked: boolean; likes: number };
+      setLiked(data.liked);
+      setLikes(data.likes);
     } catch {
-      // Revert on error
+      // Revertir el optimistic update y avisar
       setLiked(!next);
       setLikes((c) => c + (next ? -1 : 1));
+      toast.error("No se pudo actualizar el like");
     }
   }
 

@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { toast } from "sonner";
 import { imageUrl } from "@/lib/api";
 import type { ApiArticle } from "@/lib/api";
 import { useUser } from "@/components/providers";
@@ -38,20 +39,12 @@ export function ArticleCard({ article: a, big = false }: Props) {
   const { user, token } = useUser();
   const [liked, setLiked]   = useState(false);
   const [likes, setLikes]   = useState(a._count?.likes ?? 0);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
-
-  // Simple local toast (no dep externa — desaparece en 2.5s)
-  function showToast(msg: string) {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 2500);
-  }
-
   async function toggleLike(ev: React.MouseEvent) {
     ev.preventDefault();
     ev.stopPropagation();
 
     if (!user || !token) {
-      showToast("Inicia sesión para dar like");
+      toast.error("Inicia sesión para dar like");
       return;
     }
 
@@ -78,13 +71,6 @@ export function ArticleCard({ article: a, big = false }: Props) {
   return (
     <Link href={`/noticias/${a.slug}`} style={{ textDecoration: "none" }}>
       <article className="art-card" style={{ position: "relative" }}>
-        {/* Toast local */}
-        {toastMsg && (
-          <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", background: "var(--surface)", border: "1px solid var(--line)", borderRadius: 12, padding: "12px 20px", fontSize: 13, zIndex: 99, whiteSpace: "nowrap", boxShadow: "var(--shadow)" }}>
-            {toastMsg}
-          </div>
-        )}
-
         <div className="a-img" style={{ position: "relative" }}>
           {a.image ? (
             <img

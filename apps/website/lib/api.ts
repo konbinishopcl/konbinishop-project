@@ -149,6 +149,73 @@ export type ApiServiceOption = {
   order: number;
 };
 
+// ─────────────────────────── Phase 26: Inbox / CRM / Subs ──────────────────────────
+
+export type ApiContactMessage = {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+};
+
+export type CrmStage = 'NEW' | 'CONTACTED' | 'NEGOTIATING' | 'WON' | 'LOST';
+export type CrmType  = 'CONTACT' | 'PHOTOGRAPHY' | 'CONTENT';
+
+export type ApiCrmEntry = {
+  id: number;
+  type: CrmType;
+  stage: CrmStage;
+  stageReason: string | null;
+  contactName: string;
+  contactEmail: string;
+  assignedTo: number | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ApiCrmNote = {
+  id: number;
+  content: string;
+  authorId: number | null;
+  crmEntryId: number;
+  createdAt: string;
+};
+
+// SubscriptionStatus enum: ACTIVE | CANCELLED | EXPIRED (double-L — from Prisma schema)
+// Subscription.findAll includes user: { id, email, type, handle } and org: { id, email, handle }
+// (no firstname/lastname — the subscriptions service selects only these fields)
+export type ApiSubscription = {
+  id: number;
+  status: 'ACTIVE' | 'CANCELLED' | 'EXPIRED';
+  cycleStart: string;
+  cycleEnd: string;
+  creditsUsed: number;
+  creditsTotal: number;
+  cancelledAt: string | null;
+  createdAt: string;
+  user?: { id: number; email: string; type: 'PERSON' | 'ORGANIZATION'; handle: string | null } | null;
+  org?: { id: number; email: string; handle: string | null } | null;
+};
+
+export type ApiSubscriptionList = {
+  items: ApiSubscription[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export type ApiCrmList = {
+  items: ApiCrmEntry[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 // ─────────────────────────── Contenido ──────────────────────────
 
 // Phase 18+ — taxonomías separadas

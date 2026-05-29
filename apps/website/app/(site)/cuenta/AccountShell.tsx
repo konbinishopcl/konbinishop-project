@@ -6,16 +6,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/components/providers";
 
 const TABS = [
-  { id: "perfil",         href: "/cuenta/perfil",         label: "Perfil" },
-  { id: "organizaciones", href: "/cuenta/organizaciones", label: "Organizaciones" },
-  { id: "suscripcion",    href: "/cuenta/suscripcion",    label: "Suscripción" },
-  { id: "publicaciones",  href: "/cuenta/publicaciones",  label: "Mis eventos" },
-  { id: "mis-avisos",     href: "/cuenta/mis-avisos",     label: "Mis avisos" },
-  { id: "mis-portadas",   href: "/cuenta/mis-portadas",   label: "Mis portadas" },
-  { id: "articulos",      href: "/cuenta/articulos",      label: "Artículos" },
-  { id: "favoritos",      href: "/cuenta/favoritos",      label: "Favoritos" },
-  { id: "mensajes",       href: "/cuenta/mensajes",       label: "Mensajes" },
-  { id: "pagos",          href: "/cuenta/pagos",          label: "Pagos" },
+  { id: "perfil",         href: "/cuenta/perfil",         label: "Perfil",          orgHidden: false },
+  { id: "organizaciones", href: "/cuenta/organizaciones", label: "Organizaciones",   orgHidden: true  },
+  { id: "suscripcion",    href: "/cuenta/suscripcion",    label: "Suscripción",      orgHidden: false },
+  { id: "publicaciones",  href: "/cuenta/publicaciones",  label: "Mis eventos",      orgHidden: false },
+  { id: "mis-avisos",     href: "/cuenta/mis-avisos",     label: "Mis avisos",       orgHidden: false },
+  { id: "mis-portadas",   href: "/cuenta/mis-portadas",   label: "Mis portadas",     orgHidden: false },
+  { id: "articulos",      href: "/cuenta/articulos",      label: "Artículos",        orgHidden: false },
+  { id: "favoritos",      href: "/cuenta/favoritos",      label: "Favoritos",        orgHidden: false },
+  { id: "mensajes",       href: "/cuenta/mensajes",       label: "Mensajes",         orgHidden: false },
+  { id: "pagos",          href: "/cuenta/pagos",          label: "Pagos",            orgHidden: false },
 ];
 
 export function AccountShell({ children }: { children: ReactNode }) {
@@ -48,7 +48,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav className="acc-nav">
-          {TABS.map((t) => (
+          {TABS.filter((t) => !isOrgContext || !t.orgHidden).map((t) => (
             <Link
               key={t.id}
               href={t.href}

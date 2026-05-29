@@ -153,6 +153,10 @@ export default function OrganizacionesPage() {
       router.replace("/login?returnTo=/cuenta/organizaciones");
       return;
     }
+    if (ready && isOrgContext) {
+      router.replace("/cuenta");
+      return;
+    }
     if (!token) return;
     fetch("/api/organizations/mine", {
       headers: { Authorization: `Bearer ${token}` },

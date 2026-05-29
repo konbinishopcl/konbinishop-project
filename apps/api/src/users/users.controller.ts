@@ -16,7 +16,6 @@ import type { Request } from 'express';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UpdateOrganizerDto } from './dto/update-organizer.dto';
 import { SetVerifiedDto } from './dto/set-verified.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -65,14 +64,6 @@ export class UsersController {
   @ApiOperation({ summary: 'Crear un usuario (SUPER_ADMIN)' })
   create(@Body() dto: CreateUserDto) {
     return this.users.create(dto);
-  }
-
-  @Patch('me/organizer')
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Actualizar bio y website del organizador autenticado' })
-  updateOrganizer(@Body() dto: UpdateOrganizerDto, @CurrentUser() user: JwtUser) {
-    return this.users.updateOrganizer(user.sub, dto);
   }
 
   @Patch(':id/verified')

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T19:48:01.532Z"
+last_updated: "2026-05-29T19:55:45.369Z"
 progress:
   total_phases: 12
   completed_phases: 11
   total_plans: 51
-  completed_plans: 47
+  completed_plans: 49
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T19:48:01.529Z
+**Last session:** 2026-05-29T19:55:45.367Z
 
 ## Phase Summary
 
@@ -204,6 +204,9 @@ administrador quedan visibles al público.
 - [Phase 27-04]: KPIs (Ingresos mes, Histórico, Pendientes, Reembolsos) remain mock — no aggregate endpoint available; Reembolsar/comprobante buttons are stubs deferred per plan
 - [Phase 27]: HomeSection: both Task 1 (real API wiring) and Task 2 (RevenueBarChart) implemented and committed as one atomic change since they modify the same file
 - [Phase 28-01]: Data backfill added to sch11 migration: 437 articles had articleCategoryId set, backfilled into _ArticleToArticleCategory pivot before DROP COLUMN to preserve all existing category assignments
+- [Phase 28-articulos-multiples-categorias]: D-05/D-06/D-07: articleCategoryIds as number[] in 3 DTOs; articleCategories.some filter for ?articleCategory=slug query param; both ARTICLE_INCLUDE and ARTICLE_DETAIL_INCLUDE use articleCategories: true
+- [Phase 28]: Sweep-after-loop pattern ensures all articles get categorySlugs[] even when WP coverage is incomplete; also serves as offline fallback
+- [Phase 28]: Anti-P2025 knownSlugs filter in seed.ts omits slugs not in curated DB list — auto-creation avoided because ArticleCategory.nameJa is required and would corrupt MegaMenu
 
 ## Accumulated Context
 

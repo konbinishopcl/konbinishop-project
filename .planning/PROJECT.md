@@ -15,9 +15,10 @@ páginas de evento solo enlazan hacia allá.
 Organizadores publican gratis sus eventos; tras la aprobación de un administrador quedan
 visibles al público.
 
-## Current State (v1.0 shipped 2026-05-27)
+## Current State (v1.0 shipped 2026-05-27, Phase 24 complete 2026-05-29)
 
-- **16 fases completadas, 54 planes ejecutados**
+- **Phase 24 complete:** Real JWT-based org identity switching — `POST /auth/switch-org` issues org JWT, all services use `actingAs` for attribution, frontend `switchToOrg`/`switchBack` with localStorage persistence, org context hides Organizaciones tab/Crear org buttons/Cambiar contraseña
+- **17 fases completadas, 58 planes ejecutados**
 - API NestJS completamente funcional: eventos CRUD, moderación, taxonomías, organizaciones,
   transferencias, suscripciones, servicios, CRM, auditoría, notificaciones, settings
 - Website Next.js con diseño completo: vistas públicas, dashboard de organizador, panel admin

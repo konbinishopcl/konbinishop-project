@@ -19,7 +19,7 @@ const TABS = [
 ];
 
 export function AccountShell({ children }: { children: ReactNode }) {
-  const { user, activeOrg, logout } = useUser();
+  const { user, isOrgContext, logout } = useUser();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -28,21 +28,19 @@ export function AccountShell({ children }: { children: ReactNode }) {
     router.push("/");
   };
 
-  const displayName = activeOrg ? (activeOrg.name ?? activeOrg.handle ?? "Organización") : (user?.name ?? "Usuario");
-  const displayEmail = activeOrg ? (activeOrg.handle ? `@${activeOrg.handle}` : "Organización") : (user?.email ?? "");
-  const displayInitials = activeOrg
-    ? (activeOrg.name ?? activeOrg.handle ?? "O")[0].toUpperCase()
-    : (user?.initials ?? user?.name?.[0] ?? "?");
+  const displayName = user?.name ?? "Usuario";
+  const displayEmail = isOrgContext && user?.handle ? `@${user.handle}` : (user?.email ?? "");
+  const displayInitials = user?.initials ?? "?";
 
   return (
     <main className="container acc-shell">
       <aside className="acc-side">
         <div className="who">
-          <div className="av" style={activeOrg ? { background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" } : undefined}>{displayInitials}</div>
+          <div className="av" style={isOrgContext ? { background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" } : undefined}>{displayInitials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="nm">{displayName}</div>
             <div className="em">{displayEmail}</div>
-            {activeOrg && (
+            {isOrgContext && (
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".12em", color: "var(--accent)", marginTop: 2, textTransform: "uppercase" }}>
                 Operando como {displayName}
               </div>

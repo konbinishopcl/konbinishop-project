@@ -203,7 +203,7 @@ function DeleteModal({ onClose, token, logout }: { onClose: () => void; token: s
 
 /* ─── Page ────────────────────────────────────────────────────────────── */
 export default function PerfilPage() {
-  const { user, token, logout, ready } = useUser();
+  const { user, token, logout, ready, isOrgContext } = useUser();
   const router = useRouter();
 
   const [firstname, setFirstname] = useState("");
@@ -224,7 +224,7 @@ export default function PerfilPage() {
       router.replace(`/login?returnTo=/cuenta/perfil`);
     }
     if (user) {
-      const [fn, ...rest] = user.name.split(" ");
+      const [fn, ...rest] = (user.name ?? "").split(" ");
       setFirstname(fn ?? "");
       setLastname(rest.join(" "));
     }
@@ -325,10 +325,10 @@ export default function PerfilPage() {
       <div className="acc-section acc-danger">
         <h3>Zona Danger</h3>
         {[
-          { k: "password", t: "Cambiar contraseña", d: "Requiere tu contraseña actual." },
-          { k: "email",    t: "Cambiar email",       d: "Confirmación obligatoria en el nuevo email antes de aplicar el cambio." },
-          { k: "delete",  t: "Eliminar cuenta",      d: "Acción permanente e irreversible. Ley 21.719 te permite ejercer este derecho en cualquier momento." },
-        ].map((r) => (
+          { k: "password", t: "Cambiar contraseña", d: "Requiere tu contraseña actual.", hideInOrgContext: true },
+          { k: "email",    t: "Cambiar email",       d: "Confirmación obligatoria en el nuevo email antes de aplicar el cambio.", hideInOrgContext: false },
+          { k: "delete",   t: "Eliminar cuenta",     d: "Acción permanente e irreversible. Ley 21.719 te permite ejercer este derecho en cualquier momento.", hideInOrgContext: false },
+        ].filter(r => !isOrgContext || !r.hideInOrgContext).map((r) => (
           <div key={r.k} className="acc-list-row">
             <div className="main">
               <div className="t">{r.t}</div>

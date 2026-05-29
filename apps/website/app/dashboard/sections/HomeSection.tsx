@@ -1,38 +1,20 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useUser } from "@/components/providers";
+import { api, type ApiEvent, type ApiAuditLog } from "@/lib/api";
 import { AdminApproveModal } from "@/app/dashboard/modals/AdminApproveModal";
 import { AdminRejectModal }  from "@/app/dashboard/modals/AdminRejectModal";
+import { RevenueBarChart, type RevenueDatum } from "@/components/charts/RevenueBarChart";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type QueueItem = {
-  id:    string;
-  title: string;
-  meta:  string;
-  art:   string;
-};
-
 type ModalState =
-  | { type: "approve"; item: QueueItem }
-  | { type: "reject";  item: QueueItem }
+  | { type: "approve"; item: ApiEvent }
+  | { type: "reject";  item: ApiEvent }
   | null;
 
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-const QUEUE: QueueItem[] = [
-  { id: "q1", title: "Anime Crunchyroll Fest", meta: "9 cupos · Streamings",   art: "pa-3" },
-  { id: "q2", title: "BLACKPINK Tributo Live", meta: "K-Pop · Caupolicán",     art: "pa-4" },
-  { id: "q3", title: "ComicCon Chile 2024",    meta: "3 días · Espacio Riesco", art: "pa-5" },
-];
-
-const ACTIVITY = [
-  { name: "Camila T.", verb: "aprobó",              entity: "Anime Crunchyroll Fest", time: "hace 5 min" },
-  { name: "Diego S.",  verb: "baneó",               entity: "RetroGaming Fake",       time: "hace 22 min" },
-  { name: "Camila T.", verb: "verificó organizador", entity: "@cinepolis",             time: "hace 1 h" },
-  { name: "Sistema",   verb: "renovó suscripción",  entity: "Cinépolis Chile",        time: "hace 2 h" },
-  { name: "Camila T.", verb: "respondió contacto",  entity: "María Pérez",            time: "hace 4 h" },
-];
+// ── Mock data (category stats + revenue values — no aggregate endpoint) ───────
 
 const CATEGORIES = [
   ["Anime",        38, 84],
@@ -49,26 +31,65 @@ const CHART_LABELS = ["E","F","M","A","M","J","J","A","S","O","N","D"];
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HomeSection() {
-  const [queue,  setQueue]  = useState<QueueItem[]>(QUEUE);
-  const [modal,  setModal]  = useState<ModalState>(null);
+  const { token } = useUser();
+  const [queue,        setQueue]        = useState<ApiEvent[]>([]);
+  const [pendingTotal, setPendingTotal] = useState(0);
+  const [activity,     setActivity]     = useState<ApiAuditLog[]>([]);
+  const [modal,        setModal]        = useState<ModalState>(null);
 
   const closeModal = () => setModal(null);
 
-  function handleApprove() {
+  const load = useCallback(async () => {
+    if (!token) return;
+    try {
+      const [evts, logs] = await Promise.all([
+        api.adminEvents(token, { status: "PENDING_MODERATION", pageSize: 5 }),
+        api.auditLogs({ pageSize: 5 }, token),
+      ]);
+      setQueue(evts.items);
+      setPendingTotal(evts.total);
+      setActivity(logs.items);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Inicio no disponible — intenta de nuevo");
+    }
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function handleApprove() {
     if (!modal || modal.type !== "approve") return;
     const id = modal.item.id;
-    toast.success("Evento aprobado");
-    setQueue((q) => q.filter((r) => r.id !== id));
-    closeModal();
+    try {
+      if (!token) return;
+      await api.approveEvent(id, token);
+      toast.success("Evento aprobado");
+      setQueue((q) => q.filter((r) => r.id !== id));
+      setPendingTotal((n) => Math.max(0, n - 1));
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "No se pudo aprobar el evento");
+    } finally {
+      setModal(null);
+    }
   }
 
-  function handleReject(reason: string) {
+  async function handleReject(reason: string) {
     if (!modal || modal.type !== "reject") return;
     const id = modal.item.id;
-    toast.error(`Evento rechazado — "${reason.slice(0, 40)}"`);
-    setQueue((q) => q.filter((r) => r.id !== id));
-    closeModal();
+    try {
+      if (!token) return;
+      await api.rejectEvent(id, reason, token);
+      toast.error(`Evento rechazado — "${reason.slice(0, 40)}"`);
+      setQueue((q) => q.filter((r) => r.id !== id));
+      setPendingTotal((n) => Math.max(0, n - 1));
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "No se pudo rechazar el evento");
+    } finally {
+      setModal(null);
+    }
   }
+
+  // Build chart data from mock values
+  const chartData: RevenueDatum[] = CHART_VALUES.map((value, i) => ({ label: CHART_LABELS[i], value }));
 
   return (
     <>
@@ -86,7 +107,7 @@ export default function HomeSection() {
         </div>
         <div className="kpi">
           <div className="l">EN REVISIÓN</div>
-          <div className="v">9</div>
+          <div className="v">{pendingTotal}</div>
           <div className="d up">↑ 3</div>
         </div>
         <div className="kpi">
@@ -104,13 +125,7 @@ export default function HomeSection() {
             <h3>Ingresos mensuales</h3>
             <div style={{ fontSize: 12, color: "var(--ink-3)" }}>ÚLTIMOS 12 MESES</div>
           </div>
-          <div className="chart" role="img" aria-label="Gráfico de ingresos mensuales">
-            {CHART_VALUES.map((v, i) => (
-              <div key={i} className="bar" style={{ height: v + "%" }}>
-                <span className="lbl">{CHART_LABELS[i]}</span>
-              </div>
-            ))}
-          </div>
+          <RevenueBarChart data={chartData} />
         </div>
 
         {/* Category breakdown */}
@@ -142,42 +157,60 @@ export default function HomeSection() {
               </button>
             </div>
           </div>
-          {queue.map((r, i) => (
-            <div
-              key={r.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 0",
-                borderBottom: i < queue.length - 1 ? "1px solid var(--line)" : 0,
-              }}
-            >
-              <div className="thumb-sm" style={{ width: 40, height: 40 }}>
-                <div className={`pic poster-art ${r.art}`} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 13.5 }}>{r.title}</div>
-                <div style={{ color: "var(--ink-3)", fontSize: 11.5 }}>{r.meta}</div>
-              </div>
-              <div className="row-act" style={{ display: "flex", gap: 6 }}>
-                <button
-                  className="sel"
-                  style={{ color: "var(--ok)", padding: "6px 10px", fontSize: 12 }}
-                  onClick={() => setModal({ type: "approve", item: r })}
-                >
-                  ✓ Aprobar
-                </button>
-                <button
-                  className="sel"
-                  style={{ color: "var(--err)", padding: "6px 10px", fontSize: 12 }}
-                  onClick={() => setModal({ type: "reject", item: r })}
-                >
-                  ✕ Rechazar
-                </button>
-              </div>
+          {queue.length === 0 ? (
+            <div className="empty">
+              <div className="ic" />
+              <h3>Sin eventos pendientes</h3>
+              <p>No hay eventos esperando revisión.</p>
             </div>
-          ))}
+          ) : (
+            queue.map((r, i) => (
+              <div
+                key={r.id}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 0",
+                  borderBottom: i < queue.length - 1 ? "1px solid var(--line)" : 0,
+                }}
+              >
+                <div className="thumb-sm" style={{ width: 40, height: 40 }}>
+                  {r.poster ? (
+                    <img
+                      src={r.poster}
+                      alt={r.title}
+                      style={{ width: 40, height: 40, objectFit: "cover", borderRadius: "var(--r-sm)" }}
+                    />
+                  ) : (
+                    <div className="pic poster-art" />
+                  )}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13.5 }}>{r.title}</div>
+                  <div style={{ color: "var(--ink-3)", fontSize: 11.5 }}>
+                    {[r.company, r.eventCategory?.name].filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                <div className="row-act" style={{ display: "flex", gap: 6 }}>
+                  <button
+                    className="sel"
+                    style={{ color: "var(--ok)", padding: "6px 10px", fontSize: 12 }}
+                    onClick={() => setModal({ type: "approve", item: r })}
+                  >
+                    ✓ Aprobar
+                  </button>
+                  <button
+                    className="sel"
+                    style={{ color: "var(--err)", padding: "6px 10px", fontSize: 12 }}
+                    onClick={() => setModal({ type: "reject", item: r })}
+                  >
+                    ✕ Rechazar
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Activity feed */}
@@ -185,61 +218,70 @@ export default function HomeSection() {
           <div className="ph">
             <h3>Actividad reciente</h3>
           </div>
-          {ACTIVITY.map((a, i) => {
-            const initials = a.name
-              .split(" ")
-              .map((w) => w[0])
-              .slice(0, 2)
-              .join("");
-            return (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  padding: "10px 0",
-                  borderBottom: i < ACTIVITY.length - 1 ? "1px solid var(--line)" : 0,
-                  fontSize: 13,
-                }}
-              >
+          {activity.length === 0 ? (
+            <div className="empty">
+              <div className="ic" />
+              <h3>Sin actividad reciente</h3>
+              <p>No hay registros de actividad disponibles.</p>
+            </div>
+          ) : (
+            activity.map((a, i) => {
+              const actor = a.userId == null ? "Sistema" : `Usuario #${a.userId}`;
+              const initials = actor
+                .split(" ")
+                .map((w) => w[0])
+                .slice(0, 2)
+                .join("");
+              return (
                 <div
+                  key={a.id}
                   style={{
-                    width: 28,
-                    height: 28,
-                    fontSize: 11,
-                    flex: "0 0 28px",
-                    borderRadius: 999,
-                    background:
-                      a.name === "Sistema"
-                        ? "var(--ink-3)"
-                        : "linear-gradient(135deg, var(--accent), var(--accent-2))",
-                    color: "#fff",
                     display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
+                    gap: 10,
+                    padding: "10px 0",
+                    borderBottom: i < activity.length - 1 ? "1px solid var(--line)" : 0,
+                    fontSize: 13,
                   }}
                 >
-                  {initials}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div>
-                    <strong>{a.name}</strong> {a.verb}{" "}
-                    <span style={{ color: "var(--accent)" }}>{a.entity}</span>
-                  </div>
                   <div
                     style={{
-                      color: "var(--ink-3)",
+                      width: 28,
+                      height: 28,
                       fontSize: 11,
-                      fontFamily: "var(--font-mono)",
+                      flex: "0 0 28px",
+                      borderRadius: 999,
+                      background:
+                        a.userId == null
+                          ? "var(--ink-3)"
+                          : "linear-gradient(135deg, var(--accent), var(--accent-2))",
+                      color: "#fff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
                     }}
                   >
-                    {a.time}
+                    {initials}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div>
+                      <strong>{actor}</strong> {a.action}{" "}
+                      <span style={{ color: "var(--accent)" }}>{a.entity} #{a.entityId}</span>
+                    </div>
+                    <div
+                      style={{
+                        color: "var(--ink-3)",
+                        fontSize: 11,
+                        fontFamily: "var(--font-mono)",
+                      }}
+                    >
+                      {new Date(a.createdAt).toLocaleString("es-CL")}
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -247,7 +289,7 @@ export default function HomeSection() {
       {modal?.type === "approve" && (
         <AdminApproveModal
           title={modal.item.title}
-          description={modal.item.meta}
+          description={[modal.item.company, modal.item.eventCategory?.name].filter(Boolean).join(" · ")}
           onClose={closeModal}
           onConfirm={handleApprove}
         />
@@ -255,7 +297,7 @@ export default function HomeSection() {
       {modal?.type === "reject" && (
         <AdminRejectModal
           title={modal.item.title}
-          description={modal.item.meta}
+          description={[modal.item.company, modal.item.eventCategory?.name].filter(Boolean).join(" · ")}
           onClose={closeModal}
           onConfirm={handleReject}
         />

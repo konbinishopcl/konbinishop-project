@@ -15,11 +15,11 @@ páginas de evento solo enlazan hacia allá.
 Organizadores publican gratis sus eventos; tras la aprobación de un administrador quedan
 visibles al público.
 
-## Current State (v1.0 shipped 2026-05-27, Phase 27 complete 2026-05-29)
+## Current State (v1.0 shipped 2026-05-27, Phase 28 complete 2026-05-29)
 
+- **Phase 28 complete:** Artículos con múltiples categorías — Article↔ArticleCategory migrado de FK única a many-to-many implícita de Prisma. Migración SQL hand-crafted (sch11) con backfill de 437 artículos existentes, script idempotente `update-article-categories.ts` (WP API → categorySlugs[]), seed.ts con filtro anti-P2025, 3 DTOs a `articleCategoryIds[]`, `articles.service.ts` con include/where/create/update m2m, `lib/api.ts` tipo actualizado, todos los componentes de display y formularios migrados.
 - **Phase 27 complete:** Dashboard analytics/pagos con datos reales — HomeSection queue/actividad real + Recharts BarChart, GET /payments backend admin, PaymentsSection tabla real + CSV, ReportsSection period-bucketed chart + CSV real
-- **Phase 26 complete:** Dashboard inbox/CRM/suscripciones conectados a API real — InboxSection filtros Todos/No leídos + DELETE persistido, CRMSection kanban real + notas + LOST requiere stageReason, SubsSection tabla real + Ver modal
-- **27 fases completadas, 67 planes ejecutados**
+- **28 fases completadas, 72 planes ejecutados**
 - API NestJS completamente funcional: eventos CRUD, moderación, taxonomías, organizaciones,
   transferencias, suscripciones, servicios, CRM, auditoría, notificaciones, settings
 - Website Next.js con diseño completo: vistas públicas, dashboard de organizador, panel admin

@@ -142,7 +142,7 @@ function CreateOrgModal({ token, onClose, onCreated }: {
 
 /* ─── Page ───────────────────────────────────────────────────────────── */
 export default function OrganizacionesPage() {
-  const { user, token, ready } = useUser();
+  const { user, token, ready, isOrgContext } = useUser();
   const router = useRouter();
   const [orgs,    setOrgs]    = useState<Org[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,7 +181,9 @@ export default function OrganizacionesPage() {
     <AccountShell>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 4 }}>
         <h1>Mis organizaciones</h1>
-        <button className="btn primary" onClick={() => setModal(true)}>＋ Crear organización</button>
+        {!isOrgContext && (
+          <button className="btn primary" onClick={() => setModal(true)}>＋ Crear organización</button>
+        )}
       </div>
       <p className="lead">Cuentas compartidas con miembros, carrito y suscripción independientes.</p>
 
@@ -196,7 +198,9 @@ export default function OrganizacionesPage() {
           <div style={{ color: "var(--ink-3)", fontSize: 14, marginBottom: 20 }}>
             Crea una para gestionar eventos y miembros de forma independiente.
           </div>
-          <button className="btn primary" onClick={() => setModal(true)}>＋ Crear organización</button>
+          {!isOrgContext && (
+            <button className="btn primary" onClick={() => setModal(true)}>＋ Crear organización</button>
+          )}
         </div>
       ) : (
         <div className="acc-section">
@@ -222,7 +226,7 @@ export default function OrganizacionesPage() {
         </div>
       )}
 
-      {modal && token && (
+      {modal && token && !isOrgContext && (
         <CreateOrgModal
           token={token}
           onClose={() => setModal(false)}

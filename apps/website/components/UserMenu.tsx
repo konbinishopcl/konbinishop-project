@@ -116,12 +116,14 @@ export function UserMenu({ size = 40 }: { size?: number }) {
               }
             </button>
           ))}
-          <button onClick={() => go("/cuenta/organizaciones")} style={{ color: "var(--ink-3)", fontSize: 12 }}>
-            <span style={{ width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <Plus size={14} />
-            </span>
-            <span>Crear organización</span>
-          </button>
+          {!isOrgContext && (
+            <button onClick={() => go("/cuenta/organizaciones")} style={{ color: "var(--ink-3)", fontSize: 12 }}>
+              <span style={{ width: 22, height: 22, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <Plus size={14} />
+              </span>
+              <span>Crear organización</span>
+            </button>
+          )}
 
           {/* Panel de admin — solo fuera del dashboard */}
           {isAdmin && !inDashboard && (

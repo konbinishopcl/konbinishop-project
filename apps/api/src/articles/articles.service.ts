@@ -22,14 +22,14 @@ function slugify(text: string): string {
 
 const ARTICLE_INCLUDE = {
   articleTags: true,
-  articleCategory: true,
+  articleCategories: true,
   _count: { select: { likes: true } },
 } as const;
 
 // Incluye el primer evento vinculado (APPROVED) para la vista de detalle
 const ARTICLE_DETAIL_INCLUDE = {
   articleTags: true,
-  articleCategory: true,
+  articleCategories: true,
   articleImages: { orderBy: { order: 'asc' as const } },
   _count: { select: { likes: true } },
   events: {
@@ -66,7 +66,7 @@ export class ArticlesService {
       ...(isAdmin && query.status !== undefined && { status: query.status }),
       ...(query.q && { OR: [{ title: { contains: query.q } }, { excerpt: { contains: query.q } }] }),
       ...(query.articleTag ? { articleTags: { some: { slug: query.articleTag } } } : {}),
-      ...(query.articleCategory && { articleCategory: { slug: query.articleCategory } }),
+      ...(query.articleCategory && { articleCategories: { some: { slug: query.articleCategory } } }),
     };
 
     const [items, total] = await this.prisma.$transaction([
@@ -145,7 +145,7 @@ export class ArticlesService {
         content: dto.content,
         image: dto.image,
         articleTags: dto.articleTagIds?.length ? { connect: dto.articleTagIds.map((id) => ({ id })) } : undefined,
-        articleCategory: dto.articleCategoryId ? { connect: { id: dto.articleCategoryId } } : undefined,
+        articleCategories: dto.articleCategoryIds?.length ? { connect: dto.articleCategoryIds.map((id) => ({ id })) } : undefined,
       },
       include: ARTICLE_INCLUDE,
     });
@@ -171,11 +171,7 @@ export class ArticlesService {
         ...(incomingTagIds !== undefined && {
           articleTags: { set: incomingTagIds.map((tagId) => ({ id: tagId })) },
         }),
-        ...(dto.articleCategoryId !== undefined && {
-          articleCategory: dto.articleCategoryId
-            ? { connect: { id: dto.articleCategoryId } }
-            : { disconnect: true },
-        }),
+        ...(dto.articleCategoryIds !== undefined && { articleCategories: { set: dto.articleCategoryIds.map((id) => ({ id })) } }),
       },
       include: ARTICLE_INCLUDE,
     });
@@ -212,7 +208,7 @@ export class ArticlesService {
         status: PublicationStatus.DRAFT,
         owner: { connect: { id: ownerId } },
         articleTags: dto.articleTagIds?.length ? { connect: dto.articleTagIds.map((id) => ({ id })) } : undefined,
-        articleCategory: dto.articleCategoryId ? { connect: { id: dto.articleCategoryId } } : undefined,
+        articleCategories: dto.articleCategoryIds?.length ? { connect: dto.articleCategoryIds.map((id) => ({ id })) } : undefined,
         events: dto.eventId ? { connect: { id: dto.eventId } } : undefined,
       },
       include: ARTICLE_INCLUDE,

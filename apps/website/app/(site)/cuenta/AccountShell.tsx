@@ -7,7 +7,6 @@ import { useUser } from "@/components/providers";
 
 const TABS = [
   { id: "perfil",         href: "/cuenta/perfil",         label: "Perfil" },
-  { id: "organizador",    href: "/cuenta/organizador",    label: "Organizador" },
   { id: "organizaciones", href: "/cuenta/organizaciones", label: "Organizaciones" },
   { id: "suscripcion",    href: "/cuenta/suscripcion",    label: "Suscripción" },
   { id: "publicaciones",  href: "/cuenta/publicaciones",  label: "Mis eventos" },

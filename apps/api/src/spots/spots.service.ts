@@ -152,7 +152,7 @@ export class SpotsService {
       data: { status: PublicationStatus.APPROVED, statusReason: null },
       include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
-    this.audit.log({ userId: actor.sub, action: 'APPROVE', entity: 'AVISO', entityId: id, req });
+    this.audit.log({ userId: actor.actingAs ?? actor.sub, action: 'APPROVE', entity: 'AVISO', entityId: id, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentApproved(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title)
@@ -178,7 +178,7 @@ export class SpotsService {
       data: { status: PublicationStatus.REJECTED, statusReason: reason },
       include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
-    this.audit.log({ userId: actor.sub, action: 'REJECT', entity: 'AVISO', entityId: id, metadata: { reason }, req });
+    this.audit.log({ userId: actor.actingAs ?? actor.sub, action: 'REJECT', entity: 'AVISO', entityId: id, metadata: { reason }, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentRejected(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title, reason)
@@ -205,7 +205,7 @@ export class SpotsService {
       data: { status: PublicationStatus.BANNED, statusReason: reason },
       include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
-    this.audit.log({ userId: actor.sub, action: 'BAN', entity: 'AVISO', entityId: id, metadata: { reason }, req });
+    this.audit.log({ userId: actor.actingAs ?? actor.sub, action: 'BAN', entity: 'AVISO', entityId: id, metadata: { reason }, req });
     if (spot.owner?.email) {
       await this.mail
         .sendContentBanned(spot.owner.email, spot.owner.firstname ?? spot.owner.email, spot.title, reason)

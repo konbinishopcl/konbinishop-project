@@ -168,7 +168,7 @@ export class HeroesService {
       data: { status: PublicationStatus.APPROVED, statusReason: null },
       include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
-    this.audit.log({ userId: actor.sub, action: 'APPROVE', entity: 'PORTADA', entityId: id, req });
+    this.audit.log({ userId: actor.actingAs ?? actor.sub, action: 'APPROVE', entity: 'PORTADA', entityId: id, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentApproved(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title)
@@ -194,7 +194,7 @@ export class HeroesService {
       data: { status: PublicationStatus.REJECTED, statusReason: reason },
       include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
-    this.audit.log({ userId: actor.sub, action: 'REJECT', entity: 'PORTADA', entityId: id, metadata: { reason }, req });
+    this.audit.log({ userId: actor.actingAs ?? actor.sub, action: 'REJECT', entity: 'PORTADA', entityId: id, metadata: { reason }, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentRejected(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title, reason)
@@ -221,7 +221,7 @@ export class HeroesService {
       data: { status: PublicationStatus.BANNED, statusReason: reason },
       include: { owner: { select: { id: true, email: true, firstname: true, type: true } } },
     });
-    this.audit.log({ userId: actor.sub, action: 'BAN', entity: 'PORTADA', entityId: id, metadata: { reason }, req });
+    this.audit.log({ userId: actor.actingAs ?? actor.sub, action: 'BAN', entity: 'PORTADA', entityId: id, metadata: { reason }, req });
     if (hero.owner?.email) {
       await this.mail
         .sendContentBanned(hero.owner.email, hero.owner.firstname ?? hero.owner.email, hero.title, reason)

@@ -133,7 +133,7 @@ export class TransfersService {
 
     // 7. Auditoría
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'CREATE',
       entity: this.itemTypeToAuditEntity(dto.itemType),
       entityId: dto.itemId,
@@ -192,7 +192,7 @@ export class TransfersService {
     await this.notifyFromUser(transfer, 'accepted');
 
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'APPROVE',
       entity: this.itemTypeToAuditEntity(transfer.itemType),
       entityId: transfer.itemId,
@@ -243,7 +243,7 @@ export class TransfersService {
     await this.notifyFromUser(transfer, 'rejected', dto.reason);
 
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'REJECT',
       entity: this.itemTypeToAuditEntity(transfer.itemType),
       entityId: transfer.itemId,
@@ -291,7 +291,7 @@ export class TransfersService {
     });
 
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'UPDATE',
       entity: this.itemTypeToAuditEntity(dto.itemType),
       entityId: dto.itemId,

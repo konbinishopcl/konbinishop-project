@@ -192,7 +192,7 @@ export class OrganizationsService {
       });
 
       this.audit.log({
-        userId: user.sub,
+        userId: user.actingAs ?? user.sub,
         action: 'UPDATE',
         entity: 'USER',
         entityId: id,
@@ -218,7 +218,7 @@ export class OrganizationsService {
     await this.prisma.user.delete({ where: { id } });
 
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'DELETE',
       entity: 'USER',
       entityId: id,
@@ -319,7 +319,7 @@ export class OrganizationsService {
     }
 
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'CREATE',
       entity: 'USER',
       entityId: orgId,
@@ -373,7 +373,7 @@ export class OrganizationsService {
     ]);
 
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'CREATE',
       entity: 'USER',
       entityId: invitation.orgId,
@@ -414,7 +414,7 @@ export class OrganizationsService {
     });
 
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'UPDATE',
       entity: 'USER',
       entityId: orgId,
@@ -454,7 +454,7 @@ export class OrganizationsService {
     });
 
     this.audit.log({
-      userId: user.sub,
+      userId: user.actingAs ?? user.sub,
       action: 'DELETE',
       entity: 'USER',
       entityId: orgId,

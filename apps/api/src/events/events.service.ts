@@ -253,7 +253,7 @@ export class EventsService {
       },
       include: EVENT_INCLUDE,
     });
-    this.audit.log({ userId: user.sub, action: 'CREATE', entity: 'EVENT', entityId: event.id, metadata: { orgContext: orgContext?.orgId ?? null }, req });
+    this.audit.log({ userId: user.actingAs ?? user.sub, action: 'CREATE', entity: 'EVENT', entityId: event.id, metadata: { orgContext: orgContext?.orgId ?? null }, req });
     return event;
   }
 
@@ -317,7 +317,7 @@ export class EventsService {
     }
 
     const updated = await this.prisma.event.update({ where: { id }, data, include: EVENT_INCLUDE });
-    this.audit.log({ userId: user.sub, action: 'UPDATE', entity: 'EVENT', entityId: id, req });
+    this.audit.log({ userId: user.actingAs ?? user.sub, action: 'UPDATE', entity: 'EVENT', entityId: id, req });
     return updated;
   }
 
@@ -325,7 +325,7 @@ export class EventsService {
     const event = await this.ensure(id);
     this.assertCanManage(event, user);
     await this.prisma.event.delete({ where: { id } });
-    this.audit.log({ userId: user.sub, action: 'DELETE', entity: 'EVENT', entityId: id, req });
+    this.audit.log({ userId: user.actingAs ?? user.sub, action: 'DELETE', entity: 'EVENT', entityId: id, req });
     return { deleted: true };
   }
 
@@ -346,7 +346,7 @@ export class EventsService {
         owner: { select: { id: true, email: true, firstname: true, type: true } },
       },
     });
-    this.audit.log({ userId: user.sub, action: 'APPROVE', entity: 'EVENT', entityId: id, req });
+    this.audit.log({ userId: user.actingAs ?? user.sub, action: 'APPROVE', entity: 'EVENT', entityId: id, req });
     if (event.owner?.email) {
       const frontendUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
       await this.mail.sendEventApproved(
@@ -384,7 +384,7 @@ export class EventsService {
         owner: { select: { id: true, email: true, firstname: true, type: true } },
       },
     });
-    this.audit.log({ userId: user.sub, action: 'REJECT', entity: 'EVENT', entityId: id, metadata: { reason }, req });
+    this.audit.log({ userId: user.actingAs ?? user.sub, action: 'REJECT', entity: 'EVENT', entityId: id, metadata: { reason }, req });
     if (event.owner?.email) {
       await this.mail.sendEventRejected(
         event.owner.email,
@@ -422,7 +422,7 @@ export class EventsService {
         owner: { select: { id: true, email: true, firstname: true, type: true } },
       },
     });
-    this.audit.log({ userId: user.sub, action: 'BAN', entity: 'EVENT', entityId: id, metadata: { reason }, req });
+    this.audit.log({ userId: user.actingAs ?? user.sub, action: 'BAN', entity: 'EVENT', entityId: id, metadata: { reason }, req });
     if (event.owner?.email) {
       await this.mail
         .sendContentBanned(

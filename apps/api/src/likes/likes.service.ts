@@ -10,9 +10,10 @@ export class LikesService {
 
   async like(target: LikeTarget, targetId: number, user: JwtUser) {
     await this.assertTargetExists(target, targetId);
+    const userId = user.actingAs ?? user.sub;
     try {
       await this.prisma.like.create({
-        data: { userId: user.sub, [`${target}Id`]: targetId },
+        data: { userId, [`${target}Id`]: targetId },
       });
     } catch {
       throw new ConflictException('Ya le diste like a esta publicación');
@@ -23,24 +24,27 @@ export class LikesService {
 
   async likedBatch(articleIds: number[], user: JwtUser): Promise<number[]> {
     if (!articleIds.length) return [];
+    const userId = user.actingAs ?? user.sub;
     const rows = await this.prisma.like.findMany({
-      where: { userId: user.sub, articleId: { in: articleIds } },
+      where: { userId, articleId: { in: articleIds } },
       select: { articleId: true },
     });
     return rows.map((r) => r.articleId!);
   }
 
   async status(target: LikeTarget, targetId: number, user: JwtUser) {
+    const userId = user.actingAs ?? user.sub;
     const existing = await this.prisma.like.findFirst({
-      where: { userId: user.sub, [`${target}Id`]: targetId },
+      where: { userId, [`${target}Id`]: targetId },
     });
     const count = await this.countLikes(target, targetId);
     return { liked: !!existing, likes: count };
   }
 
   async unlike(target: LikeTarget, targetId: number, user: JwtUser) {
+    const userId = user.actingAs ?? user.sub;
     const existing = await this.prisma.like.findFirst({
-      where: { userId: user.sub, [`${target}Id`]: targetId },
+      where: { userId, [`${target}Id`]: targetId },
     });
     if (!existing) throw new NotFoundException('No le habías dado like a esta publicación');
     await this.prisma.like.delete({ where: { id: existing.id } });

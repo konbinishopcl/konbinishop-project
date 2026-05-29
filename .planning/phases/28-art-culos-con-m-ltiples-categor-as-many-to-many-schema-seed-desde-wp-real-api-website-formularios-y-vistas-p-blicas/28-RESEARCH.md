@@ -173,14 +173,19 @@ articleTags: tagIds.length ? { connect: tagIds.map(id => ({ id })) } : undefined
 ```
 
 **After Phase 28 (categories, by slug — D-08):**
+
+> **Important:** filter slugs against `catBySlug` before connecting. WP category slugs outside the curated 39-item list cause Prisma P2025, which skips the entire article silently (caught by the existing `try/catch`). This is safe — unknown categories are simply omitted. Do NOT upsert categories on-the-fly like tags do: auto-created categories lack `nameJa` and would pollute the MegaMenu.
+
 ```typescript
 const categorySlugs: string[] = art.categorySlugs ?? [];
+// Filter to slugs that exist in the seeded category list (prevents P2025)
+const knownSlugs = categorySlugs.filter(s => catBySlug[s] !== undefined);
 // in create:
-articleCategories: categorySlugs.length
-  ? { connect: categorySlugs.map(slug => ({ slug })) }
+articleCategories: knownSlugs.length
+  ? { connect: knownSlugs.map(slug => ({ slug })) }
   : undefined,
 // in update (upsert):
-articleCategories: { set: categorySlugs.map(slug => ({ slug })) },
+articleCategories: { set: knownSlugs.map(slug => ({ slug })) },
 ```
 
 ### Pattern 4: ArticleForm category multi-select (follows existing tags UI)
@@ -299,6 +304,22 @@ Then register: `npx prisma migrate resolve --applied YYYYMMDDHHMMSS_sch11_articl
 **What goes wrong:** `ArticlesSection.tsx` defines its own local `ApiArticle` type (lines 19-32) that does not extend from `lib/api.ts`. It currently has `tags: { ... }[]` but no `articleCategory`/`articleCategories`. If the admin list view is updated to show category but the local type is not updated, TypeScript errors.
 
 **How to avoid:** Add `articleCategories?: { id: number; name: string | null; slug: string }[]` to the local `ApiArticle` type in `ArticlesSection.tsx`. The display logic for D-11 reads `a.articleCategories?.[0]?.name`.
+
+### Pitfall 7: seed.ts `connect by slug` throws P2025 for unknown WP categories
+
+**What goes wrong:** After running `update-article-categories.ts`, `articles.json` contains `categorySlugs` from the WP API. WP has many more categories than the curated 39-item `ARTICLE_CATEGORIES` list in `seed.ts` (e.g., `shonen-jump`, `weekly`, etc.). When `seed.ts` tries `{ connect: { slug: 'shonen-jump' } }`, Prisma throws P2025 ("Record not found"), the existing `try/catch` at line 359 catches it, and **the entire article is silently skipped** — data loss.
+
+**Why it happens:** The old single-FK approach used `catBySlug[art.categorySlug] ?? null` which safely fell back to null. The new array connect has no equivalent guard by default.
+
+**How to avoid:** In `seed.ts`, filter `categorySlugs` against `catBySlug` before connecting:
+```typescript
+const knownSlugs = (art.categorySlugs ?? []).filter(s => catBySlug[s] !== undefined);
+articleCategories: knownSlugs.length ? { connect: knownSlugs.map(slug => ({ slug })) } : undefined,
+```
+
+**Why NOT upsert categories on-the-fly** (unlike tags): `ArticleCategory` has `nameJa` (Japanese name) required for the MegaMenu and category rails. Auto-created categories from WP slugs would have `nameJa: null` and appear in the header navigation with no Japanese label — polluting the curated bilingual category list.
+
+**Two-layer defense option:** Also filter in `update-article-categories.ts` before writing to `articles.json` — keeping the JSON clean so only recognized slugs appear. The planner may implement either one layer (seed filter) or both.
 
 ---
 

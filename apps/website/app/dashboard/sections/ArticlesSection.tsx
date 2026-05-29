@@ -27,6 +27,7 @@ type ApiArticle = {
   userId: number | null;
   createdAt: string;
   tags: { id: number; name: string; slug: string }[];
+  articleCategories?: { id: number; name: string | null; slug: string }[];
   _count: { likes: number };
   isSponsored: boolean;
 };
@@ -438,6 +439,11 @@ export default function ArticlesSection() {
                         <div>
                           <div className="ti">{a.title}</div>
                           <div className="su">{a.tags.slice(0, 3).map((t) => t.name).join(" · ") || "Sin tags"}</div>
+                          {a.articleCategories?.length ? (
+                            <span className="pill">
+                              {a.articleCategories[0].name}{a.articleCategories.length > 1 ? ` +${a.articleCategories.length - 1}` : ""}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </td>

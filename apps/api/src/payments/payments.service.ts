@@ -40,7 +40,7 @@ export class PaymentsService {
     });
 
     if (!order) throw new NotFoundException('Orden no encontrada');
-    if (order.userId !== user.sub) throw new ForbiddenException('No tienes acceso a esta orden');
+    if (order.userId !== (user.actingAs ?? user.sub)) throw new ForbiddenException('No tienes acceso a esta orden');
     if (order.status !== OrderStatus.DRAFT) {
       throw new BadRequestException('Solo se pueden pagar órdenes en estado DRAFT');
     }

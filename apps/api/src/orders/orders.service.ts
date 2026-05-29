@@ -62,7 +62,7 @@ export class OrdersService {
 
     const existing = await this.prisma.order.findFirst({
       where: {
-        userId: user.sub,
+        userId: user.actingAs ?? user.sub,
         orgId: orgContext?.orgId ?? null,
         status: OrderStatus.DRAFT,
       },
@@ -72,7 +72,7 @@ export class OrdersService {
 
     return this.prisma.order.create({
       data: {
-        owner: { connect: { id: user.sub } },
+        owner: { connect: { id: user.actingAs ?? user.sub } },
         ...(orgContext && { org: { connect: { id: orgContext.orgId } } }),
       },
       include: { items: { include: ITEM_INCLUDE } },
@@ -331,7 +331,7 @@ export class OrdersService {
     if (order.orgId !== null) {
       // Orden de organización: verificar que el caller es miembro de esa org
       const member = await this.prisma.orgMember.findUnique({
-        where: { userId_orgId: { userId: user.sub, orgId: order.orgId } },
+        where: { userId_orgId: { userId: user.actingAs ?? user.sub, orgId: order.orgId } },
       });
       if (!member) throw new ForbiddenException('No tienes acceso a esta orden');
     } else {

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T02:39:18.928Z"
+last_updated: "2026-05-29T03:05:29.149Z"
 progress:
   total_phases: 8
-  completed_phases: 7
+  completed_phases: 8
   total_plans: 32
-  completed_plans: 31
+  completed_plans: 32
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T02:39:18.925Z
+**Last session:** 2026-05-29T03:05:29.146Z
 
 ## Phase Summary
 
@@ -188,6 +188,7 @@ administrador quedan visibles al público.
 - [Phase 24-03]: No org-detection branch in refresh path — backend re-issues org JWT naturally via Plan 01 SWITCH-03
 - [Phase 24-03]: kb-org stale key removed on every init and logout for clean migration
 - [Phase 24-02]: getActiveSub (orders.service.ts) reviewed and left unchanged — orgContext branch already correct; orders personal-order branch at line 339 left unchanged by design; articles.service.ts and users.service.ts intentionally excluded from audit attribution fixes
+- [Phase 24]: SWITCH-12: Crear organizacion UI hidden in org context; Organizaciones tab hidden + redirect guard added — org accounts cannot manage orgs
 
 ## Quick Tasks Completed
 

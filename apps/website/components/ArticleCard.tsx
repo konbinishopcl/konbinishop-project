@@ -16,7 +16,7 @@ export function formatDate(iso: string): string {
 }
 
 export function getCat(a: ApiArticle): string {
-  if (a.articleCategory?.name) return a.articleCategory.name;
+  if (a.articleCategories?.[0]?.name) return a.articleCategories[0].name;
   if (a.articleTags?.length)   return a.articleTags[0].name;
   if (a.tags?.length)          return a.tags[0].name;
   return "Noticias";

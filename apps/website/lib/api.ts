@@ -281,7 +281,7 @@ export type ApiArticle = {
   userId: number | null;
   isSponsored: boolean;
   createdAt: string;
-  articleCategory: ApiArticleCategory | null;
+  articleCategories: ApiArticleCategory[];
   articleTags: { id: number; name: string; slug: string }[];
   tags: { id: number; name: string; slug: string }[];
   events?: ApiArticleEvent[];

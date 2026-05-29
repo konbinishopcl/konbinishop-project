@@ -1009,7 +1009,8 @@
 /* ─────────── AUTH ─────────── */
 .auth-shell { min-height: 100vh; display: grid; grid-template-columns: 1fr 1.05fr; }
 .auth-art { position: relative; background: var(--bg-2); overflow: hidden; padding: 48px; display: flex; flex-direction: column; justify-content: space-between; }
-.auth-art-img { object-fit: cover; object-position: center; }
+.auth-art-img { object-fit: cover; object-position: center; animation: auth-zoom 4s ease-out forwards; }
+@keyframes auth-zoom { from { transform: scale(1.08); } to { transform: scale(1); } }
 .auth-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,.75) 0%, rgba(0,0,0,.2) 60%, rgba(0,0,0,.4) 100%); z-index: 1; }
 .auth-art .blurb { position: relative; z-index: 2; background: rgba(0,0,0,.5); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,.08); border-radius: 18px; padding: 28px; max-width: 320px; margin-top: auto; }
 [data-theme="light"] .auth-art .blurb { background: rgba(255,255,255,.7); border-color: var(--line); }

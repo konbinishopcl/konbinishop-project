@@ -83,6 +83,72 @@ export type ApiUser = {
 
 export type AuthResponse = { token: string; user: ApiUser };
 
+export type ApiAdminUser = {
+  id: number;
+  email: string;
+  firstname: string | null;
+  lastname: string | null;
+  rut: string | null;
+  isCompany: boolean;
+  role: Role;
+  confirmed: boolean;
+  blocked: boolean;
+  type: 'PERSON' | 'ORGANIZATION';
+  handle: string | null;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ApiFaqItem = {
+  id: number;
+  question: string;
+  answer: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'BAN' | 'UNBAN';
+export type AuditEntity = 'EVENT' | 'USER' | 'AVISO' | 'PORTADA';
+
+export type ApiAuditLog = {
+  id: number;
+  userId: number | null;
+  action: AuditAction;
+  entity: AuditEntity;
+  entityId: number;
+  metadata: Record<string, unknown>;
+  ip: string | null;
+  userAgent: string | null;
+  url: string | null;
+  createdAt: string;
+};
+
+export type ApiAuditLogList = {
+  items: ApiAuditLog[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export type AuditQuery = {
+  page?: number;
+  pageSize?: number;
+  action?: AuditAction;
+  entity?: AuditEntity;
+  userId?: number;
+  dateFrom?: string;
+  dateTo?: string;
+};
+
+export type ApiServiceOption = {
+  id: number;
+  label: string;
+  order: number;
+};
+
 // ─────────────────────────── Contenido ──────────────────────────
 
 // Phase 18+ — taxonomías separadas

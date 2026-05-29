@@ -40,6 +40,8 @@ export type User = {
   phone: string;
   initials: string;
   role: Role;
+  type?: 'PERSON' | 'ORGANIZATION';   // org identity flag
+  handle?: string | null;              // org @handle
 };
 
 export const CATEGORIES: Category[] = [

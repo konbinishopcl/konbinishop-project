@@ -9,11 +9,6 @@ function apiBase(): string {
     : "/api";
 }
 
-// Active org context — set by UserMenu when switching accounts
-let _activeOrgId: number | null = null;
-export function setOrgContext(orgId: number | null) { _activeOrgId = orgId; }
-export function getOrgContext(): number | null { return _activeOrgId; }
-
 function buildHeaders(token?: string): Record<string, string> {
   const h: Record<string, string> = { "Content-Type": "application/json" };
   if (typeof window === "undefined") {
@@ -21,7 +16,6 @@ function buildHeaders(token?: string): Record<string, string> {
     if (key) h["X-API-Key"] = key;
   }
   if (token) h["Authorization"] = `Bearer ${token}`;
-  if (_activeOrgId) h["X-Org-Context"] = String(_activeOrgId);
   return h;
 }
 
@@ -83,6 +77,8 @@ export type ApiUser = {
   role: Role;
   confirmed: boolean;
   blocked: boolean;
+  type: 'PERSON' | 'ORGANIZATION';
+  handle: string | null;
 };
 
 export type AuthResponse = { token: string; user: ApiUser };
@@ -360,6 +356,8 @@ export const api = {
   googleOneTap: (credential: string) =>
     request<AuthResponse>("/auth/google/onetap", { method: "POST", body: JSON.stringify({ credential }) }),
   me: (token: string) => request<ApiUser>("/auth/me", {}, token),
+  switchOrg: (orgId: number, token: string) =>
+    request<AuthResponse>('/auth/switch-org', { method: 'POST', body: JSON.stringify({ orgId }) }, token),
 
   // Contenido
   events: (query: EventsQuery = {}) => request<ApiEventList>(`/events${qs(query)}`),
@@ -384,7 +382,6 @@ export const api = {
     const form = new FormData();
     form.append("file", file);
     const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
-    if (_activeOrgId) headers["X-Org-Context"] = String(_activeOrgId);
     let res: Response;
     try {
       res = await fetch(`${apiBase()}/upload`, {
@@ -512,6 +509,8 @@ export function toUser(u: ApiUser): User {
     phone: "",
     initials: initialsOf(name, u.email),
     role: u.role,
+    type: u.type,
+    handle: u.handle,
   };
 }
 

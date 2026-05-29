@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T01:15:27.174Z"
+last_updated: "2026-05-29T01:17:37.763Z"
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 28
-  completed_plans: 26
+  completed_plans: 27
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T01:15:27.171Z
+**Last session:** 2026-05-29T01:17:37.760Z
 
 ## Phase Summary
 
@@ -180,6 +180,7 @@ administrador quedan visibles al público.
 - [Phase 22-01]: OrgEntry exported from providers.tsx (canonical); 401 branch clears org like logout; init restore inside try/catch before setReady(true)
 - [Phase 23-01]: D-1 applied: /cuenta/organizador deleted; organizations are separate entities post-Phase-22; no user-level organizador concept remains
 - [Phase 23-01]: D-2 applied: carrito/exito CTA now points to /cuenta/perfil with copy '¿Tu perfil está completo?'
+- [Phase 23-02]: D-3: matchesTab uses APPROVED+expirationDate<now for Expirados — APPROVED expirado no cuenta como Activo; D-4: mis-portadas TABS femeninos conservados; D-5: uploadImage construye headers sin buildHeaders() para no romper multipart
 
 ## Quick Tasks Completed
 

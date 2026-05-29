@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -77,7 +78,7 @@ export function UserMenu({ size = 40 }: { size?: number }) {
           </div>
           <button
             style={{ background: !activeOrg ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
-            onClick={() => { setActiveOrg(null); close(); }}
+            onClick={() => { setActiveOrg(null); close(); toast.success("Operando como cuenta personal"); }}
           >
             <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
               {user.initials}
@@ -89,7 +90,7 @@ export function UserMenu({ size = 40 }: { size?: number }) {
             <button
               key={org.id}
               style={{ background: activeOrg?.id === org.id ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
-              onClick={() => { setActiveOrg(org); close(); }}
+              onClick={() => { setActiveOrg(org); close(); toast.success(`Operando como ${org.name ?? org.handle ?? "organización"}`); }}
             >
               <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
                 {(org.name ?? "O")[0].toUpperCase()}

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -16,6 +16,7 @@ import { CurrentUser, type JwtUser } from './current-user.decorator';
 import { VerifyTwoFaDto } from './dto/verify-2fa.dto';
 import { ChangeEmailRequestDto } from './dto/change-email-request.dto';
 import { ChangeEmailConfirmDto } from './dto/change-email-confirm.dto';
+import { SwitchOrgDto } from './dto/switch-org.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -155,6 +156,17 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Token inválido o expirado' })
   refresh(@CurrentUser() user: JwtUser) {
     return this.auth.refreshToken(user.sub);
+  }
+
+  @Post('switch-org')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cambiar a contexto de organización (emite JWT con sub=orgId)' })
+  @ApiResponse({ status: 201, description: '{ token, user } — JWT de la organización' })
+  @ApiResponse({ status: 403, description: 'No eres miembro de la organización o ya estás en contexto de org' })
+  switchOrg(@CurrentUser() user: JwtUser, @Body() dto: SwitchOrgDto) {
+    if (user.actingAs) throw new ForbiddenException('Orgs cannot switch to other orgs');
+    return this.auth.switchOrg(user.sub, dto.orgId);
   }
 
   @Patch('password')

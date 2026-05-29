@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   Logger,
   UnauthorizedException,
@@ -228,6 +229,25 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user || user.blocked) throw new UnauthorizedException();
     return { token: this.sign(user), user: this.sanitize(user) };
+  }
+
+  async switchOrg(personalUserId: number, orgId: number) {
+    const member = await this.prisma.orgMember.findUnique({
+      where: { userId_orgId: { userId: personalUserId, orgId } },
+    });
+    if (!member) throw new ForbiddenException('No eres miembro de esta organización');
+
+    const org = await this.prisma.user.findUnique({ where: { id: orgId } });
+    if (!org || org.blocked) throw new ForbiddenException('Organización no disponible');
+
+    const token = this.jwt.sign({
+      sub: orgId,
+      email: org.email,
+      role: org.role,
+      orgRole: member.role,
+      actingAs: personalUserId,
+    });
+    return { token, user: this.sanitize(org) };
   }
 
   /**

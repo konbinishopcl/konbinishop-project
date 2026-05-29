@@ -27,6 +27,7 @@ type ArticleValues = z.infer<typeof articleSchema>;
 
 type ImageSlot = { file: File | null; url: string };
 type Tag = { id: number; name: string; slug: string };
+type Cat = { id: number; name: string | null; slug: string };
 type EventMine = { id: number; title: string; status: string };
 
 export type InitialArticle = {
@@ -40,6 +41,7 @@ export type InitialArticle = {
   status: string;
   tags: Tag[];          // legacy — backend lo sigue devolviendo durante la transición
   articleTags?: Tag[];  // Phase 18+ — se prefiere sobre tags
+  articleCategories?: { id: number; name: string | null; slug: string }[];
   events?: { id: number; title: string }[];
 };
 
@@ -109,6 +111,9 @@ export function ArticleForm({ mode, variant, initial }: Props) {
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>((initial?.articleTags ?? initial?.tags)?.map(t => t.id) ?? []);
   const [tagSearch, setTagSearch] = useState("");
+  const [cats, setCats] = useState<Cat[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(initial?.articleCategories?.map(c => c.id) ?? []);
+  const [catSearch, setCatSearch] = useState("");
   const [myEvents, setMyEvents] = useState<EventMine[]>([]);
 
   const redirectTo = variant === "admin" ? "/dashboard/articles" : "/cuenta/articulos";
@@ -138,6 +143,11 @@ export function ArticleForm({ mode, variant, initial }: Props) {
     fetch("/api/article-tags").then(r => r.json()).then(d => setTags(Array.isArray(d) ? d : [])).catch(() => setTags([]));
   }, []);
 
+  // Load categories
+  useEffect(() => {
+    fetch("/api/article-categories").then(r => r.json()).then(d => setCats(Array.isArray(d) ? d : [])).catch(() => setCats([]));
+  }, []);
+
   // Load own events when sponsored variant
   useEffect(() => {
     if (variant !== "sponsored" || !token) return;
@@ -153,6 +163,10 @@ export function ArticleForm({ mode, variant, initial }: Props) {
   };
 
   const filteredTags = tags.filter(t => !tagSearch.trim() || t.name.toLowerCase().includes(tagSearch.toLowerCase()));
+
+  // Toggle category selection
+  const toggleCat = (id: number) => setSelectedCategoryIds(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]);
+  const filteredCats = cats.filter(c => !catSearch.trim() || (c.name ?? "").toLowerCase().includes(catSearch.toLowerCase()));
 
   const onSubmit = async (values: ArticleValues) => {
     if (!token) { toast.error("No autenticado"); return; }
@@ -175,6 +189,7 @@ export function ArticleForm({ mode, variant, initial }: Props) {
         image:      imageUrlPath || undefined,
         youtubeUrl: values.youtubeUrl?.trim() || undefined,
         articleTagIds: selectedTagIds.length ? selectedTagIds : undefined,
+        articleCategoryIds: selectedCategoryIds.length ? selectedCategoryIds : undefined,
       };
 
       // 3) Choose endpoint based on mode + variant
@@ -319,6 +334,21 @@ export function ArticleForm({ mode, variant, initial }: Props) {
               <label key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>
                 <input type="checkbox" checked={selectedTagIds.includes(t.id)} onChange={() => toggleTag(t.id)} />
                 <span>{t.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="field">
+          <label>Categorías <small style={{ color: "var(--ink-3)" }}>({selectedCategoryIds.length} seleccionadas)</small></label>
+          <input type="text" placeholder="Buscar categoría…" value={catSearch} onChange={(e) => setCatSearch(e.target.value)} />
+          <div style={{ marginTop: 8, maxHeight: 180, overflowY: "auto", border: "1px solid var(--line)", borderRadius: 8, padding: 8 }}>
+            {filteredCats.length === 0 ? (
+              <div style={{ color: "var(--ink-3)", fontSize: 12, textAlign: "center", padding: 12 }}>Sin categorías</div>
+            ) : filteredCats.map((c) => (
+              <label key={c.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>
+                <input type="checkbox" checked={selectedCategoryIds.includes(c.id)} onChange={() => toggleCat(c.id)} />
+                <span>{c.name}</span>
               </label>
             ))}
           </div>

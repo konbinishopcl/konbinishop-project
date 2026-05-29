@@ -37,6 +37,7 @@ export default function EditMyArticlePage() {
           youtubeUrl: data.youtubeUrl ?? null,
           status:     data.status,
           tags:       data.tags ?? [],
+          articleCategories: data.articleCategories ?? [],
           events:     data.events ?? [],
         });
       })

@@ -5,7 +5,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { NavigationProgress } from "./NavigationProgress";
 import { OneTap } from "./OneTap";
 import type { User } from "@/lib/data";
-import { toUser, setOrgContext, type ApiUser } from "@/lib/api";
+import { api, toUser, type ApiUser } from "@/lib/api";
 
 type Theme = "dark" | "light";
 
@@ -37,18 +37,20 @@ export function useTheme() {
 }
 
 /* ───────────────── user / auth ───────────────── */
-export type OrgEntry = { id: number; name: string | null; handle: string | null };
 
 type UserCtxValue = {
   user: User | null;
   token: string | null;
   /** Listo cuando ya se leyó el estado persistido (evita parpadeo en los guards). */
   ready: boolean;
+  isOrgContext: boolean;       // true when user.type === 'ORGANIZATION'
+  personalUser: User | null;   // personal user while in org mode (for UserMenu display)
+  personalToken: string | null;
   setAuth: (user: User, token: string) => void;
   setUser: (user: User | null) => void;
   logout: () => void;
-  activeOrg: OrgEntry | null;
-  setActiveOrg: (org: OrgEntry | null) => void;
+  switchToOrg: (orgId: number) => Promise<void>;
+  switchBack: () => void;
 };
 
 const UserCtx = createContext<UserCtxValue | null>(null);
@@ -57,7 +59,10 @@ function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [activeOrg, setActiveOrgState] = useState<OrgEntry | null>(null);
+  const [personalToken, setPersonalToken] = useState<string | null>(null);
+  const [personalUser, setPersonalUser] = useState<User | null>(null);
+
+  const isOrgContext = user?.type === "ORGANIZATION";
 
   useEffect(() => {
     let cancelled = false;
@@ -77,12 +82,12 @@ function UserProvider({ children }: { children: ReactNode }) {
           setUserState(parsed);
         }
         if (t) { setToken(t); storedToken = t; }
-        const o = localStorage.getItem("kb-org");
-        if (o && o !== "null") {
-          const parsedOrg = JSON.parse(o) as OrgEntry;
-          setActiveOrgState(parsedOrg);
-          setOrgContext(parsedOrg.id);
-        }
+        // Restore personal session if we're mid-org-mode
+        const pt = localStorage.getItem("kb-personal-token");
+        const pu = localStorage.getItem("kb-personal-user");
+        if (pt) setPersonalToken(pt);
+        if (pu && pu !== "null") setPersonalUser(JSON.parse(pu) as User);
+        localStorage.removeItem("kb-org"); // migrate away stale key
       } catch {
         /* ignore */
       }
@@ -105,14 +110,15 @@ function UserProvider({ children }: { children: ReactNode }) {
             localStorage.setItem("kb-user", JSON.stringify(mappedUser));
             localStorage.setItem("kb-token", data.token);
           } else if (r.status === 401) {
-            // Token expirado o inválido → cerrar sesión
+            // Token expirado o inválido → cerrar sesión completa
             setUserState(null);
             setToken(null);
+            setPersonalToken(null);
+            setPersonalUser(null);
             localStorage.removeItem("kb-user");
             localStorage.removeItem("kb-token");
-            setActiveOrgState(null);
-            setOrgContext(null);
-            localStorage.removeItem("kb-org");
+            localStorage.removeItem("kb-personal-token");
+            localStorage.removeItem("kb-personal-user");
           }
           // Otros errores (502 si el backend está caído) → mantener sesión existente
         } catch {
@@ -137,25 +143,41 @@ function UserProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("kb-user", JSON.stringify(nextUser));
   };
 
-  const setActiveOrg = (org: OrgEntry | null) => {
-    setActiveOrgState(org);
-    setOrgContext(org ? org.id : null);
-    if (org) localStorage.setItem("kb-org", JSON.stringify(org));
-    else localStorage.removeItem("kb-org");
-  };
-
   const logout = () => {
     setUserState(null);
     setToken(null);
+    setPersonalToken(null);
+    setPersonalUser(null);
     localStorage.removeItem("kb-user");
     localStorage.removeItem("kb-token");
-    setActiveOrgState(null);
-    setOrgContext(null);
+    localStorage.removeItem("kb-personal-token");
+    localStorage.removeItem("kb-personal-user");
     localStorage.removeItem("kb-org");
   };
 
+  const switchToOrg = async (orgId: number) => {
+    if (!token || !user) throw new Error("No hay sesión activa");
+    const { token: orgToken, user: apiUser } = await api.switchOrg(orgId, token);
+    // Save personal session for switch-back
+    setPersonalToken(token);
+    setPersonalUser(user);
+    localStorage.setItem("kb-personal-token", token);
+    localStorage.setItem("kb-personal-user", JSON.stringify(user));
+    // Swap in the org session (writes kb-token + kb-user)
+    setAuth(toUser(apiUser), orgToken);
+  };
+
+  const switchBack = () => {
+    if (!personalToken || !personalUser) return;
+    setAuth(personalUser, personalToken);
+    setPersonalToken(null);
+    setPersonalUser(null);
+    localStorage.removeItem("kb-personal-token");
+    localStorage.removeItem("kb-personal-user");
+  };
+
   return (
-    <UserCtx.Provider value={{ user, token, ready, activeOrg, setAuth, setUser, setActiveOrg, logout }}>
+    <UserCtx.Provider value={{ user, token, ready, isOrgContext, personalUser, personalToken, setAuth, setUser, logout, switchToOrg, switchBack }}>
       {children}
     </UserCtx.Provider>
   );

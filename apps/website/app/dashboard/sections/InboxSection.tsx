@@ -1,57 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useUser } from "@/components/providers";
+import { api, ApiContactMessage } from "@/lib/api";
 
-type PipelineStage = "Nuevo" | "Contactado" | "En negociación" | "Cerrado ganado" | "Cerrado perdido";
+const MESES = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
 
-type InboxItem = {
-  nm: string;
-  em: string;
-  ev: string;
-  date: string;
-  st: PipelineStage;
-  asunto: string;
-  msg: string;
-  services: string[] | null;
-};
-
-const DATA: InboxItem[] = [
-  {
-    nm: "María Pérez",
-    em: "maria@email.cl",
-    ev: "Aniversario AnimeShop",
-    date: "12 MAR",
-    st: "Nuevo",
-    asunto: "Quiero publicar un evento",
-    msg: "Hola, organizamos el aniversario de nuestra tienda en Santiago. Queremos publicar el evento, ¿cómo funciona?",
-    services: ["Cobertura completa del evento", "Sesión previa al evento"],
-  },
-  {
-    nm: "Pedro Sánchez",
-    em: "pedro@cosplay.cl",
-    ev: "Cosplay Meetup Junio",
-    date: "10 MAR",
-    st: "Contactado",
-    asunto: "Servicio de fotos",
-    msg: "Buenas, ¿qué tal? Vamos a hacer un meetup en julio en Santiago. Nos interesa contratar fotógrafos. Días disponibles: sáb 12 y dom 13.",
-    services: ["Cobertura completa del evento"],
-  },
-  {
-    nm: "Sofía L.",
-    em: "sofi@productora.cl",
-    ev: "Concierto J-Rock",
-    date: "8 MAR",
-    st: "En negociación",
-    asunto: "Cobertura completa",
-    msg: "Necesitamos cubrir un concierto de J-Rock en el Caupolicán el 15 abril.",
-    services: ["Aftermovie del evento", "Cobertura en vivo (stories)", "Reels para Instagram / TikTok"],
-  },
-];
-
-function pillClass(st: PipelineStage): string {
-  if (st === "Nuevo") return "rev";
-  if (st === "Contactado") return "pub";
-  return "exp";
+function formatShortDate(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getUTCDate()} ${MESES[d.getUTCMonth()]}`;
 }
 
 function initials(nm: string): string {
@@ -86,19 +43,74 @@ function ConfirmDialog({
 }
 
 export default function InboxSection({ kind = "contact" }: { kind?: "contact" | "photo" | "creators" }) {
-  const [filter, setFilter] = useState<"Todos" | "No leídos" | "Archivados">("Todos");
-  const [openItem, setOpenItem] = useState<InboxItem | null>(null);
-  const [confirmArchive, setConfirmArchive] = useState<InboxItem | null>(null);
+  const { token } = useUser();
+  const [msgs, setMsgs] = useState<ApiContactMessage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState<"Todos" | "No leídos">("Todos");
+  const [openItem, setOpenItem] = useState<ApiContactMessage | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<ApiContactMessage | null>(null);
 
-  const data = DATA.map((r) => ({
-    ...r,
-    services: kind !== "contact" ? r.services : null,
-  }));
+  const load = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const data = await api.contactAll(token);
+      setMsgs(data);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error cargando mensajes");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  if (kind !== "contact") {
+    return (
+      <div className="panel" style={{ padding: 24, textAlign: "center", color: "var(--ink-3)" }}>
+        <p>Bandeja de entrada para este servicio disponible próximamente.</p>
+        <p style={{ fontSize: 12, marginTop: 6 }}>Los mensajes de este tipo se gestionan en la sección <strong>CRM</strong>.</p>
+      </div>
+    );
+  }
+
+  const visible = filter === "No leídos" ? msgs.filter((m) => !m.read) : msgs;
+
+  async function handleOpen(item: ApiContactMessage) {
+    setOpenItem(item);
+    if (!item.read && token) {
+      setMsgs((prev) => prev.map((m) => m.id === item.id ? { ...m, read: true } : m));
+      try {
+        await api.contactMarkRead(item.id, token);
+      } catch {
+        // revert optimistic update silently
+        setMsgs((prev) => prev.map((m) => m.id === item.id ? { ...m, read: false } : m));
+      }
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirmDelete || !token) return;
+    const target = confirmDelete;
+    setConfirmDelete(null);
+    try {
+      await api.contactRemove(target.id, token);
+      setMsgs((prev) => prev.filter((m) => m.id !== target.id));
+      toast.success("Mensaje eliminado");
+      if (openItem?.id === target.id) setOpenItem(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error eliminando mensaje");
+    }
+  }
+
+  if (loading && msgs.length === 0) {
+    return <div className="panel" style={{ padding: 24 }}>Cargando mensajes…</div>;
+  }
 
   return (
     <>
       <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-        {(["Todos", "No leídos", "Archivados"] as const).map((f) => (
+        {(["Todos", "No leídos"] as const).map((f) => (
           <button key={f} className={`sel${filter === f ? " on" : ""}`} onClick={() => setFilter(f)}>
             {f}
           </button>
@@ -110,15 +122,22 @@ export default function InboxSection({ kind = "contact" }: { kind?: "contact" | 
           <thead>
             <tr>
               <th>CONTACTO</th>
-              <th>{kind === "contact" ? "ASUNTO" : "EVENTO"}</th>
+              <th>ASUNTO</th>
               <th>FECHA</th>
-              <th>PIPELINE</th>
+              <th>ESTADO</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {data.map((r, i) => (
-              <tr key={i}>
+            {visible.length === 0 && (
+              <tr>
+                <td colSpan={5} style={{ textAlign: "center", color: "var(--ink-3)", padding: 24 }}>
+                  {filter === "No leídos" ? "No hay mensajes sin leer." : "No hay mensajes."}
+                </td>
+              </tr>
+            )}
+            {visible.map((m) => (
+              <tr key={m.id}>
                 <td>
                   <div className="cell-evt">
                     <div
@@ -136,26 +155,26 @@ export default function InboxSection({ kind = "contact" }: { kind?: "contact" | 
                         flexShrink: 0,
                       }}
                     >
-                      {initials(r.nm)}
+                      {initials(m.name)}
                     </div>
                     <div>
-                      <div className="ti">{r.nm}</div>
-                      <div className="su">{r.em}</div>
+                      <div className="ti">{m.name}</div>
+                      <div className="su">{m.email}</div>
                     </div>
                   </div>
                 </td>
-                <td>{kind === "contact" ? r.asunto : r.ev}</td>
-                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{r.date}</td>
+                <td>{m.subject}</td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{formatShortDate(m.createdAt)}</td>
                 <td>
-                  <span className={`stat-pill ${pillClass(r.st)}`}>
+                  <span className={`stat-pill ${m.read ? "pub" : "rev"}`}>
                     <span className="dot" />
-                    {r.st}
+                    {m.read ? "Leído" : "No leído"}
                   </span>
                 </td>
                 <td>
                   <div className="row-act">
-                    <button onClick={() => setOpenItem(r)}>Abrir</button>
-                    <button onClick={() => setConfirmArchive(r)}>Archivar</button>
+                    <button onClick={() => handleOpen(m)}>Abrir</button>
+                    <button onClick={() => setConfirmDelete(m)}>Eliminar</button>
                   </div>
                 </td>
               </tr>
@@ -190,15 +209,15 @@ export default function InboxSection({ kind = "contact" }: { kind?: "contact" | 
                     flexShrink: 0,
                   }}
                 >
-                  {initials(openItem.nm)}
+                  {initials(openItem.name)}
                 </div>
                 <div>
-                  <h3 className="h" style={{ margin: 0 }}>{openItem.nm}</h3>
+                  <h3 className="h" style={{ margin: 0 }}>{openItem.name}</h3>
                   <a
-                    href={`mailto:${openItem.em}`}
+                    href={`mailto:${openItem.email}`}
                     style={{ color: "var(--accent)", fontFamily: "var(--font-mono)", fontSize: 12 }}
                   >
-                    {openItem.em}
+                    {openItem.email}
                   </a>
                 </div>
               </div>
@@ -207,65 +226,19 @@ export default function InboxSection({ kind = "contact" }: { kind?: "contact" | 
 
             {/* Content box */}
             <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: 14, marginBottom: 14 }}>
-              {kind === "contact" ? (
-                <>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 4 }}>
-                    ASUNTO
-                  </div>
-                  <div style={{ fontWeight: 600, marginBottom: 10 }}>{openItem.asunto}</div>
-                </>
-              ) : (
-                <>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 4 }}>
-                    EVENTO · FECHA
-                  </div>
-                  <div style={{ fontWeight: 600, marginBottom: 10 }}>{openItem.ev}</div>
-                </>
-              )}
-              <div style={{ color: "var(--ink-2)", fontSize: 14, lineHeight: 1.55 }}>{openItem.msg}</div>
-            </div>
-
-            {/* Services */}
-            {openItem.services && (
-              <div style={{ marginBottom: 14 }}>
-                <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 8 }}>
-                  SERVICIOS MARCADOS
-                </div>
-                {openItem.services.map((s) => (
-                  <div key={s} style={{ padding: "6px 0", fontSize: 13, color: "var(--ink-2)" }}>✓ {s}</div>
-                ))}
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 4 }}>
+                ASUNTO
               </div>
-            )}
-
-            {/* Pipeline */}
-            <div style={{ marginBottom: 14 }}>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", marginBottom: 8 }}>
-                MOVER EN PIPELINE
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {(["Nuevo", "Contactado", "En negociación", "Cerrado ganado", "Cerrado perdido"] as PipelineStage[]).map((s) => (
-                  <button
-                    key={s}
-                    className={`sel${openItem.st === s ? " on" : ""}`}
-                    style={{ fontSize: 11, padding: "6px 10px" }}
-                    onClick={() => {
-                      toast.success(`Movido a "${s}"`);
-                      setOpenItem(null);
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+              <div style={{ fontWeight: 600, marginBottom: 10 }}>{openItem.subject}</div>
+              <div style={{ color: "var(--ink-2)", fontSize: 14, lineHeight: 1.55 }}>{openItem.message}</div>
             </div>
 
             {/* Footer */}
             <div className="row-act" style={{ justifyContent: "flex-end" }}>
               <button
                 onClick={() => {
+                  window.location.href = `mailto:${openItem.email}`;
                   setOpenItem(null);
-                  toast.info(`Abriendo email a ${openItem.nm}…`);
-                  window.location.href = `mailto:${openItem.em}`;
                 }}
               >
                 ✉ Responder por email
@@ -282,17 +255,14 @@ export default function InboxSection({ kind = "contact" }: { kind?: "contact" | 
         </div>
       )}
 
-      {/* Archive confirm */}
-      {confirmArchive && (
+      {/* Delete confirm */}
+      {confirmDelete && (
         <ConfirmDialog
-          title="¿Archivar mensaje?"
-          message={`"${confirmArchive.nm}" pasará a Archivados. Podrás restaurarlo después si es necesario.`}
-          confirmLabel="Sí, archivar"
-          onConfirm={() => {
-            toast.success("Mensaje archivado");
-            setConfirmArchive(null);
-          }}
-          onClose={() => setConfirmArchive(null)}
+          title="¿Eliminar mensaje?"
+          message={`El mensaje de "${confirmDelete.name}" será eliminado permanentemente.`}
+          confirmLabel="Sí, eliminar"
+          onConfirm={handleDelete}
+          onClose={() => setConfirmDelete(null)}
         />
       )}
     </>

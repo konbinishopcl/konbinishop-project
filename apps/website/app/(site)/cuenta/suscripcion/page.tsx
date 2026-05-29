@@ -103,20 +103,20 @@ export default function SuscripcionPage() {
         <>
           <div className="acc-credit">
             <div className="b">
-              <div className="h">{sub.creditsUsed} / {sub.creditsTotal} créditos usados este mes</div>
+              <div className="h">{sub.creditsUsed ?? 0} / {sub.creditsTotal ?? 0} créditos usados este mes</div>
               <div className="p">Se renueva el {new Date(sub.cycleEnd).toLocaleDateString("es-CL", { day: "numeric", month: "long" })}</div>
               <div className="pbar">
-                <div style={{ width: `${Math.round((sub.creditsUsed / sub.creditsTotal) * 100)}%` }} />
+                <div style={{ width: `${sub.creditsTotal ? Math.round(((sub.creditsUsed ?? 0) / sub.creditsTotal) * 100) : 0}%` }} />
               </div>
             </div>
-            <div className="v">{sub.creditsTotal - sub.creditsUsed}</div>
+            <div className="v">{(sub.creditsTotal ?? 0) - (sub.creditsUsed ?? 0)}</div>
             <div style={{ fontSize: 11, fontFamily: "var(--font-mono)", color: "var(--ink-3)", letterSpacing: ".1em" }}>RESTAN</div>
           </div>
 
           <div className="acc-section">
             <h3>Beneficios activos</h3>
             <div style={{ color: "var(--ink-2)", fontSize: 14, lineHeight: 1.8 }}>
-              ✓ {sub.creditsTotal} créditos de publicación al mes<br />
+              ✓ {sub.creditsTotal ?? 0} créditos de publicación al mes<br />
               ✓ {n("SUBSCRIPTION_SPOT_DISCOUNT", 20)}% off en avisos y portadas<br />
               ✓ Soporte prioritario
             </div>

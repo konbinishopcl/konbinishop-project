@@ -295,7 +295,7 @@ async function main() {
       content: string;
       image: string | null;
       youtubeUrl: string | null;
-      categorySlug: string | null;
+      categorySlugs: string[];
       tags: Array<{ name: string; slug: string }>;
       gallery: string[];
       createdAt: string;
@@ -311,7 +311,10 @@ async function main() {
 
     let articleCount = 0;
     for (const art of articlesData) {
-      const articleCategoryId = art.categorySlug ? (catBySlug[art.categorySlug] ?? null) : null;
+      // Anti-P2025 filter: skip slugs not in the curated DB list (unknown slugs throw P2025 which
+      // skips the entire article — data loss). ArticleCategory has required nameJa so we never
+      // auto-create categories at seed time (they'd have null nameJa and pollute the MegaMenu).
+      const knownSlugs = (art.categorySlugs ?? []).filter(s => catBySlug[s] !== undefined);
 
       const tagIds: number[] = [];
       for (const tag of art.tags) {
@@ -332,7 +335,7 @@ async function main() {
           content: sanitize(art.content)!,
           image: art.image,
           youtubeUrl: art.youtubeUrl,
-          articleCategoryId,
+          articleCategories: { set: knownSlugs.map(slug => ({ slug })) },
           status: 'APPROVED',
           articleTags: tagIds.length ? { set: tagIds.map(id => ({ id })) } : undefined,
           articleImages: {
@@ -347,7 +350,7 @@ async function main() {
           content: sanitize(art.content)!,
           image: art.image,
           youtubeUrl: art.youtubeUrl,
-          articleCategoryId,
+          articleCategories: knownSlugs.length ? { connect: knownSlugs.map(slug => ({ slug })) } : undefined,
           status: 'APPROVED',
           createdAt: new Date(art.createdAt),
           updatedAt: new Date(art.updatedAt),

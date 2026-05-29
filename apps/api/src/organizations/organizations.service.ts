@@ -57,6 +57,7 @@ export class OrganizationsService {
    * como OWNER en la misma transacción atómica.
    */
   async create(dto: CreateOrganizationDto, user: JwtUser, req?: Request) {
+    if (user.actingAs) throw new ForbiddenException('Las organizaciones no pueden crear otras organizaciones');
     let org: { id: number };
 
     try {
@@ -76,7 +77,7 @@ export class OrganizationsService {
 
         await tx.orgMember.create({
           data: {
-            userId: user.sub,
+            userId: user.actingAs ?? user.sub,
             orgId: newOrg.id,
             role: OrgRole.OWNER,
           },
@@ -88,7 +89,7 @@ export class OrganizationsService {
       org = result;
 
       this.audit.log({
-        userId: user.sub,
+        userId: user.actingAs ?? user.sub,
         action: 'CREATE',
         entity: 'USER',
         entityId: result.id,

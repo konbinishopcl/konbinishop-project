@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T03:12:55.687Z"
+last_updated: "2026-05-29T14:04:40.383Z"
 progress:
-  total_phases: 8
+  total_phases: 11
   completed_phases: 8
-  total_plans: 32
-  completed_plans: 32
+  total_plans: 37
+  completed_plans: 33
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 24 — real-org-account-switching-via-jwt-replace-fake-activeorg-overlay-with-full-identity-switch
+**Current focus:** Phase 25 — dashboard-admin-real-usuarios-faq-logs-y-settings-con-api-real
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T03:05:29.146Z
+**Last session:** 2026-05-29T14:04:40.380Z
 
 ## Phase Summary
 
@@ -189,6 +189,7 @@ administrador quedan visibles al público.
 - [Phase 24-03]: kb-org stale key removed on every init and logout for clean migration
 - [Phase 24-02]: getActiveSub (orders.service.ts) reviewed and left unchanged — orgContext branch already correct; orders personal-order branch at line 339 left unchanged by design; articles.service.ts and users.service.ts intentionally excluded from audit attribution fixes
 - [Phase 24]: SWITCH-12: Crear organizacion UI hidden in org context; Organizaciones tab hidden + redirect guard added — org accounts cannot manage orgs
+- [Phase 25-01]: 6 new exported types + 15 flat api methods added to api.ts as Wave 1 foundation for Phase 25 parallel execution
 
 ## Quick Tasks Completed
 
@@ -213,6 +214,9 @@ administrador quedan visibles al público.
 
 - Phase 16 added: Necesito que el formulario de eventos del dashboard sea igual al formulario de eventos del dashboard de /design
 - Phase 23 added: Cleanup post-cambio de contexto org — eliminar concepto perfil organizador del usuario, implementar mis-avisos y mis-portadas reales, fix uploadImage X-Org-Context, sidebar condicional por contexto activo
+- Phase 25 added: Dashboard admin real — UsersSection, FAQSection, LogsSection y SettingsSection conectados a API real con filtros funcionales
+- Phase 26 added: Dashboard inbox, CRM y suscripciones con API real — InboxSection, CRMSection, SubsSection conectados
+- Phase 27 added: Dashboard analytics, pagos y gráficos reales con Recharts — HomeSection, PaymentsSection, ReportsSection + reemplazo completo de charts mock
 
 ## Next Action
 

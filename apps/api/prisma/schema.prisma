@@ -121,8 +121,7 @@ model Article {
   statusReason String?
   owner        User?             @relation("ArticleOwner", fields: [userId], references: [id])
   userId       Int?
-  articleCategory   ArticleCategory? @relation(fields: [articleCategoryId], references: [id])
-  articleCategoryId Int?
+  articleCategories ArticleCategory[]
   articleTags       ArticleTag[]
   articleImages     ArticleImage[]
   events    Event[]
@@ -133,7 +132,6 @@ model Article {
 
   @@index([userId])
   @@index([status])
-  @@index([articleCategoryId])
 }
 
 model ArticleImage {

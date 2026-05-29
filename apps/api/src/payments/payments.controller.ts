@@ -3,12 +3,23 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs
 import { PaymentsService } from './payments.service';
 import { CheckoutDto } from './dto/checkout.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { CurrentUser, type JwtUser } from '../auth/current-user.decorator';
 
 @ApiTags('payments')
 @Controller('payments')
 export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPER_ADMIN')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lista las órdenes pagadas/fallidas para el dashboard admin' })
+  findAll() {
+    return this.payments.findAllForAdmin();
+  }
 
   @Post(':orderId/checkout')
   @UseGuards(JwtAuthGuard)

@@ -158,11 +158,11 @@ Plans:
 
 **Depends on:** Phase 9 (org backend), Phase 20 (spots/heroes), Phase 21 (cart/checkout)
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 
-- [ ] 22-01-PLAN.md — UserContext: activeOrg + OrgEntry export, localStorage kb-org persistence, api.ts sync, logout clear (wave 1)
+- [x] 22-01-PLAN.md — UserContext: activeOrg + OrgEntry export, localStorage kb-org persistence, api.ts sync, logout clear (wave 1)
 - [ ] 22-02-PLAN.md — Visual identity switch: context-driven UserMenu + navbar avatar + /cuenta sidebar badge, human-verify end-to-end (wave 2)
 
 ---

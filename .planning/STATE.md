@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-28T20:56:24.547Z"
+last_updated: "2026-05-29T00:09:01.023Z"
 progress:
-  total_phases: 5
-  completed_phases: 4
-  total_plans: 23
-  completed_plans: 22
+  total_phases: 6
+  completed_phases: 5
+  total_plans: 25
+  completed_plans: 24
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-28T20:56:24.544Z
+**Last session:** 2026-05-29T00:09:01.021Z
 
 ## Phase Summary
 
@@ -177,6 +177,7 @@ administrador quedan visibles al público.
 - [Phase 21-03]: TITLES quota text moved to rendered subtitle paragraph — module scope cannot access React state; formatCLP added locally per view; pricePerDay prop-drilled from UpsellView to SpotForm/HeroForm
 - [Phase 21]: precios/page.tsx converted to async SSR; PricingView is 'use client' and receives props from server parent
 - [Phase 21]: Home stats and settings fully wired from Promise.all in page.tsx; eventMinPrice from Math.min(categories[].pricePerDay)
+- [Phase 22-01]: OrgEntry exported from providers.tsx (canonical); 401 branch clears org like logout; init restore inside try/catch before setReady(true)
 
 ## Quick Tasks Completed
 

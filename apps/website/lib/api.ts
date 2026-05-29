@@ -383,11 +383,13 @@ export const api = {
   uploadImage: async (file: File, token: string): Promise<{ url: string; filename: string }> => {
     const form = new FormData();
     form.append("file", file);
+    const headers: Record<string, string> = { Authorization: `Bearer ${token}` };
+    if (_activeOrgId) headers["X-Org-Context"] = String(_activeOrgId);
     let res: Response;
     try {
       res = await fetch(`${apiBase()}/upload`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
         body: form,
       });
     } catch {

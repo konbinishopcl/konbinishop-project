@@ -13,25 +13,27 @@ import {
   Plus,
   Check,
 } from "lucide-react";
-import { useUser, type OrgEntry } from "./providers";
+import { useUser } from "./providers";
 
 export function UserMenu({ size = 40 }: { size?: number }) {
-  const { user, token, logout, activeOrg, setActiveOrg } = useUser();
+  const { user, token, personalToken, personalUser, logout, switchToOrg, switchBack, isOrgContext } = useUser();
   const router    = useRouter();
   const pathname  = usePathname();
   const [open, setOpen] = useState(false);
   const [orgs, setOrgs] = useState<{ id: number; name: string | null; handle: string | null }[]>([]);
 
-  // Load user's organizations when menu opens
+  // Load user's organizations when menu opens — always use personal token (org JWTs have no memberships)
   useEffect(() => {
-    if (!open || !token) return;
-    fetch("/api/organizations/mine", { headers: { Authorization: `Bearer ${token}` } })
+    if (!open) return;
+    const authToken = personalToken ?? token;
+    if (!authToken) return;
+    fetch("/api/organizations/mine", { headers: { Authorization: `Bearer ${authToken}` } })
       .then(r => r.ok ? r.json() : [])
       .then((data: { id: number; firstname?: string | null; name?: string | null; handle?: string | null }[]) =>
         setOrgs(data.map(o => ({ id: o.id, name: o.firstname ?? o.name ?? null, handle: o.handle ?? null })))
       )
       .catch(() => {});
-  }, [open, token]);
+  }, [open, token, personalToken]);
 
   if (!user) return null;
 
@@ -40,15 +42,17 @@ export function UserMenu({ size = 40 }: { size?: number }) {
   const isAdmin     = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
   const inDashboard = pathname?.startsWith("/dashboard");
 
+  const personalDisplay = personalUser ?? user;
+
   return (
     <div style={{ position: "relative" }}>
       <button
         className="avatar"
-        style={{ width: size, height: size, fontSize: size * 0.3, ...(activeOrg ? { background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" } : {}) }}
-        title={activeOrg ? (activeOrg.name ?? activeOrg.handle ?? "Organización") : user.name}
+        style={{ width: size, height: size, fontSize: size * 0.3, ...(isOrgContext ? { background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" } : {}) }}
+        title={user.name}
         onClick={() => setOpen((o) => !o)}
       >
-        {activeOrg ? (activeOrg.name ?? activeOrg.handle ?? "O")[0].toUpperCase() : user.initials}
+        {user.initials}
       </button>
 
       {open && (
@@ -60,13 +64,13 @@ export function UserMenu({ size = 40 }: { size?: number }) {
               Operando como
             </div>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <div style={{ width: 32, height: 32, borderRadius: 999, background: activeOrg ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
-                {activeOrg ? (activeOrg.name ?? "O")[0].toUpperCase() : user.initials}
+              <div style={{ width: 32, height: 32, borderRadius: 999, background: isOrgContext ? "linear-gradient(135deg,#7c3aed,#a855f7)" : "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
+                {user.initials}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="nm">{activeOrg ? (activeOrg.name ?? activeOrg.handle) : user.name}</div>
+                <div className="nm">{user.name}</div>
                 <div className="em" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {activeOrg ? (activeOrg.handle ? `@${activeOrg.handle}` : "Organización") : user.email}
+                  {isOrgContext && user.handle ? `@${user.handle}` : user.email}
                 </div>
               </div>
             </div>
@@ -77,20 +81,28 @@ export function UserMenu({ size = 40 }: { size?: number }) {
             Cambiar de cuenta
           </div>
           <button
-            style={{ background: !activeOrg ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
-            onClick={() => { setActiveOrg(null); close(); toast.success("Operando como cuenta personal"); }}
+            style={{ background: !isOrgContext ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
+            onClick={() => { switchBack(); close(); toast.success("Operando como cuenta personal"); }}
           >
             <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
-              {user.initials}
+              {personalDisplay.initials}
             </span>
-            <span style={{ flex: 1 }}>Cuenta personal</span>
-            {!activeOrg && <Check size={14} style={{ color: "var(--accent)" }} />}
+            <span style={{ flex: 1 }}>{personalDisplay.name ?? "Cuenta personal"}</span>
+            {!isOrgContext && <Check size={14} style={{ color: "var(--accent)" }} />}
           </button>
           {orgs.map(org => (
             <button
               key={org.id}
-              style={{ background: activeOrg?.id === org.id ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
-              onClick={() => { setActiveOrg(org); close(); toast.success(`Operando como ${org.name ?? org.handle ?? "organización"}`); }}
+              style={{ background: isOrgContext && user.id === org.id ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
+              onClick={async () => {
+                try {
+                  await switchToOrg(org.id);
+                  close();
+                  toast.success(`Operando como ${org.name ?? org.handle ?? "organización"}`);
+                } catch {
+                  toast.error("No se pudo cambiar de cuenta");
+                }
+              }}
             >
               <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
                 {(org.name ?? "O")[0].toUpperCase()}
@@ -98,7 +110,7 @@ export function UserMenu({ size = 40 }: { size?: number }) {
               <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {org.name ?? org.handle ?? "Organización"}
               </span>
-              {activeOrg?.id === org.id
+              {isOrgContext && user.id === org.id
                 ? <Check size={14} style={{ color: "var(--accent)" }} />
                 : org.handle && <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--ink-3)" }}>@{org.handle}</span>
               }

@@ -118,6 +118,14 @@ None - no external service configuration required.
 - Plan 24-03 (frontend foundation) can proceed: api.ts cleanup, providers.tsx rewrite
 - Plan 24-04 (frontend UI): AccountShell, UserMenu, perfil/page.tsx updates can proceed after 24-03
 
+## Self-Check: PASSED
+
+- All 7 modified files exist on disk: FOUND
+- Task commits verified: 3d83075, 8249db6, 99c000a all present in git log
+- grep counts match acceptance criteria: orders=3, payments=1, orgs_guard=1, orgs=8, events=6, transfers=4, spots=3, heroes=3, users_actingAs=0
+- npx tsc --noEmit clean at every checkpoint
+- audit.log enumeration verified exhaustive: {events, organizations, transfers, spots, heroes, users} — no other service calls audit.log in org-reachable paths
+
 ---
 *Phase: 24-real-org-account-switching-via-jwt*
 *Completed: 2026-05-29*

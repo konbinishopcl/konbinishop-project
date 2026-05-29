@@ -60,7 +60,11 @@ export function NewsCategoryView({
   const [total, setTotal]           = useState(initialTotal);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading, setLoading]       = useState(false);
-  const firstRender                  = useRef(true);
+  // Tracks the last fetched state — only fetch when something actually changes.
+  // Using a key instead of firstRender ref so React 18 Strict Mode double-invoke
+  // doesn't trigger a spurious fetch on mount (ref value is preserved across the
+  // simulated unmount/remount, so the second invoke also sees a match and skips).
+  const prevKey = useRef(`${category.slug}:1:${pageSize}`);
 
   // Filters (client-side)
   const [period, setPeriod]         = useState<string | null>(null);
@@ -80,7 +84,9 @@ export function NewsCategoryView({
 
   // ── Fetch ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (firstRender.current) { firstRender.current = false; return; }
+    const nextKey = `${category.slug}:${page}:${perPage}`;
+    if (prevKey.current === nextKey) return;
+    prevKey.current = nextKey;
     let cancelled = false;
     setLoading(true);
 

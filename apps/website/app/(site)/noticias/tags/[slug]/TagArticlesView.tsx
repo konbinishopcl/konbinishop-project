@@ -53,7 +53,7 @@ export function TagArticlesView({ tag, initialArticles, initialTotal, initialTot
   const [total, setTotal]           = useState(initialTotal);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading, setLoading]       = useState(false);
-  const firstRender                  = useRef(true);
+  const prevKey                      = useRef(`${tag.slug}:1:${PER_PAGE_OPTIONS[1]}`);
 
   // Filters (client-side)
   const [period, setPeriod]         = useState<string | null>(null);
@@ -73,7 +73,9 @@ export function TagArticlesView({ tag, initialArticles, initialTotal, initialTot
 
   // ── Fetch (solo al cambiar página/perPage) ─────────────────────────────
   useEffect(() => {
-    if (firstRender.current) { firstRender.current = false; return; }
+    const nextKey = `${tag.slug}:${page}:${perPage}`;
+    if (prevKey.current === nextKey) return;
+    prevKey.current = nextKey;
     let cancelled = false;
     setLoading(true);
 

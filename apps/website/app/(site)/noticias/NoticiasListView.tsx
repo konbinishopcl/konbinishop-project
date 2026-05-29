@@ -57,12 +57,12 @@ export function NoticiasListView({
   const [total,      setTotal]      = useState(initialTotal);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const [loading,    setLoading]    = useState(false);
-  // useRef: no dispara re-render, evita el fetch duplicado del primer mount
-  const firstRender = useRef(true);
+  const prevKey = useRef(`all:1:${pageSize}`);
 
-  // Fetch solo cuando cambia page, perPage o cat (nunca en el primer render)
   useEffect(() => {
-    if (firstRender.current) { firstRender.current = false; return; }
+    const nextKey = `${cat}:${page}:${perPage}`;
+    if (prevKey.current === nextKey) return;
+    prevKey.current = nextKey;
 
     let cancelled = false;
     setLoading(true);

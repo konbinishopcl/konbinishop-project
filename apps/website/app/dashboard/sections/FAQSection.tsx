@@ -1,25 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-
-const FAQS: [string, string][] = [
-  [
-    "¿Cómo publico un evento?",
-    "Crea una cuenta gratuita, pulsa '＋ Crear evento' y completa el formulario. Un admin lo revisa y aprueba en menos de 24 h.",
-  ],
-  [
-    "¿Cuánto cuesta publicar?",
-    "Depende de la categoría — desde $4.990 CLP / día. Revisa la tabla de precios en la sección Categorías.",
-  ],
-  [
-    "¿Qué incluye la suscripción mensual?",
-    "10 créditos de publicación al mes, sin comisión extra, acceso a estadísticas y soporte prioritario.",
-  ],
-  [
-    "¿Cuándo se publica mi evento?",
-    "Tras enviarlo entra a revisión. Un admin lo aprueba en menos de 24 h hábiles. Recibirás un email de confirmación.",
-  ],
-];
+import { useUser } from "@/components/providers";
+import { api, type ApiFaqItem } from "@/lib/api";
 
 type Field = {
   k: string;
@@ -121,62 +104,116 @@ const FIELDS: Field[] = [
 
 type ModalState =
   | { type: "create" }
-  | { type: "edit";   item: { q: string; a: string } }
-  | { type: "delete"; item: { q: string } };
+  | { type: "edit"; item: ApiFaqItem }
+  | { type: "delete"; item: ApiFaqItem }
+  | null;
 
 export default function FAQSection() {
-  const [modal, setModal] = useState<ModalState | null>(null);
+  const { token } = useUser();
+  const [faqs, setFaqs] = useState<ApiFaqItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState<ModalState>(null);
+
+  const loadFaqs = useCallback(async () => {
+    setLoading(true);
+    try {
+      setFaqs(await api.faqAll());
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al cargar el FAQ");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadFaqs(); }, [loadFaqs]);
+
+  async function handleCreate(data: Record<string, string>) {
+    if (!token) return;
+    try {
+      await api.faqCreate({ question: data.q, answer: data.a }, token);
+      toast.success("Pregunta agregada");
+      await loadFaqs();
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "No se pudo crear");
+    }
+  }
+
+  async function handleEdit(id: number, data: Record<string, string>) {
+    if (!token) return;
+    try {
+      await api.faqUpdate(id, { question: data.q, answer: data.a }, token);
+      toast.success("Cambios guardados");
+      await loadFaqs();
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "No se pudo actualizar");
+    }
+  }
+
+  async function handleDelete(id: number) {
+    if (!token) return;
+    try {
+      await api.faqRemove(id, token);
+      toast.success("Pregunta eliminada");
+      await loadFaqs();
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "No se pudo eliminar");
+    }
+  }
 
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ color: "var(--ink-3)", fontSize: 13 }}>
-          {FAQS.length} preguntas activas · arrastra para reordenar
+          {faqs.length} preguntas activas · arrastra para reordenar
         </div>
         <button className="btn primary" onClick={() => setModal({ type: "create" })}>＋ Nueva pregunta</button>
       </div>
 
-      {FAQS.map((f, i) => (
-        <div key={i} className="panel" style={{ marginBottom: 8 }}>
-          <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <div style={{ color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontSize: 11, marginTop: 4 }}>
-              ≡ {String(i + 1).padStart(2, "0")}
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>{f[0]}</div>
-              <div style={{ color: "var(--ink-3)", fontSize: 13, lineHeight: 1.5 }}>{f[1]}</div>
-            </div>
-            <div className="row-act">
-              <button onClick={() => setModal({ type: "edit", item: { q: f[0], a: f[1] } })}>Editar</button>
-              <button className="bad" onClick={() => setModal({ type: "delete", item: { q: f[0] } })}>Eliminar</button>
+      {loading ? (
+        <div style={{ color: "var(--ink-3)", fontSize: 13, padding: "12px 0" }}>Cargando…</div>
+      ) : (
+        faqs.map((f, i) => (
+          <div key={f.id} className="panel" style={{ marginBottom: 8 }}>
+            <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+              <div style={{ color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontSize: 11, marginTop: 4 }}>
+                ≡ {String(i + 1).padStart(2, "0")}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>{f.question}</div>
+                <div style={{ color: "var(--ink-3)", fontSize: 13, lineHeight: 1.5 }}>{f.answer}</div>
+              </div>
+              <div className="row-act">
+                <button onClick={() => setModal({ type: "edit", item: f })}>Editar</button>
+                <button className="bad" onClick={() => setModal({ type: "delete", item: f })}>Eliminar</button>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))
+      )}
 
       {modal?.type === "create" && (
         <AdminFormModal
           title="Nueva pregunta"
           fields={FIELDS}
           onClose={() => setModal(null)}
-          onSave={(d) => toast.success("Pregunta agregada", { description: d.q })}
+          onSave={handleCreate}
         />
       )}
       {modal?.type === "edit" && (
         <AdminFormModal
           title="Editar pregunta"
           fields={FIELDS}
-          initial={modal.item as Record<string, string>}
+          initial={{ q: modal.item.question, a: modal.item.answer }}
           onClose={() => setModal(null)}
-          onSave={() => toast.success("Cambios guardados")}
+          onSave={(d) => handleEdit(modal.item.id, d)}
         />
       )}
       {modal?.type === "delete" && (
         <ConfirmDialog
           title="¿Eliminar pregunta?"
-          message={`Se quitará "${modal.item.q}" del FAQ público.`}
+          message={`Se quitará "${modal.item.question}" del FAQ público.`}
           confirmLabel="Sí, eliminar"
-          onConfirm={() => toast.warning("Pregunta eliminada")}
+          onConfirm={() => handleDelete(modal.item.id)}
           onClose={() => setModal(null)}
         />
       )}

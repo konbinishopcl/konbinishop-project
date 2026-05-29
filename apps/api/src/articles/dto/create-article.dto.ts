@@ -42,8 +42,9 @@ export class CreateArticleDto {
   @IsInt({ each: true })
   articleTagIds?: number[];
 
-  @ApiPropertyOptional({ example: 3, description: 'ID de la categoría del artículo (Phase 18+, opcional)' })
+  @ApiPropertyOptional({ type: [Number], example: [3, 5], description: 'IDs de categorías del artículo (many-to-many)' })
   @IsOptional()
-  @IsInt()
-  articleCategoryId?: number;
+  @IsArray()
+  @IsInt({ each: true })
+  articleCategoryIds?: number[];
 }

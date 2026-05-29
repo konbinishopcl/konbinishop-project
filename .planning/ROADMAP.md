@@ -197,6 +197,46 @@ Plans:
 - [x] 24-03-PLAN.md — Frontend foundation: api.ts cleanup + ApiUser/User type extension + providers.tsx real switchToOrg/switchBack (wave 2)
 - [x] 24-04-PLAN.md — Frontend UI consumers: UserMenu + AccountShell + perfil Danger Zone + human-verify round-trip (wave 3)
 
+### Phase 25: Dashboard admin real — usuarios, FAQ, logs y settings con API real
+
+**Goal:** Conectar las secciones de administración a la API real: `UsersSection` hace fetch a `GET /users` y `PATCH /users/:id/ban`; `FAQSection` persiste crear/editar/eliminar vía API; `LogsSection` lee audit logs reales desde `GET /admin/audit-logs` con filtros por período y admin funcionales; `SettingsSection` persiste el CRUD de servicios al backend y habilita los botones de integración de pagos (WebPay info-only, MercadoPago/Flow "Próximamente").
+
+**Requirements**: DASH-ADM-01..DASH-ADM-12 (definidos inline en los 5 PLAN.md de la fase)
+
+**Depends on:** Phase 24
+**Plans:** 5 plans en 2 olas
+
+Plans:
+- [ ] 25-01-PLAN.md — lib/api.ts: tipos admin (ApiAdminUser/ApiFaqItem/ApiAuditLog/ApiServiceOption) + 15 métodos flat (wave 1)
+- [ ] 25-02-PLAN.md — UsersSection: fetch real GET /users + ban/unban PATCH + modal "Ver" detalle (wave 2)
+- [ ] 25-03-PLAN.md — FAQSection: CRUD real GET/POST/PATCH/DELETE /faq (wave 2)
+- [ ] 25-04-PLAN.md — LogsSection: GET /admin/audit-logs + filtros período/admin + columnas degradadas (wave 2)
+- [ ] 25-05-PLAN.md — SettingsSection: CRUD servicios real + botones de pago (WebPay modal / MP-Flow "Próximamente") (wave 2)
+
+### Phase 26: Dashboard inbox, CRM y suscripciones con API real
+
+**Goal:** Conectar las secciones de comunicación a la API real: `InboxSection` fetch `GET /contact` con filtros leer/archivar que persisten; `CRMSection` kanban conectado a `GET /crm` con cambios de etapa persistidos vía `PATCH /crm/:id/stage` y notas reales; `SubsSection` carga suscriptores desde `GET /subscriptions` con el botón "Ver" navegando al detalle.
+
+**Requirements**: DASH-CRM-01..DASH-CRM-10
+
+**Depends on:** Phase 25
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 26 to break down)
+
+### Phase 27: Dashboard analytics, pagos y graficos reales con Recharts
+
+**Goal:** Reemplazar todos los datos mock de analytics y pagos con datos reales: `HomeSection` conecta queue de revisión, actividad reciente y stats de categorías a sus endpoints reales; `PaymentsSection` carga historial real desde `GET /payments`; `ReportsSection` conecta a API con filtro de período funcional y exportación CSV real; instalar Recharts como librería de gráficos única, reemplazando todos los charts mock del dashboard (HomeSection, ReportsSection) con componentes Recharts reutilizables.
+
+**Requirements**: DASH-ANLT-01..DASH-ANLT-12
+
+**Depends on:** Phase 26
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 27 to break down)
+
 ---
 
 *Roadmap creado: 2026-03-23 · v1.0 shipped: 2026-05-27*

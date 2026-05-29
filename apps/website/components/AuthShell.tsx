@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 
@@ -14,15 +15,17 @@ interface AuthShellProps {
 }
 
 export function AuthShell({ title, subtitle, children, sideContent, step, of }: AuthShellProps) {
-  const TILES = ["pa-1","pa-2","pa-3","pa-4","pa-5","pa-6","pa-7","pa-8","pa-9"];
   return (
     <div className="auth-shell">
       <div className="auth-art">
-        <div className="grid-bg">
-          {TILES.map((p, i) => (
-            <div key={i}><div className={`pic poster-art ${p}`} /></div>
-          ))}
-        </div>
+        <Image
+          src="/images/auth-bg.jpg"
+          alt=""
+          fill
+          className="auth-art-img"
+          style={{ objectFit: "cover", objectPosition: "center" }}
+          priority
+        />
         <div style={{ position: "relative", zIndex: 2, padding: 4 }}>
           <Link href="/"><BrandMark size={28} /></Link>
         </div>

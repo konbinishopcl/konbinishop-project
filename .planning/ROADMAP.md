@@ -204,13 +204,13 @@ Plans:
 **Requirements**: DASH-ADM-01..DASH-ADM-12 (definidos inline en los 5 PLAN.md de la fase)
 
 **Depends on:** Phase 24
-**Plans:** 3/5 plans executed
+**Plans:** 4/5 plans executed
 
 Plans:
 - [x] 25-01-PLAN.md — lib/api.ts: tipos admin (ApiAdminUser/ApiFaqItem/ApiAuditLog/ApiServiceOption) + 15 métodos flat (wave 1)
 - [x] 25-02-PLAN.md — UsersSection: fetch real GET /users + ban/unban PATCH + modal "Ver" detalle (wave 2)
 - [x] 25-03-PLAN.md — FAQSection: CRUD real GET/POST/PATCH/DELETE /faq (wave 2)
-- [ ] 25-04-PLAN.md — LogsSection: GET /admin/audit-logs + filtros período/admin + columnas degradadas (wave 2)
+- [x] 25-04-PLAN.md — LogsSection: GET /admin/audit-logs + filtros período/admin + columnas degradadas (wave 2)
 - [ ] 25-05-PLAN.md — SettingsSection: CRUD servicios real + botones de pago (WebPay modal / MP-Flow "Próximamente") (wave 2)
 
 ### Phase 26: Dashboard inbox, CRM y suscripciones con API real

@@ -1,28 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type SubStatus = "Activo" | "Cancelado";
-
-type Subscriber = {
-  id: string;
-  name: string;
-  start: string;
-  renew: string;
-  credits: string;
-  status: SubStatus;
-};
-
-// ── Mock data ─────────────────────────────────────────────────────────────────
-
-const MOCK_SUBS: Subscriber[] = [
-  { id: "s1", name: "Cinépolis Chile", start: "5 ENE",  renew: "5 JUN",  credits: "7/10",  status: "Activo" },
-  { id: "s2", name: "AnimeShop CL",   start: "12 ENE", renew: "12 JUN", credits: "4/10",  status: "Activo" },
-  { id: "s3", name: "María Pérez",    start: "2 FEB",  renew: "2 JUN",  credits: "10/10", status: "Cancelado" },
-];
+import { api, ApiSubscription } from "@/lib/api";
 
 // ── Plan config state ─────────────────────────────────────────────────────────
 
@@ -32,6 +12,34 @@ type PlanSettings = {
   sub_aviso_discount:    string;
   sub_portada_discount:  string;
 };
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function subDisplayName(s: ApiSubscription): string {
+  if (s.org) return s.org.handle ? `@${s.org.handle}` : s.org.email;
+  if (s.user) return s.user.handle ? `@${s.user.handle}` : s.user.email;
+  return `Sub #${s.id}`;
+}
+
+function subEmail(s: ApiSubscription): string {
+  return s.org?.email ?? s.user?.email ?? '—';
+}
+
+const MESES = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
+function fmtDate(iso: string | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return `${d.getUTCDate()} ${MESES[d.getUTCMonth()]}`;
+}
+
+function SubRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', fontSize:13 }}>
+      <span style={{ color:'var(--ink-3)', fontFamily:'var(--font-mono)', fontSize:11, letterSpacing:'.1em' }}>{label}</span>
+      <span style={{ fontWeight:500 }}>{value}</span>
+    </div>
+  );
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -66,26 +74,40 @@ export default function SubsSection() {
     }
   }
 
+  const [subs, setSubs] = useState<ApiSubscription[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loadingSubs, setLoadingSubs] = useState(false);
+  const [openSub, setOpenSub] = useState<ApiSubscription | null>(null);
+
+  const loadSubs = useCallback(async () => {
+    if (!token) return;
+    setLoadingSubs(true);
+    try {
+      const res = await api.subscriptions(token);
+      setSubs(res.items);
+      setTotal(res.total);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error cargando suscriptores");
+    } finally {
+      setLoadingSubs(false);
+    }
+  }, [token]);
+
+  useEffect(() => { loadSubs(); }, [loadSubs]);
+
+  const activeCount = subs.filter((s) => s.status === 'ACTIVE').length;
+
   return (
     <>
       {/* KPIs */}
       <div className="kpi-grid">
         <div className="kpi">
           <div className="l">ACTIVOS</div>
-          <div className="v">87</div>
-          <div className="d up">↑ 12</div>
+          <div className="v">{activeCount}</div>
         </div>
         <div className="kpi">
-          <div className="l">NUEVOS MES</div>
-          <div className="v">14</div>
-        </div>
-        <div className="kpi">
-          <div className="l">CANCELACIONES</div>
-          <div className="v">3</div>
-        </div>
-        <div className="kpi">
-          <div className="l">MRR</div>
-          <div className="v">$2.6M</div>
+          <div className="l">TOTAL</div>
+          <div className="v">{total}</div>
         </div>
       </div>
 
@@ -103,21 +125,23 @@ export default function SubsSection() {
             </tr>
           </thead>
           <tbody>
-            {MOCK_SUBS.map((s) => (
+            {loadingSubs && subs.length === 0 ? (
+              <tr><td colSpan={6} style={{textAlign:'center',padding:16}}>Cargando…</td></tr>
+            ) : subs.map((s) => (
               <tr key={s.id}>
-                <td>{s.name}</td>
-                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{s.start}</td>
-                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{s.renew}</td>
-                <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{s.credits}</td>
+                <td>{subDisplayName(s)}</td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{fmtDate(s.cycleStart)}</td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{fmtDate(s.cycleEnd)}</td>
+                <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>{s.creditsUsed}/{s.creditsTotal}</td>
                 <td>
-                  <span className={`stat-pill ${s.status === "Activo" ? "pub" : "exp"}`}>
+                  <span className={`stat-pill ${s.status === 'ACTIVE' ? 'pub' : 'exp'}`}>
                     <span className="dot" />
-                    {s.status}
+                    {s.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
                 <td>
                   <div className="row-act">
-                    <button>Ver</button>
+                    <button onClick={() => setOpenSub(s)}>Ver</button>
                   </div>
                 </td>
               </tr>
@@ -169,6 +193,28 @@ export default function SubsSection() {
           {saving ? "Guardando…" : "Guardar"}
         </button>
       </div>
+
+      {openSub && (
+        <div className="confirm-bg" onClick={() => setOpenSub(null)}>
+          <div className="confirm-card" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'start', marginBottom:14 }}>
+              <h3 className="h" style={{ margin:0 }}>Detalle de suscripción</h3>
+              <button className="icon-btn" onClick={() => setOpenSub(null)}>✕</button>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <SubRow label="Usuario / Org" value={subDisplayName(openSub)} />
+              <SubRow label="Email" value={subEmail(openSub)} />
+              <SubRow label="Estado" value={openSub.status === 'ACTIVE' ? 'Activo' : 'Inactivo'} />
+              <SubRow label="Inicio ciclo" value={fmtDate(openSub.cycleStart)} />
+              <SubRow label="Fin ciclo" value={fmtDate(openSub.cycleEnd)} />
+              <SubRow label="Créditos" value={`${openSub.creditsUsed} / ${openSub.creditsTotal}`} />
+            </div>
+            <div className="modal-acts" style={{ marginTop:16 }}>
+              <button className="btn dark" onClick={() => setOpenSub(null)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

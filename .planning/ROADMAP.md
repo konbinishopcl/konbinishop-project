@@ -258,13 +258,20 @@ Plans:
 
 ### Phase 28: Artículos con múltiples categorías — many-to-many schema, seed desde WP real, API, website, formularios y vistas públicas
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 27
-**Plans:** 0 plans
+**Goal:** Cambiar la relación Article↔ArticleCategory de FK única (`articleCategoryId`) a many-to-many implícita de Prisma (replicando el patrón `ArticleTag`), reconstruir la capa de datos desde la WP API real (script `update-article-categories.ts` → `categorySlugs[]` en articles.json → seed por slug), actualizar la API (include `articleCategories`, filtro `some`, 3 DTOs a `articleCategoryIds[]`), y propagar al website (tipo `ApiArticle.articleCategories`, helper `getCat` por primera categoría, rails del hub, selector múltiple en `ArticleForm`, y badge primera-categoría+conteo en `ArticlesSection`).
+
+**Requirements**: D-01..D-13 (decisiones bloqueadas en 28-CONTEXT.md, distribuidas en los 5 PLAN.md)
+
+**Depends on:** Phase 27, Phase 18 (taxonomía separada), Phase 17 (Articles CRUD)
+
+**Plans:** 5 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 28 to break down)
+- [ ] 28-01-PLAN.md — Schema Prisma m2m implícito + migración sch11 hand-crafted + regenerar cliente (wave 1)
+- [ ] 28-02-PLAN.md — Datos: update-article-categories.ts + articles.json categorySlugs[] + seed.ts + export-wp + delete recategorize (wave 2)
+- [ ] 28-03-PLAN.md — API: articles.service include/where/create/update/createSponsored + 3 DTOs a articleCategoryIds[] (wave 2)
+- [ ] 28-04-PLAN.md — Website display: lib/api.ts tipo + getCat + NoticiasHubView/ArticleView/SearchLightbox + NewsCategoryView x2 (wave 3)
+- [ ] 28-05-PLAN.md — Website forms: ArticleForm multi-select categorías + edit page + ArticlesSection badge D-11 (wave 4)
 
 ---
 

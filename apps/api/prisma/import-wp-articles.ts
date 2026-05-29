@@ -241,11 +241,11 @@ async function main() {
       // Featured image from media URL map (fetched separately — _embed unreliable on this WP)
       const image: string | null = mediaUrlMap[post.featured_media] ?? null;
 
-      // Article category (first WP category that maps to ours)
-      let articleCategoryId: number | null = null;
+      // Article categories — collect all WP categories that map to ours
+      const articleCategoryIds: number[] = [];
       for (const wpId of (post.categories ?? [])) {
         const ourId = wpCatToOurId[wpId];
-        if (ourId) { articleCategoryId = ourId; break; }
+        if (ourId) articleCategoryIds.push(ourId);
       }
 
       // Title and excerpt (strip HTML tags)
@@ -282,7 +282,7 @@ async function main() {
             excerpt,
             image,
             youtubeUrl,
-            articleCategoryId,
+            articleCategories: { set: articleCategoryIds.map(id => ({ id })) },
             status: 'APPROVED',
             updatedAt: postDate,
             ...(tagIds.length && { articleTags: { set: tagIds.map(id => ({ id })) } }),
@@ -298,7 +298,7 @@ async function main() {
             excerpt,
             image,
             youtubeUrl,
-            articleCategoryId,
+            ...(articleCategoryIds.length && { articleCategories: { connect: articleCategoryIds.map(id => ({ id })) } }),
             status: 'APPROVED',
             createdAt: postDate,
             updatedAt: postDate,

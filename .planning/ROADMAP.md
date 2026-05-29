@@ -264,10 +264,10 @@ Plans:
 
 **Depends on:** Phase 27, Phase 18 (taxonomía separada), Phase 17 (Articles CRUD)
 
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
-- [ ] 28-01-PLAN.md — Schema Prisma m2m implícito + migración sch11 hand-crafted + regenerar cliente (wave 1)
+- [x] 28-01-PLAN.md — Schema Prisma m2m implícito + migración sch11 hand-crafted + regenerar cliente (wave 1)
 - [ ] 28-02-PLAN.md — Datos: update-article-categories.ts + articles.json categorySlugs[] + seed.ts + export-wp + delete recategorize (wave 2)
 - [ ] 28-03-PLAN.md — API: articles.service include/where/create/update/createSponsored + 3 DTOs a articleCategoryIds[] (wave 2)
 - [ ] 28-04-PLAN.md — Website display: lib/api.ts tipo + getCat + NoticiasHubView/ArticleView/SearchLightbox + NewsCategoryView x2 (wave 3)

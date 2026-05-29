@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T19:07:20.085Z"
+last_updated: "2026-05-29T19:48:01.532Z"
 progress:
   total_phases: 12
   completed_phases: 11
-  total_plans: 46
-  completed_plans: 46
+  total_plans: 51
+  completed_plans: 47
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 27 — dashboard-analytics-pagos-y-graficos-reales-con-recharts
+**Current focus:** Phase 28 — Artículos con múltiples categorías — many-to-many schema, seed desde WP real, API, website, formularios y vistas públicas
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T18:39:11.273Z
+**Last session:** 2026-05-29T19:48:01.529Z
 
 ## Phase Summary
 
@@ -203,6 +203,7 @@ administrador quedan visibles al público.
 - [Phase 27-05]: allZero guard: pass empty array to RevenueBarChart when all buckets are 0 to trigger empty-state panel; periodPayments computed separately from bucket aggregation for CSV export
 - [Phase 27-04]: KPIs (Ingresos mes, Histórico, Pendientes, Reembolsos) remain mock — no aggregate endpoint available; Reembolsar/comprobante buttons are stubs deferred per plan
 - [Phase 27]: HomeSection: both Task 1 (real API wiring) and Task 2 (RevenueBarChart) implemented and committed as one atomic change since they modify the same file
+- [Phase 28-01]: Data backfill added to sch11 migration: 437 articles had articleCategoryId set, backfilled into _ArticleToArticleCategory pivot before DROP COLUMN to preserve all existing category assignments
 
 ## Accumulated Context
 

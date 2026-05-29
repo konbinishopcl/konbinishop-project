@@ -150,4 +150,21 @@ Plans:
 
 ---
 
+### Phase 22: Organization context switching — complete identity switch
+
+**Goal:** Switching to an org via the UserMenu is a full identity switch: (1) avatar and name in the navbar change to the org; (2) `activeOrg` stored in UserContext and persisted in localStorage; (3) all API calls include `X-Org-Context: orgId`; (4) /cuenta sidebar and header reflect the org; (5) "Mis eventos/avisos/portadas" show the org's content; (6) event/spot/hero creation attributed to the org; (7) switching back to personal works everywhere.
+
+**Requirements**: ORG-01..ORG-08
+
+**Depends on:** Phase 9 (org backend), Phase 20 (spots/heroes), Phase 21 (cart/checkout)
+
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 22-01-PLAN.md — UserContext: activeOrg + OrgEntry export, localStorage kb-org persistence, api.ts sync, logout clear (wave 1)
+- [ ] 22-02-PLAN.md — Visual identity switch: context-driven UserMenu + navbar avatar + /cuenta sidebar badge, human-verify end-to-end (wave 2)
+
+---
+
 *Roadmap creado: 2026-03-23 · v1.0 shipped: 2026-05-27*

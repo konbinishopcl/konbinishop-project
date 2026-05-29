@@ -57,6 +57,7 @@ function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [activeOrg, setActiveOrgState] = useState<OrgEntry | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +77,12 @@ function UserProvider({ children }: { children: ReactNode }) {
           setUserState(parsed);
         }
         if (t) { setToken(t); storedToken = t; }
+        const o = localStorage.getItem("kb-org");
+        if (o && o !== "null") {
+          const parsedOrg = JSON.parse(o) as OrgEntry;
+          setActiveOrgState(parsedOrg);
+          setOrgContext(parsedOrg.id);
+        }
       } catch {
         /* ignore */
       }
@@ -103,6 +110,9 @@ function UserProvider({ children }: { children: ReactNode }) {
             setToken(null);
             localStorage.removeItem("kb-user");
             localStorage.removeItem("kb-token");
+            setActiveOrgState(null);
+            setOrgContext(null);
+            localStorage.removeItem("kb-org");
           }
           // Otros errores (502 si el backend está caído) → mantener sesión existente
         } catch {
@@ -127,15 +137,25 @@ function UserProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("kb-user", JSON.stringify(nextUser));
   };
 
+  const setActiveOrg = (org: OrgEntry | null) => {
+    setActiveOrgState(org);
+    setOrgContext(org ? org.id : null);
+    if (org) localStorage.setItem("kb-org", JSON.stringify(org));
+    else localStorage.removeItem("kb-org");
+  };
+
   const logout = () => {
     setUserState(null);
     setToken(null);
     localStorage.removeItem("kb-user");
     localStorage.removeItem("kb-token");
+    setActiveOrgState(null);
+    setOrgContext(null);
+    localStorage.removeItem("kb-org");
   };
 
   return (
-    <UserCtx.Provider value={{ user, token, ready, setAuth, setUser, logout }}>
+    <UserCtx.Provider value={{ user, token, ready, activeOrg, setAuth, setUser, setActiveOrg, logout }}>
       {children}
     </UserCtx.Provider>
   );

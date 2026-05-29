@@ -533,6 +533,40 @@ export const api = {
   banHero: (id: number, reason: string, token: string) =>
     request<ApiHero>(`/heroes/${id}/ban`, { method: "PATCH", body: JSON.stringify({ reason }) }, token),
 
+  // ───────── Admin: Users (Phase 25) ─────────
+  adminUsers: (token: string) => request<ApiAdminUser[]>("/users", {}, token),
+  banUser: (id: number, blocked: boolean, token: string) =>
+    request<ApiAdminUser>(`/users/${id}/ban`, { method: "PATCH", body: JSON.stringify({ blocked }) }, token),
+
+  // ───────── FAQ (Phase 25) ─────────
+  faqAll: () => request<ApiFaqItem[]>("/faq"),
+  faqCreate: (body: { question: string; answer: string; order?: number }, token: string) =>
+    request<ApiFaqItem>("/faq", { method: "POST", body: JSON.stringify(body) }, token),
+  faqUpdate: (id: number, body: { question?: string; answer?: string; order?: number }, token: string) =>
+    request<ApiFaqItem>(`/faq/${id}`, { method: "PATCH", body: JSON.stringify(body) }, token),
+  faqRemove: (id: number, token: string) =>
+    request<{ deleted?: boolean } | ApiFaqItem>(`/faq/${id}`, { method: "DELETE" }, token),
+
+  // ───────── Audit logs (Phase 25) ─────────
+  auditLogs: (query: AuditQuery, token: string) =>
+    request<ApiAuditLogList>(`/admin/audit-logs${qs(query as Record<string, string | number | undefined>)}`, {}, token),
+
+  // ───────── Service options (Phase 25) ─────────
+  photoOptions: () => request<ApiServiceOption[]>("/services/photography/options"),
+  creatorOptions: () => request<ApiServiceOption[]>("/services/content-creators/options"),
+  createPhotoOption: (body: { label: string }, token: string) =>
+    request<ApiServiceOption>("/services/photography/options", { method: "POST", body: JSON.stringify(body) }, token),
+  updatePhotoOption: (id: number, body: { label?: string }, token: string) =>
+    request<ApiServiceOption>(`/services/photography/options/${id}`, { method: "PATCH", body: JSON.stringify(body) }, token),
+  deletePhotoOption: (id: number, token: string) =>
+    request<{ deleted?: boolean } | ApiServiceOption>(`/services/photography/options/${id}`, { method: "DELETE" }, token),
+  createCreatorOption: (body: { label: string }, token: string) =>
+    request<ApiServiceOption>("/services/content-creators/options", { method: "POST", body: JSON.stringify(body) }, token),
+  updateCreatorOption: (id: number, body: { label?: string }, token: string) =>
+    request<ApiServiceOption>(`/services/content-creators/options/${id}`, { method: "PATCH", body: JSON.stringify(body) }, token),
+  deleteCreatorOption: (id: number, token: string) =>
+    request<{ deleted?: boolean } | ApiServiceOption>(`/services/content-creators/options/${id}`, { method: "DELETE" }, token),
+
   // Settings / Stats (no token required)
   settingsPublic: () => request<Record<string, string>>("/settings/public"),
   statsPublic:    () => request<{ approvedEvents: number; organizers: number }>("/stats/public"),

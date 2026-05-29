@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T14:04:40.383Z"
+last_updated: "2026-05-29T14:07:05.661Z"
 progress:
   total_phases: 11
   completed_phases: 8
   total_plans: 37
-  completed_plans: 33
+  completed_plans: 34
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T14:04:40.380Z
+**Last session:** 2026-05-29T14:07:02.481Z
 
 ## Phase Summary
 
@@ -190,6 +190,7 @@ administrador quedan visibles al público.
 - [Phase 24-02]: getActiveSub (orders.service.ts) reviewed and left unchanged — orgContext branch already correct; orders personal-order branch at line 339 left unchanged by design; articles.service.ts and users.service.ts intentionally excluded from audit attribution fixes
 - [Phase 24]: SWITCH-12: Crear organizacion UI hidden in org context; Organizaciones tab hidden + redirect guard added — org accounts cannot manage orgs
 - [Phase 25-01]: 6 new exported types + 15 flat api methods added to api.ts as Wave 1 foundation for Phase 25 parallel execution
+- [Phase 25-02]: Detail modal populated from loaded row — no extra fetch; busyId disables ban button while PATCH in flight
 
 ## Quick Tasks Completed
 

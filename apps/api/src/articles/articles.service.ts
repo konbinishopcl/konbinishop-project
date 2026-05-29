@@ -30,6 +30,7 @@ const ARTICLE_INCLUDE = {
 const ARTICLE_DETAIL_INCLUDE = {
   articleTags: true,
   articleCategory: true,
+  articleImages: { orderBy: { order: 'asc' as const } },
   _count: { select: { likes: true } },
   events: {
     where: { status: PublicationStatus.APPROVED },

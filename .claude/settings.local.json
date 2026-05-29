@@ -35,7 +35,8 @@
       "Bash(git:*)",
       "Skill(gsd:execute-phase)",
       "Skill(gsd:pause-work)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Skill(gsd:progress)"
     ]
   }
 }

@@ -68,13 +68,8 @@ function SpotForm({ onAdd, onCancel, pricePerDay = 8000 }: { onAdd: () => void; 
         title: parsed.data.title, image: parsed.data.image,
         linkType: parsed.data.linkType, linkValue: parsed.data.linkValue,
       }, token);
-      const draft = await fetch("/api/orders/draft", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
-      const addRes = await fetch(`/api/orders/${draft.id}/items`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "SPOT", spotId: created.id, days }),
-      });
-      if (!addRes.ok) { const e = await addRes.json().catch(() => ({})); throw new Error((e as { message?: string }).message ?? "Error al agregar al carrito"); }
+      const draft = await api.ordersDraft(token);
+      await api.addOrderItem(draft.id, { type: "SPOT", spotId: created.id, days }, token);
       toast.success("Aviso agregado al carrito");
       onAdd();
     } catch (ex) {
@@ -188,13 +183,8 @@ function HeroForm({ onAdd, onCancel, pricePerDay = 15000 }: { onAdd: () => void;
         place: place.trim() || undefined,
         link: parsed.data.link,
       }, token);
-      const draft = await fetch("/api/orders/draft", { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
-      const addRes = await fetch(`/api/orders/${draft.id}/items`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "HERO", heroId: created.id, days }),
-      });
-      if (!addRes.ok) { const e = await addRes.json().catch(() => ({})); throw new Error((e as { message?: string }).message ?? "Error al agregar al carrito"); }
+      const draft = await api.ordersDraft(token);
+      await api.addOrderItem(draft.id, { type: "HERO", heroId: created.id, days }, token);
       toast.success("Portada agregada al carrito");
       onAdd();
     } catch (ex) {

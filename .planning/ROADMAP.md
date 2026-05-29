@@ -165,6 +165,19 @@ Plans:
 - [x] 22-01-PLAN.md — UserContext: activeOrg + OrgEntry export, localStorage kb-org persistence, api.ts sync, logout clear (wave 1)
 - [ ] 22-02-PLAN.md — Visual identity switch: context-driven UserMenu + navbar avatar + /cuenta sidebar badge, human-verify end-to-end (wave 2)
 
+### Phase 23: Cleanup post-cambio de contexto org — eliminar concepto perfil organizador del usuario, implementar mis-avisos y mis-portadas reales, fix uploadImage X-Org-Context, sidebar condicional por contexto activo
+
+**Goal:** Eliminar todos los vestigios del modelo "perfil de organizador como modo especial del usuario" y completar los gaps de Phase 22 (org context switching): (1) borrar la página /cuenta/organizador y su tab del sidebar; (2) corregir el CTA de carrito/exito hacia /cuenta/perfil; (3) implementar /cuenta/mis-avisos y /cuenta/mis-portadas con datos reales (api.mySpots/myHeroes + filtros por tab); (4) corregir uploadImage para incluir X-Org-Context; (5) eliminar el endpoint backend PATCH /users/me/organizer (controller + service + DTO).
+
+**Requirements**: CLEAN-01..CLEAN-07 (IDs locales a Phase 23, derivados de los 7 ítems in-scope de 23-CONTEXT.md; sin backref en ROADMAP)
+**Depends on:** Phase 22
+**Plans:** 3 plans
+
+Plans:
+- [ ] 23-01-PLAN.md - Frontend cleanup: eliminar /cuenta/organizador + quitar tab AccountShell + fix carrito/exito CTA (wave 1)
+- [ ] 23-02-PLAN.md - Frontend data: mis-avisos + mis-portadas con API real + fix uploadImage X-Org-Context (wave 1)
+- [ ] 23-03-PLAN.md - Backend cleanup: eliminar endpoint PATCH /users/me/organizer (controller + service + DTO) (wave 2)
+
 ---
 
 *Roadmap creado: 2026-03-23 · v1.0 shipped: 2026-05-27*

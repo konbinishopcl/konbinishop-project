@@ -188,11 +188,11 @@ Plans:
 
 **Depends on:** Phase 22 (org context base), Phase 23 (overlay cleanup)
 
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
 
-- [ ] 24-01-PLAN.md — Backend auth foundation: JwtUser extension + POST /auth/switch-org + refreshToken org claims + OrgContextGuard rewrite (wave 1)
+- [x] 24-01-PLAN.md — Backend auth foundation: JwtUser extension + POST /auth/switch-org + refreshToken org claims + OrgContextGuard rewrite (wave 1)
 - [ ] 24-02-PLAN.md — Backend service fixes: orders/payments/orgs userId via actingAs + org-can't-create-org guard + audit attribution across 5 services (wave 2)
 - [ ] 24-03-PLAN.md — Frontend foundation: api.ts cleanup + ApiUser/User type extension + providers.tsx real switchToOrg/switchBack (wave 2)
 - [ ] 24-04-PLAN.md — Frontend UI consumers: UserMenu + AccountShell + perfil Danger Zone + human-verify round-trip (wave 3)

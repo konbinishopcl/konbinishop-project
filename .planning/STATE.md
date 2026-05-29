@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T01:20:36.422Z"
+last_updated: "2026-05-29T02:29:31.542Z"
 progress:
-  total_phases: 7
+  total_phases: 8
   completed_phases: 7
-  total_plans: 28
-  completed_plans: 28
+  total_plans: 32
+  completed_plans: 29
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 23 — cleanup-post-cambio-de-contexto-org-eliminar-concepto-perfil-organizador-del-usuario-implementar-mis-avisos-y-mis-portadas-reales-fix-uploadimage-x-org-context-sidebar-condicional-por-contexto-activo
+**Current focus:** Phase 24 — real-org-account-switching-via-jwt-replace-fake-activeorg-overlay-with-full-identity-switch
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T01:20:36.419Z
+**Last session:** 2026-05-29T02:29:31.540Z
 
 ## Phase Summary
 
@@ -182,6 +182,7 @@ administrador quedan visibles al público.
 - [Phase 23-01]: D-2 applied: carrito/exito CTA now points to /cuenta/perfil with copy '¿Tu perfil está completo?'
 - [Phase 23-02]: D-3: matchesTab uses APPROVED+expirationDate<now for Expirados — APPROVED expirado no cuenta como Activo; D-4: mis-portadas TABS femeninos conservados; D-5: uploadImage construye headers sin buildHeaders() para no romper multipart
 - [Phase 23-03]: D-6 applied: PATCH /users/me/organizer removed; bio/website fields remain in DB Profile without UI until future org-settings phase
+- [Phase 24-01]: JwtUser extended with orgRole+actingAs claims; OrgContextGuard is DB-free trusting JWT claims; refreshToken accepts JwtUser for org-context preservation
 
 ## Quick Tasks Completed
 

@@ -279,10 +279,10 @@ async function main() {
     }
 
     // Category slug (pick most specific, skip catch-alls if alternatives exist)
-    const CATCHALL = new Set(['cultura-otaku', 'uncategorized']);
+    const CATCHALL = new Set(['cultura-otaku', 'anime', 'uncategorized']);
     const catSlugs = (post.categories ?? []).map((id: number) => wpCatSlug[id]).filter(Boolean) as string[];
     const specific = catSlugs.filter(s => !CATCHALL.has(s));
-    const categorySlug = (specific.length > 0 ? specific[0] : catSlugs[0]) ?? null;
+    const categorySlugs = specific.length > 0 ? specific : catSlugs;
 
     // Tags
     const tags = hashtags.map(name => ({
@@ -301,7 +301,7 @@ async function main() {
       content,
       image,
       youtubeUrl,
-      categorySlug,
+      categorySlugs,
       tags,
       gallery,
       createdAt: new Date(post.date).toISOString(),

@@ -1,9 +1,10 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ArticleView } from "./ArticleView";
 import type { ApiArticle, ApiArticleEvent } from "@/lib/api";
 
-async function ssrFetch(path: string) {
+const ssrFetch = cache(async function ssrFetch(path: string) {
   const base = process.env.API_URL || "http://localhost:3333/api";
   const headers: Record<string, string> = {};
   const key = process.env.API_KEY;
@@ -11,7 +12,7 @@ async function ssrFetch(path: string) {
   const res = await fetch(`${base}${path}`, { headers, cache: 'no-store' });
   if (!res.ok) return null;
   return res.json();
-}
+});
 
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },

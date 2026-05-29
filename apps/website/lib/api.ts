@@ -1,4 +1,5 @@
 // Cliente HTTP de la API de Konbini.
+import { cache } from "react";
 import type { EventItem, Role, User } from "./data";
 
 // En servidor: llama al backend directamente con la API key (process.env no-público).
@@ -552,8 +553,8 @@ export const api = {
   countries: () => request<ApiCountry[]>("/countries"),
   eventCategories: () => request<ApiEventCategory[]>("/event-categories"),
   eventTags:       () => request<ApiEventTag[]>("/event-tags"),
-  articleCategories: () => request<ApiArticleCategory[]>("/article-categories"),
-  articleTags:     () => request<ApiArticleTag[]>("/article-tags"),
+  articleCategories: cache(() => request<ApiArticleCategory[]>("/article-categories")),
+  articleTags:     cache(() => request<ApiArticleTag[]>("/article-tags")),
   articles: (query?: { page?: number; pageSize?: number; articleCategory?: string; articleTag?: string }) =>
     request<{ items: ApiArticle[]; total: number; page: number; pageSize: number; totalPages: number }>(
       `/articles${qs(query ?? {})}`

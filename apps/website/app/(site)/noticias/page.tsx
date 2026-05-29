@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { ApiArticle, ApiArticleCategory } from "@/lib/api";
+import { api } from "@/lib/api";
 import { NoticiasHubView } from "./NoticiasHubView";
 
 export const dynamic = "force-dynamic";
@@ -9,24 +9,13 @@ export const metadata: Metadata = {
   description: "Cobertura editorial de anime, manga, cine, gaming y cultura otaku chilena.",
 };
 
-const BASE =
-  typeof window === "undefined"
-    ? process.env.API_URL || "http://localhost:3333/api"
-    : "/api";
-
-function apiHeaders(): Record<string, string> {
-  const h: Record<string, string> = {};
+async function fetchArticles() {
+  const base = process.env.API_URL || "http://localhost:3333/api";
+  const headers: Record<string, string> = {};
   const key = process.env.API_KEY;
-  if (key) h["X-API-Key"] = key;
-  return h;
-}
-
-async function fetchArticles(): Promise<ApiArticle[]> {
+  if (key) headers["X-API-Key"] = key;
   try {
-    const res = await fetch(`${BASE}/articles?pageSize=50`, {
-      headers: apiHeaders(),
-      cache: "no-store",
-    });
+    const res = await fetch(`${base}/articles?pageSize=50`, { headers, cache: "no-store" });
     if (!res.ok) return [];
     const data = await res.json();
     return data.items ?? [];
@@ -35,23 +24,10 @@ async function fetchArticles(): Promise<ApiArticle[]> {
   }
 }
 
-async function fetchArticleCategories(): Promise<ApiArticleCategory[]> {
-  try {
-    const res = await fetch(`${BASE}/article-categories`, {
-      headers: apiHeaders(),
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
 export default async function NoticiasPage() {
   const [articles, categories] = await Promise.all([
     fetchArticles(),
-    fetchArticleCategories(),
+    api.articleCategories().catch(() => []),
   ]);
 
   return (

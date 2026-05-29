@@ -12,18 +12,14 @@ import {
   Plus,
   Check,
 } from "lucide-react";
-import { useUser } from "./providers";
-import { setOrgContext } from "@/lib/api";
-
-type OrgEntry = { id: number; name: string | null; handle: string | null };
+import { useUser, type OrgEntry } from "./providers";
 
 export function UserMenu({ size = 40 }: { size?: number }) {
-  const { user, token, logout } = useUser();
+  const { user, token, logout, activeOrg, setActiveOrg } = useUser();
   const router    = useRouter();
   const pathname  = usePathname();
   const [open, setOpen] = useState(false);
-  const [orgs, setOrgs] = useState<OrgEntry[]>([]);
-  const [activeOrg, setActiveOrg] = useState<OrgEntry | null>(null);
+  const [orgs, setOrgs] = useState<{ id: number; name: string | null; handle: string | null }[]>([]);
 
   // Load user's organizations when menu opens
   useEffect(() => {
@@ -47,11 +43,11 @@ export function UserMenu({ size = 40 }: { size?: number }) {
     <div style={{ position: "relative" }}>
       <button
         className="avatar"
-        style={{ width: size, height: size, fontSize: size * 0.3 }}
-        title={user.name}
+        style={{ width: size, height: size, fontSize: size * 0.3, ...(activeOrg ? { background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff" } : {}) }}
+        title={activeOrg ? (activeOrg.name ?? activeOrg.handle ?? "Organización") : user.name}
         onClick={() => setOpen((o) => !o)}
       >
-        {user.initials}
+        {activeOrg ? (activeOrg.name ?? activeOrg.handle ?? "O")[0].toUpperCase() : user.initials}
       </button>
 
       {open && (
@@ -81,7 +77,7 @@ export function UserMenu({ size = 40 }: { size?: number }) {
           </div>
           <button
             style={{ background: !activeOrg ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
-            onClick={() => { setActiveOrg(null); setOrgContext(null); close(); }}
+            onClick={() => { setActiveOrg(null); close(); }}
           >
             <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
               {user.initials}
@@ -93,7 +89,7 @@ export function UserMenu({ size = 40 }: { size?: number }) {
             <button
               key={org.id}
               style={{ background: activeOrg?.id === org.id ? "var(--surface-2)" : "transparent", color: "var(--ink)" }}
-              onClick={() => { setActiveOrg(org); setOrgContext(org.id); close(); }}
+              onClick={() => { setActiveOrg(org); close(); }}
             >
               <span style={{ width: 22, height: 22, borderRadius: 999, background: "linear-gradient(135deg,#7c3aed,#a855f7)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 10, flexShrink: 0 }}>
                 {(org.name ?? "O")[0].toUpperCase()}

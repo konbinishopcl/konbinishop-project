@@ -26,8 +26,8 @@ export function AuthShell({ title, subtitle, children, sideContent, step, of }: 
           style={{ objectFit: "cover", objectPosition: "center" }}
           priority
         />
-        <div style={{ position: "relative", zIndex: 2, padding: 4 }}>
-          <Link href="/"><BrandMark size={28} /></Link>
+        <div style={{ position: "relative", zIndex: 2, padding: 4, filter: "brightness(0) invert(1)" }}>
+          <Link href="/"><BrandMark size={48} /></Link>
         </div>
         <div className="blurb">
           <div className="q">

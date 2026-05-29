@@ -220,10 +220,13 @@ Plans:
 **Requirements**: DASH-CRM-01..DASH-CRM-10
 
 **Depends on:** Phase 25
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 26 to break down)
+- [ ] 26-01-PLAN.md — lib/api.ts: tipos Phase 26 (ApiContactMessage/ApiCrmEntry/ApiCrmNote/ApiSubscription) + 9 métodos flat (wave 1)
+- [ ] 26-02-PLAN.md — InboxSection: fetch real GET /contact + PATCH read + DELETE + tabs Todos/No leídos (wave 2)
+- [ ] 26-03-PLAN.md — CRMSection: kanban real GET /crm + modal detalle + notas + cambio de stage (wave 2)
+- [ ] 26-04-PLAN.md — SubsSection: GET /subscriptions + KPIs Activos/Total + modal Ver detalle (wave 2)
 
 ### Phase 27: Dashboard analytics, pagos y graficos reales con Recharts
 

@@ -143,6 +143,18 @@ export type AuditQuery = {
   dateTo?: string;
 };
 
+// ─────────────────────────── Phase 27: Payments ──────────────────────────
+
+export type ApiPayment = {
+  id: number;
+  status: "PAID" | "FAILED";
+  total: number;
+  gateway: string | null;
+  createdAt: string;
+  buyer: { name: string; handle: string | null; email: string };
+  items: Array<{ type: string; title: string; days: number; subtotal: number }>;
+};
+
 export type ApiServiceOption = {
   id: number;
   label: string;
@@ -314,6 +326,8 @@ export type ApiEvent = {
   isApproved: boolean;
   isRejected: boolean;
   rejectedReason: string | null;
+  status: "DRAFT" | "PENDING_PAYMENT" | "PENDING_MODERATION" | "APPROVED" | "REJECTED" | "BANNED";
+  statusReason: string | null;
   _count?: { likes: number };
   owner?: {
     id: number;
@@ -442,6 +456,7 @@ export type EventsQuery = {
   q?: string;
   eventCategory?: string;
   region?: string;
+  status?: "DRAFT" | "PENDING_PAYMENT" | "PENDING_MODERATION" | "APPROVED" | "REJECTED" | "BANNED";
 };
 
 // Payload para crear un evento (POST /events).
@@ -501,6 +516,8 @@ export const api = {
   // El endpoint unificado /events devuelve todos los estados cuando el token es de admin.
   adminEvents: (token: string, query: EventsQuery = {}) =>
     request<ApiEventList>(`/events${qs(query)}`, {}, token),
+  adminPayments: (token: string) =>
+    request<ApiPayment[]>("/payments", {}, token),
   approveEvent: (id: number, token: string) =>
     request<ApiEvent>(`/events/${id}/approve`, { method: "PATCH" }, token),
   rejectEvent: (id: number, reason: string, token: string) =>

@@ -5,7 +5,6 @@ import {
   XAxis,
   ResponsiveContainer,
   Tooltip,
-  type TooltipProps,
 } from "recharts";
 
 export type RevenueDatum = { label: string; value: number };
@@ -17,7 +16,13 @@ function formatCLP(n: number): string {
   return `$${n}`;
 }
 
-function ChartTooltip({ active, payload }: TooltipProps<number, string>) {
+function ChartTooltip({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { value?: number }[];
+}) {
   if (!active || !payload?.length) return null;
   return (
     <div
@@ -31,7 +36,7 @@ function ChartTooltip({ active, payload }: TooltipProps<number, string>) {
         color: "var(--ink)",
       }}
     >
-      {formatCLP(Number(payload[0].value))}
+      {formatCLP(Number(payload[0].value ?? 0))}
     </div>
   );
 }
@@ -59,7 +64,15 @@ export function RevenueBarChart({ data }: { data: RevenueDatum[] }) {
             fill: "var(--ink-3)",
           }}
         />
-        <Tooltip content={<ChartTooltip />} cursor={{ fill: "transparent" }} />
+        <Tooltip
+          content={({ active, payload }) => (
+            <ChartTooltip
+              active={active}
+              payload={payload as unknown as { value?: number }[]}
+            />
+          )}
+          cursor={{ fill: "transparent" }}
+        />
         <Bar
           dataKey="value"
           fill="color-mix(in oklab, var(--accent) 60%, transparent)"

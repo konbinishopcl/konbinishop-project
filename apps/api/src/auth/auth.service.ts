@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import type { JwtUser } from './current-user.decorator';
 import { ConfigService } from '@nestjs/config';
 import { compare, hash } from 'bcryptjs';
 import { createHash, randomBytes } from 'crypto';
@@ -223,11 +224,29 @@ export class AuthService {
 
   /**
    * Emite un nuevo JWT con el rol actual del usuario en DB.
+   * Cuando se está en contexto de org, re-emite un JWT de org (sub sigue siendo orgId).
    * Útil para refrescar el token cuando el rol cambió sin cerrar sesión.
    */
-  async refreshToken(userId: number) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+  async refreshToken(currentUser: JwtUser) {
+    const user = await this.prisma.user.findUnique({ where: { id: currentUser.sub } });
     if (!user || user.blocked) throw new UnauthorizedException();
+
+    if (currentUser.actingAs) {
+      // Org context: re-issue org JWT (sub stays = orgId)
+      const member = await this.prisma.orgMember.findUnique({
+        where: { userId_orgId: { userId: currentUser.actingAs, orgId: currentUser.sub } },
+      });
+      if (!member) throw new UnauthorizedException(); // membership was revoked
+      const token = this.jwt.sign({
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+        orgRole: member.role,
+        actingAs: currentUser.actingAs,
+      });
+      return { token, user: this.sanitize(user) };
+    }
+
     return { token: this.sign(user), user: this.sanitize(user) };
   }
 

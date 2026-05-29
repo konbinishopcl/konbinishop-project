@@ -155,7 +155,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: '{ token, user } — nuevo JWT con rol actualizado' })
   @ApiResponse({ status: 401, description: 'Token inválido o expirado' })
   refresh(@CurrentUser() user: JwtUser) {
-    return this.auth.refreshToken(user.sub);
+    return this.auth.refreshToken(user);
   }
 
   @Post('switch-org')

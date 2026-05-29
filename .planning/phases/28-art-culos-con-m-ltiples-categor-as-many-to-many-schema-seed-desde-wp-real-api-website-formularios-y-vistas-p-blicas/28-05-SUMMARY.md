@@ -33,6 +33,7 @@ key-files:
     - apps/website/app/dashboard/articles/ArticleForm.tsx
     - apps/website/app/dashboard/articles/[slug]/edit/page.tsx
     - apps/website/app/dashboard/sections/ArticlesSection.tsx
+    - apps/website/app/(site)/cuenta/articulos/[slug]/edit/page.tsx
 
 key-decisions:
   - "Cat type uses name: string | null (nullable) to match ApiArticleCategory shape from lib/api.ts"
@@ -46,7 +47,7 @@ patterns-established:
 requirements-completed: [D-10, D-11]
 
 # Metrics
-duration: 15min
+duration: 20min
 completed: 2026-05-29
 ---
 
@@ -59,8 +60,8 @@ completed: 2026-05-29
 - **Duration:** ~15 min
 - **Started:** 2026-05-29T20:10:00Z
 - **Completed:** 2026-05-29T20:25:00Z
-- **Tasks:** 3 (2 auto + 1 checkpoint auto-approved)
-- **Files modified:** 3
+- **Tasks:** 3 (2 auto + 1 checkpoint auto-approved) + 1 auto-fix
+- **Files modified:** 4
 
 ## Accomplishments
 - ArticleForm now has a category multi-select identical in UX to the existing tags selector: fetches /api/article-categories on mount, toggleCat, filteredCats with search, scrollable checklist UI
@@ -74,11 +75,13 @@ completed: 2026-05-29
 1. **Task 1: ArticleForm — multi-select de categorías + InitialArticle + payload** - `cf2b778` (feat)
 2. **Task 2: edit page mapea categorías + ArticlesSection display D-11** - `22bec05` (feat)
 3. **Task 3: Verificación humana** — checkpoint auto-approved (AUTO_CFG=true), no commit
+4. **Auto-fix [Rule 1]: organizador edit page** - `9156734` (fix)
 
 ## Files Created/Modified
 - `apps/website/app/dashboard/articles/ArticleForm.tsx` — Added Cat type, InitialArticle.articleCategories field, cats/selectedCategoryIds/catSearch state, /api/article-categories fetch, toggleCat, filteredCats, articleCategoryIds in payload, category selector UI block
 - `apps/website/app/dashboard/articles/[slug]/edit/page.tsx` — Added `articleCategories: data.articleCategories ?? []` to setInitial mapping
 - `apps/website/app/dashboard/sections/ArticlesSection.tsx` — Added `articleCategories?` to local ApiArticle type; D-11 badge below tags in table row
+- `apps/website/app/(site)/cuenta/articulos/[slug]/edit/page.tsx` — Added `articleCategories: data.articleCategories ?? []` (auto-fix: same mapping the admin edit page needed)
 
 ## Decisions Made
 - Cat type defined with `name: string | null` (nullable) matching ApiArticleCategory from lib/api.ts; filteredCats uses `(c.name ?? "")` for safe lowercase comparison
@@ -88,11 +91,26 @@ completed: 2026-05-29
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug] Fixed missing articleCategories in organizador edit page**
+- **Found during:** Post-task review (self-check on all ArticleForm entry points)
+- **Issue:** `cuenta/articulos/[slug]/edit/page.tsx` builds `InitialArticle` without `articleCategories`, causing the category selector to open empty in organizador edit mode — directly contradicting the must_have "en modo edit las categorías aparecen pre-seleccionadas"
+- **Fix:** Added `articleCategories: data.articleCategories ?? []` to setInitial mapping (identical to admin edit page fix in Task 2)
+- **Files modified:** `apps/website/app/(site)/cuenta/articulos/[slug]/edit/page.tsx`
+- **Verification:** tsc --noEmit exit 0
+- **Committed in:** `9156734` (fix commit)
+
+---
+
+**Total deviations:** 1 auto-fixed (Rule 1 — bug)
+**Impact on plan:** Essential for correctness — without it, organizador edit mode silently fails to pre-select categories.
 
 ## Issues Encountered
 
-None. TypeScript baseline was clean before changes and remained clean after both tasks.
+None. TypeScript baseline was clean before changes and remained clean after all tasks.
+
+**State-tool notes:** `state advance-plan` returned "Cannot parse Current Plan or Total Plans" (pre-existing STATE.md structural inconsistency — not caused by this plan); `state record-metric` returned "Performance Metrics section not found" (same pre-existing issue). Both are out of scope. ROADMAP correctly updated to Phase 28 Complete (5/5).
 
 ## User Setup Required
 

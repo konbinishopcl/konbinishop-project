@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T16:59:34.513Z"
+last_updated: "2026-05-29T18:31:33.877Z"
 progress:
   total_phases: 12
   completed_phases: 10
-  total_plans: 41
-  completed_plans: 41
+  total_plans: 46
+  completed_plans: 42
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 26 — dashboard-inbox-crm-y-suscripciones-con-api-real
+**Current focus:** Phase 27 — dashboard-analytics-pagos-y-graficos-reales-con-recharts
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T16:48:14.311Z
+**Last session:** 2026-05-29T18:31:33.874Z
 
 ## Phase Summary
 
@@ -198,6 +198,7 @@ administrador quedan visibles al público.
 - [Phase 26-04]: KPI block reduced to Activos+Total only; MRR/Nuevos mes/Cancelaciones removed — no aggregates endpoint available
 - [Phase 26]: kind!==contact guard renders próximamente placeholder for photo/creators inbox variants — CRM-by-type deferred
 - [Phase 26]: STAGE_CONFIG array for ordered kanban columns; TYPE_TAG record for CrmType→CSS mapping; CRMDetailModal component with LOST stageReason guard
+- [Phase 27-01]: GET /payments placed ABOVE POST :orderId/checkout to prevent route ambiguity; org ?? owner principal resolution for buyer identity; Hero title uses titleAccent ?? title chain
 
 ## Accumulated Context
 

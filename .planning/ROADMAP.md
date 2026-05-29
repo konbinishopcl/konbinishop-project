@@ -247,10 +247,10 @@ Plans:
 - DASH-ANLT-12: ReportsSection export CSV real desde los pagos del período seleccionado.
 
 **Depends on:** Phase 26
-**Plans:** 5/5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
-- [ ] 27-01-PLAN.md — Backend: GET /payments admin (controller + service findAllForAdmin) (wave 1)
+- [x] 27-01-PLAN.md — Backend: GET /payments admin (controller + service findAllForAdmin) (wave 1)
 - [ ] 27-02-PLAN.md — Frontend foundation: recharts + RevenueBarChart + api.ts (ApiPayment/adminPayments/EventsQuery.status/ApiEvent.status) (wave 1)
 - [ ] 27-03-PLAN.md — HomeSection: queue + actividad + KPI reales + RevenueBarChart (wave 2)
 - [ ] 27-04-PLAN.md — PaymentsSection: tabla + modal reales + CSV (wave 2)

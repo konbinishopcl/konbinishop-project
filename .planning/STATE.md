@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T16:43:32.561Z"
+last_updated: "2026-05-29T16:46:58.102Z"
 progress:
   total_phases: 12
   completed_phases: 9
   total_plans: 41
-  completed_plans: 38
+  completed_plans: 40
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T16:43:32.559Z
+**Last session:** 2026-05-29T16:46:58.099Z
 
 ## Phase Summary
 
@@ -195,6 +195,8 @@ administrador quedan visibles al público.
 - [Phase 25-03]: Form field keys q/a kept for AdminFormModal; mapped to question/answer only at API call boundary
 - [Phase 25-04]: Degraded render: ENTITY #id format for LogsSection because GET /admin/audit-logs returns raw scalar rows with no joins
 - [Phase 26-01]: ApiSubscriptionList uses limit field (not pageSize) — verified against subscriptions service response shape
+- [Phase 26-04]: KPI block reduced to Activos+Total only; MRR/Nuevos mes/Cancelaciones removed — no aggregates endpoint available
+- [Phase 26]: kind!==contact guard renders próximamente placeholder for photo/creators inbox variants — CRM-by-type deferred
 
 ## Accumulated Context
 

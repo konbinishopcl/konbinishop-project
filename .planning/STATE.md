@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T18:38:46.238Z"
+last_updated: "2026-05-29T18:39:11.276Z"
 progress:
   total_phases: 12
   completed_phases: 11
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T18:38:46.236Z
+**Last session:** 2026-05-29T18:39:11.273Z
 
 ## Phase Summary
 
@@ -202,6 +202,7 @@ administrador quedan visibles al público.
 - [Phase 27-02]: Use TooltipContentProps unknown cast for recharts v3 tooltip compatibility; status/statusReason added as required fields to ApiEvent
 - [Phase 27-05]: allZero guard: pass empty array to RevenueBarChart when all buckets are 0 to trigger empty-state panel; periodPayments computed separately from bucket aggregation for CSV export
 - [Phase 27-04]: KPIs (Ingresos mes, Histórico, Pendientes, Reembolsos) remain mock — no aggregate endpoint available; Reembolsar/comprobante buttons are stubs deferred per plan
+- [Phase 27]: HomeSection: both Task 1 (real API wiring) and Task 2 (RevenueBarChart) implemented and committed as one atomic change since they modify the same file
 
 ## Accumulated Context
 

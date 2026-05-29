@@ -78,7 +78,7 @@ export function SearchLightbox({ open, onClose, articleCategories, topTags }: Pr
               kind: "article" as const,
               id: a.id, slug: a.slug, title: a.title,
               image: a.image,
-              meta: [a.articleCategory?.name, a.createdAt?.slice(0, 10)].filter(Boolean).join(" · "),
+              meta: [a.articleCategories?.[0]?.name, a.createdAt?.slice(0, 10)].filter(Boolean).join(" · "),
             }))
           : [];
         setHits([...evs, ...ars]);

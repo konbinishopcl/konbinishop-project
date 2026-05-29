@@ -27,7 +27,7 @@ export function NoticiasHubView({ articles, categories }: Props) {
   // Top 5 categorías con más artículos en el batch (dinámico)
   const catCounts: Record<string, number> = {};
   for (const a of articles) {
-    const slug = a.articleCategory?.slug;
+    const slug = a.articleCategories?.[0]?.slug;
     if (slug) catCounts[slug] = (catCounts[slug] ?? 0) + 1;
   }
   const topSlugs = Object.entries(catCounts)
@@ -39,7 +39,7 @@ export function NoticiasHubView({ articles, categories }: Props) {
   const railsData = topSlugs.map((slug) => {
     const cat = categories.find((c) => c.slug === slug);
     const items = articles
-      .filter((a) => a.articleCategory?.slug === slug)
+      .filter((a) => a.articleCategories?.[0]?.slug === slug)
       .slice(0, 4);
     return { slug, cat, items };
   }).filter((r) => r.items.length > 0);
@@ -99,7 +99,7 @@ export function NoticiasHubView({ articles, categories }: Props) {
           {/* Content — subido un poco */}
           <div style={{ position: "absolute", left: 36, right: 36, bottom: 48, color: "#fff", zIndex: 2 }}>
             <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".2em", color: "rgba(255,255,255,.72)", marginBottom: 10, display: "flex", alignItems: "center", gap: 12 }}>
-              <span>DESTACADO · {(featured.articleCategory?.name ?? "NOTICIAS").toUpperCase()}</span>
+              <span>DESTACADO · {(featured.articleCategories?.[0]?.name ?? "NOTICIAS").toUpperCase()}</span>
               <span style={{ opacity: .5 }}>·</span>
               <span>{formatDate(featured.createdAt)} · {readingTime(featured.content ?? "")} lectura</span>
             </div>
@@ -133,7 +133,7 @@ export function NoticiasHubView({ articles, categories }: Props) {
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".12em", color: "var(--accent)", marginBottom: 4 }}>
-                  {(a.articleCategory?.name ?? "NOTICIAS").toUpperCase()}
+                  {(a.articleCategories?.[0]?.name ?? "NOTICIAS").toUpperCase()}
                 </div>
                 <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 17, lineHeight: 1.25, letterSpacing: "-.01em", marginBottom: 6 }}>
                   {a.title}
@@ -186,7 +186,7 @@ export function NoticiasHubView({ articles, categories }: Props) {
           {/* Info */}
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
             <div className="eyebrow" style={{ color: "var(--accent)", marginBottom: 12 }}>
-              {sponsored.articleCategory?.name ?? "NOTICIAS"} · PATROCINADO
+              {sponsored.articleCategories?.[0]?.name ?? "NOTICIAS"} · PATROCINADO
             </div>
             <h3 style={{ fontFamily: "var(--font-display)", fontSize: 32, letterSpacing: "-.02em", lineHeight: 1.1, margin: "0 0 12px", fontWeight: 700 }}>
               {sponsored.title}

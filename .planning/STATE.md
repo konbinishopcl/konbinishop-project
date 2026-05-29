@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T18:31:33.877Z"
+last_updated: "2026-05-29T18:34:52.890Z"
 progress:
   total_phases: 12
   completed_phases: 10
   total_plans: 46
-  completed_plans: 42
+  completed_plans: 43
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T18:31:33.874Z
+**Last session:** 2026-05-29T18:34:52.888Z
 
 ## Phase Summary
 
@@ -199,6 +199,7 @@ administrador quedan visibles al público.
 - [Phase 26]: kind!==contact guard renders próximamente placeholder for photo/creators inbox variants — CRM-by-type deferred
 - [Phase 26]: STAGE_CONFIG array for ordered kanban columns; TYPE_TAG record for CrmType→CSS mapping; CRMDetailModal component with LOST stageReason guard
 - [Phase 27-01]: GET /payments placed ABOVE POST :orderId/checkout to prevent route ambiguity; org ?? owner principal resolution for buyer identity; Hero title uses titleAccent ?? title chain
+- [Phase 27-02]: Use TooltipContentProps unknown cast for recharts v3 tooltip compatibility; status/statusReason added as required fields to ApiEvent
 
 ## Accumulated Context
 

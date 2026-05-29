@@ -1,27 +1,12 @@
 "use client";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { useUser } from "@/components/providers";
+import { api, type ApiAdminUser } from "@/lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type UserFilter = "Todos" | "Persona" | "Organización" | "Baneado";
-
-type UserRow = {
-  av: string;
-  nm: string;
-  em: string;
-  tp: string;
-  ro: string;
-  st: "Activo" | "Baneado";
-};
-
-// ── Mock data (matches AdminTable kind="users" design) ────────────────────────
-
-const USERS: UserRow[] = [
-  { av: "ET", nm: "Edgardo Toro",    em: "edgardo.toro@gmail.com", tp: "Persona",      ro: "Admin",   st: "Activo"  },
-  { av: "C",  nm: "Cinépolis Chile", em: "—",                      tp: "Organización", ro: "—",       st: "Activo"  },
-  { av: "MP", nm: "María Pérez",     em: "maria.perez@email.cl",   tp: "Persona",      ro: "Usuario", st: "Activo"  },
-  { av: "JR", nm: "José Ramírez",    em: "jr@email.cl",            tp: "Persona",      ro: "Usuario", st: "Baneado" },
-];
 
 // ── ConfirmDialog ─────────────────────────────────────────────────────────────
 
@@ -49,25 +34,138 @@ function ConfirmDialog({ title, message, confirmLabel, danger, onConfirm, onClos
   );
 }
 
+// ── UserDetailModal ───────────────────────────────────────────────────────────
+
+function UserDetailModal({ item, onClose }: { item: ApiAdminUser; onClose: () => void }) {
+  const name = [item.firstname, item.lastname].filter(Boolean).join(" ") || item.email;
+  const tipo = item.type === "ORGANIZATION" ? "Organización" : "Persona";
+  const rol =
+    item.role === "SUPER_ADMIN" ? "Super Admin"
+    : item.role === "ADMIN" ? "Admin"
+    : "Usuario";
+  const handle = item.handle ? `@${item.handle}` : "—";
+  const registrado = new Date(item.createdAt).toLocaleDateString("es-CL");
+  const estadoLabel = item.blocked ? "Baneado" : "Activo";
+
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ minWidth: 320 }}>
+        <h3 style={{ margin: "0 0 16px" }}>Detalle de usuario</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--ink-2)", fontSize: 13 }}>Nombre</span>
+            <span style={{ fontWeight: 600, fontSize: 13 }}>{name}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--ink-2)", fontSize: 13 }}>Email</span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{item.email}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--ink-2)", fontSize: 13 }}>Tipo</span>
+            <span style={{ fontSize: 13 }}>{tipo}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--ink-2)", fontSize: 13 }}>Rol</span>
+            <span className="pill" style={{ fontSize: 12 }}>{rol}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--ink-2)", fontSize: 13 }}>Handle</span>
+            <span style={{ fontSize: 13 }}>{handle}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "var(--ink-2)", fontSize: 13 }}>Registrado</span>
+            <span style={{ fontSize: 13 }}>{registrado}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ color: "var(--ink-2)", fontSize: 13 }}>Estado</span>
+            <span className={`stat-pill ${item.blocked ? "rej" : "pub"}`}>
+              <span className="dot" />{estadoLabel}
+            </span>
+          </div>
+        </div>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button className="btn ghost sm" onClick={onClose}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function UsersSection() {
+  const { token } = useUser();
   const [filter, setFilter] = useState<UserFilter>("Todos");
-  const [users, setUsers] = useState<UserRow[]>(USERS);
-  const [modal, setModal] = useState<{ type: "ban" | "restore"; item: UserRow } | null>(null);
+  const [users, setUsers] = useState<ApiAdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [modal, setModal] = useState<{ type: "ban" | "restore" | "view"; item: ApiAdminUser } | null>(null);
 
   const FILTERS: UserFilter[] = ["Todos", "Persona", "Organización", "Baneado"];
 
+  // ── Fetch ──────────────────────────────────────────────────────────────────
+
+  const fetchUsers = useCallback(async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const data = await api.adminUsers(token);
+      setUsers(data);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al cargar usuarios");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  // ── Ban / Unban ────────────────────────────────────────────────────────────
+
+  async function applyBan(u: ApiAdminUser, blocked: boolean) {
+    if (!token) return;
+    setBusyId(u.id);
+    try {
+      const updated = await api.banUser(u.id, blocked, token);
+      setUsers((prev) => prev.map((x) => (x.id === u.id ? updated : x)));
+      toast.success(blocked ? "Usuario baneado" : "Usuario restaurado");
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "No se pudo actualizar");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  // ── Filter ─────────────────────────────────────────────────────────────────
+
   const filtered = users.filter((u) => {
     if (filter === "Todos") return true;
-    if (filter === "Baneado") return u.st === "Baneado";
-    return u.tp === filter;
+    if (filter === "Baneado") return u.blocked === true;
+    if (filter === "Persona") return u.type === "PERSON";
+    if (filter === "Organización") return u.type === "ORGANIZATION";
+    return true;
   });
 
-  function toggleBan(u: UserRow) {
-    setUsers((prev) =>
-      prev.map((x) => x.nm === u.nm ? { ...x, st: x.st === "Activo" ? "Baneado" : "Activo" } : x)
-    );
+  // ── Display helpers ────────────────────────────────────────────────────────
+
+  function userName(u: ApiAdminUser): string {
+    return [u.firstname, u.lastname].filter(Boolean).join(" ") || u.email;
+  }
+
+  function userInitials(u: ApiAdminUser): string {
+    const name = [u.firstname, u.lastname].filter(Boolean).join(" ");
+    if (name) {
+      return name.split(/\s+/).filter(Boolean).map((s) => s[0]).slice(0, 2).join("").toUpperCase();
+    }
+    return (u.email.split("@")[0] ?? u.email).slice(0, 2).toUpperCase() || "?";
+  }
+
+  function userTipo(u: ApiAdminUser): string {
+    return u.type === "ORGANIZATION" ? "Organización" : "Persona";
+  }
+
+  function userRol(u: ApiAdminUser): string {
+    return u.role === "SUPER_ADMIN" ? "Super Admin" : u.role === "ADMIN" ? "Admin" : "Usuario";
   }
 
   return (
@@ -88,32 +186,39 @@ export default function UsersSection() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((u, i) => (
-              <tr key={i}>
+            {loading ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: "center", padding: 24, color: "var(--ink-2)" }}>
+                  Cargando…
+                </td>
+              </tr>
+            ) : filtered.map((u) => (
+              <tr key={u.id}>
                 <td>
                   <div className="cell-evt">
                     <div style={{ width: 36, height: 36, borderRadius: 999, background: "linear-gradient(135deg, var(--accent), var(--accent-2))", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12, flexShrink: 0 }}>
-                      {u.av}
+                      {userInitials(u)}
                     </div>
-                    <div><div className="ti">{u.nm}</div></div>
+                    <div><div className="ti">{userName(u)}</div></div>
                   </div>
                 </td>
-                <td><span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{u.em}</span></td>
-                <td>{u.tp}</td>
-                <td><span className="pill">{u.ro}</span></td>
+                <td><span style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{u.email}</span></td>
+                <td>{userTipo(u)}</td>
+                <td><span className="pill">{userRol(u)}</span></td>
                 <td>
-                  <span className={`stat-pill ${u.st === "Activo" ? "pub" : "rej"}`}>
-                    <span className="dot" />{u.st}
+                  <span className={`stat-pill ${u.blocked ? "rej" : "pub"}`}>
+                    <span className="dot" />{u.blocked ? "Baneado" : "Activo"}
                   </span>
                 </td>
                 <td>
                   <div className="row-act">
-                    <button>Ver</button>
+                    <button onClick={() => setModal({ type: "view", item: u })}>Ver</button>
                     <button
-                      className={u.st === "Activo" ? "bad" : "ok"}
-                      onClick={() => setModal({ type: u.st === "Activo" ? "ban" : "restore", item: u })}
+                      className={u.blocked ? "ok" : "bad"}
+                      disabled={busyId === u.id}
+                      onClick={() => setModal({ type: u.blocked ? "restore" : "ban", item: u })}
                     >
-                      {u.st === "Activo" ? "Banear" : "Restaurar"}
+                      {u.blocked ? "Restaurar" : "Banear"}
                     </button>
                   </div>
                 </td>
@@ -125,19 +230,22 @@ export default function UsersSection() {
 
       {modal?.type === "ban" && (
         <ConfirmDialog danger title="¿Banear usuario?"
-          message={`${modal.item.nm} perderá acceso inmediatamente. Puedes restaurarlo después.`}
+          message={`${userName(modal.item)} perderá acceso inmediatamente. Puedes restaurarlo después.`}
           confirmLabel="Sí, banear"
-          onConfirm={() => toggleBan(modal.item)}
+          onConfirm={() => applyBan(modal.item, true)}
           onClose={() => setModal(null)}
         />
       )}
       {modal?.type === "restore" && (
         <ConfirmDialog title="¿Restaurar usuario?"
-          message={`${modal.item.nm} recuperará acceso completo a la plataforma.`}
+          message={`${userName(modal.item)} recuperará acceso completo a la plataforma.`}
           confirmLabel="Sí, restaurar"
-          onConfirm={() => toggleBan(modal.item)}
+          onConfirm={() => applyBan(modal.item, false)}
           onClose={() => setModal(null)}
         />
+      )}
+      {modal?.type === "view" && (
+        <UserDetailModal item={modal.item} onClose={() => setModal(null)} />
       )}
     </>
   );

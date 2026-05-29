@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T14:11:56.188Z"
+last_updated: "2026-05-29T16:43:32.561Z"
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 9
-  total_plans: 37
-  completed_plans: 37
+  total_plans: 41
+  completed_plans: 38
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 25 — dashboard-admin-real-usuarios-faq-logs-y-settings-con-api-real
+**Current focus:** Phase 26 — dashboard-inbox-crm-y-suscripciones-con-api-real
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T14:09:27.017Z
+**Last session:** 2026-05-29T16:43:32.559Z
 
 ## Phase Summary
 
@@ -194,6 +194,13 @@ administrador quedan visibles al público.
 - [Phase 25-03]: Handlers do not call setModal(null) — inline modals close themselves after invoking callbacks
 - [Phase 25-03]: Form field keys q/a kept for AdminFormModal; mapped to question/answer only at API call boundary
 - [Phase 25-04]: Degraded render: ENTITY #id format for LogsSection because GET /admin/audit-logs returns raw scalar rows with no joins
+- [Phase 26-01]: ApiSubscriptionList uses limit field (not pageSize) — verified against subscriptions service response shape
+
+## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 28 added: Artículos con múltiples categorías — many-to-many schema, seed desde WP real, API, website, formularios y vistas públicas
 
 ## Quick Tasks Completed
 

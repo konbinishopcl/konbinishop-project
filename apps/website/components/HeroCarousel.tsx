@@ -39,8 +39,9 @@ export function HeroCarousel({ slides }: { slides: HeroSlide[] }) {
       {/* Slides reales */}
       {slides.map((s, i) => (
         <div key={i} className={`slide ${i === idx ? "on" : ""}`}>
-          {/* Background image */}
+          {/* Background image — key changes when slide becomes active to restart animation */}
           <div
+            key={i === idx ? `bg-${i}-${idx}` : `bg-${i}`}
             className="bg"
             style={
               s.image

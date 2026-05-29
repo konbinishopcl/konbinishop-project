@@ -564,7 +564,8 @@
 .pcar { position: relative; margin: 28px 0 56px; border-radius: var(--r-xl); overflow: hidden; aspect-ratio: 21/9; min-height: 480px; background: #0a0908; }
 .pcar .slide { position: absolute; inset: 0; opacity: 0; transition: opacity .5s ease; }
 .pcar .slide.on { opacity: 1; }
-.pcar .slide .bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+.pcar .slide .bg { position: absolute; inset: 0; background-size: cover; background-position: center; animation: hero-zoom 4s ease-out forwards; }
+@keyframes hero-zoom { from { transform: scale(1.06); } to { transform: scale(1); } }
 .pcar .slide .bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, rgba(0,0,0,.78) 0%, rgba(0,0,0,.5) 40%, rgba(0,0,0,.1) 70%, rgba(0,0,0,0) 100%), linear-gradient(0deg, rgba(0,0,0,.65) 0%, rgba(0,0,0,0) 50%); }
 .pcar .body { position: relative; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; padding: 56px 64px; color: #fff; max-width: 720px; z-index: 2; }
 .pcar .body .eyebrow-w { font-family: var(--font-mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,255,255,.78); margin-bottom: 14px; }

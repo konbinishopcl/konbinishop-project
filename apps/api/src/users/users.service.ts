@@ -7,7 +7,6 @@ import { AuditService } from '../audit/audit.service';
 import type { JwtUser } from '../auth/current-user.decorator';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UpdateOrganizerDto } from './dto/update-organizer.dto';
 import { EventsService } from '../events/events.service';
 
 // Campos públicos del usuario (nunca exponemos passwordHash).
@@ -106,32 +105,6 @@ export class UsersService {
     // No exponer blocked al cliente — quitar del response
     const { blocked: _blocked, ...publicUser } = user;
     return { ...publicUser, events, articles };
-  }
-
-  async updateOrganizer(userId: number, dto: UpdateOrganizerDto) {
-    // Verificar que el user existe
-    await this.ensure(userId);
-
-    // Profile.slug es required y @unique — para crear si no existe usamos un slug derivado del userId
-    const fallbackSlug = `user-${userId}`;
-    const profile = await this.prisma.profile.upsert({
-      where: { userId },
-      update: {
-        ...(dto.bio !== undefined && { bio: dto.bio }),
-        ...(dto.website !== undefined && { website: dto.website }),
-      },
-      create: {
-        userId,
-        slug: fallbackSlug,
-        bio: dto.bio ?? null,
-        website: dto.website ?? null,
-      },
-      select: {
-        id: true, bio: true, website: true,
-        avatar: true, banner: true, displayName: true,
-      },
-    });
-    return profile;
   }
 
   async setVerified(id: number, isVerified: boolean, actor: JwtUser, req?: Request) {

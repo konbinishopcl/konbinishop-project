@@ -17,3 +17,4 @@ node_modules
 *.zip
 *.zip:Zone.Identifier
 Zone.Identifier
+docs/demo-credentials.md

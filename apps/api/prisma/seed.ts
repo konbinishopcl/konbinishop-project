@@ -318,7 +318,7 @@ async function main() {
         if (!tag.slug) continue;
         const t = await prisma.articleTag.upsert({
           where:  { slug: tag.slug },
-          update: { name: tag.name },
+          update: {},
           create: { name: tag.name, slug: tag.slug },
         });
         tagIds.push(t.id);
@@ -357,7 +357,7 @@ async function main() {
           },
         },
       }); articleCount++; } catch (e: any) {
-        console.warn(`  ⚠ skipped "${art.slug}": ${e.message?.slice(0, 80)}`);
+        console.warn(`  ⚠ skipped "${art.slug}": ${e.message?.slice(0, 300)}`);
       }
     }
     console.log(`✓ Articles seeded: ${articleCount} from prisma/data/articles.json`);

@@ -1,38 +1,21 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { AdminFormModal } from "@/app/dashboard/modals/AdminFormModal";
+import { api, type ApiServiceOption } from "@/lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type ServiceItem = { name: string };
-
 type ModalState =
   | { type: "createFoto" }
-  | { type: "editFoto"; item: ServiceItem }
-  | { type: "deleteFoto"; item: ServiceItem }
+  | { type: "editFoto"; item: ApiServiceOption }
+  | { type: "deleteFoto"; item: ApiServiceOption }
   | { type: "createCreat" }
-  | { type: "editCreat"; item: ServiceItem }
-  | { type: "deleteCreat"; item: ServiceItem }
+  | { type: "editCreat"; item: ApiServiceOption }
+  | { type: "deleteCreat"; item: ApiServiceOption }
   | null;
-
-// ── Default services ──────────────────────────────────────────────────────────
-
-const DEFAULT_FOTO: ServiceItem[] = [
-  { name: "Cobertura completa del evento" },
-  { name: "Sesión previa al evento" },
-  { name: "Entrega en 48 horas" },
-  { name: "Retoque profesional" },
-];
-
-const DEFAULT_CREAT: ServiceItem[] = [
-  { name: "Reels para Instagram / TikTok" },
-  { name: "Aftermovie" },
-  { name: "Cobertura en vivo (stories)" },
-  { name: "Video resumen 60s" },
-];
 
 // ── Inline ConfirmDialog ──────────────────────────────────────────────────────
 
@@ -111,8 +94,8 @@ export default function SettingsSection() {
   const [busyPortadas, setBusyPortadas] = useState(false);
 
   // Services
-  const [fotoServices,  setFotoServices]  = useState<ServiceItem[]>(DEFAULT_FOTO);
-  const [creatServices, setCreatServices] = useState<ServiceItem[]>(DEFAULT_CREAT);
+  const [fotoServices,  setFotoServices]  = useState<ApiServiceOption[]>([]);
+  const [creatServices, setCreatServices] = useState<ApiServiceOption[]>([]);
 
   // Modal
   const [modal, setModal] = useState<ModalState>(null);
@@ -120,6 +103,9 @@ export default function SettingsSection() {
 
   // Service form input
   const [svcInput, setSvcInput] = useState("");
+
+  // WebPay info modal
+  const [webpayInfo, setWebpayInfo] = useState(false);
 
   // Load settings on mount
   useEffect(() => {
@@ -141,6 +127,18 @@ export default function SettingsSection() {
       .catch(() => {/* use defaults */});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // Load service options on mount (public endpoints — no token needed)
+  const loadServices = useCallback(async () => {
+    try {
+      const [foto, creat] = await Promise.all([api.photoOptions(), api.creatorOptions()]);
+      setFotoServices(foto);
+      setCreatServices(creat);
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "Error al cargar servicios");
+    }
+  }, []);
+  useEffect(() => { loadServices(); }, [loadServices]);
 
   // Save handlers
   async function saveBlock(
@@ -167,40 +165,39 @@ export default function SettingsSection() {
 
   // Service CRUD
   function openCreateFoto() { setSvcInput(""); setModal({ type: "createFoto" }); }
-  function openEditFoto(item: ServiceItem) { setSvcInput(item.name); setModal({ type: "editFoto", item }); }
-  function openDeleteFoto(item: ServiceItem) { setModal({ type: "deleteFoto", item }); }
+  function openEditFoto(item: ApiServiceOption) { setSvcInput(item.label); setModal({ type: "editFoto", item }); }
+  function openDeleteFoto(item: ApiServiceOption) { setModal({ type: "deleteFoto", item }); }
   function openCreateCreat() { setSvcInput(""); setModal({ type: "createCreat" }); }
-  function openEditCreat(item: ServiceItem) { setSvcInput(item.name); setModal({ type: "editCreat", item }); }
-  function openDeleteCreat(item: ServiceItem) { setModal({ type: "deleteCreat", item }); }
+  function openEditCreat(item: ApiServiceOption) { setSvcInput(item.label); setModal({ type: "editCreat", item }); }
+  function openDeleteCreat(item: ApiServiceOption) { setModal({ type: "deleteCreat", item }); }
 
-  function handleSaveService() {
-    const nm = svcInput.trim();
-    if (!nm) return;
-    if (modal?.type === "createFoto") {
-      setFotoServices((p) => [...p, { name: nm }]);
-      toast.success("Servicio creado");
-    } else if (modal?.type === "editFoto" && modal.item) {
-      setFotoServices((p) => p.map((s) => s.name === modal.item.name ? { name: nm } : s));
-      toast.success("Servicio actualizado");
-    } else if (modal?.type === "createCreat") {
-      setCreatServices((p) => [...p, { name: nm }]);
-      toast.success("Servicio creado");
-    } else if (modal?.type === "editCreat" && modal.item) {
-      setCreatServices((p) => p.map((s) => s.name === modal.item.name ? { name: nm } : s));
-      toast.success("Servicio actualizado");
+  async function handleSaveService() {
+    const label = svcInput.trim();
+    if (!label || !token) return;
+    try {
+      if (modal?.type === "createFoto")        await api.createPhotoOption({ label }, token);
+      else if (modal?.type === "editFoto")     await api.updatePhotoOption(modal.item.id, { label }, token);
+      else if (modal?.type === "createCreat")  await api.createCreatorOption({ label }, token);
+      else if (modal?.type === "editCreat")    await api.updateCreatorOption(modal.item.id, { label }, token);
+      toast.success("Servicio guardado");
+      closeModal();
+      await loadServices();
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "No se pudo guardar");
     }
-    closeModal();
   }
 
-  function handleDeleteService() {
-    if (modal?.type === "deleteFoto" && modal.item) {
-      setFotoServices((p) => p.filter((s) => s.name !== modal.item.name));
+  async function handleDeleteService() {
+    if (!token) return;
+    try {
+      if (modal?.type === "deleteFoto")       await api.deletePhotoOption(modal.item.id, token);
+      else if (modal?.type === "deleteCreat") await api.deleteCreatorOption(modal.item.id, token);
       toast.success("Servicio eliminado");
-    } else if (modal?.type === "deleteCreat" && modal.item) {
-      setCreatServices((p) => p.filter((s) => s.name !== modal.item.name));
-      toast.success("Servicio eliminado");
+      closeModal();
+      await loadServices();
+    } catch (ex) {
+      toast.error(ex instanceof Error ? ex.message : "No se pudo eliminar");
     }
-    closeModal();
   }
 
   const isServiceModal =
@@ -327,9 +324,9 @@ export default function SettingsSection() {
           Opciones que ve el organizador en el formulario de /fotografia.
         </div>
         {fotoServices.map((s) => (
-          <div key={s.name} className="acc-list-row" style={{ padding: "10px 0" }}>
+          <div key={s.id} className="acc-list-row" style={{ padding: "10px 0" }}>
             <div className="main">
-              <div className="t">{s.name}</div>
+              <div className="t">{s.label}</div>
             </div>
             <div className="row-act">
               <button
@@ -367,9 +364,9 @@ export default function SettingsSection() {
           Opciones que ve el organizador en /creadores.
         </div>
         {creatServices.map((s) => (
-          <div key={s.name} className="acc-list-row" style={{ padding: "10px 0" }}>
+          <div key={s.id} className="acc-list-row" style={{ padding: "10px 0" }}>
             <div className="main">
-              <div className="t">{s.name}</div>
+              <div className="t">{s.label}</div>
             </div>
             <div className="row-act">
               <button
@@ -414,7 +411,7 @@ export default function SettingsSection() {
             <div className="m">Conectado · Producción</div>
           </div>
           <span className="stat-pill pub"><span className="dot" />Activo</span>
-          <button className="btn ghost" style={{ padding: "8px 14px" }}>Configurar</button>
+          <button className="btn ghost" style={{ padding: "8px 14px" }} onClick={() => setWebpayInfo(true)}>Configurar</button>
         </div>
         <div className="acc-list-row">
           <div className="main">
@@ -422,7 +419,7 @@ export default function SettingsSection() {
             <div className="m">No configurado</div>
           </div>
           <span className="stat-pill exp"><span className="dot" />Inactivo</span>
-          <button className="btn ghost" style={{ padding: "8px 14px" }}>Conectar</button>
+          <button className="btn ghost" disabled style={{ opacity: 0.5, cursor: "not-allowed", padding: "8px 14px" }}>Próximamente</button>
         </div>
         <div className="acc-list-row">
           <div className="main">
@@ -430,7 +427,7 @@ export default function SettingsSection() {
             <div className="m">No configurado</div>
           </div>
           <span className="stat-pill exp"><span className="dot" />Inactivo</span>
-          <button className="btn ghost" style={{ padding: "8px 14px" }}>Conectar</button>
+          <button className="btn ghost" disabled style={{ opacity: 0.5, cursor: "not-allowed", padding: "8px 14px" }}>Próximamente</button>
         </div>
       </div>
 
@@ -464,11 +461,26 @@ export default function SettingsSection() {
       {isDeleteModal && (modal?.type === "deleteFoto" || modal?.type === "deleteCreat") && (
         <ConfirmDialog
           title="¿Eliminar servicio?"
-          message={`"${modal.item.name}" ya no aparecerá en el formulario público.`}
+          message={`"${modal.item.label}" ya no aparecerá en el formulario público.`}
           confirmLabel="Sí, eliminar"
           onConfirm={handleDeleteService}
           onClose={closeModal}
         />
+      )}
+
+      {/* Modal: WebPay info */}
+      {webpayInfo && (
+        <div className="confirm-bg" onClick={() => setWebpayInfo(false)}>
+          <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
+            <h3>Configuración de WebPay Plus</h3>
+            <p style={{ fontSize: 14, color: "var(--ink-2)", marginBottom: 18 }}>
+              Transbank está configurado vía variables de entorno. Para cambiar credenciales, actualiza las env vars del servidor.
+            </p>
+            <div className="modal-acts">
+              <button className="btn ghost" onClick={() => setWebpayInfo(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
       )}
 
     </>

@@ -634,6 +634,30 @@ export const api = {
   deleteCreatorOption: (id: number, token: string) =>
     request<{ deleted?: boolean } | ApiServiceOption>(`/services/content-creators/options/${id}`, { method: "DELETE" }, token),
 
+  // ───────── Contact / Inbox (Phase 26) ─────────
+  contactAll: (token: string) =>
+    request<ApiContactMessage[]>('/contact', {}, token),
+  contactMarkRead: (id: number, token: string) =>
+    request<ApiContactMessage>(`/contact/${id}/read`, { method: 'PATCH', body: JSON.stringify({ read: true }) }, token),
+  contactRemove: (id: number, token: string) =>
+    request<{ deleted: boolean }>(`/contact/${id}`, { method: 'DELETE' }, token),
+
+  // ───────── CRM (Phase 26) ─────────
+  crmAll: (token: string) =>
+    request<ApiCrmList>('/crm?limit=50', {}, token),
+  crmGet: (id: number, token: string) =>
+    request<ApiCrmEntry>(`/crm/${id}`, {}, token),
+  crmNotes: (id: number, token: string) =>
+    request<ApiCrmNote[]>(`/crm/${id}/notes`, {}, token),
+  crmAddNote: (id: number, content: string, token: string) =>
+    request<ApiCrmNote>(`/crm/${id}/notes`, { method: 'POST', body: JSON.stringify({ content }) }, token),
+  crmSetStage: (id: number, stage: CrmStage, token: string, stageReason?: string) =>
+    request<ApiCrmEntry>(`/crm/${id}/stage`, { method: 'PATCH', body: JSON.stringify(stageReason ? { stage, stageReason } : { stage }) }, token),
+
+  // ───────── Subscriptions (Phase 26) ─────────
+  subscriptions: (token: string) =>
+    request<ApiSubscriptionList>('/subscriptions?limit=50', {}, token),
+
   // Settings / Stats (no token required)
   settingsPublic: () => request<Record<string, string>>("/settings/public"),
   statsPublic:    () => request<{ approvedEvents: number; organizers: number }>("/stats/public"),

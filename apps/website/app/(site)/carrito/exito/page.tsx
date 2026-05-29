@@ -151,12 +151,12 @@ export default function CartExitoPage({
         }}
       >
         <h3 style={{ fontFamily: "var(--font-display)", fontSize: 20, marginBottom: 8 }}>
-          ¿Tu perfil de organizador está completo?
+          ¿Tu perfil está completo?
         </h3>
         <p style={{ color: "var(--ink-2)", margin: "0 0 14px", fontSize: 14, lineHeight: 1.55 }}>
           Cuando los visitantes hagan clic en tu nombre, verán tu perfil público. Completa tu bio, avatar y redes sociales.
         </p>
-        <Link href="/cuenta?tab=org" className="btn dark">
+        <Link href="/cuenta/perfil" className="btn dark">
           Completar mi perfil
         </Link>
       </div>

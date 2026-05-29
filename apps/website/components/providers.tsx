@@ -5,7 +5,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { NavigationProgress } from "./NavigationProgress";
 import { OneTap } from "./OneTap";
 import type { User } from "@/lib/data";
-import { toUser, type ApiUser } from "@/lib/api";
+import { toUser, setOrgContext, type ApiUser } from "@/lib/api";
 
 type Theme = "dark" | "light";
 
@@ -37,6 +37,8 @@ export function useTheme() {
 }
 
 /* ───────────────── user / auth ───────────────── */
+export type OrgEntry = { id: number; name: string | null; handle: string | null };
+
 type UserCtxValue = {
   user: User | null;
   token: string | null;
@@ -45,6 +47,8 @@ type UserCtxValue = {
   setAuth: (user: User, token: string) => void;
   setUser: (user: User | null) => void;
   logout: () => void;
+  activeOrg: OrgEntry | null;
+  setActiveOrg: (org: OrgEntry | null) => void;
 };
 
 const UserCtx = createContext<UserCtxValue | null>(null);

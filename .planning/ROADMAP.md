@@ -171,10 +171,10 @@ Plans:
 
 **Requirements**: CLEAN-01..CLEAN-07 (IDs locales a Phase 23, derivados de los 7 ítems in-scope de 23-CONTEXT.md; sin backref en ROADMAP)
 **Depends on:** Phase 22
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] 23-01-PLAN.md - Frontend cleanup: eliminar /cuenta/organizador + quitar tab AccountShell + fix carrito/exito CTA (wave 1)
+- [x] 23-01-PLAN.md - Frontend cleanup: eliminar /cuenta/organizador + quitar tab AccountShell + fix carrito/exito CTA (wave 1)
 - [ ] 23-02-PLAN.md - Frontend data: mis-avisos + mis-portadas con API real + fix uploadImage X-Org-Context (wave 1)
 - [ ] 23-03-PLAN.md - Backend cleanup: eliminar endpoint PATCH /users/me/organizer (controller + service + DTO) (wave 2)
 

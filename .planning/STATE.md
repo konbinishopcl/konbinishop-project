@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T00:13:32.871Z"
+last_updated: "2026-05-29T01:15:27.174Z"
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 6
-  total_plans: 25
-  completed_plans: 25
+  total_plans: 28
+  completed_plans: 26
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 20 — flujo-completo-avisos-portadas
+**Current focus:** Phase 23 — cleanup-post-cambio-de-contexto-org-eliminar-concepto-perfil-organizador-del-usuario-implementar-mis-avisos-y-mis-portadas-reales-fix-uploadimage-x-org-context-sidebar-condicional-por-contexto-activo
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T00:13:32.867Z
+**Last session:** 2026-05-29T01:15:27.171Z
 
 ## Phase Summary
 
@@ -178,6 +178,8 @@ administrador quedan visibles al público.
 - [Phase 21]: precios/page.tsx converted to async SSR; PricingView is 'use client' and receives props from server parent
 - [Phase 21]: Home stats and settings fully wired from Promise.all in page.tsx; eventMinPrice from Math.min(categories[].pricePerDay)
 - [Phase 22-01]: OrgEntry exported from providers.tsx (canonical); 401 branch clears org like logout; init restore inside try/catch before setReady(true)
+- [Phase 23-01]: D-1 applied: /cuenta/organizador deleted; organizations are separate entities post-Phase-22; no user-level organizador concept remains
+- [Phase 23-01]: D-2 applied: carrito/exito CTA now points to /cuenta/perfil with copy '¿Tu perfil está completo?'
 
 ## Quick Tasks Completed
 
@@ -201,6 +203,7 @@ administrador quedan visibles al público.
 ### Roadmap Evolution
 
 - Phase 16 added: Necesito que el formulario de eventos del dashboard sea igual al formulario de eventos del dashboard de /design
+- Phase 23 added: Cleanup post-cambio de contexto org — eliminar concepto perfil organizador del usuario, implementar mis-avisos y mis-portadas reales, fix uploadImage X-Org-Context, sidebar condicional por contexto activo
 
 ## Next Action
 

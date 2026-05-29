@@ -180,4 +180,23 @@ Plans:
 
 ---
 
+### Phase 24: Real org account switching via JWT — replace fake activeOrg overlay with full identity switch
+
+**Goal:** Replace the fake org-context overlay (activeOrg + X-Org-Context header) with a real identity switch: switching to an org changes the JWT token and the `user` object completely, so every page (including /cuenta/perfil, /cuenta/mis-avisos, etc.) automatically shows the org's data. Backend adds `POST /auth/switch-org` which issues a new JWT with `{ sub: orgId, orgRole, actingAs: personalUserId }`; `OrgContextGuard` auto-populates `req.orgContext` from JWT instead of reading X-Org-Context header; `refreshToken` preserves org claims; `JwtUser` type extended with `orgRole?`/`actingAs?`; audit logs use `actingAs ?? sub` for correct attribution. Frontend rewrites `providers.tsx` with `switchToOrg(orgId)` (saves personal token + user for switch-back), `switchBack()`, `isOrgContext`, and `personalUser`; removes all X-Org-Context machinery from `api.ts`; rewrites `UserMenu.tsx` to use real switches; updates `AccountShell.tsx` to use `user` directly; updates `perfil/page.tsx` with conditional Danger Zone (no password change in org context); extends `ApiUser`/`sanitize()` to include `type` and `handle`. Goal: any page visited after switching to an org sees that org's JWT sub and responds with org data — no special-casing anywhere.
+
+**Requirements**: SWITCH-01..SWITCH-12
+
+**Depends on:** Phase 22 (org context base), Phase 23 (overlay cleanup)
+
+**Plans:** 4 plans
+
+Plans:
+
+- [ ] 24-01-PLAN.md — Backend auth foundation: JwtUser extension + POST /auth/switch-org + refreshToken org claims + OrgContextGuard rewrite (wave 1)
+- [ ] 24-02-PLAN.md — Backend service fixes: orders/payments/orgs userId via actingAs + org-can't-create-org guard + audit attribution across 5 services (wave 2)
+- [ ] 24-03-PLAN.md — Frontend foundation: api.ts cleanup + ApiUser/User type extension + providers.tsx real switchToOrg/switchBack (wave 2)
+- [ ] 24-04-PLAN.md — Frontend UI consumers: UserMenu + AccountShell + perfil Danger Zone + human-verify round-trip (wave 3)
+
+---
+
 *Roadmap creado: 2026-03-23 · v1.0 shipped: 2026-05-27*

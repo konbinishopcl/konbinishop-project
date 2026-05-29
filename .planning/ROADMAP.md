@@ -32,7 +32,6 @@
 - [x] Phase 13: Contenido avanzado (4/4 plans) — Artículos patrocinados, favoritos, perfil público v2
 - [x] Phase 14: Servicios y CRM (4/4 plans) — Cotizaciones fotografía/contenido + CRM pipeline unificado
 - [x] Phase 15: Rediseño UI — migración de vistas (5/5 plans) — Todas las vistas al nuevo diseño Konbini.html
-- [x] Phase 16: EventForm rewrite (1/1 plans) — Paridad visual con design/app.jsx: arrays dinámicos, uploads, footer sticky
 
 **Total:** 16 fases, 54 planes — shipped 2026-05-27
 
@@ -230,15 +229,32 @@ Plans:
 
 ### Phase 27: Dashboard analytics, pagos y graficos reales con Recharts
 
-**Goal:** Reemplazar todos los datos mock de analytics y pagos con datos reales: `HomeSection` conecta queue de revisión, actividad reciente y stats de categorías a sus endpoints reales; `PaymentsSection` carga historial real desde `GET /payments`; `ReportsSection` conecta a API con filtro de período funcional y exportación CSV real; instalar Recharts como librería de gráficos única, reemplazando todos los charts mock del dashboard (HomeSection, ReportsSection) con componentes Recharts reutilizables.
+**Goal:** Reemplazar todos los datos mock de analytics y pagos con datos reales: `HomeSection` conecta queue de revisión y actividad reciente a endpoints reales; `PaymentsSection` carga historial real desde un nuevo `GET /payments`; `ReportsSection` computa el gráfico de ventas desde el historial de pagos real con filtro de período client-side y exportación CSV real; instalar Recharts como librería de gráficos única, reemplazando los charts CSS mock de HomeSection y ReportsSection con un componente `<RevenueBarChart />` reutilizable. KPIs de ingresos, stats de categorías y rankings de top organizadores quedan mock (no existen endpoints de agregados).
 
-**Requirements**: DASH-ANLT-01..DASH-ANLT-12
+**Requirements**: DASH-ANLT-01..DASH-ANLT-12 (definidos inline a continuación y distribuidos en los 5 PLAN.md de la fase)
+
+- DASH-ANLT-01: Recharts instalado en apps/website como librería de gráficos única.
+- DASH-ANLT-02: Componente `RevenueBarChart` reutilizable (ResponsiveContainer 160px, accent fill, eje mono, sin Y/grid/legend) con empty-state.
+- DASH-ANLT-03: HomeSection cola de revisión desde `GET /events?status=PENDING_MODERATION&pageSize=5`.
+- DASH-ANLT-04: HomeSection aprobar/rechazar real (approveEvent/rejectEvent) + actividad reciente desde `GET /admin/audit-logs?pageSize=5`.
+- DASH-ANLT-05: Backend `GET /payments` admin (JwtAuthGuard + RolesGuard) que retorna órdenes PAID/FAILED normalizadas.
+- DASH-ANLT-06: `findAllForAdmin()` en PaymentsService con buyer + items resueltos server-side.
+- DASH-ANLT-07: Tipo `ApiPayment` + método `api.adminPayments` + reemplazo del chart CSS por `RevenueBarChart` en HomeSection y ReportsSection.
+- DASH-ANLT-08: KPI "En Revisión" de HomeSection derivado del total real de eventos pendientes.
+- DASH-ANLT-09: PaymentsSection tabla cargada desde `GET /payments` con loading/empty states.
+- DASH-ANLT-10: PaymentsSection modal de detalle real + export CSV client-side desde datos cargados.
+- DASH-ANLT-11: ReportsSection gráfico de ventas computado desde pagos reales con filtro de período client-side (Día/Semana/Mes/Año).
+- DASH-ANLT-12: ReportsSection export CSV real desde los pagos del período seleccionado.
 
 **Depends on:** Phase 26
-**Plans:** 0 plans
+**Plans:** 5/5 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 27 to break down)
+- [ ] 27-01-PLAN.md — Backend: GET /payments admin (controller + service findAllForAdmin) (wave 1)
+- [ ] 27-02-PLAN.md — Frontend foundation: recharts + RevenueBarChart + api.ts (ApiPayment/adminPayments/EventsQuery.status/ApiEvent.status) (wave 1)
+- [ ] 27-03-PLAN.md — HomeSection: queue + actividad + KPI reales + RevenueBarChart (wave 2)
+- [ ] 27-04-PLAN.md — PaymentsSection: tabla + modal reales + CSV (wave 2)
+- [ ] 27-05-PLAN.md — ReportsSection: gráfico period-bucketed real + CSV (wave 2)
 
 ### Phase 28: Artículos con múltiples categorías — many-to-many schema, seed desde WP real, API, website, formularios y vistas públicas
 

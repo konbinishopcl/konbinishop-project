@@ -36,7 +36,8 @@
       "Skill(gsd:execute-phase)",
       "Skill(gsd:pause-work)",
       "Bash(npx tsc:*)",
-      "Skill(gsd:progress)"
+      "Skill(gsd:progress)",
+      "Skill(gsd:ui-phase)"
     ]
   }
 }

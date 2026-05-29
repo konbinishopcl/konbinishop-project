@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T20:01:23.633Z"
+last_updated: "2026-05-29T20:07:13.132Z"
 progress:
   total_phases: 12
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 51
-  completed_plans: 50
+  completed_plans: 51
 ---
 
 # Project State
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T20:01:23.630Z
+**Last session:** 2026-05-29T20:07:13.129Z
 
 ## Phase Summary
 
@@ -208,6 +208,8 @@ administrador quedan visibles al público.
 - [Phase 28]: Sweep-after-loop pattern ensures all articles get categorySlugs[] even when WP coverage is incomplete; also serves as offline fallback
 - [Phase 28]: Anti-P2025 knownSlugs filter in seed.ts omits slugs not in curated DB list — auto-creation avoided because ArticleCategory.nameJa is required and would corrupt MegaMenu
 - [Phase 28-04]: getCat name preserved (not renamed to primaryCategory) — avoids touching NewsCategoryView imports; articleCategories?.[0]?.slug for rail grouping; D-06 query params left unchanged
+- [Phase 28-05]: Cat type uses name: string | null (nullable) matching ApiArticleCategory; category selector cloned exactly from tags pattern
+- [Phase 28-05]: D-11 badge uses articleCategories?.[0].name + conditional +N suffix with .pill class; null guard at articleCategories?.length
 
 ## Accumulated Context
 

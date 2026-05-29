@@ -268,6 +268,56 @@ export class PaymentsService {
     await this.prisma.$transaction(ops);
   }
 
+  async findAllForAdmin() {
+    const orders = await this.prisma.order.findMany({
+      where: { status: { in: [OrderStatus.PAID, OrderStatus.FAILED] } },
+      orderBy: { createdAt: 'desc' },
+      include: {
+        owner: { select: { firstname: true, lastname: true, email: true, handle: true } },
+        org:   { select: { firstname: true, lastname: true, email: true, handle: true } },
+        items: {
+          include: {
+            event:   { select: { title: true } },
+            spot:    { select: { title: true } },
+            hero:    { select: { title: true, titleAccent: true } },
+            article: { select: { title: true } },
+          },
+        },
+      },
+    });
+
+    const userName = (u: { firstname: string | null; lastname: string | null; email: string }) =>
+      [u.firstname, u.lastname].filter(Boolean).join(' ') || u.email;
+
+    return orders.map((o) => {
+      const principal = o.org ?? o.owner;
+      return {
+        id: o.id,
+        status: o.status as 'PAID' | 'FAILED',
+        total: o.total,
+        gateway: o.gateway,
+        createdAt: o.createdAt.toISOString(),
+        buyer: {
+          name: userName(principal),
+          handle: principal.handle,
+          email: principal.email,
+        },
+        items: o.items.map((it) => ({
+          type: it.type,
+          title:
+            it.event?.title ??
+            it.spot?.title ??
+            it.hero?.titleAccent ??
+            it.hero?.title ??
+            it.article?.title ??
+            it.type,
+          days: it.days,
+          subtotal: it.subtotal,
+        })),
+      };
+    });
+  }
+
   private async assertSpotQuota() {
     const maxActive = Number(this.config.get('SPOT_MAX_ACTIVE')) || 10;
     const active = await this.prisma.spot.count({

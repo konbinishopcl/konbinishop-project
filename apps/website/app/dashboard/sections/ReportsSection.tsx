@@ -7,20 +7,6 @@ import { RevenueBarChart, type RevenueDatum } from "@/components/charts/RevenueB
 
 type Period = "Día" | "Semana" | "Mes" | "Año";
 
-const TOP_INGRESOS: [string, string][] = [
-  ["Cinépolis Chile", "$1.2M"],
-  ["AnimeShop CL", "$680k"],
-  ["Konbini Editorial", "$520k"],
-  ["Producciones Tepuy", "$340k"],
-];
-
-const TOP_EVENTOS: [string, string][] = [
-  ["AnimeShop CL", "23 evt"],
-  ["Cinépolis Chile", "18 evt"],
-  ["Konbini Ed.", "14 evt"],
-  ["María Pérez", "9 evt"],
-];
-
 // ── CSV export helper ─────────────────────────────────────────────────────────
 
 function buildCSV(rows: ApiPayment[]): string {
@@ -214,6 +200,21 @@ export default function ReportsSection() {
     return { chartData, periodPayments };
   }, [payments, period]);
 
+  // Top buyers by revenue (grouped from PAID payments)
+  const topIngresos = useMemo(() => {
+    const map = new Map<string, number>();
+    payments
+      .filter((p) => p.status === "PAID")
+      .forEach((p) => map.set(p.buyer.name, (map.get(p.buyer.name) ?? 0) + p.total));
+    const sorted = [...map.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const max = sorted[0]?.[1] ?? 0;
+    return sorted.map(([name, total]) => ({
+      name,
+      label: "$" + total.toLocaleString("es-CL"),
+      pct: max > 0 ? Math.round((total / max) * 100) : 0,
+    }));
+  }, [payments]);
+
   function handleExportCSV() {
     const csv = buildCSV(periodPayments);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -272,39 +273,29 @@ export default function ReportsSection() {
         )}
       </div>
 
-      {/* Two-column grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 18 }}>
-        {/* Top organizadores ingresos */}
-        <div className="panel">
-          <div className="ph">
-            <h3>Top organizadores (ingresos)</h3>
-          </div>
-          {TOP_INGRESOS.map(([name, value], i) => (
-            <div key={i} className="cat-bar">
-              <div className="name">{i + 1}. {name}</div>
-              <div className="track">
-                <div style={{ width: (90 - i * 18) + "%" }} />
-              </div>
-              <div className="v">{value}</div>
-            </div>
-          ))}
+      {/* Top buyers by revenue */}
+      <div className="panel" style={{ marginTop: 18 }}>
+        <div className="ph">
+          <h3>Top compradores (ingresos)</h3>
         </div>
-
-        {/* Top organizadores eventos */}
-        <div className="panel">
-          <div className="ph">
-            <h3>Top organizadores (eventos)</h3>
+        {topIngresos.length === 0 ? (
+          <div className="empty">
+            <div className="ic" />
+            <h3>Sin datos de ingresos</h3>
           </div>
-          {TOP_EVENTOS.map(([name, value], i) => (
-            <div key={i} className="cat-bar">
-              <div className="name">{i + 1}. {name}</div>
-              <div className="track">
-                <div style={{ width: (80 - i * 16) + "%" }} />
+        ) : (
+          topIngresos.map((t, i) => (
+            <div key={t.name} className="cat-bar">
+              <div className="name">
+                {i + 1}. {t.name}
               </div>
-              <div className="v">{value}</div>
+              <div className="track">
+                <div style={{ width: t.pct + "%" }} />
+              </div>
+              <div className="v">{t.label}</div>
             </div>
-          ))}
-        </div>
+          ))
+        )}
       </div>
     </>
   );

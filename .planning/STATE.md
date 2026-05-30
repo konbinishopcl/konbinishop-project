@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-29T20:07:13.132Z"
+last_updated: "2026-05-30T18:39:59.188Z"
 progress:
   total_phases: 12
   completed_phases: 12
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-29T20:07:13.129Z
+**Last session:** 2026-05-30T18:39:59.185Z
 
 ## Phase Summary
 
@@ -210,6 +210,7 @@ administrador quedan visibles al público.
 - [Phase 28-04]: getCat name preserved (not renamed to primaryCategory) — avoids touching NewsCategoryView imports; articleCategories?.[0]?.slug for rail grouping; D-06 query params left unchanged
 - [Phase 28-05]: Cat type uses name: string | null (nullable) matching ApiArticleCategory; category selector cloned exactly from tags pattern
 - [Phase 28-05]: D-11 badge uses articleCategories?.[0].name + conditional +N suffix with .pill class; null guard at articleCategories?.length
+- [Phase 27.1-02]: crumbPrefix derived as subPage?.crumb ?? activeGroup/cur.label to reuse existing activeGroup const; settings fetch uses headers-only GET pattern matching existing API route
 
 ## Accumulated Context
 

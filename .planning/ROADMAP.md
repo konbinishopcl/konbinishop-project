@@ -305,3 +305,16 @@ Plans:
 ---
 
 *Roadmap creado: 2026-03-23 · v1.0 shipped: 2026-05-27*
+
+### Phase 28.1: Sitio público gap fixes — FAQs desde API real, filtros rotos en categoría y noticias, autor real en artículos (INSERTED)
+
+**Goal:** Eliminar datos mock y funcionalidades rotas del sitio público: (1) quitar el filtro "Ciudad" de `/categoria/[cat]` que muestra UI pero nunca filtra `filtered[]`; (2) quitar el filtro "Tipo" (Artículos/Entrevistas/Reseñas) de `/noticias/categorias/[slug]` y `/noticias/tags/[slug]` — `Article` no tiene campo `type`; (3) conectar `/preguntas-frecuentes` y la sección FAQ de `/precios` a `GET /faq` real (ya público, `api.faqAll()` ya existe) con fallback al array hardcodeado; (4) agregar `user` a `ARTICLE_DETAIL_INCLUDE` en el backend y derivar `authorName` desde `article.user` en `ArticleView.tsx` con fallback "Konbini Editorial" para artículos importados.
+**Requirements**: gap closure — no formal req IDs
+**Depends on:** Phase 28
+**Plans:** 3 plans
+
+Plans:
+- [ ] 28.1-01-PLAN.md — Backend ARTICLE_DETAIL_INCLUDE user + ApiArticle type + ArticleView authorName (wave 1)
+- [ ] 28.1-02-PLAN.md — FAQs desde API real: preguntas-frecuentes/page.tsx + precios/page.tsx + PricingView.tsx (wave 1)
+- [ ] 28.1-03-PLAN.md — Broken filters removal: CategoryView Ciudad + NewsCategoryView Tipo + TagArticlesView Tipo (wave 1)
+

@@ -16,7 +16,6 @@ type Props = {
 // Opciones de ordenado
 const SORT_OPTIONS = ["Relevancia", "Más recientes", "Precio: menor", "Precio: mayor"];
 
-const CITY_OPTIONS = ["Todas las ciudades", "Santiago", "Valparaíso", "Concepción", "Antofagasta", "Viña del Mar"];
 const FORMAT_OPTIONS = ["Todos", "Presencial", "Online"];
 
 export function CategoryView({ category, allCategories, items }: Props) {
@@ -25,7 +24,6 @@ export function CategoryView({ category, allCategories, items }: Props) {
   const [openPop, setOpenPop] = useState<string | null>(null);
   const [filterPrice, setFilterPrice] = useState("Todos");
   const [filterQuick, setFilterQuick] = useState<string | null>(null);
-  const [filterCity, setFilterCity] = useState("Todas las ciudades");
   const [filterFormat, setFilterFormat] = useState("Todos");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -51,7 +49,6 @@ export function CategoryView({ category, allCategories, items }: Props) {
   const clearFilters = () => {
     setFilterPrice("Todos");
     setFilterQuick(null);
-    setFilterCity("Todas las ciudades");
     setFilterFormat("Todos");
     setDateFrom("");
     setDateTo("");
@@ -60,7 +57,6 @@ export function CategoryView({ category, allCategories, items }: Props) {
   const activeCount =
     (filterPrice !== "Todos" ? 1 : 0) +
     (filterQuick ? 1 : 0) +
-    (filterCity !== "Todas las ciudades" ? 1 : 0) +
     (filterFormat !== "Todos" ? 1 : 0) +
     (hasDateRange ? 1 : 0);
 
@@ -131,31 +127,6 @@ export function CategoryView({ category, allCategories, items }: Props) {
                     <button className="btn ghost block" style={{ padding: "8px 12px", fontSize: 12 }} onClick={() => { setDateFrom(""); setDateTo(""); setOpenPop(null); }}>Limpiar</button>
                     <button className="btn dark block" style={{ padding: "8px 12px", fontSize: 12 }} onClick={() => setOpenPop(null)}>Aplicar</button>
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Ciudad */}
-            <div style={{ position: "relative" }}>
-              <button
-                className={`sel ${openPop === "city" ? "on" : ""} ${filterCity !== "Todas las ciudades" ? "on" : ""}`}
-                onClick={() => setOpenPop(openPop === "city" ? null : "city")}
-              >
-                <strong style={{ fontWeight: 600 }}>{filterCity}</strong> {Ic.chev}
-              </button>
-              {openPop === "city" && (
-                <div className="menu" style={{ top: 44, left: 0, minWidth: 200 }} onMouseLeave={() => setOpenPop(null)}>
-                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: ".15em", color: "var(--ink-3)", textTransform: "uppercase", padding: "8px 12px 4px" }}>Ciudad</div>
-                  {CITY_OPTIONS.map((o) => (
-                    <button
-                      key={o}
-                      onClick={() => { setFilterCity(o); setOpenPop(null); }}
-                      style={filterCity === o ? { background: "var(--surface-2)", color: "var(--ink)" } : undefined}
-                    >
-                      {filterCity === o && <span style={{ color: "var(--accent)", marginRight: 4 }}>✓</span>}
-                      {o}
-                    </button>
-                  ))}
                 </div>
               )}
             </div>

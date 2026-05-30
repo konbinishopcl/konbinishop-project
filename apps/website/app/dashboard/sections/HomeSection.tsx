@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
-import { api, type ApiEvent, type ApiAuditLog } from "@/lib/api";
+import { api, type ApiEvent, type ApiAuditLog, type ApiEventCategory } from "@/lib/api";
 import { AdminApproveModal } from "@/app/dashboard/modals/AdminApproveModal";
 import { AdminRejectModal }  from "@/app/dashboard/modals/AdminRejectModal";
 import { RevenueBarChart, type RevenueDatum } from "@/components/charts/RevenueBarChart";
@@ -14,20 +15,6 @@ type ModalState =
   | { type: "reject";  item: ApiEvent }
   | null;
 
-// ── Mock data (category stats + revenue values — no aggregate endpoint) ───────
-
-const CATEGORIES = [
-  ["Anime",        38, 84],
-  ["Conciertos",   28, 62],
-  ["Cine",         22, 48],
-  ["Gaming",       16, 36],
-  ["Convenciones", 12, 27],
-  ["Cosplay",       8, 18],
-] as const;
-
-const CHART_VALUES = [42, 51, 38, 60, 72, 65, 80, 90, 75, 88, 110, 142];
-const CHART_LABELS = ["E","F","M","A","M","J","J","A","S","O","N","D"];
-
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function HomeSection() {
@@ -36,19 +23,68 @@ export default function HomeSection() {
   const [pendingTotal, setPendingTotal] = useState(0);
   const [activity,     setActivity]     = useState<ApiAuditLog[]>([]);
   const [modal,        setModal]        = useState<ModalState>(null);
+  const [monthRevenue,   setMonthRevenue]   = useState(0);
+  const [publishedTotal, setPublishedTotal] = useState(0);
+  const [subsTotal,      setSubsTotal]      = useState(0);
+  const [categoryBars,   setCategoryBars]   = useState<{ name: string; count: number; pct: number }[]>([]);
+  const [revenueData,    setRevenueData]    = useState<RevenueDatum[]>([]);
 
   const closeModal = () => setModal(null);
 
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const [evts, logs] = await Promise.all([
+      const [evts, logs, payments, approved, subsRes, cats] = await Promise.all([
         api.adminEvents(token, { status: "PENDING_MODERATION", pageSize: 5 }),
         api.auditLogs({ pageSize: 5 }, token),
+        api.adminPayments(token),
+        api.adminEvents(token, { status: "APPROVED", pageSize: 1 }),
+        api.subscriptions(token),
+        api.eventCategories(),
       ]);
       setQueue(evts.items);
       setPendingTotal(evts.total);
       setActivity(logs.items);
+
+      // INGRESOS MES: sum of current-month PAID payments
+      const now = new Date();
+      const monthSum = payments
+        .filter((p) => {
+          if (p.status !== "PAID") return false;
+          const d = new Date(p.createdAt);
+          return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        })
+        .reduce((s, p) => s + p.total, 0);
+      setMonthRevenue(monthSum);
+      setPublishedTotal(approved.total);
+      setSubsTotal(subsRes.total);
+
+      // Category bars from _count.events, top 6 by count, pct relative to max
+      const withCounts = cats
+        .map((c) => ({
+          name: c.name ?? c.slug,
+          count: (c as ApiEventCategory & { _count?: { events?: number } })._count?.events ?? 0,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6);
+      const maxCount = withCounts[0]?.count ?? 0;
+      setCategoryBars(
+        withCounts.map((c) => ({ ...c, pct: maxCount > 0 ? Math.round((c.count / maxCount) * 100) : 0 }))
+      );
+
+      // Revenue chart: bucket PAID payments by month (last 12 months, oldest→newest)
+      const MONTH_LABELS = ["E","F","M","A","M","J","J","A","S","O","N","D"];
+      const refMonths = Array.from({ length: 12 }, (_, idx) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (11 - idx), 1);
+        return { year: d.getFullYear(), month: d.getMonth(), label: MONTH_LABELS[d.getMonth()] };
+      });
+      const monthly = refMonths.map((rm) => ({ label: rm.label, value: 0 }));
+      payments.filter((p) => p.status === "PAID").forEach((p) => {
+        const pd = new Date(p.createdAt);
+        const idx = refMonths.findIndex((rm) => rm.year === pd.getFullYear() && rm.month === pd.getMonth());
+        if (idx !== -1) monthly[idx].value += p.total;
+      });
+      setRevenueData(monthly.every((m) => m.value === 0) ? [] : monthly);
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "Inicio no disponible — intenta de nuevo");
     }
@@ -88,32 +124,25 @@ export default function HomeSection() {
     }
   }
 
-  // Build chart data from mock values
-  const chartData: RevenueDatum[] = CHART_VALUES.map((value, i) => ({ label: CHART_LABELS[i], value }));
-
   return (
     <>
       {/* KPIs */}
       <div className="kpi-grid">
         <div className="kpi">
           <div className="l">INGRESOS MES</div>
-          <div className="v">$3.8M</div>
-          <div className="d up">↑ 24%</div>
+          <div className="v">${monthRevenue.toLocaleString("es-CL")}</div>
         </div>
         <div className="kpi">
           <div className="l">EVENTOS PUBLICADOS</div>
-          <div className="v">142</div>
-          <div className="d up">↑ 18%</div>
+          <div className="v">{publishedTotal}</div>
         </div>
         <div className="kpi">
           <div className="l">EN REVISIÓN</div>
           <div className="v">{pendingTotal}</div>
-          <div className="d up">↑ 3</div>
         </div>
         <div className="kpi">
           <div className="l">SUSCRIPTORES</div>
-          <div className="v">87</div>
-          <div className="d up">↑ 12</div>
+          <div className="v">{subsTotal}</div>
         </div>
       </div>
 
@@ -125,7 +154,7 @@ export default function HomeSection() {
             <h3>Ingresos mensuales</h3>
             <div style={{ fontSize: 12, color: "var(--ink-3)" }}>ÚLTIMOS 12 MESES</div>
           </div>
-          <RevenueBarChart data={chartData} />
+          <RevenueBarChart data={revenueData} />
         </div>
 
         {/* Category breakdown */}
@@ -133,13 +162,13 @@ export default function HomeSection() {
           <div className="ph">
             <h3>Por categoría</h3>
           </div>
-          {CATEGORIES.map(([name, count, pct]) => (
-            <div key={name} className="cat-bar">
-              <div className="name">{name}</div>
-              <div className="track">
-                <div style={{ width: pct + "%" }} />
-              </div>
-              <div className="v">{count} evt</div>
+          {categoryBars.length === 0 ? (
+            <div className="empty"><div className="ic" /><h3>Sin categorías</h3></div>
+          ) : categoryBars.map((c) => (
+            <div key={c.name} className="cat-bar">
+              <div className="name">{c.name}</div>
+              <div className="track"><div style={{ width: c.pct + "%" }} /></div>
+              <div className="v">{c.count} evt</div>
             </div>
           ))}
         </div>
@@ -152,9 +181,9 @@ export default function HomeSection() {
           <div className="ph">
             <h3>Cola de revisión</h3>
             <div className="right-act">
-              <button className="sel" style={{ padding: "6px 12px", fontSize: 12 }}>
+              <Link href="/dashboard/events" className="sel" style={{ padding: "6px 12px", fontSize: 12 }}>
                 Ver toda →
-              </button>
+              </Link>
             </div>
           </div>
           {queue.length === 0 ? (

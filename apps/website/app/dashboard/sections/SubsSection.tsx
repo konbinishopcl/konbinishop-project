@@ -98,6 +98,29 @@ export default function SubsSection() {
 
   useEffect(() => { loadSubs(); }, [loadSubs]);
 
+  useEffect(() => {
+    if (!token) return;
+    fetch("/api/settings", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        const keys: (keyof PlanSettings)[] = [
+          "sub_monthly_price",
+          "sub_credits_per_month",
+          "sub_aviso_discount",
+          "sub_portada_discount",
+        ];
+        const patch: Partial<PlanSettings> = {};
+        data.forEach(({ key, value }: { key: string; value: string }) => {
+          if (keys.includes(key as keyof PlanSettings)) {
+            patch[key as keyof PlanSettings] = value;
+          }
+        });
+        if (Object.keys(patch).length) setPlan((p) => ({ ...p, ...patch }));
+      })
+      .catch(() => {});
+  }, [token]);
+
   const activeCount = subs.filter((s) => s.status === 'ACTIVE').length;
 
   return (

@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-30T18:42:54.589Z"
+last_updated: "2026-05-30T18:49:13.217Z"
 progress:
   total_phases: 12
   completed_phases: 12
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-30T18:42:50.120Z
+**Last session:** 2026-05-30T18:49:13.214Z
 
 ## Phase Summary
 
@@ -216,6 +216,7 @@ administrador quedan visibles al público.
 - [Phase 27.1-04]: KPIs computed client-side from already-loaded rows via useMemo — no extra API calls; REEMBOLSOS removed; FALLIDOS replaces PENDIENTES; fake PDF/refund buttons removed from modal
 - [Phase 27.1-03]: Category bars use _count.events from eventCategories() with defensive cast; revenue chart passes empty array when all buckets zero to trigger empty state
 - [Phase 27.1-06]: Deleted both inline AdminApproveModal components entirely — no refactor, clean removal. Approve uses ConfirmDialog without danger or typeToConfirm.
+- [Phase 27.1-dashboard-gap-fixes]: RealCountriesSection/RealStatesSection/RealCitiesSection replace mock KINDS; GeoSelectFormModal for id-valued parent selects; client-side joins for parent names and counts; TagsFormModal reused verbatim; SimpleCRUDSection is pure router
 
 ## Accumulated Context
 

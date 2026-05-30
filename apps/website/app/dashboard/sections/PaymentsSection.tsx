@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { api, type ApiPayment } from "@/lib/api";
@@ -44,6 +44,20 @@ export default function PaymentsSection() {
 
   const { page, goPage, perPage, changePerPage, total, totalPages, from, to, paginated: paginatedRows } = useClientPagination(rows);
 
+  const kpis = useMemo(() => {
+    const now = new Date();
+    const paid = rows.filter((r) => r.status === "PAID");
+    const monthRevenue = paid
+      .filter((r) => {
+        const d = new Date(r.createdAt);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      })
+      .reduce((s, r) => s + r.total, 0);
+    const historic = paid.reduce((s, r) => s + r.total, 0);
+    const failed = rows.filter((r) => r.status === "FAILED").length;
+    return { monthRevenue, historic, failed };
+  }, [rows]);
+
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -76,10 +90,9 @@ export default function PaymentsSection() {
     <>
       {/* KPIs */}
       <div className="kpi-grid">
-        <div className="kpi"><div className="l">INGRESOS MES</div><div className="v">$3.8M</div></div>
-        <div className="kpi"><div className="l">HISTÓRICO</div><div className="v">$42M</div></div>
-        <div className="kpi"><div className="l">PENDIENTES</div><div className="v">3</div></div>
-        <div className="kpi"><div className="l">REEMBOLSOS</div><div className="v">2</div></div>
+        <div className="kpi"><div className="l">INGRESOS MES</div><div className="v">{formatCLP(kpis.monthRevenue)}</div></div>
+        <div className="kpi"><div className="l">HISTÓRICO</div><div className="v">{formatCLP(kpis.historic)}</div></div>
+        <div className="kpi"><div className="l">FALLIDOS</div><div className="v">{kpis.failed}</div></div>
       </div>
 
       {/* Table */}
@@ -88,7 +101,7 @@ export default function PaymentsSection() {
           <thead>
             <tr>
               <th>ID</th>
-              <th>ORGANIZADOR</th>
+              <th>COMPRADOR</th>
               <th>PRODUCTO</th>
               <th>MONTO</th>
               <th>FECHA</th>
@@ -222,14 +235,6 @@ export default function PaymentsSection() {
             </div>
 
             <div className="row-act" style={{ justifyContent: "flex-end" }}>
-              <button onClick={() => { setDetail(null); toast.info("Descargando comprobante PDF…"); }}>
-                Descargar comprobante
-              </button>
-              {detail.status === "PAID" && (
-                <button className="bad" onClick={() => { setDetail(null); toast.warning("Iniciando reembolso…"); }}>
-                  Reembolsar
-                </button>
-              )}
               <button className="btn dark" style={{ padding: "6px 14px", fontSize: 12 }} onClick={() => setDetail(null)}>
                 Cerrar
               </button>

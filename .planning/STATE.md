@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-30T21:11:34.205Z"
+last_updated: "2026-05-30T21:11:51.058Z"
 progress:
   total_phases: 14
   completed_phases: 13
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-30T21:11:34.202Z
+**Last session:** 2026-05-30T21:11:46.952Z
 
 ## Phase Summary
 
@@ -218,6 +218,7 @@ administrador quedan visibles al público.
 - [Phase 27.1-06]: Deleted both inline AdminApproveModal components entirely — no refactor, clean removal. Approve uses ConfirmDialog without danger or typeToConfirm.
 - [Phase 27.1-dashboard-gap-fixes]: RealCountriesSection/RealStatesSection/RealCitiesSection replace mock KINDS; GeoSelectFormModal for id-valued parent selects; client-side joins for parent names and counts; TagsFormModal reused verbatim; SimpleCRUDSection is pure router
 - [Phase 28.1]: ARTICLE_DETAIL_INCLUDE gets user without email (only firstname+lastname); ARTICLE_INCLUDE already had email in user select
+- [Phase 28.1]: ApiFaqItem fallback objects include createdAt/updatedAt as empty strings to satisfy the full type shape; FAQ fetch in precios/page.tsx is independent from settings/categories Promise.all
 
 ## Accumulated Context
 

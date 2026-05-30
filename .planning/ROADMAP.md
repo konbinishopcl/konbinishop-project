@@ -136,7 +136,7 @@ Plans:
 
 **Depends on:** Phase 12 (orders/payments backend), Phase 20 (spots/heroes types in lib/api.ts)
 
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 
@@ -157,7 +157,7 @@ Plans:
 
 **Depends on:** Phase 9 (org backend), Phase 20 (spots/heroes), Phase 21 (cart/checkout)
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 

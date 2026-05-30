@@ -569,6 +569,29 @@ export const api = {
   regions: (country?: string) => request<ApiRegion[]>(`/states${country ? `?country=${encodeURIComponent(country)}` : ""}`),
   communes: (region?: string) =>
     request<ApiCommune[]>(`/cities${region ? `?state=${encodeURIComponent(region)}` : ""}`),
+
+  // ───────── Geo admin CRUD (Phase 27.1) ─────────
+  createCountry: (body: { name: string; slug: string }, token: string) =>
+    request<ApiCountry>("/countries", { method: "POST", body: JSON.stringify(body) }, token),
+  updateCountry: (id: number, body: { name?: string; slug?: string }, token: string) =>
+    request<ApiCountry>(`/countries/${id}`, { method: "PATCH", body: JSON.stringify(body) }, token),
+  deleteCountry: (id: number, token: string) =>
+    request<{ deleted: boolean }>(`/countries/${id}`, { method: "DELETE" }, token),
+
+  createState: (body: { name: string; slug: string; countryId: number }, token: string) =>
+    request<ApiRegion>("/states", { method: "POST", body: JSON.stringify(body) }, token),
+  updateState: (id: number, body: { name?: string; slug?: string; countryId?: number }, token: string) =>
+    request<ApiRegion>(`/states/${id}`, { method: "PATCH", body: JSON.stringify(body) }, token),
+  deleteState: (id: number, token: string) =>
+    request<{ deleted: boolean }>(`/states/${id}`, { method: "DELETE" }, token),
+
+  createCity: (body: { name: string; slug: string; stateId: number }, token: string) =>
+    request<ApiCommune>("/cities", { method: "POST", body: JSON.stringify(body) }, token),
+  updateCity: (id: number, body: { name?: string; slug?: string; stateId?: number }, token: string) =>
+    request<ApiCommune>(`/cities/${id}`, { method: "PATCH", body: JSON.stringify(body) }, token),
+  deleteCity: (id: number, token: string) =>
+    request<{ deleted: boolean }>(`/cities/${id}`, { method: "DELETE" }, token),
+
   heroes: () => request<ApiList<ApiHero>>("/heroes").then((r) => r.items),
   spots:  () => request<ApiList<ApiSpot>>("/spots").then((r) => r.items),
 

@@ -154,7 +154,7 @@ export function ArticleForm({ mode, variant, initial }: Props) {
   if (initial?.status === "APPROVED") initStatus = "APPROVED";
   else if (initial?.status === "DRAFT") initStatus = "DRAFT";
 
-  const { register, control, handleSubmit, watch, getValues, formState: { errors } } = useForm<ArticleValues>({
+  const { register, control, handleSubmit, watch, getValues, setValue, formState: { errors } } = useForm<ArticleValues>({
     resolver: zodResolver(articleSchema),
     mode: "onTouched",
     defaultValues: {
@@ -171,6 +171,15 @@ export function ArticleForm({ mode, variant, initial }: Props) {
   const watchStatus = watch("status");
   const watchTitle = watch("title");
   const watchContent = watch("content");
+  const watchSlug = watch("slug");
+
+  // Auto-generate slug from title unless user has manually edited it
+  const slugLockedRef = useRef(!!initial?.slug);
+  useEffect(() => {
+    if (slugLockedRef.current) return;
+    const auto = watchTitle.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
+    setValue("slug", auto, { shouldDirty: false });
+  }, [watchTitle, setValue]);
 
   useEffect(() => {
     fetch("/api/article-tags").then(r => r.json()).then(d => setTags(Array.isArray(d) ? d : [])).catch(() => setTags([]));
@@ -339,8 +348,8 @@ export function ArticleForm({ mode, variant, initial }: Props) {
 
           <div className="grid-2">
             <div className="field">
-              <label>Slug <small style={{ color: "var(--ink-3)" }}>(opcional)</small></label>
-              <input type="text" placeholder="demon-slayer-estreno-mundial" {...register("slug")} />
+              <label>Slug <small style={{ color: "var(--ink-3)" }}>(auto)</small></label>
+              <input type="text" placeholder="demon-slayer-estreno-mundial" {...register("slug")} onInput={() => { slugLockedRef.current = true; }} />
             </div>
             <div className="field">
               <label>Tiempo de lectura (min)</label>

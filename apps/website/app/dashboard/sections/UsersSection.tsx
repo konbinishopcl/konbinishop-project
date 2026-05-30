@@ -13,21 +13,36 @@ type UserFilter = "Todos" | "Persona" | "Organización" | "Baneado";
 
 function ConfirmDialog({ title, message, confirmLabel, danger, onConfirm, onClose }: {
   title: string; message: string; confirmLabel: string;
-  danger?: boolean; onConfirm: () => void; onClose: () => void;
+  danger?: boolean; onConfirm: () => Promise<void>; onClose: () => void;
 }) {
+  const [busy, setBusy] = useState(false);
+
+  async function handleConfirm() {
+    setBusy(true);
+    try {
+      await onConfirm();
+      onClose();
+    } catch {
+      // stay open on error
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="confirm-bg" onClick={onClose}>
       <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
         <h3 style={{ margin: "0 0 10px" }}>{title}</h3>
         <p style={{ fontSize: 14, color: "var(--ink-2)", marginBottom: 18 }}>{message}</p>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-          <button className="btn ghost sm" onClick={onClose}>Cancelar</button>
+          <button className="btn ghost sm" onClick={onClose} disabled={busy}>Cancelar</button>
           <button
             className="btn sm"
             style={{ background: danger ? "var(--err)" : "var(--ink)", color: "#fff" }}
-            onClick={() => { onConfirm(); onClose(); }}
+            onClick={handleConfirm}
+            disabled={busy}
           >
-            {confirmLabel}
+            {busy ? "…" : confirmLabel}
           </button>
         </div>
       </div>
@@ -255,6 +270,7 @@ export default function UsersSection() {
           onClose={() => setModal(null)}
         />
       )}
+
       {modal?.type === "view" && (
         <UserDetailModal item={modal.item} onClose={() => setModal(null)} />
       )}

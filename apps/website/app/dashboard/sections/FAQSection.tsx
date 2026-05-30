@@ -1,8 +1,18 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { useUser } from "@/components/providers";
 import { api, type ApiFaqItem } from "@/lib/api";
+
+// ── Schema ─────────────────────────────────────────────────────────────────────
+
+const Schema = z.object({
+  q: z.string().min(5, "Mínimo 5 caracteres"),
+  a: z.string().min(10, "Mínimo 10 caracteres"),
+});
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type Field = {
   k: string;
@@ -11,6 +21,19 @@ type Field = {
   type?: string;
   placeholder?: string;
 };
+
+const FIELDS: Field[] = [
+  { k: "q", label: "Pregunta",  required: true, placeholder: "¿Cómo publico un evento?" },
+  { k: "a", label: "Respuesta", required: true, type: "textarea", placeholder: "Escribe la respuesta completa..." },
+];
+
+type ModalState =
+  | { type: "create" }
+  | { type: "edit"; item: ApiFaqItem }
+  | { type: "delete"; item: ApiFaqItem }
+  | null;
+
+// ── AdminFormModal ─────────────────────────────────────────────────────────────
 
 function AdminFormModal({
   title,
@@ -23,10 +46,26 @@ function AdminFormModal({
   fields: Field[];
   initial?: Record<string, string>;
   onClose: () => void;
-  onSave: (data: Record<string, string>) => void;
+  onSave: (data: Record<string, string>) => Promise<void>;
 }) {
   const [data, setData] = useState<Record<string, string>>(initial);
+  const [busy, setBusy] = useState(false);
   const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
+
+  const isValid = Schema.safeParse(data).success;
+
+  async function handleSave() {
+    setBusy(true);
+    try {
+      await onSave(data);
+      onClose();
+    } catch {
+      // stay open
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="confirm-bg" onClick={onClose}>
       <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
@@ -43,6 +82,9 @@ function AdminFormModal({
                   value={data[f.k] || ""}
                   onChange={(e) => set(f.k, e.target.value)}
                   placeholder={f.placeholder}
+                  disabled={busy}
+                  rows={4}
+                  style={{ resize: "vertical" }}
                 />
               ) : (
                 <input
@@ -50,46 +92,16 @@ function AdminFormModal({
                   value={data[f.k] || ""}
                   onChange={(e) => set(f.k, e.target.value)}
                   placeholder={f.placeholder}
+                  disabled={busy}
                 />
               )}
             </div>
           ))}
         </div>
         <div className="row-act">
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn dark" onClick={() => { onSave(data); onClose(); }}>Guardar</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ConfirmDialog({
-  title,
-  message,
-  confirmLabel,
-  onConfirm,
-  onClose,
-}: {
-  title: string;
-  message: string;
-  confirmLabel: string;
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
-  return (
-    <div className="confirm-bg" onClick={onClose}>
-      <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
-        <h3 className="h">{title}</h3>
-        <p className="p">{message}</p>
-        <div className="row-act">
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button
-            className="btn primary"
-            style={{ background: "var(--err)" }}
-            onClick={() => { onConfirm(); onClose(); }}
-          >
-            {confirmLabel}
+          <button className="btn ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button className="btn dark" onClick={handleSave} disabled={!isValid || busy}>
+            {busy ? "Guardando…" : "Guardar"}
           </button>
         </div>
       </div>
@@ -97,16 +109,55 @@ function ConfirmDialog({
   );
 }
 
-const FIELDS: Field[] = [
-  { k: "q", label: "Pregunta",  required: true, placeholder: "¿Cómo publico un evento?" },
-  { k: "a", label: "Respuesta", required: true, type: "textarea", placeholder: "Escribe la respuesta completa..." },
-];
+// ── ConfirmDialog ─────────────────────────────────────────────────────────────
 
-type ModalState =
-  | { type: "create" }
-  | { type: "edit"; item: ApiFaqItem }
-  | { type: "delete"; item: ApiFaqItem }
-  | null;
+function ConfirmDialog({
+  title,
+  message,
+  onConfirm,
+  onClose,
+}: {
+  title: string;
+  message: string;
+  onConfirm: () => Promise<void>;
+  onClose: () => void;
+}) {
+  const [busy, setBusy] = useState(false);
+
+  async function handleConfirm() {
+    setBusy(true);
+    try {
+      await onConfirm();
+      onClose();
+    } catch {
+      // stay open
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
+        <h3 className="h">{title}</h3>
+        <p className="p">{message}</p>
+        <div className="row-act">
+          <button className="btn ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button
+            className="btn primary"
+            style={{ background: "var(--err)" }}
+            onClick={handleConfirm}
+            disabled={busy}
+          >
+            {busy ? "Eliminando…" : "Sí, eliminar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Section ───────────────────────────────────────────────────────────────────
 
 export default function FAQSection() {
   const { token } = useUser();
@@ -128,35 +179,38 @@ export default function FAQSection() {
   useEffect(() => { loadFaqs(); }, [loadFaqs]);
 
   async function handleCreate(data: Record<string, string>) {
-    if (!token) return;
+    if (!token) { toast.error("Sin sesión activa"); throw new Error("no token"); }
     try {
       await api.faqCreate({ question: data.q, answer: data.a }, token);
       toast.success("Pregunta agregada");
       await loadFaqs();
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "No se pudo crear");
+      throw ex;
     }
   }
 
   async function handleEdit(id: number, data: Record<string, string>) {
-    if (!token) return;
+    if (!token) { toast.error("Sin sesión activa"); throw new Error("no token"); }
     try {
       await api.faqUpdate(id, { question: data.q, answer: data.a }, token);
       toast.success("Cambios guardados");
       await loadFaqs();
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "No se pudo actualizar");
+      throw ex;
     }
   }
 
   async function handleDelete(id: number) {
-    if (!token) return;
+    if (!token) { toast.error("Sin sesión activa"); throw new Error("no token"); }
     try {
       await api.faqRemove(id, token);
       toast.success("Pregunta eliminada");
       await loadFaqs();
     } catch (ex) {
       toast.error(ex instanceof Error ? ex.message : "No se pudo eliminar");
+      throw ex;
     }
   }
 
@@ -164,7 +218,7 @@ export default function FAQSection() {
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ color: "var(--ink-3)", fontSize: 13 }}>
-          {faqs.length} preguntas activas · arrastra para reordenar
+          {faqs.length} preguntas activas
         </div>
         <button className="btn primary" onClick={() => setModal({ type: "create" })}>＋ Nueva pregunta</button>
       </div>
@@ -212,7 +266,6 @@ export default function FAQSection() {
         <ConfirmDialog
           title="¿Eliminar pregunta?"
           message={`Se quitará "${modal.item.question}" del FAQ público.`}
-          confirmLabel="Sí, eliminar"
           onConfirm={() => handleDelete(modal.item.id)}
           onClose={() => setModal(null)}
         />

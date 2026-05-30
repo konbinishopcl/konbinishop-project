@@ -1,7 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
+import { useUser } from "@/components/providers";
 import { TablePagination, useClientPagination } from "@/components/TablePagination";
+
+// ── Schema ─────────────────────────────────────────────────────────────────────
+
+const Schema = z.object({
+  name: z.string().min(2, "Mínimo 2 caracteres"),
+  slug: z.string().min(2, "Mínimo 2 caracteres"),
+});
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type TagItem = { id: number; name: string; slug: string };
 type ModalState =
@@ -10,15 +21,13 @@ type ModalState =
   | { type: "delete"; item: TagItem }
   | null;
 
-async function authedFetch(path: string, init: RequestInit = {}) {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(init.headers as Record<string, string> | undefined),
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return fetch(path, { ...init, headers });
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function slugify(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
 }
+
+// ── TagFormModal ───────────────────────────────────────────────────────────────
 
 function TagFormModal({
   title,
@@ -29,10 +38,26 @@ function TagFormModal({
   title: string;
   initial?: Record<string, string>;
   onClose: () => void;
-  onSave: (data: Record<string, string>) => void;
+  onSave: (data: Record<string, string>) => Promise<void>;
 }) {
   const [data, setData] = useState<Record<string, string>>(initial);
-  const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
+  const [slugLocked, setSlugLocked] = useState(!!initial?.slug);
+  const [busy, setBusy] = useState(false);
+
+  const isValid = Schema.safeParse(data).success;
+
+  async function handleSave() {
+    setBusy(true);
+    try {
+      await onSave(data);
+      onClose();
+    } catch {
+      // stay open
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="confirm-bg" onClick={onClose}>
       <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
@@ -40,21 +65,40 @@ function TagFormModal({
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
           <div className="field" style={{ margin: 0 }}>
             <label>Nombre del tag <span style={{ color: "var(--err)" }}>*</span></label>
-            <input type="text" value={data.name || ""} onChange={(e) => set("name", e.target.value)} placeholder="concierto" />
+            <input
+              type="text"
+              value={data.name || ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                setData((d) => ({ ...d, name: v, ...(!slugLocked && { slug: slugify(v) }) }));
+              }}
+              placeholder="concierto"
+              disabled={busy}
+            />
           </div>
           <div className="field" style={{ margin: 0 }}>
             <label>Slug <span style={{ color: "var(--err)" }}>*</span></label>
-            <input type="text" value={data.slug || ""} onChange={(e) => set("slug", e.target.value)} placeholder="concierto" />
+            <input
+              type="text"
+              value={data.slug || ""}
+              onChange={(e) => { setSlugLocked(true); setData((d) => ({ ...d, slug: e.target.value })); }}
+              placeholder="concierto"
+              disabled={busy}
+            />
           </div>
         </div>
         <div className="row-act">
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn dark" onClick={() => { onSave(data); onClose(); }}>Guardar</button>
+          <button className="btn ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button className="btn dark" onClick={handleSave} disabled={!isValid || busy}>
+            {busy ? "Guardando…" : "Guardar"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
+// ── ConfirmDialog ─────────────────────────────────────────────────────────────
 
 function ConfirmDialog({
   title,
@@ -64,10 +108,24 @@ function ConfirmDialog({
 }: {
   title: string;
   message: string;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onClose: () => void;
 }) {
   const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function handleConfirm() {
+    setBusy(true);
+    try {
+      await onConfirm();
+      onClose();
+    } catch {
+      // stay open
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="confirm-bg" onClick={onClose}>
       <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
@@ -75,17 +133,17 @@ function ConfirmDialog({
         <p className="p">{message}</p>
         <div className="field" style={{ margin: "0 0 14px" }}>
           <label>Escribe <strong>ELIMINAR</strong> para confirmar</label>
-          <input type="text" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="ELIMINAR" />
+          <input type="text" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="ELIMINAR" disabled={busy} />
         </div>
         <div className="row-act">
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn ghost" onClick={onClose} disabled={busy}>Cancelar</button>
           <button
             className="btn primary"
             style={{ background: "var(--err)" }}
-            onClick={() => { onConfirm(); onClose(); }}
-            disabled={typed !== "ELIMINAR"}
+            onClick={handleConfirm}
+            disabled={typed !== "ELIMINAR" || busy}
           >
-            Sí, eliminar
+            {busy ? "Eliminando…" : "Sí, eliminar"}
           </button>
         </div>
       </div>
@@ -93,7 +151,10 @@ function ConfirmDialog({
   );
 }
 
+// ── Section ───────────────────────────────────────────────────────────────────
+
 export default function EventTagsSection() {
+  const { token } = useUser();
   const [items, setItems] = useState<TagItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
@@ -115,29 +176,52 @@ export default function EventTagsSection() {
 
   useEffect(() => { load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  function authedHeaders(): Record<string, string> {
+    const h: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) h.Authorization = `Bearer ${token}`;
+    return h;
+  }
+
   const onCreate = async (d: Record<string, string>) => {
-    const res = await authedFetch("/api/event-tags", {
+    const res = await fetch("/api/event-tags", {
       method: "POST",
+      headers: authedHeaders(),
       body: JSON.stringify({ name: d.name.trim(), slug: d.slug.trim() }),
     });
-    if (!res.ok) { toast.error("No se pudo crear el tag"); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err?.message ?? "No se pudo crear el tag");
+      throw new Error("create failed");
+    }
     toast.success("Tag creado", { description: `"${d.name}" agregado al sistema` });
     load();
   };
 
   const onEdit = async (id: number, d: Record<string, string>) => {
-    const res = await authedFetch(`/api/event-tags/${id}`, {
+    const res = await fetch(`/api/event-tags/${id}`, {
       method: "PATCH",
+      headers: authedHeaders(),
       body: JSON.stringify({ name: d.name.trim(), slug: d.slug.trim() }),
     });
-    if (!res.ok) { toast.error("No se pudo actualizar el tag"); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err?.message ?? "No se pudo actualizar el tag");
+      throw new Error("edit failed");
+    }
     toast.success("Tag actualizado");
     load();
   };
 
   const onDelete = async (id: number) => {
-    const res = await authedFetch(`/api/event-tags/${id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("No se pudo eliminar el tag"); return; }
+    const res = await fetch(`/api/event-tags/${id}`, {
+      method: "DELETE",
+      headers: authedHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err?.message ?? "No se pudo eliminar el tag");
+      throw new Error("delete failed");
+    }
     toast.warning("Tag eliminado");
     load();
   };

@@ -1,8 +1,20 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
+import { useUser } from "@/components/providers";
 import { SITE_HOST } from "@/lib/site";
 import { TablePagination, useClientPagination } from "@/components/TablePagination";
+
+// ── Schema ─────────────────────────────────────────────────────────────────────
+
+const Schema = z.object({
+  name: z.string().min(2, "Mínimo 2 caracteres"),
+  slug: z.string().min(2, "Mínimo 2 caracteres"),
+  icon: z.string().optional(),
+});
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type ArticleCategory = { id: number; name: string | null; slug: string; icon?: string | null };
 
@@ -26,15 +38,13 @@ type ModalState =
   | { type: "delete"; item: ArticleCategory }
   | null;
 
-async function authedFetch(path: string, init: RequestInit = {}) {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(init.headers as Record<string, string> | undefined),
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-  return fetch(path, { ...init, headers });
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function slugify(s: string) {
+  return s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
 }
+
+// ── AdminFormModal ─────────────────────────────────────────────────────────────
 
 function AdminFormModal({
   title,
@@ -47,10 +57,34 @@ function AdminFormModal({
   fields: Field[];
   initial?: Record<string, string>;
   onClose: () => void;
-  onSave: (data: Record<string, string>) => void;
+  onSave: (data: Record<string, string>) => Promise<void>;
 }) {
   const [data, setData] = useState<Record<string, string>>(initial);
-  const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
+  const [slugLocked, setSlugLocked] = useState(!!initial.slug);
+  const [busy, setBusy] = useState(false);
+
+  const isValid = Schema.safeParse(data).success;
+
+  function set(k: string, v: string) {
+    setData((d) => {
+      const next = { ...d, [k]: v };
+      if (k === "name" && !slugLocked) next.slug = slugify(v);
+      return next;
+    });
+  }
+
+  async function handleSave() {
+    setBusy(true);
+    try {
+      await onSave(data);
+      onClose();
+    } catch {
+      // stay open
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="confirm-bg" onClick={onClose}>
       <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
@@ -68,29 +102,35 @@ function AdminFormModal({
                   <input
                     type="text"
                     value={data[f.k] || ""}
-                    onChange={(e) => set(f.k, e.target.value)}
+                    onChange={(e) => { if (f.k === "slug") setSlugLocked(true); set(f.k, e.target.value); }}
                     placeholder={f.placeholder}
+                    disabled={busy}
                   />
                 </div>
               ) : (
                 <input
                   type="text"
                   value={data[f.k] || ""}
-                  onChange={(e) => set(f.k, e.target.value)}
+                  onChange={(e) => { if (f.k === "slug") setSlugLocked(true); set(f.k, e.target.value); }}
                   placeholder={f.placeholder}
+                  disabled={busy}
                 />
               )}
             </div>
           ))}
         </div>
         <div className="row-act">
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn dark" onClick={() => { onSave(data); onClose(); }}>Guardar</button>
+          <button className="btn ghost" onClick={onClose} disabled={busy}>Cancelar</button>
+          <button className="btn dark" onClick={handleSave} disabled={!isValid || busy}>
+            {busy ? "Guardando…" : "Guardar"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
+
+// ── ConfirmDialog ─────────────────────────────────────────────────────────────
 
 function ConfirmDialog({
   title,
@@ -100,10 +140,24 @@ function ConfirmDialog({
 }: {
   title: string;
   message: string;
-  onConfirm: () => void;
+  onConfirm: () => Promise<void>;
   onClose: () => void;
 }) {
   const [typed, setTyped] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function handleConfirm() {
+    setBusy(true);
+    try {
+      await onConfirm();
+      onClose();
+    } catch {
+      // stay open
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="confirm-bg" onClick={onClose}>
       <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
@@ -116,17 +170,18 @@ function ConfirmDialog({
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             placeholder="ELIMINAR"
+            disabled={busy}
           />
         </div>
         <div className="row-act">
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn ghost" onClick={onClose} disabled={busy}>Cancelar</button>
           <button
             className="btn primary"
             style={{ background: "var(--err)" }}
-            onClick={() => { onConfirm(); onClose(); }}
-            disabled={typed !== "ELIMINAR"}
+            onClick={handleConfirm}
+            disabled={typed !== "ELIMINAR" || busy}
           >
-            Sí, eliminar
+            {busy ? "Eliminando…" : "Sí, eliminar"}
           </button>
         </div>
       </div>
@@ -134,7 +189,10 @@ function ConfirmDialog({
   );
 }
 
+// ── Section ───────────────────────────────────────────────────────────────────
+
 export default function ArticleCategoriesSection() {
+  const { token } = useUser();
   const [items, setItems] = useState<ArticleCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<ModalState>(null);
@@ -156,29 +214,52 @@ export default function ArticleCategoriesSection() {
 
   useEffect(() => { load(); }, [load]);
 
+  function authedHeaders(): Record<string, string> {
+    const h: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) h.Authorization = `Bearer ${token}`;
+    return h;
+  }
+
   const onCreate = async (d: Record<string, string>) => {
-    const res = await authedFetch("/api/article-categories", {
+    const res = await fetch("/api/article-categories", {
       method: "POST",
+      headers: authedHeaders(),
       body: JSON.stringify({ name: d.name.trim(), slug: d.slug.trim(), icon: d.icon?.trim() || undefined }),
     });
-    if (!res.ok) { toast.error("No se pudo crear la categoría"); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err?.message ?? "No se pudo crear la categoría");
+      throw new Error("create failed");
+    }
     toast.success("Categoría creada", { description: `"${d.name}" agregada al sistema` });
     load();
   };
 
   const onEdit = async (id: number, d: Record<string, string>) => {
-    const res = await authedFetch(`/api/article-categories/${id}`, {
+    const res = await fetch(`/api/article-categories/${id}`, {
       method: "PATCH",
+      headers: authedHeaders(),
       body: JSON.stringify({ name: d.name.trim(), slug: d.slug.trim(), icon: d.icon?.trim() || undefined }),
     });
-    if (!res.ok) { toast.error("No se pudo actualizar la categoría"); return; }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err?.message ?? "No se pudo actualizar la categoría");
+      throw new Error("edit failed");
+    }
     toast.success("Categoría actualizada", { description: `Cambios guardados en "${d.name}"` });
     load();
   };
 
   const onDelete = async (id: number) => {
-    const res = await authedFetch(`/api/article-categories/${id}`, { method: "DELETE" });
-    if (!res.ok) { toast.error("No se pudo eliminar la categoría"); return; }
+    const res = await fetch(`/api/article-categories/${id}`, {
+      method: "DELETE",
+      headers: authedHeaders(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err?.message ?? "No se pudo eliminar la categoría");
+      throw new Error("delete failed");
+    }
     toast.warning("Categoría eliminada");
     load();
   };

@@ -53,12 +53,29 @@ const ADMIN_NAV: NavGroup[] = [
     ],
   },
   {
-    grp: "MODERACIÓN",
+    grp: "EVENTOS",
     items: [
-      { label: "Eventos",   ic: CalendarDays,  href: "/dashboard/events" },
-      { label: "Avisos",    ic: Megaphone,     href: "/dashboard/spots" },
-      { label: "Portadas",  ic: Layers,        href: "/dashboard/heroes" },
-      { label: "Artículos", ic: FileText,      href: "/dashboard/articles" },
+      { label: "Eventos",     ic: CalendarDays, href: "/dashboard/events" },
+      { label: "Categorías",  ic: Tag,          href: "/dashboard/event-categories" },
+      { label: "Tags",        ic: Tags,         href: "/dashboard/event-tags" },
+      { label: "Avisos",      ic: Megaphone,    href: "/dashboard/spots" },
+      { label: "Portadas",    ic: Layers,       href: "/dashboard/heroes" },
+    ],
+  },
+  {
+    grp: "NOTICIAS",
+    items: [
+      { label: "Artículos",  ic: FileText, href: "/dashboard/articles" },
+      { label: "Categorías", ic: Tag,      href: "/dashboard/article-categories" },
+      { label: "Tags",       ic: Tags,     href: "/dashboard/article-tags" },
+    ],
+  },
+  {
+    grp: "COMUNIDAD",
+    items: [
+      { label: "Usuarios",     ic: UserCog,    href: "/dashboard/users", superOnly: true },
+      { label: "Contacto",     ic: Mail,       href: "/dashboard/contact" },
+      { label: "CRM",          ic: Users,      href: "/dashboard/crm" },
     ],
   },
   {
@@ -66,30 +83,23 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: "Pagos & ventas",  ic: CreditCard,   href: "/dashboard/payments" },
       { label: "Suscripciones",   ic: Repeat2,      href: "/dashboard/subscriptions" },
-      { label: "Contacto",        ic: Mail,         href: "/dashboard/contact" },
       { label: "Fotografía",      ic: Camera,       href: "/dashboard/photography" },
       { label: "Creadores",       ic: Clapperboard, href: "/dashboard/content-creators" },
-      { label: "CRM",             ic: Users,        href: "/dashboard/crm" },
     ],
   },
   {
-    grp: "MANTENEDORES",
+    grp: "CATÁLOGOS",
     items: [
-      { label: "Categorías · Eventos",  ic: Tag,  href: "/dashboard/event-categories" },
-      { label: "Categorías · Noticias", ic: Tag,  href: "/dashboard/article-categories" },
-      { label: "Tags · Eventos",        ic: Tags, href: "/dashboard/event-tags" },
-      { label: "Tags · Noticias",       ic: Tags, href: "/dashboard/article-tags" },
-      { label: "Países",     ic: Globe,      href: "/dashboard/countries" },
-      { label: "Divisiones", ic: Map,        href: "/dashboard/states" },
-      { label: "Ciudades",   ic: MapPin,     href: "/dashboard/cities" },
-      { label: "FAQ",        ic: HelpCircle, href: "/dashboard/faq" },
+      { label: "Países",     ic: Globe,  href: "/dashboard/countries" },
+      { label: "Divisiones", ic: Map,    href: "/dashboard/states" },
+      { label: "Ciudades",   ic: MapPin, href: "/dashboard/cities" },
     ],
   },
   {
     grp: "SISTEMA",
     superAdminOnly: true,
     items: [
-      { label: "Usuarios",         ic: UserCog,    href: "/dashboard/users",   superOnly: true },
+      { label: "FAQ",              ic: HelpCircle, href: "/dashboard/faq" },
       { label: "Reportes",         ic: BarChart2,  href: "/dashboard/reports" },
       { label: "Logs & auditoría", ic: ScrollText, href: "/dashboard/logs" },
       { label: "Configuración",    ic: Settings,   href: "/dashboard/settings" },

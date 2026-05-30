@@ -256,6 +256,35 @@ Plans:
 - [x] 27-04-PLAN.md — PaymentsSection: tabla + modal reales + CSV (wave 2)
 - [x] 27-05-PLAN.md — ReportsSection: gráfico period-bucketed real + CSV (wave 2)
 
+### Phase 27.1: Dashboard gap fixes — KPIs reales, catálogos geo con API real, breadcrumb, modal aprobar limpio
+
+**Goal:** Eliminar todos los datos mock y funcionalidades falsas que quedaron en el dashboard tras las fases 25-27: computar KPIs desde datos ya cargados (ingresos mes, total pagos, publicados, suscriptores); conectar catálogos geo (Países/Divisiones/Ciudades) a la API real; fijar breadcrumb para mostrar grupo padre en lugar de "DASHBOARD"; limpiar el modal de aprobación de eventos/artículos (quitar IA falsa); cargar config del plan desde /api/settings al montar SubsSection; renombrar columna "ORGANIZADOR" → "COMPRADOR" en pagos; computar top-organizadores desde pagos reales; hacer real "Ver toda →".
+
+**Requirements**: DASH-FIX-01..DASH-FIX-09 (inline a continuación)
+
+- DASH-FIX-01: HomeSection KPIs calculados desde APIs reales (EVENTOS PUBLICADOS desde events API total, SUSCRIPTORES desde subscriptions total, INGRESOS MES desde payments mes actual).
+- DASH-FIX-02: HomeSection panel "Por categoría" cargado desde GET /event-categories con _count.events real.
+- DASH-FIX-03: HomeSection botón "Ver toda →" navega a /dashboard/events.
+- DASH-FIX-04: PaymentsSection KPIs calculados desde rows cargadas (INGRESOS MES, HISTÓRICO, fallidos), columna renombrada a "COMPRADOR", botones "Descargar comprobante" y "Reembolsar" eliminados (sin backend).
+- DASH-FIX-05: ReportsSection top-organizadores calculados desde pagos reales (group by buyer, barras proporcionales a valor real).
+- DASH-FIX-06: SubsSection carga configuración del plan desde GET /api/settings al montar.
+- DASH-FIX-07: DashboardShell breadcrumb muestra "GRUPO / LABEL" en lugar de "DASHBOARD / LABEL".
+- DASH-FIX-08: Catálogos Países/Divisiones/Ciudades conectados a API real (GET/POST/PATCH/DELETE /countries, /states, /cities) con columnas reales (sin iso/flag).
+- DASH-FIX-09: Modal de aprobación de eventos/artículos limpiado — quitar generador de tags IA falso (regenAI/Math.random), reemplazar por ConfirmDialog simple.
+
+**Depends on:** Phase 27
+
+**Plans:** 7/7 plans complete
+
+Plans:
+- [ ] 27.1-01-PLAN.md — lib/api.ts: métodos admin CRUD geo (createCountry/State/City + update/delete) (wave 1)
+- [ ] 27.1-02-PLAN.md — DashboardShell breadcrumb grupo padre + SubsSection carga settings al montar (wave 1)
+- [ ] 27.1-03-PLAN.md — HomeSection: KPIs reales + barras por categoría reales + "Ver toda →" link (wave 1)
+- [ ] 27.1-04-PLAN.md — PaymentsSection: KPIs desde rows + columna COMPRADOR + quitar botones falsos (wave 1)
+- [ ] 27.1-05-PLAN.md — ReportsSection: top-compradores desde pagos reales + quitar panel eventos (wave 1)
+- [ ] 27.1-06-PLAN.md — EventsSection + ArticlesSection: quitar modal IA falso, usar ConfirmDialog (wave 1)
+- [ ] 27.1-07-PLAN.md — SimpleCRUDSection: RealCountries/States/CitiesSection con API real (wave 2)
+
 ### Phase 28: Artículos con múltiples categorías — many-to-many schema, seed desde WP real, API, website, formularios y vistas públicas
 
 **Goal:** Cambiar la relación Article↔ArticleCategory de FK única (`articleCategoryId`) a many-to-many implícita de Prisma (replicando el patrón `ArticleTag`), reconstruir la capa de datos desde la WP API real (script `update-article-categories.ts` → `categorySlugs[]` en articles.json → seed por slug), actualizar la API (include `articleCategories`, filtro `some`, 3 DTOs a `articleCategoryIds[]`), y propagar al website (tipo `ApiArticle.articleCategories`, helper `getCat` por primera categoría, rails del hub, selector múltiple en `ArticleForm`, y badge primera-categoría+conteo en `ArticlesSection`).

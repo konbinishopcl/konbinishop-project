@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-30T18:49:13.217Z"
+last_updated: "2026-05-30T19:22:17.151Z"
 progress:
-  total_phases: 12
-  completed_phases: 12
-  total_plans: 51
-  completed_plans: 51
+  total_phases: 13
+  completed_phases: 13
+  total_plans: 58
+  completed_plans: 58
 ---
 
 # Project State
@@ -19,7 +19,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 28 — Artículos con múltiples categorías — many-to-many schema, seed desde WP real, API, website, formularios y vistas públicas
+**Current focus:** Phase 27.1 — dashboard-gap-fixes
 
 ## Current Status
 

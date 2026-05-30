@@ -88,6 +88,9 @@
   }
   .nav-wrap { display: flex; align-items: center; justify-content: space-between; height: 72px; }
   .brand { display: flex; align-items: baseline; gap: 8px; }
+  [data-theme="light"] .brand img { filter: invert(1) brightness(.12); }
+  [data-theme="light"] .pcar .slide.sell .bg::after { display: none; }
+  [data-theme="light"] .pcar .slide.sell .lead, [data-theme="light"] .pcar .slide.sell .eyebrow-w { color: var(--ink-2); }
   .brand .mark {
     font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: -.02em;
     background: var(--accent); color: var(--accent-ink); padding: 4px 10px 6px; border-radius: 6px;
@@ -359,6 +362,8 @@
   .upload-box { border: 1.5px dashed var(--line-2); border-radius: var(--r); padding: 28px 18px; text-align: center; color: var(--ink-3); aspect-ratio: 16/9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: var(--surface-2); cursor: pointer; transition: border-color .15s; }
   .upload-box:hover { border-color: var(--accent); color: var(--ink-2); }
   .upload-box.tall { aspect-ratio: 3/4; }
+  .upload-box.spot-ratio { aspect-ratio: 4/5; max-width: 240px; }
+  .upload-box.hero-ratio { aspect-ratio: 21/9; }
   .upload-box .ic { width: 36px; height: 36px; border-radius: 999px; background: var(--surface); display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); }
   .upload-box small { font-size: 11px; }
 
@@ -1009,7 +1014,58 @@
     .mega-bg { display: none; }
     .explore-cats { columns: 2 !important; column-gap: 24px !important; }
   }
+  /* ─────────── SEARCH PALETTE ─────────── */
+  .sp-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); backdrop-filter: blur(8px); z-index: 115; display: flex; align-items: flex-start; justify-content: center; padding: 80px 24px 24px; animation: fadein .15s ease; overflow-y: auto; }
+  .sp-card { width: 100%; max-width: 720px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; max-height: calc(100vh - 120px); overflow: hidden; }
+  .sp-head { display: flex; align-items: center; gap: 12px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+  .sp-head svg { color: var(--ink-3); flex-shrink: 0; }
+  .sp-head input { flex: 1; background: transparent; border: 0; outline: 0; color: var(--ink); font-size: 19px; font-weight: 500; }
+  .sp-head input::placeholder { color: var(--ink-3); }
+  .sp-head kbd { font-family: var(--font-mono); font-size: 11px; padding: 4px 8px; border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-3); }
+  .sp-body { flex: 1; overflow-y: auto; padding: 16px 22px 22px; }
+  .sp-section { margin-bottom: 18px; }
+  .sp-section .lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: .18em; color: var(--ink-3); text-transform: uppercase; margin-bottom: 12px; padding: 0 4px; }
+  .sp-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sp-tag { display: inline-flex; align-items: baseline; gap: 6px; padding: 7px 12px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); font-size: 13px; font-weight: 600; cursor: pointer; transition: background .12s, border-color .12s; }
+  .sp-tag:hover { background: color-mix(in oklab, var(--accent) 14%, var(--surface-2)); border-color: var(--accent); }
+  .sp-tag .h { color: var(--accent); }
+  .sp-tag .c { font-family: var(--font-mono); font-size: 10px; color: var(--ink-3); letter-spacing: .04em; }
+  .sp-row { display: flex; gap: 14px; align-items: center; padding: 10px 8px; border-radius: 10px; cursor: pointer; text-align: left; width: 100%; }
+  .sp-row:hover { background: var(--surface-2); }
+  .sp-row .thumb { width: 56px; aspect-ratio: 4/5; border-radius: 8px; overflow: hidden; position: relative; flex: 0 0 56px; background: #1a1714; }
+  .sp-row .thumb .pic { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .sp-row .body { flex: 1; min-width: 0; }
+  .sp-row .body .k { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; color: var(--accent); font-weight: 700; margin-bottom: 2px; }
+  .sp-row .body .t { font-weight: 600; font-size: 14px; line-height: 1.3; margin-bottom: 2px; }
+  .sp-row .body .m { color: var(--ink-3); font-size: 12px; }
+  .sp-foot { padding: 12px 22px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--ink-3); flex-wrap: wrap; gap: 8px; }
+  .sp-foot kbd { font-family: var(--font-mono); font-size: 10px; padding: 2px 6px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); margin-right: 4px; }
+
   .toast-stack { position: fixed; right: 20px; bottom: 96px; z-index: 95; display: flex; flex-direction: column; gap: 10px; max-width: 360px; pointer-events: none; }
+
+  /* ─────────── EVENT CATEGORIES GRID ─────────── */
+  .ecat-card { cursor: pointer; transition: transform .2s ease; }
+  .ecat-card:hover { transform: translateY(-4px); }
+  .ecat-stack { position: relative; aspect-ratio: 4/5; border-radius: 22px; overflow: hidden; background: #0a0908; border: 1px solid var(--line); }
+  .ecat-card:hover .ecat-stack { border-color: var(--accent); }
+  .ecat-card .pic { background-size: cover; background-position: center; transition: transform .4s ease; }
+  .ecat-card:hover .pic { transform: scale(1.05); }
+  .ecat-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.1) 35%, rgba(0,0,0,.85) 100%); z-index: 2; }
+  .ecat-top { position: absolute; top: 18px; left: 22px; right: 22px; z-index: 3; }
+  .ecat-top .ja-big { font-family: var(--font-display); font-size: 64px; font-weight: 900; color: rgba(255,255,255,.18); letter-spacing: -.05em; line-height: .9; display: block; }
+  .ecat-body { position: absolute; left: 22px; right: 22px; bottom: 64px; z-index: 3; color: #fff; }
+  .ecat-body h3 { font-family: var(--font-display); font-size: 38px; font-weight: 800; letter-spacing: -.03em; margin: 0 0 8px; line-height: 1; }
+  .ecat-body .meta { display: flex; gap: 8px; color: rgba(255,255,255,.78); font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; }
+  .ecat-mini { position: absolute; right: 18px; bottom: 70px; display: flex; flex-direction: column; gap: 8px; z-index: 3; }
+  .ecat-mini-pic { width: 56px; aspect-ratio: 4/5; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,.15); position: relative; }
+  .ecat-mini-pic .pic { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .ecat-cta { position: absolute; left: 22px; right: 22px; bottom: 22px; z-index: 3; padding: 10px 14px; border-radius: 999px; background: rgba(15,12,10,.55); backdrop-filter: blur(8px); color: #fff; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(255,255,255,.1); }
+  .ecat-card:hover .ecat-cta { background: var(--accent); border-color: var(--accent); }
+  @media (max-width: 640px) {
+    .ecat-grid { grid-template-columns: 1fr !important; }
+    .ecat-body h3 { font-size: 30px; }
+    .ecat-top .ja-big { font-size: 48px; }
+  }
   .toast { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; box-shadow: var(--shadow); pointer-events: auto; animation: toast-in .25s cubic-bezier(.2,.7,.3,1.2) both; }
   @keyframes toast-in { from { transform: translateY(8px) scale(.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
   .toast .tic { width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: #fff; flex: 0 0 28px; }
@@ -1738,6 +1794,7 @@ function Header() {
   const [newsOpen, setNewsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchPalette, setSearchPalette] = useState(false);
   const active = route.params?.cat || (route.name === "home" ? "home" : route.name === "category" ? route.params?.cat : "");
   const topCats = CATEGORIES.filter(c => c.id !== "home").slice(0, 4);
   const moreCats = CATEGORIES.filter(c => c.id !== "home").slice(4);
@@ -1785,7 +1842,7 @@ function Header() {
           <button className="nav-hamb" title="Menú" onClick={() => setMobileOpen(true)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
           </button>
-          <button className="icon-btn" title="Buscar" onClick={() => nav("search")}>{Ic.search}</button>
+          <button className="icon-btn" title="Buscar" onClick={() => setSearchPalette(true)}>{Ic.search}</button>
           <button className="icon-btn" title="Tema" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
             {theme === "dark" ? Ic.sun : Ic.moon}
           </button>
@@ -1885,7 +1942,123 @@ function Header() {
       )}
     </header>
     {newsOpen && <NewsMegaMenu open={newsOpen} onClose={() => setNewsOpen(false)} currentCat={route.params?.cat} />}
+    {searchPalette && <SearchPalette onClose={() => setSearchPalette(false)} />}
     </>);
+}
+
+function SearchPalette({ onClose }) {
+  const { nav } = useRouter();
+  const [q, setQ] = useState("");
+  // recent searches mock
+  const recent = ["anime crunchyroll", "k-pop santiago", "demon slayer"];
+  // top tags
+  const counts = {};
+  ARTICLES.forEach(a => (a.tags || []).forEach(t => { counts[t] = (counts[t] || 0) + 1; }));
+  const topTags = Object.entries(counts).map(([t, c]) => [t, c * 13 + 12]).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  // live results
+  const qq = q.toLowerCase().trim();
+  const matchedEvents = qq ? EVENTS.filter(e => e.title.toLowerCase().includes(qq) || e.cat.toLowerCase().includes(qq)).slice(0, 4) : [];
+  const matchedArticles = qq ? ARTICLES.filter(a => a.title.toLowerCase().includes(qq) || a.cat.toLowerCase().includes(qq) || (a.tags || []).some(t => t.toLowerCase().includes(qq))).slice(0, 4) : [];
+  const goSearch = () => { onClose(); nav("search"); };
+  useEffect(() => {
+    const onKey = e => { if (e.key === "Escape") onClose(); if (e.key === "Enter" && q.trim()) goSearch(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [q]);
+
+  return (
+    <div className="sp-bg" onClick={onClose}>
+      <div className="sp-card" onClick={e => e.stopPropagation()}>
+        <div className="sp-head">
+          {Ic.search}
+          <input autoFocus placeholder="Buscar eventos, noticias, organizadores, tags…" value={q} onChange={e => setQ(e.target.value)} />
+          <kbd>ESC</kbd>
+        </div>
+        <div className="sp-body">
+          {qq ? (<>
+            {matchedEvents.length === 0 && matchedArticles.length === 0 ? (
+              <div style={{ padding: "32px 0", textAlign: "center", color: "var(--ink-3)" }}>
+                <div style={{ fontSize: 40, marginBottom: 8 }}>🍙</div>
+                <div style={{ color: "var(--ink-2)" }}>Sin resultados para "{q}"</div>
+                <button className="btn ghost" style={{ marginTop: 14 }} onClick={goSearch}>Buscar de todas formas {Ic.arrow}</button>
+              </div>
+            ) : (<>
+              {matchedEvents.length > 0 && <div className="sp-section">
+                <div className="lbl">EVENTOS · {matchedEvents.length}</div>
+                {matchedEvents.map(e => (
+                  <div key={e.id} className="sp-row" onClick={() => { onClose(); nav("event", { id: e.id }); }}>
+                    <div className="thumb"><div className={`pic poster-art ${e.art}`} /></div>
+                    <div className="body">
+                      <div className="k">{e.cat.toUpperCase()}</div>
+                      <div className="t">{e.title}</div>
+                      <div className="m">{e.date} · {e.place}</div>
+                    </div>
+                    <span style={{ color: "var(--ink-3)" }}>{Ic.arrow}</span>
+                  </div>
+                ))}
+              </div>}
+              {matchedArticles.length > 0 && <div className="sp-section">
+                <div className="lbl">NOTICIAS · {matchedArticles.length}</div>
+                {matchedArticles.map(a => (
+                  <div key={a.id} className="sp-row" onClick={() => { onClose(); nav("article", { id: a.id }); }}>
+                    <div className="thumb" style={{ aspectRatio: "16/10", width: 72, flex: "0 0 72px" }}><div className={`pic poster-art ${a.art}`} /></div>
+                    <div className="body">
+                      <div className="k" style={{ color: "var(--accent-3)" }}>{a.cat.toUpperCase()}</div>
+                      <div className="t">{a.title}</div>
+                      <div className="m">{a.date} · {a.reading} lectura</div>
+                    </div>
+                    <span style={{ color: "var(--ink-3)" }}>{Ic.arrow}</span>
+                  </div>
+                ))}
+              </div>}
+              <div style={{ padding: "8px 4px 0" }}>
+                <button className="btn ghost block" onClick={goSearch}>Ver todos los resultados {Ic.arrow}</button>
+              </div>
+            </>)}
+          </>) : (<>
+            <div className="sp-section">
+              <div className="lbl">TAGS MÁS BUSCADOS</div>
+              <div className="sp-tags">
+                {topTags.map(([t, c]) => (
+                  <button key={t} className="sp-tag" onClick={() => { onClose(); nav("tag", { tag: t }); }}>
+                    <span className="h">#</span>{t}<span className="c">{c}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="sp-section">
+              <div className="lbl">CATEGORÍAS POPULARES</div>
+              <div className="sp-tags">
+                {["Anime", "Conciertos", "Cine", "Gaming"].map(c => (
+                  <button key={c} className="sp-tag" onClick={() => { onClose(); nav("category", { cat: c.toLowerCase() }); }}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="sp-section">
+              <div className="lbl">BÚSQUEDAS RECIENTES</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {recent.map(r => (
+                  <button key={r} className="sp-row" onClick={() => setQ(r)} style={{ padding: "8px 10px" }}>
+                    <span style={{ width: 28, height: 28, borderRadius: 999, background: "var(--surface-2)", color: "var(--ink-3)", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 28px" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 7v5l3 3"/></svg>
+                    </span>
+                    <span style={{ flex: 1, fontSize: 14, color: "var(--ink-2)" }}>{r}</span>
+                    <span style={{ color: "var(--ink-3)", fontSize: 11 }}>{Ic.arrow}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>)}
+        </div>
+        <div className="sp-foot">
+          <span><kbd>↑↓</kbd> navegar · <kbd>↵</kbd> abrir</span>
+          <button onClick={goSearch} style={{ color: "var(--accent)", fontSize: 12, fontWeight: 600 }}>Búsqueda avanzada {Ic.arrow}</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function NewsMegaMenu({ open, onClose, currentCat }) {
@@ -2618,6 +2791,90 @@ function NewsHubPage() {
   );
 }
 
+/* ───────────────── events: all categories ───────────────── */
+function EventCatsAllPage() {
+  const { nav } = useRouter();
+  const [q, setQ] = useState("");
+  const cats = CATEGORIES.filter(c => c.id !== "home");
+  const list = cats.filter(c => !q.trim() || c.label.toLowerCase().includes(q.toLowerCase()));
+  // synthesize counts + a preview event per category
+  const previewArtsFor = id => {
+    const matching = EVENTS.filter(e => e.cat.toLowerCase() === id.toLowerCase());
+    const items = matching.length >= 3 ? matching.slice(0, 3) : [...matching, ...EVENTS].slice(0, 3);
+    return items.map(e => e.art);
+  };
+  const eventCount = id => {
+    const m = EVENTS.filter(e => e.cat.toLowerCase() === id.toLowerCase()).length;
+    return (m || 1) * 7 + ((id.length * 3) % 13) + 2;
+  };
+  return (
+    <main className="container">
+      <a onClick={() => nav("home")} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginTop: 24, marginBottom: 4, cursor: "pointer" }}>{Ic.chevL} Volver al inicio</a>
+      <div style={{ margin: "8px 0 36px", display: "flex", justifyContent: "space-between", alignItems: "end", flexWrap: "wrap", gap: 16 }}>
+        <div>
+          <div className="eyebrow">EVENTOS · カテゴリ</div>
+          <h1 className="display" style={{ fontSize: 80, margin: "12px 0 8px", letterSpacing: "-.035em", lineHeight: .95 }}>Categorías<span style={{ color: "var(--accent)" }}>.</span></h1>
+          <p style={{ color: "var(--ink-2)", margin: 0, maxWidth: "62ch", fontSize: 16 }}>
+            <strong style={{ color: "var(--ink)" }}>{cats.length} secciones</strong> · explora eventos por tipo. Cada categoría agrupa cientos de fechas en vivo cada mes.
+          </p>
+        </div>
+      </div>
+
+      <div className="fbar-sticky">
+        <div className="fbar-inner" style={{ gap: 12 }}>
+          <div className="search-input" style={{ padding: "8px 16px", margin: 0, flex: 1, minWidth: 280, background: "transparent", border: 0 }}>
+            {Ic.search}
+            <input placeholder="Buscar categoría…" value={q} onChange={e => setQ(e.target.value)} style={{ padding: 0, background: "transparent" }} />
+            {q && <button onClick={() => setQ("")} className="icon-btn" style={{ width: 28, height: 28 }}>{Ic.close}</button>}
+          </div>
+          <div className="group" style={{ marginLeft: "auto" }}>
+            <span className="sel" style={{ background: "transparent", border: 0, color: "var(--ink-3)" }}>{list.length} resultados</span>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 18 }} className="ecat-grid">
+        {list.map(c => {
+          const arts = previewArtsFor(c.id);
+          return (
+            <div key={c.id} className="ecat-card" onClick={() => nav("category", { cat: c.id })}>
+              <div className="ecat-stack">
+                <div className={`pic poster-art ${arts[0]}`} style={{ position: "absolute", inset: 0 }} />
+                <div className="ecat-overlay"></div>
+                <div className="ecat-top">
+                  <span className="ja-big">{c.ja}</span>
+                </div>
+                <div className="ecat-body">
+                  <h3>{c.label}</h3>
+                  <div className="meta">
+                    <span>{eventCount(c.id)} eventos</span>
+                    <span style={{ opacity: .5 }}>·</span>
+                    <span>Próximos 30 días</span>
+                  </div>
+                </div>
+                <div className="ecat-mini">
+                  {arts.slice(1, 3).map((a, i) => (
+                    <div key={i} className="ecat-mini-pic"><div className={`pic poster-art ${a}`} /></div>
+                  ))}
+                </div>
+                <div className="ecat-cta">Ver eventos {Ic.arrow}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {list.length === 0 && (
+        <div className="acc-empty" style={{ margin: "40px 0 60px" }}>
+          <div className="ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+          <h3>Sin categorías que coincidan con "{q}"</h3>
+          <button className="btn ghost" onClick={() => setQ("")}>Limpiar búsqueda</button>
+        </div>
+      )}
+    </main>
+  );
+}
+
 /* ───────────────── news: all categories ───────────────── */
 function NewsCatsAllPage() {
   const { nav } = useRouter();
@@ -2922,6 +3179,18 @@ function NewsCategoryPage({ cat }) {
 function ArticlePage() {
   const { route, nav } = useRouter();
   const a = ARTICLES.find(x => x.id === route.params?.id) || ARTICLES[0];
+  const toast = useToast();
+  const seed = (a.id || "").charCodeAt(2) || 7;
+  const [likes, setLikes] = useState(120 + seed * 13);
+  const [liked, setLiked] = useState(false);
+  const toggleLike = () => {
+    setLiked(l => {
+      const next = !l;
+      setLikes(c => c + (next ? 1 : -1));
+      if (next) toast?.ok("¡Te gustó este artículo!"); else toast?.info("Like quitado");
+      return next;
+    });
+  };
   const linkedEvent = a.relatedEventId ? EVENTS.find(e => e.id === a.relatedEventId) : null;
   const orgRel = EVENTS.filter(e => e.id !== a.relatedEventId).slice(0, 3);
   const moreArt = ARTICLES.filter(x => x.id !== a.id).slice(0, 3);
@@ -2947,6 +3216,10 @@ function ArticlePage() {
                 </div>
               </div>
               <div className="share-grp">
+                <button onClick={toggleLike} title={liked ? "Quitar like" : "Me gusta"} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "0 14px", height: 36, borderRadius: 999, background: liked ? "var(--accent)" : "var(--surface)", border: "1px solid " + (liked ? "var(--accent)" : "var(--line)"), color: liked ? "#fff" : "var(--ink)", fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "background .15s, transform .1s" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 22V11"/><path d="M2 13a2 2 0 0 1 2-2h3v11H4a2 2 0 0 1-2-2v-7z"/><path d="M22 11.5a2.5 2.5 0 0 0-2.5-2.5h-5l1-4.5a2 2 0 0 0-3.9-.9L7 11v11h11.4a2 2 0 0 0 2-1.7l1.5-7.3a2.5 2.5 0 0 0 .1-1.5z"/></svg>
+                  <span>{likes >= 1000 ? (likes / 1000).toFixed(1) + "k" : likes}</span>
+                </button>
                 <button className="icon-btn">{Ic.share}</button>
                 <button className="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M9 15v-6l5 3-5 3z"/><circle cx="12" cy="12" r="10"/></svg></button>
                 <button className="icon-btn">{Ic.insta}</button>
@@ -2969,6 +3242,17 @@ function ArticlePage() {
             <p>Las preventas comienzan la próxima semana y los lugares en sala IMAX son limitados. Si eres parte de la comunidad konbinera, ya sabes lo que hay que hacer.</p>
             <div className="tags-row">
               {(a.tags || []).map(t => <span key={t} className="pill" onClick={() => nav("tag", { tag: t })} style={{ cursor: "pointer" }}>#{t}</span>)}
+            </div>
+
+            <div style={{ marginTop: 36, padding: 28, border: "1px solid var(--line)", borderRadius: "var(--r-lg)", display: "flex", gap: 18, alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
+              <div>
+                <div style={{ fontFamily: "var(--font-display)", fontSize: 22, letterSpacing: "-.01em", fontWeight: 700, marginBottom: 4 }}>{liked ? "Gracias por tu like" : "¿Te gustó este artículo?"}</div>
+                <div style={{ color: "var(--ink-3)", fontSize: 13 }}>{likes} {likes === 1 ? "persona" : "personas"} le {likes === 1 ? "dio" : "dieron"} like</div>
+              </div>
+              <button onClick={toggleLike} className="btn primary lg" style={liked ? { background: "var(--accent)" } : { background: "var(--ink)", color: "var(--bg)" }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={liked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 22V11"/><path d="M2 13a2 2 0 0 1 2-2h3v11H4a2 2 0 0 1-2-2v-7z"/><path d="M22 11.5a2.5 2.5 0 0 0-2.5-2.5h-5l1-4.5a2 2 0 0 0-3.9-.9L7 11v11h11.4a2 2 0 0 0 2-1.7l1.5-7.3a2.5 2.5 0 0 0 .1-1.5z"/></svg>
+                <span style={{ marginLeft: 6 }}>{liked ? "Te gustó" : "Me gusta"}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -3270,9 +3554,41 @@ function EventPage() {
 }
 
 /* ───────────────── form ───────────────── */
+function WizardHelp({ onClose }) {
+  const faqs = [
+    ["¿Cuánto cuesta publicar?", "Desde $4.990/día según categoría. Eliges entre 10 y 60 días de publicación."],
+    ["¿Cuándo se publica?", "Tras enviarlo entra a revisión. Un admin lo aprueba en menos de 24h hábiles."],
+    ["¿Puedo editarlo después?", "Una vez aprobado no. Por eso te pedimos revisar bien en el paso 4."],
+    ["¿Qué son los extras del paso 5?", "Avisos, portadas y artículos patrocinados — opcionales, para amplificar tu evento."],
+  ];
+  return (
+    <div className="confirm-bg" onClick={onClose}>
+      <div className="confirm-card" onClick={e => e.stopPropagation()} style={{ maxWidth: 460 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <h3 className="h" style={{ margin: 0 }}>Ayuda</h3>
+          <button className="icon-btn" onClick={onClose}>{Ic.close}</button>
+        </div>
+        <p className="p" style={{ marginBottom: 14 }}>Dudas frecuentes al crear un evento. Esto no interrumpe tu progreso.</p>
+        <div>
+          {faqs.map((f, i) => (
+            <details key={i} className="faq-item" open={i === 0} style={{ padding: "14px 0" }}>
+              <summary style={{ fontSize: 15 }}>{f[0]}</summary>
+              <div className="faq-a" style={{ fontSize: 13 }}>{f[1]}</div>
+            </details>
+          ))}
+        </div>
+        <button className="btn ghost block" style={{ marginTop: 16 }} onClick={onClose}>Entendido, seguir</button>
+      </div>
+    </div>
+  );
+}
+
 function FormPage() {
   const { nav } = useRouter();
   const [step, setStep] = useState(1);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [extras, setExtras] = useState({});
+  const [extrasOpen, setExtrasOpen] = useState({ spot: true });
   const [data, setData] = useState({
     title: "", company: "", category: "", desc: "", about: "",
     free: false, prices: [{ name: "Entrada General", amount: "" }],
@@ -3287,25 +3603,27 @@ function FormPage() {
     <main>
       <div style={{ background: "var(--bg-2)", borderBottom: "1px solid var(--line)", padding: "18px 0" }}>
         <div className="container row" style={{ justifyContent: "space-between" }}>
-          <BrandMark size={28} />
+          <a onClick={() => nav("home")} style={{ cursor: "pointer" }}><BrandMark size={28} /></a>
           <div className="row" style={{ gap: 10 }}>
-            <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>PASO {step} DE 4</span>
-            <button className="btn ghost"><span style={{ marginRight: 6 }}>?</span> Ayuda</button>
+            <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>PASO {step} DE 5</span>
+            <button className="btn ghost" onClick={() => setHelpOpen(true)}><span style={{ marginRight: 6 }}>?</span> Ayuda</button>
           </div>
         </div>
       </div>
+      {helpOpen && <WizardHelp onClose={() => setHelpOpen(false)} />}
 
       <div className="container">
         <div className="form-shell">
           <div className="form-stepbar">
-            {[1,2,3,4].map(n => <div key={n} className={`seg ${n < step ? "done" : ""} ${n === step ? "curr" : ""}`} />)}
+            {[1,2,3,4,5].map(n => <div key={n} className={`seg ${n < step ? "done" : ""} ${n === step ? "curr" : ""}`} />)}
           </div>
 
-          <div className="step-num">PASO {step} / 04</div>
+          <div className="step-num">PASO {step} / 05</div>
           {step === 1 && <Step1 data={data} update={update} />}
           {step === 2 && <Step2 data={data} update={update} />}
           {step === 3 && <Step3 data={data} update={update} />}
           {step === 4 && <Step4 data={data} setStep={setStep} />}
+          {step === 5 && <Step5Extras extras={extras} setExtras={setExtras} open={extrasOpen} setOpen={setExtrasOpen} />}
 
           <div className="form-foot">
             <button className="btn ghost" onClick={() => step > 1 ? setStep(step - 1) : null} disabled={step === 1} style={{ opacity: step === 1 ? .3 : 1 }}>
@@ -3313,8 +3631,8 @@ function FormPage() {
             </button>
             <div className="row" style={{ gap: 14 }}>
               <button className="btn ghost">Guardar borrador</button>
-              <button className="btn primary" onClick={() => step < 4 ? setStep(step + 1) : nav("upsell")}>
-                {step === 4 ? "Enviar evento a revisión" : "Continuar"} {Ic.arrow}
+              <button className="btn primary" onClick={() => step < 5 ? setStep(step + 1) : nav("cart")}>
+                {step === 4 ? "Enviar a revisión →  Extras" : step === 5 ? "Continuar al carrito" : "Continuar"} {Ic.arrow}
               </button>
             </div>
           </div>
@@ -4986,7 +5304,8 @@ function SpotForm({ embedded = false }) {
       </div>
       <div className="field">
         <label>Imagen del aviso <span style={{ color: "var(--err)" }}>*</span></label>
-        <div className="upload-box"><div className="ic">{Ic.upl}</div><div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube una imagen</div><small>JPG / PNG · 1200×1500 mín · máx 5MB</small></div>
+        <div className="upload-box spot-ratio"><div className="ic">{Ic.upl}</div><div style={{ fontWeight: 500, color: "var(--ink-2)", fontSize: 13 }}>Sube una imagen</div><small>4:5 · 1200×1500 mín</small></div>
+        <div className="help">Proporción vertical 4:5 — así se ve la card del aviso.</div>
       </div>
       <div className="field">
         <label>Tipo de enlace del CTA <span style={{ color: "var(--err)" }}>*</span></label>
@@ -5041,7 +5360,8 @@ function HeroForm() {
       </div>
       <div className="field">
         <label>Imagen de fondo (pantalla completa) <span style={{ color: "var(--err)" }}>*</span></label>
-        <div className="upload-box" style={{ aspectRatio: "21/9" }}><div className="ic">{Ic.upl}</div><div style={{ fontWeight: 500, color: "var(--ink-2)" }}>Sube imagen horizontal</div><small>JPG · 2400×1080 mín · máx 8MB · sin texto</small></div>
+        <div className="upload-box hero-ratio"><div className="ic">{Ic.upl}</div><div style={{ fontWeight: 500, color: "var(--ink-2)", fontSize: 13 }}>Sube imagen horizontal</div><small>21:9 · 2400×1080 mín · sin texto</small></div>
+        <div className="help">Proporción panorámica 21:9 — formato del carrusel del home.</div>
       </div>
       <div className="grid-2">
         <div className="field"><label>Fecha a mostrar</label><input type="text" placeholder="9–12 MAY 2025" /></div>
@@ -5145,94 +5465,142 @@ function CreateProductPage({ kind }) {
   );
 }
 
-/* ───────────────── upsell ───────────────── */
+/* ───────────────── step 5: extras (in-wizard) ───────────────── */
+function Step5Extras({ extras, setExtras, open, setOpen }) {
+  const toast = useToast();
+  const toggle = k => setOpen(o => ({ ...o, [k]: !o[k] }));
+  const products = [
+    { k: "spot", n: "5.1", title: "Agregar un aviso", price: "$8.000 / día", sub: "Banner pagado en home y al final de todas las páginas de categoría. Cupo: 9 / 12.", Form: SpotForm },
+    { k: "hero", n: "5.2", title: "Agregar una portada", price: "$15.000 / día", sub: "Aparición en el carrusel principal del home. Cupo: 3 / 5 — escasez de verdad.", Form: HeroForm },
+    { k: "article", n: "5.3", title: "Solicitar un artículo patrocinado", price: "Cotización", sub: "Konbini revisa, edita y publica con su estilo editorial. Sin cupo limitado.", Form: ArticleForm },
+  ];
+  const addedCount = Object.values(extras).filter(Boolean).length;
+  return (
+    <div>
+      <h1 className="step-title">Amplifica tu evento.</h1>
+      <p className="step-lead">Tu evento ya fue enviado a revisión. Estos productos son opcionales — agrega los que quieras o continúa sin ninguno.{addedCount > 0 ? ` Llevas ${addedCount} agregado${addedCount > 1 ? "s" : ""}.` : ""}</p>
+      <div className="form-acc">
+        {products.map(p => {
+          const F = p.Form;
+          const isAdded = extras[p.k];
+          return (
+            <div key={p.k} className={`form-acc-item ${open[p.k] ? "open" : ""}`}>
+              <div className="form-acc-head" onClick={() => toggle(p.k)}>
+                <span className="num">{p.n}</span>
+                <span className="ti">{p.title}</span>
+                {isAdded
+                  ? <span className="meta" style={{ color: "var(--ok)", fontWeight: 600 }}>✓ Agregado</span>
+                  : <span className="meta" style={{ fontFamily: "var(--font-mono)" }}>{p.price}</span>}
+                <span className="chev">{Ic.chev}</span>
+              </div>
+              {open[p.k] && (
+                <div className="form-acc-body">
+                  <p style={{ color: "var(--ink-2)", fontSize: 14, margin: "0 0 18px", lineHeight: 1.55 }}>{p.sub}</p>
+                  <F />
+                  <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
+                    {!isAdded ? (
+                      <button className="btn primary" onClick={() => { setExtras(a => ({ ...a, [p.k]: true })); toast.ok(`${p.k === "spot" ? "Aviso" : p.k === "hero" ? "Portada" : "Artículo"} agregado al carrito`); setOpen(o => ({ ...o, [p.k]: false })); }}>＋ Agregar al carrito</button>
+                    ) : (
+                      <button className="btn ghost" style={{ color: "var(--err)" }} onClick={() => { setExtras(a => ({ ...a, [p.k]: false })); toast.info("Quitado del carrito"); }}>Quitar del carrito</button>
+                    )}
+                    <button className="btn ghost" onClick={() => toggle(p.k)}>Cerrar</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────── upsell (legacy route → redirect) ───────────────── */
 function UpsellPage() {
   const { nav } = useRouter();
-  const [step, setStep] = useState(1);
-  // open: null | "form" — when "form", show inline form before continuing
-  const [open, setOpen] = useState({});
-  const advance = (n, addedItem) => { setStep(n + 1); };
+  useEffect(() => { nav("form"); }, []);
+  return null;
+}
+function UpsellPageOLD() {
+  const { nav } = useRouter();
+  const [open, setOpen] = useState({ spot: true });
+  const [added, setAdded] = useState({});
+  const toast = useToast();
+  const toggle = k => setOpen(o => ({ ...o, [k]: !o[k] }));
+  const products = [
+    { k: "spot", n: "1", title: "Agregar un aviso", price: "$8.000 / día", sub: "Banner pagado en home y al final de todas las páginas de categoría. Cupo: 9 / 12.", Form: SpotForm },
+    { k: "hero", n: "2", title: "Agregar una portada", price: "$15.000 / día", sub: "Aparición en el carrusel principal del home. Cupo: 3 / 5 — escasez de verdad.", Form: HeroForm },
+    { k: "article", n: "3", title: "Solicitar un artículo patrocinado", price: "Cotización", sub: "Konbini revisa, edita y publica con su estilo editorial. Sin cupo limitado.", Form: ArticleForm },
+  ];
+  const addedCount = Object.values(added).filter(Boolean).length;
+
   return (
-    <main className="ups-shell">
-      <div style={{ background: "color-mix(in oklab, var(--ok) 8%, var(--surface))", border: "1px solid color-mix(in oklab, var(--ok) 30%, var(--line))", borderRadius: "var(--r-xl)", padding: 28, marginBottom: 18, display: "flex", gap: 18, alignItems: "center" }}>
-        <div style={{ width: 56, height: 56, borderRadius: 999, background: "var(--ok)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 56px" }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <main>
+      <div style={{ background: "var(--bg-2)", borderBottom: "1px solid var(--line)", padding: "18px 0" }}>
+        <div className="container row" style={{ justifyContent: "space-between" }}>
+          <a onClick={() => nav("home")} style={{ cursor: "pointer" }}><BrandMark size={28} /></a>
+          <div className="row" style={{ gap: 10 }}>
+            <span className="mono" style={{ fontSize: 11, letterSpacing: ".15em", color: "var(--ink-3)" }}>PASO 4 DE 4 · EXTRAS</span>
+            <button className="btn ghost" onClick={() => nav("help", { tab: "faq" })}><span style={{ marginRight: 6 }}>?</span> Ayuda</button>
+          </div>
         </div>
-        <div>
-          <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, letterSpacing: "-.01em" }}>Tu evento está listo para publicar</div>
-          <div style={{ color: "var(--ink-2)", fontSize: 14, marginTop: 2 }}>Antes de pagar, te ofrecemos 3 productos opcionales para amplificar tu evento.</div>
+      </div>
+
+      <div className="container">
+        <div className="form-shell">
+          <a onClick={() => nav("form")} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginBottom: 18, cursor: "pointer" }}>{Ic.chevL} Volver al evento</a>
+
+          <div style={{ background: "color-mix(in oklab, var(--ok) 8%, var(--surface))", border: "1px solid color-mix(in oklab, var(--ok) 30%, var(--line))", borderRadius: "var(--r-xl)", padding: 28, marginBottom: 18, display: "flex", gap: 18, alignItems: "center" }}>
+            <div style={{ width: 56, height: 56, borderRadius: 999, background: "var(--ok)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flex: "0 0 56px" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div style={{ fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 700, letterSpacing: "-.01em" }}>Tu evento está listo para publicar</div>
+              <div style={{ color: "var(--ink-2)", fontSize: 14, marginTop: 2 }}>Productos opcionales para amplificar tu evento. Agrega los que quieras — o ninguno.</div>
+            </div>
+          </div>
+
+          <div className="form-acc">
+            {products.map(p => {
+              const F = p.Form;
+              const isAdded = added[p.k];
+              return (
+                <div key={p.k} className={`form-acc-item ${open[p.k] ? "open" : ""}`}>
+                  <div className="form-acc-head" onClick={() => toggle(p.k)}>
+                    <span className="num">{p.n}</span>
+                    <span className="ti">{p.title}</span>
+                    {isAdded
+                      ? <span className="meta" style={{ color: "var(--ok)", fontWeight: 600 }}>✓ Agregado</span>
+                      : <span className="meta" style={{ fontFamily: "var(--font-mono)" }}>{p.price}</span>}
+                    <span className="chev">{Ic.chev}</span>
+                  </div>
+                  {open[p.k] && (
+                    <div className="form-acc-body">
+                      <p style={{ color: "var(--ink-2)", fontSize: 14, margin: "0 0 18px", lineHeight: 1.55 }}>{p.sub}</p>
+                      <F />
+                      <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
+                        {!isAdded ? (
+                          <button className="btn primary" onClick={() => { setAdded(a => ({ ...a, [p.k]: true })); toast.ok(`${p.title.replace("Agregar un", "Aviso").replace("Agregar una", "Portada").replace("Solicitar un", "Artículo")} agregado al carrito`); setOpen(o => ({ ...o, [p.k]: false })); }}>＋ Agregar al carrito</button>
+                        ) : (
+                          <button className="btn ghost" style={{ color: "var(--err)" }} onClick={() => { setAdded(a => ({ ...a, [p.k]: false })); toast.info("Quitado del carrito"); }}>Quitar del carrito</button>
+                        )}
+                        <button className="btn ghost" onClick={() => toggle(p.k)}>Cerrar</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="form-foot">
+            <div style={{ color: "var(--ink-3)", fontSize: 13 }}>{addedCount > 0 ? <><strong style={{ color: "var(--ink)" }}>{addedCount}</strong> producto{addedCount > 1 ? "s" : ""} extra agregado{addedCount > 1 ? "s" : ""}</> : "Puedes continuar sin agregar nada."}</div>
+            <div className="row" style={{ gap: 10 }}>
+              <button className="btn ghost" onClick={() => nav("form")}>Volver</button>
+              <button className="btn primary" onClick={() => nav("cart")}>Continuar al carrito {Ic.arrow}</button>
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* PASO 1: AVISO */}
-      <div className={`ups-step ${step > 1 ? "done" : ""}`}>
-        <div className="num">PASO 1 / 3 · OPCIONAL</div>
-        <h2>¿Quieres agregar un aviso?</h2>
-        <p className="av">Banner pagado en home y al final de todas las páginas de categoría. Cupo: 9 / 12 ocupados.</p>
-        {step === 1 && <div className="body">
-          {!open.spot ? <>
-            <div style={{ background: "var(--surface-2)", borderRadius: 12, padding: 16, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div><div style={{ fontWeight: 600 }}>Precio</div><div style={{ color: "var(--ink-3)", fontSize: 12 }}>10 días mínimo, 30 máximo</div></div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>$8.000 / día</div>
-            </div>
-            <div className="ups-cta-row">
-              <button className="btn primary" onClick={() => setOpen({ ...open, spot: true })}>Sí, agregar aviso</button>
-              <button className="btn ghost" onClick={() => advance(1)}>No, gracias — siguiente</button>
-            </div>
-          </> : <>
-            <SpotForm embedded />
-            <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-              <button className="btn primary" onClick={() => advance(1, "spot")}>Agregar aviso al carrito {Ic.arrow}</button>
-              <button className="btn ghost" onClick={() => setOpen({ ...open, spot: false })}>Cancelar</button>
-            </div>
-          </>}
-        </div>}
-      </div>
-
-      {/* PASO 2: PORTADA */}
-      <div className={`ups-step ${step < 2 ? "done" : ""} ${step > 2 ? "done" : ""}`} style={ step < 2 ? { opacity: .35 } : null }>
-        <div className="num">PASO 2 / 3 · OPCIONAL</div>
-        <h2>¿Quieres agregar una portada?</h2>
-        <p className="av">Aparición en el carrusel principal del home. Cupo: 3 / 5 ocupados — escasez de verdad.</p>
-        {step === 2 && <div className="body">
-          {!open.hero ? <>
-            <div style={{ background: "var(--surface-2)", borderRadius: 12, padding: 16, marginBottom: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div><div style={{ fontWeight: 600 }}>Precio</div><div style={{ color: "var(--ink-3)", fontSize: 12 }}>10 días mínimo, 30 máximo</div></div>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700 }}>$15.000 / día</div>
-            </div>
-            <div className="ups-cta-row">
-              <button className="btn primary" onClick={() => setOpen({ ...open, hero: true })}>Sí, agregar portada</button>
-              <button className="btn ghost" onClick={() => advance(2)}>No, gracias — siguiente</button>
-            </div>
-          </> : <>
-            <HeroForm />
-            <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-              <button className="btn primary" onClick={() => advance(2, "hero")}>Agregar portada al carrito {Ic.arrow}</button>
-              <button className="btn ghost" onClick={() => setOpen({ ...open, hero: false })}>Cancelar</button>
-            </div>
-          </>}
-        </div>}
-      </div>
-
-      {/* PASO 3: ARTÍCULO */}
-      <div className={`ups-step ${step < 3 ? "done" : ""}`} style={ step < 3 ? { opacity: .35 } : null }>
-        <div className="num">PASO 3 / 3 · OPCIONAL</div>
-        <h2>¿Quieres un artículo patrocinado?</h2>
-        <p className="av">Konbini revisa, edita y publica con su estilo editorial. El evento aparece destacado en el bloque de relacionados del artículo. Sin cupo limitado.</p>
-        {step === 3 && <div className="body">
-          {!open.article ? <>
-            <div className="ups-cta-row">
-              <button className="btn primary" onClick={() => setOpen({ ...open, article: true })}>Sí, agregar artículo</button>
-              <button className="btn ghost" onClick={() => nav("cart")}>No, gracias — ir al carrito</button>
-            </div>
-          </> : <>
-            <ArticleForm />
-            <div className="ups-cta-row" style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
-              <button className="btn primary" onClick={() => nav("cart")}>Agregar artículo al carrito {Ic.arrow}</button>
-              <button className="btn ghost" onClick={() => setOpen({ ...open, article: false })}>Cancelar</button>
-            </div>
-          </>}
-        </div>}
       </div>
     </main>
   );
@@ -6016,6 +6384,44 @@ function AccItem({ n, title, meta, open, onToggle, children }) {
   );
 }
 
+/* ───────────────── admin product editor (spot / hero, full page) ───────────────── */
+function AdminProductEditor({ kind, mode = "create" }) {
+  const { nav } = useRouter();
+  const toast = useToast();
+  const isSpot = kind === "spot";
+  const singular = isSpot ? "aviso" : "portada";
+  const save = () => {
+    toast.ok(mode === "create" ? `${singular[0].toUpperCase() + singular.slice(1)} creado` : "Cambios guardados", "Publicado directamente como admin");
+    nav("admin", { section: isSpot ? "spots" : "heroes" });
+  };
+  return (
+    <div style={{ maxWidth: 880, margin: "0 auto" }}>
+      <a onClick={() => nav("admin", { section: isSpot ? "spots" : "heroes" })} style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "var(--ink-3)", fontSize: 13, marginBottom: 18, cursor: "pointer" }}>{Ic.chevL} Volver a {isSpot ? "avisos" : "portadas"}</a>
+
+      <div className="panel" style={{ marginBottom: 18 }}>
+        <div className="field" style={{ margin: 0 }}>
+          <label>Asignar a organizador <span style={{ color: "var(--err)" }}>*</span></label>
+          <select defaultValue=""><option value="">Selecciona una cuenta…</option><option>Cinépolis Chile (@cinepolis)</option><option>Konbini Editorial (@konbini-ed)</option><option>AnimeShop CL (@animeshop)</option></select>
+          <div className="help">El {singular} se publicará bajo esta cuenta. Cupo {isSpot ? "9 / 12" : "3 / 5"} ocupado.</div>
+        </div>
+      </div>
+
+      <div className="acc-section" style={{ padding: 28 }}>
+        {isSpot ? <SpotForm /> : <HeroForm />}
+      </div>
+
+      <div style={{ position: "sticky", bottom: 0, marginTop: 24, padding: "18px 0", borderTop: "1px solid var(--line)", background: "color-mix(in oklab, var(--bg) 92%, transparent)", backdropFilter: "blur(8px)", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+        <div style={{ color: "var(--ink-3)", fontSize: 12 }}>{mode === "create" ? "Creando como admin · publicación directa." : "Editando como admin."}</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn ghost" onClick={() => nav("admin", { section: isSpot ? "spots" : "heroes" })}>Cancelar</button>
+          <button className="btn primary" onClick={save}>{mode === "create" ? "Crear y publicar" : "Guardar cambios"} {Ic.arrow}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────── admin event editor (full page) ───────────────── */
 function AdminEventEditor({ initial = {}, mode = "create" }) {
   const { nav } = useRouter();
   const toast = useToast();
@@ -6317,8 +6723,10 @@ const ADMIN_NAV = [
     { id: "crm", label: "CRM", ic: "▦" },
   ]},
   { grp: "Mantenedores", items: [
-    { id: "categories", label: "Categorías", ic: "#" },
-    { id: "tags", label: "Tags", ic: "#" },
+    { id: "categories-ev", label: "Categorías · Eventos", ic: "#" },
+    { id: "categories-art", label: "Categorías · Noticias", ic: "#" },
+    { id: "tags-ev", label: "Tags · Eventos", ic: "#" },
+    { id: "tags-art", label: "Tags · Noticias", ic: "#" },
     { id: "countries", label: "Países", ic: "◐" },
     { id: "states", label: "Divisiones", ic: "◑" },
     { id: "cities", label: "Ciudades", ic: "◒" },
@@ -6338,8 +6746,10 @@ function AdminPage() {
   const cur = ADMIN_NAV.flatMap(g => g.items).find(i => i.id === sel)
     || (sel === "event-new" || sel === "event-edit" ? { label: sel === "event-new" ? "Crear evento" : "Editar evento", crumb: "EVENTOS / " + (sel === "event-new" ? "NUEVO" : "EDITAR") } :
         sel === "article-new" || sel === "article-edit" ? { label: sel === "article-new" ? "Crear artículo" : "Editar artículo", crumb: "ARTÍCULOS / " + (sel === "article-new" ? "NUEVO" : "EDITAR") } :
+        sel === "spot-new" || sel === "spot-edit" ? { label: sel === "spot-new" ? "Crear aviso" : "Editar aviso", crumb: "AVISOS / " + (sel === "spot-new" ? "NUEVO" : "EDITAR") } :
+        sel === "hero-new" || sel === "hero-edit" ? { label: sel === "hero-new" ? "Crear portada" : "Editar portada", crumb: "PORTADAS / " + (sel === "hero-new" ? "NUEVO" : "EDITAR") } :
         ADMIN_NAV[0].items[0]);
-  const sideActive = (sel === "event-new" || sel === "event-edit") ? "events" : (sel === "article-new" || sel === "article-edit") ? "articles" : sel;
+  const sideActive = (sel === "event-new" || sel === "event-edit") ? "events" : (sel === "article-new" || sel === "article-edit") ? "articles" : (sel === "spot-new" || sel === "spot-edit") ? "spots" : (sel === "hero-new" || sel === "hero-edit") ? "heroes" : sel;
   const activeGroup = ADMIN_NAV.find(g => g.items.some(i => i.id === sideActive))?.grp;
   const [openGroups, setOpenGroups] = useState(() => {
     const init = {};
@@ -6399,7 +6809,11 @@ function AdminPage() {
           {sel === "event-new" && <AdminEventEditor mode="create" />}
           {sel === "event-edit" && <AdminEventEditor mode="edit" initial={{ title: "Evento existente", category: "Anime", venue: "Teatro Cariola", city: "Santiago" }} />}
           {sel === "spots" && <AdminTable kind="spots" />}
+          {sel === "spot-new" && <AdminProductEditor kind="spot" mode="create" />}
+          {sel === "spot-edit" && <AdminProductEditor kind="spot" mode="edit" />}
           {sel === "heroes" && <AdminTable kind="heroes" />}
+          {sel === "hero-new" && <AdminProductEditor kind="hero" mode="create" />}
+          {sel === "hero-edit" && <AdminProductEditor kind="hero" mode="edit" />}
           {sel === "articles" && <AdminTable kind="articles" />}
           {sel === "article-new" && <AdminArticleEditor mode="create" />}
           {sel === "article-edit" && <AdminArticleEditor mode="edit" initial={{ title: "Artículo existente", category: "Anime", content: "Lorem ipsum dolor sit amet..." }} />}
@@ -6410,8 +6824,10 @@ function AdminPage() {
           {sel === "photo" && <AdminInbox kind="photo" />}
           {sel === "creators" && <AdminInbox kind="creators" />}
           {sel === "crm" && <AdminCRM />}
-          {sel === "categories" && <AdminCategories />}
-          {sel === "tags" && <AdminSimpleCRUD kind="tags" />}
+          {sel === "categories-ev" && <AdminCategories kind="events" />}
+          {sel === "categories-art" && <AdminCategories kind="news" />}
+          {sel === "tags-ev" && <AdminSimpleCRUD kind="tags-ev" />}
+          {sel === "tags-art" && <AdminSimpleCRUD kind="tags-art" />}
           {sel === "countries" && <AdminSimpleCRUD kind="countries" />}
           {sel === "states" && <AdminSimpleCRUD kind="states" />}
           {sel === "cities" && <AdminSimpleCRUD kind="cities" />}
@@ -6524,14 +6940,13 @@ function AdminTable({ kind }) {
   const [activeStatus, setActiveStatus] = useState("Todos");
   const [modal, setModal] = useState(null); // { type, item }
   const close = () => setModal(null);
-  const createKinds = { events: "evento", articles: "artículo" };
+  const createKinds = { events: "evento", articles: "artículo", spots: "aviso", heroes: "portada" };
 
   return (<>
     <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
       {meta.statuses.map(s => <button key={s} className={`sel ${activeStatus === s ? "on" : ""}`} onClick={() => setActiveStatus(s)}>{s}</button>)}
       {meta.cap && <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", padding: "9px 14px", borderRadius: 999, background: "color-mix(in oklab, var(--accent) 12%, transparent)", color: "var(--accent)", fontSize: 12, fontWeight: 600, fontFamily: "var(--font-mono)", letterSpacing: ".08em" }}>OCUPACIÓN · {meta.cap}</div>}
-      {createKinds[kind] && <button className="btn primary" style={{ marginLeft: meta.cap ? 10 : "auto", padding: "9px 16px", fontSize: 13 }} onClick={() => kind === "events" ? nav("admin", { section: "event-new" }) : kind === "articles" ? nav("admin", { section: "article-new" }) : setModal({ type: "create" })}>＋ Crear {createKinds[kind]}</button>}
-    </div>
+      {createKinds[kind] && <button className="btn primary" style={{ marginLeft: meta.cap ? 10 : "auto", padding: "9px 16px", fontSize: 13 }} onClick={() => kind === "events" ? nav("admin", { section: "event-new" }) : kind === "articles" ? nav("admin", { section: "article-new" }) : kind === "spots" ? nav("admin", { section: "spot-new" }) : kind === "heroes" ? nav("admin", { section: "hero-new" }) : setModal({ type: "create" })}>＋ Crear {createKinds[kind]}</button>}    </div>
     <div className="panel" style={{ padding: 0 }}>
       <table className="a-table">
         <thead>
@@ -6573,7 +6988,7 @@ function AdminTable({ kind }) {
                   <button onClick={() => setModal({ type: "approve", item: e })}>Re-revisar</button>
                   <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
                 </> : <>
-                  <button onClick={() => nav("admin", { section: "event-edit" })}>Editar</button>
+                  <button onClick={() => kind === "events" ? nav("admin", { section: "event-edit" }) : kind === "articles" ? nav("admin", { section: "article-edit" }) : kind === "spots" ? nav("admin", { section: "spot-edit" }) : kind === "heroes" ? nav("admin", { section: "hero-edit" }) : setModal({ type: "edit", item: e })}>Editar</button>
                   <button className="bad" onClick={() => setModal({ type: "ban", item: e })}>Banear</button>
                   <button onClick={() => setModal({ type: "transfer", item: e })}>Transferir</button>
                 </>}
@@ -6870,41 +7285,55 @@ function AdminCRM() {
   );
 }
 
-function AdminCategories() {
+function AdminCategories({ kind = "events" }) {
   const toast = useToast();
-  const cats = [
+  const isEv = kind === "events";
+  const cats = isEv ? [
     { nm: "Anime", slug: "anime", ic: "🎌", price: 4990, min: 10, max: 60, count: 84 },
     { nm: "Conciertos", slug: "conciertos", ic: "🎤", price: 6990, min: 10, max: 60, count: 62 },
     { nm: "Cine", slug: "cine", ic: "🎬", price: 5990, min: 10, max: 45, count: 48 },
     { nm: "Gaming", slug: "gaming", ic: "🎮", price: 4990, min: 10, max: 60, count: 36 },
     { nm: "Convenciones", slug: "convenciones", ic: "📦", price: 9990, min: 10, max: 60, count: 27 },
     { nm: "Cosplay", slug: "cosplay", ic: "✨", price: 4990, min: 10, max: 60, count: 18 },
+  ] : [
+    { nm: "Anime", slug: "anime", ic: "🎌", count: 142 },
+    { nm: "Manga", slug: "manga", ic: "📖", count: 98 },
+    { nm: "Cine", slug: "cine", ic: "🎬", count: 64 },
+    { nm: "Gaming", slug: "gaming", ic: "🎮", count: 73 },
+    { nm: "K-Pop", slug: "kpop", ic: "🎤", count: 51 },
+    { nm: "Cosplay", slug: "cosplay", ic: "✨", count: 39 },
+    { nm: "Cultura", slug: "cultura", ic: "🍙", count: 47 },
   ];
   const [modal, setModal] = useState(null);
-  const fields = [
+  const fields = isEv ? [
     { k: "nm", label: "Nombre de la categoría", required: true, placeholder: "Anime" },
     { k: "slug", label: "Slug (URL)", required: true, prefix: "konbini.cl/", placeholder: "anime" },
     { k: "ic", label: "Icono/Emoji", placeholder: "🎌" },
     { k: "price", label: "Precio por día (CLP)", type: "number", required: true, placeholder: "4990" },
     { k: "min", label: "Días mínimos", type: "number", required: true, placeholder: "10" },
     { k: "max", label: "Días máximos", type: "number", required: true, placeholder: "60" },
+  ] : [
+    { k: "nm", label: "Nombre de la categoría", required: true, placeholder: "Anime" },
+    { k: "slug", label: "Slug (URL)", required: true, prefix: "konbini.cl/noticias/", placeholder: "anime" },
+    { k: "ic", label: "Icono/Emoji", placeholder: "🎌" },
   ];
+  const noun = isEv ? "evento" : "artículo";
   return (<>
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-      <div style={{ color: "var(--ink-3)", fontSize: 13 }}>Reordenar arrastrando · CRUD completo · valores por defecto al instalar</div>
+      <div style={{ color: "var(--ink-3)", fontSize: 13 }}>Categorías de <strong style={{ color: "var(--ink)" }}>{isEv ? "Eventos" : "Noticias"}</strong> · {isEv ? "con precio y duración" : "solo editorial, sin precio"}</div>
       <button className="btn primary" onClick={() => setModal({ type: "create" })}>＋ Nueva categoría</button>
     </div>
     <div className="panel" style={{ padding: 0 }}>
       <table className="a-table">
-        <thead><tr><th>CATEGORÍA</th><th>SLUG</th><th>$/DÍA</th><th>MÍN</th><th>MÁX</th><th>EVENTOS</th><th></th></tr></thead>
+        <thead><tr><th>CATEGORÍA</th><th>SLUG</th>{isEv && <><th>$/DÍA</th><th>MÍN</th><th>MÁX</th></>}<th>{isEv ? "EVENTOS" : "ARTÍCULOS"}</th><th></th></tr></thead>
         <tbody>
           {cats.map(c => (
             <tr key={c.slug}>
               <td><div className="cell-evt"><div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--surface-2)", border: "1px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{c.ic}</div><div className="ti">{c.nm}</div></div></td>
               <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>/{c.slug}</td>
-              <td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>${c.price.toLocaleString("es-CL")}</td>
+              {isEv && <><td style={{ fontFamily: "var(--font-mono)", fontWeight: 600 }}>${c.price.toLocaleString("es-CL")}</td>
               <td style={{ fontFamily: "var(--font-mono)" }}>{c.min}d</td>
-              <td style={{ fontFamily: "var(--font-mono)" }}>{c.max}d</td>
+              <td style={{ fontFamily: "var(--font-mono)" }}>{c.max}d</td></>}
               <td style={{ fontFamily: "var(--font-mono)" }}>{c.count}</td>
               <td><div className="row-act">
                 <button onClick={() => setModal({ type: "edit", item: c })}>Editar</button>
@@ -6915,12 +7344,12 @@ function AdminCategories() {
         </tbody>
       </table>
     </div>
-    {modal?.type === "create" && <AdminFormModal title="Nueva categoría" fields={fields} onClose={() => setModal(null)} onSave={d => toast.ok("Categoría creada", `"${d.nm}" agregada al sistema`)} />}
+    {modal?.type === "create" && <AdminFormModal title={`Nueva categoría de ${isEv ? "evento" : "noticia"}`} fields={fields} onClose={() => setModal(null)} onSave={d => toast.ok("Categoría creada", `"${d.nm}" agregada al sistema`)} />}
     {modal?.type === "edit" && <AdminFormModal title={`Editar ${modal.item.nm}`} fields={fields} initial={modal.item} onClose={() => setModal(null)} onSave={d => toast.ok("Categoría actualizada", `Cambios guardados en "${d.nm}"`)} />}
     {modal?.type === "delete" && <ConfirmDialog
       danger
       title={`¿Eliminar categoría "${modal.item.nm}"?`}
-      message={modal.item.count > 0 ? `Esta categoría tiene ${modal.item.count} eventos asociados. No se puede eliminar mientras tenga contenido.` : "Esta acción es permanente."}
+      message={modal.item.count > 0 ? `Esta categoría tiene ${modal.item.count} ${noun}s asociados. No se puede eliminar mientras tenga contenido.` : "Esta acción es permanente."}
       typeToConfirm={modal.item.count === 0 ? "ELIMINAR" : null}
       confirmLabel={modal.item.count > 0 ? "Entendido" : "Sí, eliminar"}
       onConfirm={() => { if (modal.item.count === 0) toast.warn("Categoría eliminada"); setModal(null); }}
@@ -6932,7 +7361,8 @@ function AdminCategories() {
 function AdminSimpleCRUD({ kind }) {
   const toast = useToast();
   const data = {
-    tags: { name: "Tag", items: ["shonen", "seinen", "isekai", "kpop", "cosplay", "indie", "retro", "esports"], cols: ["NOMBRE", "SLUG", "USOS"], fields: [{ k: "nm", label: "Nombre del tag", required: true, placeholder: "shonen" }] },
+    "tags-ev": { name: "Tag de evento", items: ["concierto", "santiago", "anime", "cosplay", "convención", "gratis", "online", "estreno"], cols: ["NOMBRE", "SLUG", "USOS"], fields: [{ k: "nm", label: "Nombre del tag", required: true, placeholder: "concierto" }] },
+    "tags-art": { name: "Tag de noticia", items: ["shonen", "seinen", "isekai", "kpop", "cosplay", "indie", "retro", "esports"], cols: ["NOMBRE", "SLUG", "USOS"], fields: [{ k: "nm", label: "Nombre del tag", required: true, placeholder: "shonen" }] },
     countries: { name: "País", items: ["Chile", "Argentina", "México", "España"], cols: ["NOMBRE", "ISO", "BANDERA"], fields: [{ k: "nm", label: "Nombre del país", required: true }, { k: "iso", label: "Código ISO (2 letras)", required: true, placeholder: "CL" }, { k: "flag", label: "Bandera (emoji)", placeholder: "🇨🇱" }] },
     states: { name: "División", items: ["Metropolitana de Santiago", "Valparaíso", "Bío-Bío", "Antofagasta"], cols: ["NOMBRE", "TIPO", "PAÍS"], fields: [{ k: "nm", label: "Nombre", required: true }, { k: "tp", label: "Tipo", type: "select", options: ["Región", "Provincia", "Estado", "Departamento"], required: true }, { k: "co", label: "País", type: "select", options: ["Chile", "Argentina", "México"], required: true }] },
     cities: { name: "Ciudad", items: ["Santiago", "Valparaíso", "Concepción", "Antofagasta"], cols: ["NOMBRE", "DIVISIÓN", "PAÍS"], fields: [{ k: "nm", label: "Nombre", required: true }, { k: "div", label: "División administrativa", type: "select", options: ["Metropolitana", "Valparaíso", "Bío-Bío"], required: true }, { k: "co", label: "País", type: "select", options: ["Chile", "Argentina", "México"], required: true }] },
@@ -6950,8 +7380,8 @@ function AdminSimpleCRUD({ kind }) {
           {data.items.map(it => (
             <tr key={it}>
               <td><strong>{it}</strong></td>
-              <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{kind === "tags" ? "#" + it.toLowerCase().replace(/\s/g, "-") : kind === "countries" ? "CL" : kind === "states" ? "Región" : "Metropolitana"}</td>
-              <td style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink-3)" }}>{kind === "tags" ? Math.floor(Math.random() * 50) + 3 : kind === "countries" ? "🇨🇱" : "Chile"}</td>
+              <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{kind.startsWith("tags") ? "#" + it.toLowerCase().replace(/\s/g, "-") : kind === "countries" ? "CL" : kind === "states" ? "Región" : "Metropolitana"}</td>
+              <td style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink-3)" }}>{kind.startsWith("tags") ? Math.floor(Math.random() * 50) + 3 : kind === "countries" ? "🇨🇱" : "Chile"}</td>
               <td><div className="row-act">
                 <button onClick={() => setModal({ type: "edit", item: { nm: it } })}>Editar</button>
                 <button className="bad" onClick={() => setModal({ type: "delete", item: { nm: it } })}>Eliminar</button>
@@ -7203,6 +7633,7 @@ function Shell() {
       {route.name === "news" && <NewsListPage />}
       {route.name === "newsCats" && <NewsCatsAllPage />}
       {route.name === "newsTags" && <NewsTagsAllPage />}
+      {route.name === "eventCats" && <EventCatsAllPage />}
       {route.name === "article" && <ArticlePage />}
       {route.name === "organizer" && <OrganizerPage />}
       {route.name === "pricing" && <PricingPage />}

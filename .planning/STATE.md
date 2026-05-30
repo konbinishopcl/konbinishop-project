@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-30T18:40:28.879Z"
+last_updated: "2026-05-30T18:41:23.924Z"
 progress:
   total_phases: 12
   completed_phases: 12
@@ -26,7 +26,7 @@ administrador quedan visibles al público.
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-30T18:40:28.875Z
+**Last session:** 2026-05-30T18:41:23.922Z
 
 ## Phase Summary
 
@@ -214,6 +214,7 @@ administrador quedan visibles al público.
 - [Phase 27.1-05]: topIngresos derived via useMemo from already-loaded payments; Top organizadores eventos panel removed (no aggregate endpoint)
 - [Phase 27.1-01]: delete methods return { deleted: boolean } not void — consistent with catalog.service.ts removeCountry/removeState/removeCity responses
 - [Phase 27.1-04]: KPIs computed client-side from already-loaded rows via useMemo — no extra API calls; REEMBOLSOS removed; FALLIDOS replaces PENDIENTES; fake PDF/refund buttons removed from modal
+- [Phase 27.1-03]: Category bars use _count.events from eventCategories() with defensive cast; revenue chart passes empty array when all buckets zero to trigger empty state
 
 ## Accumulated Context
 

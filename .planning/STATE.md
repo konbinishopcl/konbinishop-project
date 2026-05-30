@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-30T20:44:23.631Z"
+last_updated: "2026-05-30T21:11:34.205Z"
 progress:
-  total_phases: 13
+  total_phases: 14
   completed_phases: 13
-  total_plans: 58
-  completed_plans: 58
+  total_plans: 61
+  completed_plans: 60
 ---
 
 # Project State
@@ -19,14 +19,14 @@ See: `.planning/PROJECT.md` (updated 2026-05-27 after v1.0 milestone)
 
 **Core value:** Organizadores publican gratis sus eventos; tras la aprobación de un
 administrador quedan visibles al público.
-**Current focus:** Phase 27.1 — dashboard-gap-fixes
+**Current focus:** Phase 28.1 — sitio-p-blico-gap-fixes
 
 ## Current Status
 
 **Milestone:** v2 — Plataforma completa ✅
 **Active Phase:** —
 **Overall Progress:** [██████████] 100% (48/48 plans) · Todas las fases completas (0–14)
-**Last session:** 2026-05-30T18:49:13.214Z
+**Last session:** 2026-05-30T21:11:34.202Z
 
 ## Phase Summary
 
@@ -217,6 +217,7 @@ administrador quedan visibles al público.
 - [Phase 27.1-03]: Category bars use _count.events from eventCategories() with defensive cast; revenue chart passes empty array when all buckets zero to trigger empty state
 - [Phase 27.1-06]: Deleted both inline AdminApproveModal components entirely — no refactor, clean removal. Approve uses ConfirmDialog without danger or typeToConfirm.
 - [Phase 27.1-dashboard-gap-fixes]: RealCountriesSection/RealStatesSection/RealCitiesSection replace mock KINDS; GeoSelectFormModal for id-valued parent selects; client-side joins for parent names and counts; TagsFormModal reused verbatim; SimpleCRUDSection is pure router
+- [Phase 28.1]: ARTICLE_DETAIL_INCLUDE gets user without email (only firstname+lastname); ARTICLE_INCLUDE already had email in user select
 
 ## Accumulated Context
 

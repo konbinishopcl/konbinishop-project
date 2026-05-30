@@ -55,11 +55,9 @@ const ADMIN_NAV: NavGroup[] = [
   {
     grp: "EVENTOS",
     items: [
-      { label: "Eventos",     ic: CalendarDays, href: "/dashboard/events" },
-      { label: "Categorías",  ic: Tag,          href: "/dashboard/event-categories" },
-      { label: "Tags",        ic: Tags,         href: "/dashboard/event-tags" },
-      { label: "Avisos",      ic: Megaphone,    href: "/dashboard/spots" },
-      { label: "Portadas",    ic: Layers,       href: "/dashboard/heroes" },
+      { label: "Eventos",    ic: CalendarDays, href: "/dashboard/events" },
+      { label: "Categorías", ic: Tag,          href: "/dashboard/event-categories" },
+      { label: "Tags",       ic: Tags,         href: "/dashboard/event-tags" },
     ],
   },
   {
@@ -83,6 +81,8 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: "Pagos & ventas",  ic: CreditCard,   href: "/dashboard/payments" },
       { label: "Suscripciones",   ic: Repeat2,      href: "/dashboard/subscriptions" },
+      { label: "Avisos",          ic: Megaphone,    href: "/dashboard/spots" },
+      { label: "Portadas",        ic: Layers,       href: "/dashboard/heroes" },
       { label: "Fotografía",      ic: Camera,       href: "/dashboard/photography" },
       { label: "Creadores",       ic: Clapperboard, href: "/dashboard/content-creators" },
     ],

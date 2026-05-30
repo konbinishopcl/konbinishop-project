@@ -84,49 +84,6 @@ function imageSrc(image: string | null) {
 
 // ── Modal components ──────────────────────────────────────────────────────────
 
-function AdminApproveModal({ kind, onClose, onApprove }: {
-  kind: string; onClose: () => void; onApprove: (tags: string) => void;
-}) {
-  const [tags, setTags] = useState("anime, cosplay, santiago, evento");
-  const [aiBusy, setAiBusy] = useState(false);
-  const regenAI = () => {
-    setAiBusy(true);
-    setTimeout(() => {
-      setTags("anime, japón, otaku, santiago, evento, " + (Math.random() > 0.5 ? "convención" : "concierto"));
-      setAiBusy(false);
-    }, 700);
-  };
-  return (
-    <div className="confirm-bg" onClick={onClose}>
-      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-        <h3 className="h">Aprobar {kind}</h3>
-        <p className="p">Al aprobar, el contenido pasa a ser público en Konbini. La IA sugirió los siguientes tags — puedes editarlos antes de confirmar.</p>
-        <div className="field" style={{ margin: 0 }}>
-          <label>Tags (separados por coma)</label>
-          <div style={{ position: "relative" }}>
-            <input type="text" value={tags} onChange={(e) => setTags(e.target.value)} style={{ paddingRight: 44 }} />
-            <button
-              className="icon-btn"
-              onClick={regenAI}
-              title="Regenerar con IA"
-              style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, background: "var(--accent)", color: "#fff", borderColor: "var(--accent)" }}
-            >
-              <span style={{ animation: aiBusy ? "spin 1s linear infinite" : "none" }}>✦</span>
-            </button>
-          </div>
-          <div className="help">Los tags ayudan a categorizar el contenido. Se generan automáticamente con IA.</div>
-        </div>
-        <div className="row-act" style={{ marginTop: 22 }}>
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn primary" style={{ background: "var(--ok)" }} onClick={() => { onApprove(tags); onClose(); }}>
-            ✓ Aprobar y publicar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function AdminRejectModal({ kind, onClose, onReject }: {
   kind: string; onClose: () => void; onReject: (reason: string) => void;
 }) {
@@ -504,7 +461,15 @@ export default function ArticlesSection() {
       {/* Modals */}
       {modal?.type === "approve" && (() => {
         const item = modal.item;
-        return <AdminApproveModal kind="artículo" onClose={close} onApprove={() => { close(); doApprove(item); }} />;
+        return (
+          <ConfirmDialog
+            title="¿Publicar este artículo?"
+            message={`"${item.title}" pasará a ser público en Konbini.`}
+            confirmLabel="✓ Publicar"
+            onConfirm={() => { close(); doApprove(item); }}
+            onClose={close}
+          />
+        );
       })()}
       {modal?.type === "reject" && (() => {
         const item = modal.item;

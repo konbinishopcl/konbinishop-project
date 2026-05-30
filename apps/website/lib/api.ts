@@ -287,6 +287,7 @@ export type ApiArticle = {
   tags: { id: number; name: string; slug: string }[];
   events?: ApiArticleEvent[];
   _count?: { likes: number };
+  user?: { firstname: string; lastname: string } | null;
 };
 
 export type ApiArticleTag = {

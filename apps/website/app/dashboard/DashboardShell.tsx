@@ -147,6 +147,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const allItems  = ADMIN_NAV.flatMap((g) => g.items);
   const subPage   = SUB_PAGES[pathname];
   const cur       = subPage ?? allItems.find((i) => isActive(i.href)) ?? ADMIN_NAV[0].items[0];
+  const crumbPrefix = subPage?.crumb ?? `${activeGroup} / ${cur.label.toUpperCase()}`;
   const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
   const initials = user
@@ -206,7 +207,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="admin-main">
         <div className="admin-top">
           <div>
-            <div className="crumb">DASHBOARD / {cur.label.toUpperCase()}</div>
+            <div className="crumb">{crumbPrefix}</div>
             <h1>{cur.label}</h1>
           </div>
           <UserMenu size={36} />

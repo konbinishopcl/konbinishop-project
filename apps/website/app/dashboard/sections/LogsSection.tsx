@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { api, type ApiAuditLog, type ApiAdminUser } from "@/lib/api";
+import { TablePagination, useClientPagination } from "@/components/TablePagination";
 
 function actionColor(action: string): string {
   if (action === "BAN" || action === "REJECT" || action === "DELETE") return "var(--err)";
@@ -13,6 +14,7 @@ function actionColor(action: string): string {
 export default function LogsSection() {
   const { token } = useUser();
   const [logs, setLogs] = useState<ApiAuditLog[]>([]);
+  const { page, goPage, perPage, changePerPage, total, totalPages, from, to, paginated: paginatedLogs } = useClientPagination(logs);
   const [admins, setAdmins] = useState<ApiAdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState<"all" | "7d">("all");
@@ -110,7 +112,7 @@ export default function LogsSection() {
                   Sin registros
                 </td>
               </tr>
-            ) : logs.map((log) => (
+            ) : paginatedLogs.map((log) => (
               <tr key={log.id}>
                 <td>
                   <strong style={{ fontSize: 13 }}>
@@ -142,6 +144,14 @@ export default function LogsSection() {
           </tbody>
         </table>
       </div>
+
+      {!loading && (
+        <TablePagination
+          page={page} totalPages={totalPages} total={total} from={from} to={to}
+          perPage={perPage} noun="registro"
+          onPageChange={goPage} onPerPageChange={changePerPage}
+        />
+      )}
     </>
   );
 }

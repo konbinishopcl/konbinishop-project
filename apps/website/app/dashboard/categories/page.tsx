@@ -1,2 +1,2 @@
-import CategoriesSection from "../sections/CategoriesSection";
-export default function Page() { return <CategoriesSection />; }
+import { redirect } from "next/navigation";
+export default function Page() { redirect("/dashboard/event-categories"); }

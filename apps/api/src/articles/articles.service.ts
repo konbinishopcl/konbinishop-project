@@ -24,6 +24,7 @@ const ARTICLE_INCLUDE = {
   articleTags: true,
   articleCategories: true,
   _count: { select: { likes: true } },
+  user: { select: { firstname: true, lastname: true, email: true } },
 } as const;
 
 // Incluye el primer evento vinculado (APPROVED) para la vista de detalle

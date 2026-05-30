@@ -1,2 +1,2 @@
-import SimpleCRUDSection from "../sections/SimpleCRUDSection";
-export default function Page() { return <SimpleCRUDSection kind="tags" />; }
+import { redirect } from "next/navigation";
+export default function Page() { redirect("/dashboard/article-tags"); }

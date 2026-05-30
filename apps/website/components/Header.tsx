@@ -44,10 +44,13 @@ export function Header({
         if (el) {
           if (y < 80) {
             el.classList.remove("headroom--hidden");
+            document.body.classList.remove("headroom-hidden");
           } else if (y - lastY > 4) {
             el.classList.add("headroom--hidden");
+            document.body.classList.add("headroom-hidden");
           } else if (lastY - y > 4) {
             el.classList.remove("headroom--hidden");
+            document.body.classList.remove("headroom-hidden");
           }
         }
         lastY = y;

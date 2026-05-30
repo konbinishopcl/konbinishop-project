@@ -652,7 +652,8 @@
 .lj-stack .more { background: var(--ink); color: var(--bg); font-family: var(--font-mono); font-size: 12px; }
 
 /* ─────────── STICKY FILTERS ─────────── */
-.fbar-sticky { position: sticky; top: 72px; z-index: 40; background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 999px; margin: 0 0 32px; padding: 10px 16px; }
+.fbar-sticky { position: sticky; top: 80px; z-index: 40; background: color-mix(in oklab, var(--bg) 92%, transparent); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 999px; margin: 0 0 32px; padding: 10px 16px; transition: top 0.28s ease; }
+body.headroom-hidden .fbar-sticky { top: 8px; }
 .fbar-inner { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .fbar-inner .group { display: flex; gap: 8px; align-items: center; }
 .fbar-inner .vline { width: 1px; height: 22px; background: var(--line); }

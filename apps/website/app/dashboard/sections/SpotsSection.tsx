@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { api, imageUrl, type ApiSpot, type ApiQuota } from "@/lib/api";
+import { TablePagination, useClientPagination } from "@/components/TablePagination";
 
 // ── Status maps ───────────────────────────────────────────────────────────────
 
@@ -114,6 +115,8 @@ export default function SpotsSection() {
   const [modal, setModal]               = useState<ModalState>(null);
   const close = () => setModal(null);
 
+  const { page, goPage, perPage, changePerPage, total, totalPages, from, to, paginated: paginatedSpots } = useClientPagination(spots);
+
   // ── Fetch spots ───────────────────────────────────────────────────────────
 
   const fetchSpots = useCallback(async (filter: string) => {
@@ -216,7 +219,7 @@ export default function SpotsSection() {
               </tr>
             </thead>
             <tbody>
-              {spots.map((spot) => {
+              {paginatedSpots.map((spot) => {
                 const status = toDisplay(spot.status);
                 const img    = imageUrl(spot.image);
                 const ownerName = spot.owner
@@ -301,6 +304,14 @@ export default function SpotsSection() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!loading && (
+        <TablePagination
+          page={page} totalPages={totalPages} total={total} from={from} to={to}
+          perPage={perPage} noun="aviso"
+          onPageChange={goPage} onPerPageChange={changePerPage}
+        />
       )}
 
       {/* Modals */}

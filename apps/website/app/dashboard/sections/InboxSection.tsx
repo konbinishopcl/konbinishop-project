@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { api, ApiContactMessage } from "@/lib/api";
+import { TablePagination, useClientPagination } from "@/components/TablePagination";
 
 const MESES = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
 
@@ -75,6 +76,7 @@ export default function InboxSection({ kind = "contact" }: { kind?: "contact" | 
   }
 
   const visible = filter === "No leídos" ? msgs.filter((m) => !m.read) : msgs;
+  const { page, goPage, perPage, changePerPage, total: pTotal, totalPages, from, to, paginated: paginatedMsgs } = useClientPagination(visible);
 
   async function handleOpen(item: ApiContactMessage) {
     setOpenItem(item);
@@ -136,7 +138,7 @@ export default function InboxSection({ kind = "contact" }: { kind?: "contact" | 
                 </td>
               </tr>
             )}
-            {visible.map((m) => (
+            {paginatedMsgs.map((m) => (
               <tr key={m.id}>
                 <td>
                   <div className="cell-evt">
@@ -182,6 +184,12 @@ export default function InboxSection({ kind = "contact" }: { kind?: "contact" | 
           </tbody>
         </table>
       </div>
+
+      <TablePagination
+        page={page} totalPages={totalPages} total={pTotal} from={from} to={to}
+        perPage={perPage} noun="mensaje"
+        onPageChange={goPage} onPerPageChange={changePerPage}
+      />
 
       {/* Open item modal */}
       {openItem && (

@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { TablePagination, useClientPagination } from "@/components/TablePagination";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { api, type ApiAdminUser } from "@/lib/api";
@@ -146,6 +147,8 @@ export default function UsersSection() {
     return true;
   });
 
+  const { page, goPage, perPage, changePerPage, total, totalPages, from, to, paginated: paginatedUsers } = useClientPagination(filtered);
+
   // ── Display helpers ────────────────────────────────────────────────────────
 
   function userName(u: ApiAdminUser): string {
@@ -192,7 +195,7 @@ export default function UsersSection() {
                   Cargando…
                 </td>
               </tr>
-            ) : filtered.map((u) => (
+            ) : paginatedUsers.map((u) => (
               <tr key={u.id}>
                 <td>
                   <div className="cell-evt">
@@ -227,6 +230,14 @@ export default function UsersSection() {
           </tbody>
         </table>
       </div>
+
+      {!loading && (
+        <TablePagination
+          page={page} totalPages={totalPages} total={total} from={from} to={to}
+          perPage={perPage} noun="usuario"
+          onPageChange={goPage} onPerPageChange={changePerPage}
+        />
+      )}
 
       {modal?.type === "ban" && (
         <ConfirmDialog danger title="¿Banear usuario?"

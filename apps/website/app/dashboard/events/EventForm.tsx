@@ -136,6 +136,7 @@ export type InitialEvent = {
   socialLinks:     { link: string | null }[];
   videos:          { link: string | null }[];
   city?: { id: number; name: string; state?: { id: number; slug: string; country?: { slug: string } } } | null;
+  eventTags?: { id: number; name: string; slug: string }[];
 };
 
 interface Props {
@@ -261,6 +262,12 @@ export function EventForm({ mode, initial }: Props) {
   const [open, setOpen] = useState<Record<number, boolean>>({ 1: true });
   const toggle = (n: number) => setOpen((o) => ({ ...o, [n]: !o[n] }));
 
+  // Event tags
+  const [eventTags,        setEventTags]        = useState<{ id: number; name: string; slug: string }[]>([]);
+  const [selectedTagIds,   setSelectedTagIds]   = useState<number[]>(initial?.eventTags?.map((t: { id: number }) => t.id) ?? []);
+  const [tagSearch,        setTagSearch]        = useState("");
+  const [aiBusy,           setAiBusy]           = useState(false);
+
   // ── RHF ────────────────────────────────────────────────────────────────────
 
   let initStatus: DashEventValues["status"] = "PENDING_MODERATION";
@@ -372,6 +379,23 @@ export function EventForm({ mode, initial }: Props) {
       .catch(() => setOrgUsers([]));
   }, [token, isAdmin]);
 
+  // Load event tags
+  useEffect(() => {
+    fetch("/api/event-tags").then(r => r.json()).then(d => setEventTags(Array.isArray(d) ? d : [])).catch(() => setEventTags([]));
+  }, []);
+
+  const toggleTag = (id: number) => setSelectedTagIds(prev => prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]);
+  const filteredTags = eventTags.filter(t => !tagSearch.trim() || t.name.toLowerCase().includes(tagSearch.toLowerCase()));
+
+  const aiSuggestTags = () => {
+    if (!watchTitle) { toast.error("Ingresa un título primero"); return; }
+    setAiBusy(true);
+    setTimeout(() => {
+      setAiBusy(false);
+      toast.info("Sugerencia de IA próximamente — integración con backend pendiente");
+    }, 800);
+  };
+
   // ── onSubmit ───────────────────────────────────────────────────────────────
 
   const onSubmit = async (values: DashEventValues) => {
@@ -436,8 +460,9 @@ export function EventForm({ mode, initial }: Props) {
             endTime:   d.endTime   || undefined,
           })),
 
-        socialLinks: values.socials.filter((s) => s.link.trim()).map((s) => ({ link: s.link.trim() })),
-        videos:      values.videos .filter((v) => v.link.trim()).map((v) => ({ link: v.link.trim() })),
+        socialLinks:  values.socials.filter((s) => s.link.trim()).map((s) => ({ link: s.link.trim() })),
+        videos:       values.videos .filter((v) => v.link.trim()).map((v) => ({ link: v.link.trim() })),
+        eventTagIds:  selectedTagIds.length ? selectedTagIds : undefined,
       };
 
       // 3) Submit to backend
@@ -839,6 +864,40 @@ export function EventForm({ mode, initial }: Props) {
           <button type="button" className="add-line" onClick={() => addSocial({ link: "" })}>
             + Agregar otra red social
           </button>
+
+          {/* Tags con AI suggest */}
+          <div className="field" style={{ margin: "18px 0 0" }}>
+            <label>Tags <small style={{ color: "var(--ink-3)" }}>({selectedTagIds.length} seleccionados)</small></label>
+            <div style={{ position: "relative" }}>
+              <input
+                type="text"
+                placeholder="Buscar tag…"
+                value={tagSearch}
+                onChange={(e) => setTagSearch(e.target.value)}
+                style={{ paddingRight: 44 }}
+              />
+              <button
+                type="button"
+                className="icon-btn"
+                title="Sugerir tags con IA"
+                onClick={aiSuggestTags}
+                style={{ position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, background: "var(--accent)", color: "#fff", borderColor: "var(--accent)" }}
+              >
+                <span style={{ animation: aiBusy ? "spin 1s linear infinite" : "none", display: "inline-block" }}>✦</span>
+              </button>
+            </div>
+            {eventTags.length > 0 && (
+              <div style={{ marginTop: 8, maxHeight: 160, overflowY: "auto", border: "1px solid var(--line)", borderRadius: 8, padding: 8 }}>
+                {filteredTags.map((t) => (
+                  <label key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", borderRadius: 6, cursor: "pointer", fontSize: 13 }}>
+                    <input type="checkbox" checked={selectedTagIds.includes(t.id)} onChange={() => toggleTag(t.id)} />
+                    <span>{t.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="help">La IA puede sugerir tags automáticamente analizando el título y descripción.</div>
+          </div>
 
         </AccItem>
 

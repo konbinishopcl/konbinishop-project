@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { api, type ApiPayment } from "@/lib/api";
+import { TablePagination, useClientPagination } from "@/components/TablePagination";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -40,6 +41,8 @@ export default function PaymentsSection() {
   const [rows, setRows] = useState<ApiPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [detail, setDetail] = useState<ApiPayment | null>(null);
+
+  const { page, goPage, perPage, changePerPage, total, totalPages, from, to, paginated: paginatedRows } = useClientPagination(rows);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -107,7 +110,7 @@ export default function PaymentsSection() {
                 </td>
               </tr>
             ) : (
-              rows.map((r) => (
+              paginatedRows.map((r) => (
                 <tr key={r.id}>
                   <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>TX-{r.id}</td>
                   <td>{r.buyer.name}</td>
@@ -131,6 +134,14 @@ export default function PaymentsSection() {
           </tbody>
         </table>
       </div>
+
+      {!loading && (
+        <TablePagination
+          page={page} totalPages={totalPages} total={total} from={from} to={to}
+          perPage={perPage} noun="pago"
+          onPageChange={goPage} onPerPageChange={changePerPage}
+        />
+      )}
 
       <button className="btn ghost" style={{ marginTop: 14 }} onClick={exportCSV}>
         ↓ Exportar CSV

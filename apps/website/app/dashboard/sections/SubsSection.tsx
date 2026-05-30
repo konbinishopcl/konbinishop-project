@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
 import { api, ApiSubscription } from "@/lib/api";
+import { TablePagination, useClientPagination } from "@/components/TablePagination";
 
 // ── Plan config state ─────────────────────────────────────────────────────────
 
@@ -77,6 +78,8 @@ export default function SubsSection() {
   const [subs, setSubs] = useState<ApiSubscription[]>([]);
   const [total, setTotal] = useState(0);
   const [loadingSubs, setLoadingSubs] = useState(false);
+
+  const { page, goPage, perPage, changePerPage, total: pTotal, totalPages, from, to, paginated: paginatedSubs } = useClientPagination(subs);
   const [openSub, setOpenSub] = useState<ApiSubscription | null>(null);
 
   const loadSubs = useCallback(async () => {
@@ -127,7 +130,7 @@ export default function SubsSection() {
           <tbody>
             {loadingSubs && subs.length === 0 ? (
               <tr><td colSpan={6} style={{textAlign:'center',padding:16}}>Cargando…</td></tr>
-            ) : subs.map((s) => (
+            ) : paginatedSubs.map((s) => (
               <tr key={s.id}>
                 <td>{subDisplayName(s)}</td>
                 <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{fmtDate(s.cycleStart)}</td>
@@ -149,6 +152,14 @@ export default function SubsSection() {
           </tbody>
         </table>
       </div>
+
+      {!loadingSubs && (
+        <TablePagination
+          page={page} totalPages={totalPages} total={pTotal} from={from} to={to}
+          perPage={perPage} noun="suscripción"
+          onPageChange={goPage} onPerPageChange={changePerPage}
+        />
+      )}
 
       {/* Plan config */}
       <div className="panel">

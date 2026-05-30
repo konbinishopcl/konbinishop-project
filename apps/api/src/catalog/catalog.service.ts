@@ -151,7 +151,10 @@ export class CatalogService {
   // ── EventCategories ──
 
   eventCategories() {
-    return this.prisma.eventCategory.findMany({ orderBy: [{ order: 'asc' }, { name: 'asc' }] });
+    return this.prisma.eventCategory.findMany({
+      orderBy: [{ order: 'asc' }, { name: 'asc' }],
+      include: { _count: { select: { events: true } } },
+    });
   }
 
   async findEventCategory(id: number) {
@@ -180,7 +183,10 @@ export class CatalogService {
   // ── EventTags ──
 
   eventTags() {
-    return this.prisma.eventTag.findMany({ orderBy: { name: 'asc' } });
+    return this.prisma.eventTag.findMany({
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { events: true } } },
+    });
   }
 
   async findEventTag(id: number) {
@@ -209,7 +215,10 @@ export class CatalogService {
   // ── ArticleCategories ──
 
   articleCategories() {
-    return this.prisma.articleCategory.findMany({ orderBy: { name: 'asc' } });
+    return this.prisma.articleCategory.findMany({
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { articles: true } } },
+    });
   }
 
   async findArticleCategory(id: number) {

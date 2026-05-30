@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
+import { TablePagination, useClientPagination } from "@/components/TablePagination";
 import { api, imageUrl, type ApiHero, type ApiQuota } from "@/lib/api";
 
 // ── Status maps ───────────────────────────────────────────────────────────────
@@ -114,6 +115,8 @@ export default function HeroesSection() {
   const [modal, setModal]               = useState<ModalState>(null);
   const close = () => setModal(null);
 
+  const { page, goPage, perPage, changePerPage, total, totalPages, from, to, paginated: paginatedHeroes } = useClientPagination(heroes);
+
   // ── Fetch heroes ──────────────────────────────────────────────────────────
 
   const fetchHeroes = useCallback(async (filter: string) => {
@@ -216,7 +219,7 @@ export default function HeroesSection() {
               </tr>
             </thead>
             <tbody>
-              {heroes.map((hero) => {
+              {paginatedHeroes.map((hero) => {
                 const status = toDisplay(hero.status);
                 const img    = imageUrl(hero.image);
                 const subtitle = hero.titleAccent ?? hero.eventCategory?.name ?? "";
@@ -302,6 +305,14 @@ export default function HeroesSection() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!loading && (
+        <TablePagination
+          page={page} totalPages={totalPages} total={total} from={from} to={to}
+          perPage={perPage} noun="portada"
+          onPageChange={goPage} onPerPageChange={changePerPage}
+        />
       )}
 
       {/* Modals */}

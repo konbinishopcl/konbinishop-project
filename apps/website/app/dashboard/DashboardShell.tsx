@@ -75,8 +75,10 @@ const ADMIN_NAV: NavGroup[] = [
   {
     grp: "MANTENEDORES",
     items: [
-      { label: "Categorías", ic: Tag,        href: "/dashboard/categories" },
-      { label: "Tags",       ic: Tags,       href: "/dashboard/tags" },
+      { label: "Categorías · Eventos",  ic: Tag,  href: "/dashboard/event-categories" },
+      { label: "Categorías · Noticias", ic: Tag,  href: "/dashboard/article-categories" },
+      { label: "Tags · Eventos",        ic: Tags, href: "/dashboard/event-tags" },
+      { label: "Tags · Noticias",       ic: Tags, href: "/dashboard/article-tags" },
       { label: "Países",     ic: Globe,      href: "/dashboard/countries" },
       { label: "Divisiones", ic: Map,        href: "/dashboard/states" },
       { label: "Ciudades",   ic: MapPin,     href: "/dashboard/cities" },

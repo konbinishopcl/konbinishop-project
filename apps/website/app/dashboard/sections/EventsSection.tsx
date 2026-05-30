@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
+import { TablePagination, pageWindows } from "@/components/TablePagination";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -102,35 +103,6 @@ function posterSrc(poster: string | null) {
   return `/api/media${poster}`;
 }
 
-// ── Pagination helpers ────────────────────────────────────────────────────────
-
-/** Genera el array de páginas visibles con ellipsis.
- *  Ej: [1, "…", 4, 5, 6, "…", 12]
- */
-function pageWindows(current: number, total: number): (number | "…")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const pages: (number | "…")[] = [];
-  const addPage = (p: number) => { if (!pages.includes(p)) pages.push(p); };
-  addPage(1);
-  if (current > 3) pages.push("…");
-  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) addPage(p);
-  if (current < total - 2) pages.push("…");
-  addPage(total);
-  return pages;
-}
-
-// ── Chevron icons ─────────────────────────────────────────────────────────────
-
-const ChevL = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
-const ChevR = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-);
 
 // ── Modal components ──────────────────────────────────────────────────────────
 
@@ -649,46 +621,12 @@ export default function EventsSection() {
         </div>
       )}
 
-      {/* Pagination bar */}
-      {!loading && total > 0 && (
-        <div className="pag-bar">
-          <div className="pag-info">
-            <span>
-              Mostrando{" "}
-              <strong style={{ color: "var(--ink)" }}>{from}–{to}</strong>
-              {" "}de{" "}
-              <strong style={{ color: "var(--ink)" }}>{total}</strong>
-              {" "}evento{total !== 1 ? "s" : ""}
-            </span>
-            <span style={{ color: "var(--line)" }}>·</span>
-            <span className="ips">
-              <span>Mostrar</span>
-              <select value={perPage} onChange={(e) => changePerPage(Number(e.target.value))}>
-                {PER_PAGE_OPTIONS.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-              <span>por página</span>
-            </span>
-          </div>
-          <div className="pag-pages">
-            <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} title="Anterior">
-              <ChevL />
-            </button>
-            {pageWindows(page, totalPages).map((p, i) =>
-              p === "…" ? (
-                <span key={`ell-${i}`} className="ell">…</span>
-              ) : (
-                <button key={p} className={page === p ? "on" : ""} onClick={() => setPage(p)}>
-                  {p}
-                </button>
-              )
-            )}
-            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages} title="Siguiente">
-              <ChevR />
-            </button>
-          </div>
-        </div>
+      {!loading && (
+        <TablePagination
+          page={page} totalPages={totalPages} total={total} from={from} to={to}
+          perPage={perPage} perPageOptions={PER_PAGE_OPTIONS} noun="evento"
+          onPageChange={setPage} onPerPageChange={changePerPage}
+        />
       )}
 
       {/* Modals */}

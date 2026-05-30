@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useUser } from "@/components/providers";
+import { TablePagination, pageWindows } from "@/components/TablePagination";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ type ApiArticle = {
   status: ApiStatus;
   statusReason: string | null;
   userId: number | null;
+  user: { firstname: string | null; lastname: string | null; email: string } | null;
   createdAt: string;
   tags: { id: number; name: string; slug: string }[];
   articleCategories?: { id: number; name: string | null; slug: string }[];
@@ -79,32 +81,6 @@ function imageSrc(image: string | null) {
   return `/api/media${image}`;
 }
 
-// ── Pagination helpers ────────────────────────────────────────────────────────
-
-function pageWindows(current: number, total: number): (number | "…")[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const pages: (number | "…")[] = [];
-  const addPage = (p: number) => { if (!pages.includes(p)) pages.push(p); };
-  addPage(1);
-  if (current > 3) pages.push("…");
-  for (let p = Math.max(2, current - 1); p <= Math.min(total - 1, current + 1); p++) addPage(p);
-  if (current < total - 2) pages.push("…");
-  addPage(total);
-  return pages;
-}
-
-// ── Chevron icons ─────────────────────────────────────────────────────────────
-
-const ChevL = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="15 18 9 12 15 6" />
-  </svg>
-);
-const ChevR = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="9 18 15 12 9 6" />
-  </svg>
-);
 
 // ── Modal components ──────────────────────────────────────────────────────────
 
@@ -438,7 +414,7 @@ export default function ArticlesSection() {
                         </div>
                         <div>
                           <div className="ti">{a.title}</div>
-                          <div className="su">{a.tags.slice(0, 3).map((t) => t.name).join(" · ") || "Sin tags"}</div>
+                          <div className="su">{(a.tags ?? []).slice(0, 3).map((t) => t.name).join(" · ") || "Sin tags"}</div>
                           {a.articleCategories?.length ? (
                             <span className="pill">
                               {a.articleCategories[0].name}{a.articleCategories.length > 1 ? ` +${a.articleCategories.length - 1}` : ""}
@@ -451,9 +427,9 @@ export default function ArticlesSection() {
                     {/* AUTOR */}
                     <td>
                       <div style={{ fontSize: 13 }}>
-                        {a.userId === null
-                          ? <span style={{ color: "var(--ink-3)" }}>Editorial</span>
-                          : `Usuario #${a.userId}`}
+                        {a.user
+                          ? [a.user.firstname, a.user.lastname].filter(Boolean).join(" ") || a.user.email
+                          : <span style={{ color: "var(--ink-3)" }}>—</span>}
                         <br />
                         <span style={{ color: "var(--ink-3)", fontFamily: "var(--font-mono)", fontSize: 11 }}>
                           {a.isSponsored ? "Patrocinado" : "Editorial"}
@@ -517,46 +493,12 @@ export default function ArticlesSection() {
         </div>
       )}
 
-      {/* Pagination bar */}
-      {!loading && total > 0 && (
-        <div className="pag-bar">
-          <div className="pag-info">
-            <span>
-              Mostrando{" "}
-              <strong style={{ color: "var(--ink)" }}>{from}–{to}</strong>
-              {" "}de{" "}
-              <strong style={{ color: "var(--ink)" }}>{total}</strong>
-              {" "}artículo{total !== 1 ? "s" : ""}
-            </span>
-            <span style={{ color: "var(--line)" }}>·</span>
-            <span className="ips">
-              <span>Mostrar</span>
-              <select value={perPage} onChange={(e) => changePerPage(Number(e.target.value))}>
-                {PER_PAGE_OPTIONS.map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
-              <span>por página</span>
-            </span>
-          </div>
-          <div className="pag-pages">
-            <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} title="Anterior">
-              <ChevL />
-            </button>
-            {pageWindows(page, totalPages).map((p, i) =>
-              p === "…" ? (
-                <span key={`ell-${i}`} className="ell">…</span>
-              ) : (
-                <button key={p} className={page === p ? "on" : ""} onClick={() => setPage(p)}>
-                  {p}
-                </button>
-              )
-            )}
-            <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages} title="Siguiente">
-              <ChevR />
-            </button>
-          </div>
-        </div>
+      {!loading && (
+        <TablePagination
+          page={page} totalPages={totalPages} total={total} from={from} to={to}
+          perPage={perPage} perPageOptions={PER_PAGE_OPTIONS} noun="artículo"
+          onPageChange={setPage} onPerPageChange={changePerPage}
+        />
       )}
 
       {/* Modals */}

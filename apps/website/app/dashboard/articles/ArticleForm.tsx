@@ -174,7 +174,7 @@ export function ArticleForm({ mode, variant, initial }: Props) {
   const watchSlug = watch("slug");
 
   // Auto-generate slug from title unless user has manually edited it
-  const slugLockedRef = useRef(!!initial?.slug);
+  const slugLockedRef = useRef(false);
   useEffect(() => {
     if (slugLockedRef.current) return;
     const auto = watchTitle.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");

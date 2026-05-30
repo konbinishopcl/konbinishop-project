@@ -93,7 +93,7 @@ function AdminFormModal({
   onSave: (data: Record<string, string>) => Promise<void>;
 }) {
   const [data, setData] = useState<Record<string, string>>(initial);
-  const [slugLocked, setSlugLocked] = useState(!!initial.slug);
+  const [slugLocked, setSlugLocked] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const isValid = Schema.safeParse(data).success;

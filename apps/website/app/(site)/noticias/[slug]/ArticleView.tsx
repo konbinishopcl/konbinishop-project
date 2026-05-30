@@ -92,7 +92,12 @@ export function ArticleView({ article, related, linkedEvent, relatedEvents }: Ar
     });
   };
 
-  const authorName = "Konbini Editorial";
+  const authorName = (() => {
+    const u = article.user;
+    if (!u) return "Konbini Editorial";
+    const full = `${u.firstname ?? ""} ${u.lastname ?? ""}`.trim();
+    return full || "Konbini Editorial";
+  })();
   const cat = getCat(article);
 
   return (

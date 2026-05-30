@@ -1,14 +1,6 @@
 "use client";
 import Link from "next/link";
-
-const FAQS = [
-  ["¿Cuánto cuesta publicar un evento?", "El precio varía según la categoría (Anime, Conciertos, Convenciones, etc.). Puedes elegir publicarlo entre 10 y 60 días — mientras más días, más tiempo está visible y descubrible."],
-  ["¿Cuándo se publica mi evento?", "Tras enviarlo entra a revisión. Un admin lo aprueba (o rechaza con motivo) en menos de 24 horas hábiles. Te notificamos por email y en tu centro de mensajes."],
-  ["¿Puedo editar un evento publicado?", "Una vez aprobado, no. Por eso te pedimos revisar bien antes de enviar. Si necesitas corregir algo importante después, contáctanos y vemos qué se puede hacer."],
-  ["¿Qué pasa si compro suscripción y no uso los créditos?", "Los créditos no utilizados se pierden al final del mes — no se acumulan. Recomendamos la suscripción solo si publicas eventos seguido."],
-  ["¿Qué diferencia hay entre Aviso y Portada?", "Una Portada aparece en el carrusel principal del home (máx 5 simultáneas). Un Aviso es un banner que aparece en home y al final de las categorías (máx 12 simultáneos). Las portadas son más exclusivas y caras."],
-  ["¿Puedo pagar con tarjeta extranjera?", "Por ahora aceptamos solo tarjetas chilenas a través de WebPay (Transbank). Próximamente integraremos Mercado Pago para pagos internacionales."],
-];
+import type { ApiFaqItem } from "@/lib/api";
 
 function formatCLP(value: number): string {
   return `$${value.toLocaleString("es-CL")}`;
@@ -17,9 +9,10 @@ function formatCLP(value: number): string {
 type Props = {
   settings: Record<string, string>;
   eventMinPrice: number;
+  faqs: ApiFaqItem[];
 };
 
-export function PricingView({ settings, eventMinPrice }: Props) {
+export function PricingView({ settings, eventMinPrice, faqs }: Props) {
   const n = (k: string, fb: number) => parseInt(settings[k] ?? "", 10) || fb;
 
   return (
@@ -120,10 +113,10 @@ export function PricingView({ settings, eventMinPrice }: Props) {
           <div className="sh-ja">よくある質問</div>
         </div>
         <div style={{ marginTop: 8 }}>
-          {FAQS.map((q, i) => (
-            <details key={i} className="faq-item" open={i === 0}>
-              <summary>{q[0]}</summary>
-              <div className="faq-a">{q[1]}</div>
+          {faqs.map((item, i) => (
+            <details key={item.id} className="faq-item" open={i === 0}>
+              <summary>{item.question}</summary>
+              <div className="faq-a">{item.answer}</div>
             </details>
           ))}
         </div>

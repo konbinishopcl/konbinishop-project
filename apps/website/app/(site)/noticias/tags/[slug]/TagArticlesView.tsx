@@ -32,7 +32,6 @@ const ChevR = () => (
 );
 
 const SORT_OPTIONS    = ["Más recientes", "A-Z"] as const;
-const TYPE_OPTIONS    = ["Todos", "Artículos", "Entrevistas", "Reseñas"] as const;
 const ORIGEN_OPTIONS  = ["Todos", "Editoriales", "Patrocinados"] as const;
 const PER_PAGE_OPTIONS = [12, 24, 48];
 
@@ -57,7 +56,6 @@ export function TagArticlesView({ tag, initialArticles, initialTotal, initialTot
 
   // Filters (client-side)
   const [period, setPeriod]         = useState<string | null>(null);
-  const [type, setType]             = useState<string>("Todos");
   const [origen, setOrigen]         = useState<string>("Todos");
   const [q, setQ]                   = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -124,13 +122,12 @@ export function TagArticlesView({ tag, initialArticles, initialTotal, initialTot
 
   // ── Active filter count ────────────────────────────────────────────────
   const activeCount =
-    (type !== "Todos" ? 1 : 0) +
     (origen !== "Todos" ? 1 : 0) +
     (period ? 1 : 0) +
     (q.trim() ? 1 : 0);
 
   function clearAll() {
-    setType("Todos"); setOrigen("Todos"); setPeriod(null); setQ(""); setPage(1);
+    setOrigen("Todos"); setPeriod(null); setQ(""); setPage(1);
   }
 
   // ── Pagination derived ─────────────────────────────────────────────────
@@ -221,13 +218,8 @@ export function TagArticlesView({ tag, initialArticles, initialTotal, initialTot
 
           <div className="vline" />
 
-          {/* Tipo + Origen + Limpiar */}
+          {/* Origen + Limpiar */}
           <div className="group">
-            <Pop
-              id="type" label="Tipo" options={TYPE_OPTIONS} value={type} dflt="Todos"
-              onPick={(v) => { setType(v); setPage(1); }}
-              icon={<span style={{ display: "inline-flex", marginRight: 6 }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h12M4 18h8"/></svg></span>}
-            />
             <Pop
               id="origen" label="Origen" options={ORIGEN_OPTIONS} value={origen} dflt="Todos"
               onPick={(v) => { setOrigen(v); setPage(1); }}

@@ -1,88 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useUser } from "@/components/providers";
+import { api, type ApiCountry, type ApiRegion, type ApiCommune } from "@/lib/api";
 
-type SelectField = {
-  k: string;
-  label: string;
-  required?: boolean;
-  type: "select";
-  options: string[];
-};
+// ── KindKey ─────────────────────────────────────────────────────────────────
 
-type TextField = {
-  k: string;
-  label: string;
-  required?: boolean;
-  type?: "text";
-  placeholder?: string;
-};
+type KindKey = "tags" | "countries" | "states" | "cities";
 
-type Field = TextField | SelectField;
+// ── Slug helper ──────────────────────────────────────────────────────────────
 
-const KINDS = {
-  tags: {
-    name: "Tag",
-    items: [
-      { nm: "shonen",  slug: "#shonen",  usos: 48 },
-      { nm: "seinen",  slug: "#seinen",  usos: 31 },
-      { nm: "isekai",  slug: "#isekai",  usos: 27 },
-      { nm: "kpop",    slug: "#kpop",    usos: 19 },
-      { nm: "cosplay", slug: "#cosplay", usos: 14 },
-    ],
-    cols: ["NOMBRE", "SLUG", "USOS"],
-    fields: [
-      { k: "nm", label: "Nombre del tag", required: true, placeholder: "shonen" },
-    ] as Field[],
-  },
-  countries: {
-    name: "País",
-    items: [
-      { nm: "Chile",     iso: "CL", flag: "🇨🇱" },
-      { nm: "Argentina", iso: "AR", flag: "🇦🇷" },
-      { nm: "México",    iso: "MX", flag: "🇲🇽" },
-      { nm: "España",    iso: "ES", flag: "🇪🇸" },
-    ],
-    cols: ["NOMBRE", "ISO", "BANDERA"],
-    fields: [
-      { k: "nm",   label: "Nombre del país", required: true },
-      { k: "iso",  label: "Código ISO (2 letras)", required: true, placeholder: "CL" },
-      { k: "flag", label: "Bandera (emoji)", placeholder: "🇨🇱" },
-    ] as Field[],
-  },
-  states: {
-    name: "División",
-    items: [
-      { nm: "Metropolitana de Santiago", tp: "Región",   co: "Chile" },
-      { nm: "Valparaíso",                tp: "Región",   co: "Chile" },
-      { nm: "Bío-Bío",                   tp: "Región",   co: "Chile" },
-      { nm: "Antofagasta",               tp: "Región",   co: "Chile" },
-    ],
-    cols: ["NOMBRE", "TIPO", "PAÍS"],
-    fields: [
-      { k: "nm", label: "Nombre", required: true },
-      { k: "tp", label: "Tipo", type: "select" as const, options: ["Región", "Provincia", "Estado", "Departamento"], required: true },
-      { k: "co", label: "País",  type: "select" as const, options: ["Chile", "Argentina", "México"], required: true },
-    ] as Field[],
-  },
-  cities: {
-    name: "Ciudad",
-    items: [
-      { nm: "Santiago",    div: "Metropolitana", co: "Chile" },
-      { nm: "Valparaíso",  div: "Valparaíso",    co: "Chile" },
-      { nm: "Concepción",  div: "Bío-Bío",       co: "Chile" },
-      { nm: "Antofagasta", div: "Antofagasta",   co: "Chile" },
-    ],
-    cols: ["NOMBRE", "DIVISIÓN", "PAÍS"],
-    fields: [
-      { k: "nm",  label: "Nombre", required: true },
-      { k: "div", label: "División administrativa", type: "select" as const, options: ["Metropolitana", "Valparaíso", "Bío-Bío", "Antofagasta"], required: true },
-      { k: "co",  label: "País", type: "select" as const, options: ["Chile", "Argentina", "México"], required: true },
-    ] as Field[],
-  },
-} as const;
-
-type KindKey = keyof typeof KINDS;
+const toSlug = (s: string) =>
+  s.toLowerCase().trim().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 // ── Helpers para las secciones con API real ─────────────────────────────────
 
@@ -312,49 +242,62 @@ function TagsConfirmDialog({
   );
 }
 
-function AdminFormModal({
+// ── GeoSelectFormModal (modal with id-valued select for states & cities) ─────
+
+function GeoSelectFormModal({
   title,
-  fields,
-  initial = {} as Record<string, string>,
+  initial,
+  selectLabel,
+  selectOptions,
+  selectKey,
   onClose,
   onSave,
 }: {
   title: string;
-  fields: Field[];
   initial?: Record<string, string>;
+  selectLabel: string;
+  selectOptions: { id: number; name: string }[];
+  selectKey: "countryId" | "stateId";
   onClose: () => void;
   onSave: (data: Record<string, string>) => void;
 }) {
-  const [data, setData] = useState<Record<string, string>>(initial);
+  const [data, setData] = useState<Record<string, string>>(initial ?? {});
   const set = (k: string, v: string) => setData((d) => ({ ...d, [k]: v }));
   return (
     <div className="confirm-bg" onClick={onClose}>
-      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
+      <div className="confirm-card" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
         <h3 className="h">{title}</h3>
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 18 }}>
-          {fields.map((f) => (
-            <div key={f.k} className="field" style={{ margin: 0 }}>
-              <label>
-                {f.label}
-                {f.required && <span style={{ color: "var(--err)" }}> *</span>}
-              </label>
-              {f.type === "select" ? (
-                <select value={data[f.k] || ""} onChange={(e) => set(f.k, e.target.value)}>
-                  <option value="">Selecciona…</option>
-                  {(f as SelectField).options.map((o) => (
-                    <option key={o} value={o}>{o}</option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type="text"
-                  value={data[f.k] || ""}
-                  onChange={(e) => set(f.k, e.target.value)}
-                  placeholder={(f as TextField).placeholder}
-                />
-              )}
-            </div>
-          ))}
+          <div className="field" style={{ margin: 0 }}>
+            <label>Nombre <span style={{ color: "var(--err)" }}>*</span></label>
+            <input
+              type="text"
+              value={data.name || ""}
+              onChange={(e) => set("name", e.target.value)}
+              placeholder="Nombre"
+            />
+          </div>
+          <div className="field" style={{ margin: 0 }}>
+            <label>Slug</label>
+            <input
+              type="text"
+              value={data.slug || ""}
+              onChange={(e) => set("slug", e.target.value)}
+              placeholder="slug-automatico"
+            />
+          </div>
+          <div className="field" style={{ margin: 0 }}>
+            <label>{selectLabel} <span style={{ color: "var(--err)" }}>*</span></label>
+            <select
+              value={data[selectKey] || ""}
+              onChange={(e) => set(selectKey, e.target.value)}
+            >
+              <option value="">Selecciona…</option>
+              {selectOptions.map((o) => (
+                <option key={o.id} value={String(o.id)}>{o.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="row-act">
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
@@ -365,144 +308,446 @@ function AdminFormModal({
   );
 }
 
-function ConfirmDialog({
-  title,
-  message,
-  confirmLabel,
-  onConfirm,
-  onClose,
-}: {
-  title: string;
-  message: string;
-  confirmLabel: string;
-  onConfirm: () => void;
-  onClose: () => void;
-}) {
-  const [typed, setTyped] = useState("");
-  return (
-    <div className="confirm-bg" onClick={onClose}>
-      <div className="confirm-card" onClick={(e) => e.stopPropagation()}>
-        <h3 className="h">{title}</h3>
-        <p className="p">{message}</p>
-        <div className="field" style={{ margin: "0 0 14px" }}>
-          <label>Escribe <strong>ELIMINAR</strong> para confirmar</label>
-          <input
-            type="text"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-            placeholder="ELIMINAR"
-          />
-        </div>
-        <div className="row-act">
-          <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button
-            className="btn primary"
-            style={{ background: "var(--err)" }}
-            onClick={() => { onConfirm(); onClose(); }}
-            disabled={typed !== "ELIMINAR"}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// ── RealCountriesSection ─────────────────────────────────────────────────────
 
-type ModalState =
+type CountryModalState =
   | { type: "create" }
-  | { type: "edit";   item: Record<string, string> }
-  | { type: "delete"; item: Record<string, string> };
+  | { type: "edit";   item: ApiCountry }
+  | { type: "delete"; item: ApiCountry }
+  | null;
 
-function renderCol2(kind: KindKey, item: Record<string, string>): string {
-  if (kind === "tags")      return item.slug;
-  if (kind === "countries") return item.iso;
-  if (kind === "states")    return item.tp;
-  if (kind === "cities")    return item.div;
-  return "";
-}
+function RealCountriesSection() {
+  const { token } = useUser();
+  const [countries, setCountries] = useState<ApiCountry[]>([]);
+  const [states, setStates] = useState<ApiRegion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState<CountryModalState>(null);
 
-function renderCol3(kind: KindKey, item: Record<string, string>): string {
-  if (kind === "tags")      return String(item.usos ?? "");
-  if (kind === "countries") return item.flag;
-  if (kind === "states")    return item.co;
-  if (kind === "cities")    return item.co;
-  return "";
-}
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [c, s] = await Promise.all([api.countries(), api.regions()]);
+      setCountries(c);
+      setStates(s);
+    } catch {
+      toast.error("No se pudieron cargar los países");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-export default function SimpleCRUDSection({ kind }: { kind: KindKey }) {
-  // Rama real: kind === "tags" → CRUD contra /api/article-tags
-  if (kind === "tags") return <RealTagsSection />;
+  useEffect(() => { load(); }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
-  const cfg = KINDS[kind];
-  const [modal, setModal] = useState<ModalState | null>(null);
+  const onCreate = async (d: Record<string, string>) => {
+    try {
+      await api.createCountry({ name: d.name.trim(), slug: (d.slug || toSlug(d.name)).trim() }, token!);
+      toast.success("País creado", { description: `"${d.name}" agregado al sistema` });
+      load();
+    } catch {
+      toast.error("No se pudo crear el país");
+    }
+  };
 
-  const nameLabel = cfg.name.toLowerCase();
-  const count = cfg.items.length;
+  const onEdit = async (id: number, d: Record<string, string>) => {
+    try {
+      await api.updateCountry(id, { name: d.name.trim(), slug: (d.slug || toSlug(d.name)).trim() }, token!);
+      toast.success("País actualizado");
+      load();
+    } catch {
+      toast.error("No se pudo actualizar el país");
+    }
+  };
+
+  const onDelete = async (id: number) => {
+    try {
+      await api.deleteCountry(id, token!);
+      toast.warning("País eliminado");
+      load();
+    } catch {
+      toast.error("No se pudo eliminar el país (puede tener divisiones asociadas)");
+    }
+  };
 
   return (
     <>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ color: "var(--ink-3)", fontSize: 13 }}>
-          {count} {nameLabel}{(count as number) !== 1 ? "s" : ""} en el sistema
+          {loading ? "Cargando…" : `${countries.length} países en el sistema`}
         </div>
-        <button className="btn primary" onClick={() => setModal({ type: "create" })}>
-          ＋ Nuevo {nameLabel}
-        </button>
+        <button className="btn primary" onClick={() => setModal({ type: "create" })}>＋ Nuevo país</button>
       </div>
 
       <div className="panel" style={{ padding: 0 }}>
         <table className="a-table">
           <thead>
             <tr>
-              {cfg.cols.map((c) => <th key={c}>{c}</th>)}
+              <th>NOMBRE</th>
+              <th>SLUG</th>
+              <th>DIVISIONES</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {(cfg.items as unknown as Record<string, string>[]).map((it, idx) => (
-              <tr key={idx}>
-                <td><strong>{it.nm}</strong></td>
-                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{renderCol2(kind, it)}</td>
-                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink-3)" }}>{renderCol3(kind, it)}</td>
+            {countries.map((c) => (
+              <tr key={c.id}>
+                <td><strong>{c.name}</strong></td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{c.slug}</td>
+                <td style={{ color: "var(--ink-3)" }}>{states.filter((st) => st.countryId === c.id).length}</td>
                 <td>
                   <div className="row-act">
-                    <button onClick={() => setModal({ type: "edit", item: it })}>Editar</button>
-                    <button className="bad" onClick={() => setModal({ type: "delete", item: it })}>Eliminar</button>
+                    <button onClick={() => setModal({ type: "edit", item: c })}>Editar</button>
+                    <button className="bad" onClick={() => setModal({ type: "delete", item: c })}>Eliminar</button>
                   </div>
                 </td>
               </tr>
             ))}
+            {!loading && countries.length === 0 && (
+              <tr>
+                <td colSpan={4} style={{ textAlign: "center", color: "var(--ink-3)", padding: "24px 0" }}>
+                  No hay países. Crea el primero.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
       {modal?.type === "create" && (
-        <AdminFormModal
-          title={`Nuevo ${nameLabel}`}
-          fields={cfg.fields as Field[]}
+        <TagsFormModal
+          title="Nuevo país"
+          initial={{}}
           onClose={() => setModal(null)}
-          onSave={(d) => toast.success(`${cfg.name} creado`, { description: `"${d.nm}" agregado al sistema` })}
+          onSave={onCreate}
         />
       )}
       {modal?.type === "edit" && (
-        <AdminFormModal
-          title={`Editar ${nameLabel}`}
-          fields={cfg.fields as Field[]}
-          initial={modal.item}
+        <TagsFormModal
+          title={`Editar ${modal.item.name}`}
+          initial={{ name: modal.item.name, slug: modal.item.slug }}
           onClose={() => setModal(null)}
-          onSave={() => toast.success(`${cfg.name} actualizado`)}
+          onSave={(d) => onEdit(modal.item.id, d)}
         />
       )}
       {modal?.type === "delete" && (
-        <ConfirmDialog
-          title={`¿Eliminar "${modal.item.nm}"?`}
-          message={`Esta acción es permanente. Si "${modal.item.nm}" tiene contenido asociado, no se podrá eliminar.`}
-          confirmLabel="Sí, eliminar"
-          onConfirm={() => toast.warning(`${cfg.name} eliminado`)}
+        <TagsConfirmDialog
+          title={`¿Eliminar país "${modal.item.name}"?`}
+          message="Esta acción es permanente. Si el país tiene divisiones asociadas, no se podrá eliminar."
+          onConfirm={() => onDelete(modal.item.id)}
           onClose={() => setModal(null)}
         />
       )}
     </>
   );
+}
+
+// ── RealStatesSection ────────────────────────────────────────────────────────
+
+type StateModalState =
+  | { type: "create" }
+  | { type: "edit";   item: ApiRegion }
+  | { type: "delete"; item: ApiRegion }
+  | null;
+
+function RealStatesSection() {
+  const { token } = useUser();
+  const [statesList, setStatesList] = useState<ApiRegion[]>([]);
+  const [countries, setCountries] = useState<ApiCountry[]>([]);
+  const [cities, setCities] = useState<ApiCommune[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState<StateModalState>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [s, c, ci] = await Promise.all([api.regions(), api.countries(), api.communes()]);
+      setStatesList(s);
+      setCountries(c);
+      setCities(ci);
+    } catch {
+      toast.error("No se pudieron cargar las divisiones");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onCreate = async (d: Record<string, string>) => {
+    try {
+      await api.createState({
+        name: d.name.trim(),
+        slug: (d.slug || toSlug(d.name)).trim(),
+        countryId: Number(d.countryId),
+      }, token!);
+      toast.success("División creada", { description: `"${d.name}" agregada al sistema` });
+      load();
+    } catch {
+      toast.error("No se pudo crear la división");
+    }
+  };
+
+  const onEdit = async (id: number, d: Record<string, string>) => {
+    try {
+      await api.updateState(id, {
+        name: d.name.trim(),
+        slug: (d.slug || toSlug(d.name)).trim(),
+        countryId: Number(d.countryId),
+      }, token!);
+      toast.success("División actualizada");
+      load();
+    } catch {
+      toast.error("No se pudo actualizar la división");
+    }
+  };
+
+  const onDelete = async (id: number) => {
+    try {
+      await api.deleteState(id, token!);
+      toast.warning("División eliminada");
+      load();
+    } catch {
+      toast.error("No se pudo eliminar la división (puede tener ciudades asociadas)");
+    }
+  };
+
+  return (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ color: "var(--ink-3)", fontSize: 13 }}>
+          {loading ? "Cargando…" : `${statesList.length} divisiones en el sistema`}
+        </div>
+        <button className="btn primary" onClick={() => setModal({ type: "create" })}>＋ Nueva división</button>
+      </div>
+
+      <div className="panel" style={{ padding: 0 }}>
+        <table className="a-table">
+          <thead>
+            <tr>
+              <th>NOMBRE</th>
+              <th>SLUG</th>
+              <th>PAÍS</th>
+              <th>CIUDADES</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {statesList.map((s) => (
+              <tr key={s.id}>
+                <td><strong>{s.name}</strong></td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{s.slug}</td>
+                <td style={{ color: "var(--ink-3)" }}>
+                  {countries.find((co) => co.id === s.countryId)?.name ?? "—"}
+                </td>
+                <td style={{ color: "var(--ink-3)" }}>
+                  {cities.filter((ci) => ci.stateId === s.id).length}
+                </td>
+                <td>
+                  <div className="row-act">
+                    <button onClick={() => setModal({ type: "edit", item: s })}>Editar</button>
+                    <button className="bad" onClick={() => setModal({ type: "delete", item: s })}>Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!loading && statesList.length === 0 && (
+              <tr>
+                <td colSpan={5} style={{ textAlign: "center", color: "var(--ink-3)", padding: "24px 0" }}>
+                  No hay divisiones. Crea la primera.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {modal?.type === "create" && (
+        <GeoSelectFormModal
+          title="Nueva división"
+          initial={{}}
+          selectLabel="País"
+          selectOptions={countries}
+          selectKey="countryId"
+          onClose={() => setModal(null)}
+          onSave={onCreate}
+        />
+      )}
+      {modal?.type === "edit" && (
+        <GeoSelectFormModal
+          title={`Editar ${modal.item.name}`}
+          initial={{ name: modal.item.name, slug: modal.item.slug, countryId: String(modal.item.countryId) }}
+          selectLabel="País"
+          selectOptions={countries}
+          selectKey="countryId"
+          onClose={() => setModal(null)}
+          onSave={(d) => onEdit(modal.item.id, d)}
+        />
+      )}
+      {modal?.type === "delete" && (
+        <TagsConfirmDialog
+          title={`¿Eliminar división "${modal.item.name}"?`}
+          message="Esta acción es permanente. Si la división tiene ciudades asociadas, no se podrá eliminar."
+          onConfirm={() => onDelete(modal.item.id)}
+          onClose={() => setModal(null)}
+        />
+      )}
+    </>
+  );
+}
+
+// ── RealCitiesSection ────────────────────────────────────────────────────────
+
+type CityModalState =
+  | { type: "create" }
+  | { type: "edit";   item: ApiCommune }
+  | { type: "delete"; item: ApiCommune }
+  | null;
+
+function RealCitiesSection() {
+  const { token } = useUser();
+  const [citiesList, setCitiesList] = useState<ApiCommune[]>([]);
+  const [statesList, setStatesList] = useState<ApiRegion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState<CityModalState>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [ci, s] = await Promise.all([api.communes(), api.regions()]);
+      setCitiesList(ci);
+      setStatesList(s);
+    } catch {
+      toast.error("No se pudieron cargar las ciudades");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const onCreate = async (d: Record<string, string>) => {
+    try {
+      await api.createCity({
+        name: d.name.trim(),
+        slug: (d.slug || toSlug(d.name)).trim(),
+        stateId: Number(d.stateId),
+      }, token!);
+      toast.success("Ciudad creada", { description: `"${d.name}" agregada al sistema` });
+      load();
+    } catch {
+      toast.error("No se pudo crear la ciudad");
+    }
+  };
+
+  const onEdit = async (id: number, d: Record<string, string>) => {
+    try {
+      await api.updateCity(id, {
+        name: d.name.trim(),
+        slug: (d.slug || toSlug(d.name)).trim(),
+        stateId: Number(d.stateId),
+      }, token!);
+      toast.success("Ciudad actualizada");
+      load();
+    } catch {
+      toast.error("No se pudo actualizar la ciudad");
+    }
+  };
+
+  const onDelete = async (id: number) => {
+    try {
+      await api.deleteCity(id, token!);
+      toast.warning("Ciudad eliminada");
+      load();
+    } catch {
+      toast.error("No se pudo eliminar la ciudad");
+    }
+  };
+
+  return (
+    <>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div style={{ color: "var(--ink-3)", fontSize: 13 }}>
+          {loading ? "Cargando…" : `${citiesList.length} ciudades en el sistema`}
+        </div>
+        <button className="btn primary" onClick={() => setModal({ type: "create" })}>＋ Nueva ciudad</button>
+      </div>
+
+      <div className="panel" style={{ padding: 0 }}>
+        <table className="a-table">
+          <thead>
+            <tr>
+              <th>NOMBRE</th>
+              <th>SLUG</th>
+              <th>DIVISIÓN</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {citiesList.map((c) => (
+              <tr key={c.id}>
+                <td><strong>{c.name}</strong></td>
+                <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{c.slug}</td>
+                <td style={{ color: "var(--ink-3)" }}>
+                  {statesList.find((st) => st.id === c.stateId)?.name ?? "—"}
+                </td>
+                <td>
+                  <div className="row-act">
+                    <button onClick={() => setModal({ type: "edit", item: c })}>Editar</button>
+                    <button className="bad" onClick={() => setModal({ type: "delete", item: c })}>Eliminar</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {!loading && citiesList.length === 0 && (
+              <tr>
+                <td colSpan={4} style={{ textAlign: "center", color: "var(--ink-3)", padding: "24px 0" }}>
+                  No hay ciudades. Crea la primera.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {modal?.type === "create" && (
+        <GeoSelectFormModal
+          title="Nueva ciudad"
+          initial={{}}
+          selectLabel="División"
+          selectOptions={statesList}
+          selectKey="stateId"
+          onClose={() => setModal(null)}
+          onSave={onCreate}
+        />
+      )}
+      {modal?.type === "edit" && (
+        <GeoSelectFormModal
+          title={`Editar ${modal.item.name}`}
+          initial={{ name: modal.item.name, slug: modal.item.slug, stateId: String(modal.item.stateId) }}
+          selectLabel="División"
+          selectOptions={statesList}
+          selectKey="stateId"
+          onClose={() => setModal(null)}
+          onSave={(d) => onEdit(modal.item.id, d)}
+        />
+      )}
+      {modal?.type === "delete" && (
+        <TagsConfirmDialog
+          title={`¿Eliminar ciudad "${modal.item.name}"?`}
+          message="Esta acción es permanente."
+          onConfirm={() => onDelete(modal.item.id)}
+          onClose={() => setModal(null)}
+        />
+      )}
+    </>
+  );
+}
+
+// ── Pure router ──────────────────────────────────────────────────────────────
+
+export default function SimpleCRUDSection({ kind }: { kind: KindKey }) {
+  if (kind === "tags")      return <RealTagsSection />;
+  if (kind === "countries") return <RealCountriesSection />;
+  if (kind === "states")    return <RealStatesSection />;
+  if (kind === "cities")    return <RealCitiesSection />;
+  return null;
 }

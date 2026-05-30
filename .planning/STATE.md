@@ -223,6 +223,7 @@ administrador quedan visibles al público.
 ### Roadmap Evolution
 
 - Phase 28 added: Artículos con múltiples categorías — many-to-many schema, seed desde WP real, API, website, formularios y vistas públicas
+- Phase 28.1 inserted after Phase 28: Sitio público gap fixes — FAQs desde API real, filtros rotos en categoría y noticias, autor real en artículos (INSERTED)
 
 ## Quick Tasks Completed
 

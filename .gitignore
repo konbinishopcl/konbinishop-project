@@ -1,6 +1,7 @@
 node_modules
 .turbo
 *.tsbuildinfo
+demo-credentials.md
 
 # Windows alternate data stream artifacts
 *Zone.Identifier*

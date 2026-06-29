@@ -33,6 +33,8 @@ export default async function PreguntasFrecuentesPage() {
       question: q,
       answer: a,
       order: i,
+      createdAt: "",
+      updatedAt: "",
     }));
   }
 

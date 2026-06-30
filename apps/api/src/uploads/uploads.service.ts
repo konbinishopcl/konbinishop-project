@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { put } from '@vercel/blob';
 
 /** Forma mínima del archivo entregado por FileInterceptor (multer, memoria). */
 export interface UploadedImage {
@@ -11,8 +10,6 @@ export interface UploadedImage {
   buffer: Buffer;
 }
 
-// Directorio físico de las imágenes; servido en /uploads (ver main.ts).
-const UPLOADS_DIR = join(process.cwd(), 'uploads');
 const MAX_BYTES = 5 * 1024 * 1024;
 const EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -22,7 +19,7 @@ const EXT_BY_MIME: Record<string, string> = {
 
 @Injectable()
 export class UploadsService {
-  /** Valida y guarda una imagen en uploads/; devuelve su URL pública. */
+  /** Valida y sube una imagen a Vercel Blob; devuelve su URL pública absoluta. */
   async save(file?: UploadedImage) {
     if (!file) throw new BadRequestException('No se recibió ningún archivo');
 
@@ -34,10 +31,15 @@ export class UploadsService {
       throw new BadRequestException('La imagen supera el máximo de 5 MB');
     }
 
-    await fs.mkdir(UPLOADS_DIR, { recursive: true });
     const filename = `${Date.now()}-${randomBytes(6).toString('hex')}.${ext}`;
-    await fs.writeFile(join(UPLOADS_DIR, filename), file.buffer);
+    const blob = await put(`uploads/${filename}`, file.buffer, {
+      access: 'public',
+      contentType: file.mimetype,
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    });
 
-    return { url: `/uploads/${filename}`, filename };
+    // url absoluta (https://...blob.vercel-storage.com/...); el frontend la usa tal cual
+    // gracias a imageUrl() del website, que deja pasar rutas que empiezan con "http".
+    return { url: blob.url, filename };
   }
 }

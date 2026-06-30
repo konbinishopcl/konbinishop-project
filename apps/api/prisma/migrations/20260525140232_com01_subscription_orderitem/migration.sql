@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `OrderItem` MODIFY `type` ENUM('EVENT', 'SPOT', 'HERO', 'ARTICLE', 'SUBSCRIPTION') NOT NULL;

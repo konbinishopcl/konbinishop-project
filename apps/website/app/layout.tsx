@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
+import { BLOCK_INDEXING } from "@/lib/seo";
 import "./globals.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://konbini.cl";
@@ -54,7 +55,10 @@ export const metadata: Metadata = {
     "msapplication-TileColor": "#ffffff",
     "msapplication-TileImage": "/ms-icon-144x144.png",
   },
-  robots: { index: true, follow: true },
+  // BLOCK_INDEXING="true" → noindex/nofollow en todo el sitio (no listo aún).
+  robots: BLOCK_INDEXING
+    ? { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } }
+    : { index: true, follow: true },
   alternates: { canonical: SITE_URL },
 };
 

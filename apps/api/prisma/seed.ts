@@ -198,14 +198,16 @@ async function main() {
       create: { name: region, slug: stateSlug, countryId: chile.id },
     });
 
-    for (const communeName of communes) {
+    // Comunas en paralelo (independientes dentro de la región) para evitar
+    // cientos de round-trips secuenciales contra Neon.
+    await Promise.all(communes.map((communeName) => {
       const citySlug = slugify(communeName);
-      await prisma.city.upsert({
+      return prisma.city.upsert({
         where: { slug: citySlug },
         update: { name: communeName, stateId: state.id },
         create: { name: communeName, slug: citySlug, stateId: state.id },
       });
-    }
+    }));
   }
 
   const totalCities = regionsData.reduce((acc, r) => acc + r.communes.length, 0);
@@ -309,59 +311,70 @@ async function main() {
     const catBySlug: Record<string, number> = {};
     for (const c of dbCategories) catBySlug[c.slug] = c.id;
 
-    let articleCount = 0;
+    // Tags en bloque (una sola vez): se repiten entre artículos, así evitamos
+    // miles de upserts secuenciales contra Neon (el cuello de botella del seed).
+    const uniqueTags = new Map<string, { name: string; slug: string }>();
     for (const art of articlesData) {
-      // Anti-P2025 filter: skip slugs not in the curated DB list (unknown slugs throw P2025 which
-      // skips the entire article — data loss). ArticleCategory has required nameJa so we never
-      // auto-create categories at seed time (they'd have null nameJa and pollute the MegaMenu).
-      const knownSlugs = (art.categorySlugs ?? []).filter(s => catBySlug[s] !== undefined);
-
-      const tagIds: number[] = [];
       for (const tag of art.tags) {
-        if (!tag.slug) continue;
-        const t = await prisma.articleTag.upsert({
-          where:  { slug: tag.slug },
-          update: {},
-          create: { name: tag.name, slug: tag.slug },
-        });
-        tagIds.push(t.id);
+        if (tag.slug && !uniqueTags.has(tag.slug)) uniqueTags.set(tag.slug, { name: tag.name, slug: tag.slug });
       }
+    }
+    await prisma.articleTag.createMany({ data: [...uniqueTags.values()], skipDuplicates: true });
+    const dbTags = await prisma.articleTag.findMany({ select: { id: true, slug: true } });
+    const tagIdBySlug: Record<string, number> = {};
+    for (const t of dbTags) tagIdBySlug[t.slug] = t.id;
 
-      try { await prisma.article.upsert({
-        where: { slug: art.slug },
-        update: {
-          title: art.title,
-          excerpt: sanitize(art.excerpt),
-          content: sanitize(art.content)!,
-          image: art.image,
-          youtubeUrl: art.youtubeUrl,
-          articleCategories: { set: knownSlugs.map(slug => ({ slug })) },
-          status: 'APPROVED',
-          articleTags: tagIds.length ? { set: tagIds.map(id => ({ id })) } : undefined,
-          articleImages: {
-            deleteMany: {},
-            create: art.gallery.map((url, i) => ({ url, order: i })),
-          },
-        },
-        create: {
-          title: art.title,
-          slug: art.slug,
-          excerpt: sanitize(art.excerpt),
-          content: sanitize(art.content)!,
-          image: art.image,
-          youtubeUrl: art.youtubeUrl,
-          articleCategories: knownSlugs.length ? { connect: knownSlugs.map(slug => ({ slug })) } : undefined,
-          status: 'APPROVED',
-          createdAt: new Date(art.createdAt),
-          updatedAt: new Date(art.updatedAt),
-          articleTags: tagIds.length ? { connect: tagIds.map(id => ({ id })) } : undefined,
-          articleImages: {
-            create: art.gallery.map((url, i) => ({ url, order: i })),
-          },
-        },
-      }); articleCount++; } catch (e: any) {
-        console.warn(`  ⚠ skipped "${art.slug}": ${e.message?.slice(0, 300)}`);
-      }
+    // Anti-P2025: solo slugs de categoría presentes en la lista curada (las desconocidas
+    // lanzan P2025 y descartan el artículo). No auto-creamos categorías (nameJa requerido).
+    let articleCount = 0;
+    const CHUNK = 20;
+    for (let i = 0; i < articlesData.length; i += CHUNK) {
+      const results = await Promise.all(articlesData.slice(i, i + CHUNK).map(async (art) => {
+        const knownSlugs = (art.categorySlugs ?? []).filter(s => catBySlug[s] !== undefined);
+        const tagIds = (art.tags ?? [])
+          .map(t => tagIdBySlug[t.slug])
+          .filter((id): id is number => id !== undefined);
+        try {
+          await prisma.article.upsert({
+            where: { slug: art.slug },
+            update: {
+              title: art.title,
+              excerpt: sanitize(art.excerpt),
+              content: sanitize(art.content)!,
+              image: art.image,
+              youtubeUrl: art.youtubeUrl,
+              articleCategories: { set: knownSlugs.map(slug => ({ slug })) },
+              status: 'APPROVED',
+              articleTags: tagIds.length ? { set: tagIds.map(id => ({ id })) } : undefined,
+              articleImages: {
+                deleteMany: {},
+                create: art.gallery.map((url, i) => ({ url, order: i })),
+              },
+            },
+            create: {
+              title: art.title,
+              slug: art.slug,
+              excerpt: sanitize(art.excerpt),
+              content: sanitize(art.content)!,
+              image: art.image,
+              youtubeUrl: art.youtubeUrl,
+              articleCategories: knownSlugs.length ? { connect: knownSlugs.map(slug => ({ slug })) } : undefined,
+              status: 'APPROVED',
+              createdAt: new Date(art.createdAt),
+              updatedAt: new Date(art.updatedAt),
+              articleTags: tagIds.length ? { connect: tagIds.map(id => ({ id })) } : undefined,
+              articleImages: {
+                create: art.gallery.map((url, i) => ({ url, order: i })),
+              },
+            },
+          });
+          return true;
+        } catch (e: any) {
+          console.warn(`  ⚠ skipped "${art.slug}": ${e.message?.slice(0, 300)}`);
+          return false;
+        }
+      }));
+      articleCount += results.filter(Boolean).length;
     }
     console.log(`✓ Articles seeded: ${articleCount} from prisma/data/articles.json`);
   } else {

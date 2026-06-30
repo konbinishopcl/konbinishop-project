@@ -1,9 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import Script from "next/script";
 import { Providers } from "@/components/providers";
 import { Toaster } from "sonner";
 import { BLOCK_INDEXING } from "@/lib/seo";
+import { LogRocketInit } from "@/components/analytics/logrocket-init";
 import "./globals.css";
+
+const GTM_ID = "GTM-WB5J9KQF";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://konbini.cl";
 const TITLE = "Konbini · Plataforma de eventos";
@@ -70,7 +74,25 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="es" data-theme="dark">
+      <head>
+        <Script
+          id="gtm-script"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${GTM_ID}');`,
+          }}
+        />
+      </head>
       <body>
+        {/* GTM noscript fallback */}
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         {/* Aplica el tema guardado antes del primer paint para evitar parpadeo */}
         <script
           dangerouslySetInnerHTML={{
@@ -80,6 +102,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
         <Providers>{children}</Providers>
         <Toaster position="bottom-right" />
+        <LogRocketInit />
       </body>
     </html>
   );

@@ -138,6 +138,9 @@ importers:
       '@react-oauth/google':
         specifier: ^0.13.5
         version: 0.13.5(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      logrocket:
+        specifier: ^12.1.1
+        version: 12.1.1
       lucide-react:
         specifier: ^1.16.0
         version: 1.16.0(react@19.2.6)
@@ -2822,6 +2825,9 @@ packages:
   log-symbols@4.1.0:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
     engines: {node: '>=10'}
+
+  logrocket@12.1.1:
+    resolution: {integrity: sha512-l7z9ii5nNV6NZ3nzEqbB3xJAqFJC6QdRYDK8DeCC6JKwzuI8nyUezUJAotgMyClrqB6eV/Bo0i/KihQlXSRDKw==}
 
   lru-cache@10.4.3:
     resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
@@ -7209,6 +7215,8 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       is-unicode-supported: 0.1.0
+
+  logrocket@12.1.1: {}
 
   lru-cache@10.4.3: {}
 

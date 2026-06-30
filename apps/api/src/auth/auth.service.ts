@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { JwtUser } from './current-user.decorator';
 import { ConfigService } from '@nestjs/config';
 import { compare, hash } from 'bcryptjs';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import type { User } from '@prisma/client';
 import { PrismaService } from '../../utils/prisma/prisma.service';
@@ -52,7 +52,7 @@ export class AuthService {
 
   /** Genera un código de 6 dígitos, lo guarda hasheado (SHA-256, 10 min) y lo envía por email. */
   private async issueTwoFaCode(user: User): Promise<void> {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const code = randomInt(100000, 1000000).toString();
     await this.prisma.user.update({
       where: { id: user.id },
       data: {

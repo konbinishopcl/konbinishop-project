@@ -21,6 +21,10 @@
       "@scarf/scarf",
       "prisma",
       "sharp"
-    ]
+    ],
+    "overrides": {
+      "multer": "^2.2.0",
+      "undici": "^6.27.0"
+    }
   }
 }

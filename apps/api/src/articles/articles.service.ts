@@ -24,7 +24,7 @@ const ARTICLE_INCLUDE = {
   articleTags: true,
   articleCategories: true,
   _count: { select: { likes: true } },
-  user: { select: { firstname: true, lastname: true, email: true } },
+  owner: { select: { firstname: true, lastname: true, email: true } },
 } as const;
 
 // Incluye el primer evento vinculado (APPROVED) para la vista de detalle
@@ -33,7 +33,7 @@ const ARTICLE_DETAIL_INCLUDE = {
   articleCategories: true,
   articleImages: { orderBy: { order: 'asc' as const } },
   _count: { select: { likes: true } },
-  user: { select: { firstname: true, lastname: true } },
+  owner: { select: { firstname: true, lastname: true } },
   events: {
     where: { status: PublicationStatus.APPROVED },
     take: 1,
@@ -49,6 +49,13 @@ const ARTICLE_DETAIL_INCLUDE = {
     },
   },
 } as const;
+
+// La relación Prisma se llama `owner` (convención del schema), pero el API y el
+// website exponen/consumen `user`. Renombra owner→user y agrega isSponsored.
+function withUser<T extends { userId: number | null; owner?: unknown }>(a: T) {
+  const { owner, ...rest } = a;
+  return { ...rest, user: owner ?? null, isSponsored: a.userId !== null };
+}
 
 @Injectable()
 export class ArticlesService {
@@ -83,7 +90,7 @@ export class ArticlesService {
     ]);
 
     return {
-      items: items.map((a) => ({ ...a, isSponsored: a.userId !== null })),
+      items: items.map(withUser),
       total,
       page,
       pageSize,
@@ -99,14 +106,14 @@ export class ArticlesService {
     if (!isAdmin && article.status !== PublicationStatus.APPROVED) {
       throw new NotFoundException('Artículo no encontrado');
     }
-    return { ...article, isSponsored: article.userId !== null };
+    return withUser(article);
   }
 
   async findById(id: number) {
     const article = await this.prisma.article.findUnique({ where: { id }, include: ARTICLE_INCLUDE });
     if (!article) throw new NotFoundException('Artículo no encontrado');
     // NO gate de status — findById se usa internamente (approve/reject/ban requieren ver todos los estados)
-    return { ...article, isSponsored: article.userId !== null };
+    return withUser(article);
   }
 
   async findMine(user: JwtUser, orgContext: OrgContextDto | null = null) {
@@ -116,7 +123,7 @@ export class ArticlesService {
       include: ARTICLE_INCLUDE,
       orderBy: { createdAt: 'desc' },
     });
-    return items.map((a) => ({ ...a, isSponsored: a.userId !== null }));
+    return items.map(withUser);
   }
 
   private assertOwnerOrAdmin(
@@ -151,7 +158,7 @@ export class ArticlesService {
       },
       include: ARTICLE_INCLUDE,
     });
-    return { ...article, isSponsored: article.userId !== null };
+    return withUser(article);
   }
 
   async update(id: number, dto: UpdateArticleDto, user: JwtUser, orgContext: OrgContextDto | null = null) {
@@ -177,7 +184,7 @@ export class ArticlesService {
       },
       include: ARTICLE_INCLUDE,
     });
-    return { ...updated, isSponsored: updated.userId !== null };
+    return withUser(updated);
   }
 
   async remove(id: number, user: JwtUser, orgContext: OrgContextDto | null = null) {
@@ -215,7 +222,7 @@ export class ArticlesService {
       },
       include: ARTICLE_INCLUDE,
     });
-    return { ...article, isSponsored: true };
+    return withUser(article);
   }
 
   // ─────────────────────── Moderación (ADMIN+) ───────────────────────
@@ -243,7 +250,7 @@ export class ArticlesService {
       payload: { articleId: id },
       userId: article.userId,
     });
-    return { ...updated, isSponsored: updated.userId !== null };
+    return withUser(updated);
   }
 
   /**
@@ -268,7 +275,7 @@ export class ArticlesService {
       payload: { articleId: id, reason },
       userId: article.userId,
     });
-    return { ...updated, isSponsored: updated.userId !== null };
+    return withUser(updated);
   }
 
   /**
@@ -293,6 +300,6 @@ export class ArticlesService {
       payload: { articleId: id, reason },
       userId: article.userId,
     });
-    return { ...updated, isSponsored: updated.userId !== null };
+    return withUser(updated);
   }
 }

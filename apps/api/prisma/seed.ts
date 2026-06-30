@@ -441,7 +441,7 @@ async function main() {
         title: 'Festival de',
         titleAccent: 'Primavera 2026',
         lead: 'Dos días de música en vivo en el corazón de Santiago.',
-        image: '/uploads/hero-1.jpg',
+        image: 'https://2w45nhh8p6jdklcj.public.blob.vercel-storage.com/seed/hero-1.webp',
         date: new Date('2026-09-21'),
         place: "Parque O'Higgins, Santiago",
         link: 'https://example.cl/festival-de-primavera',
@@ -456,7 +456,7 @@ async function main() {
         title: 'Expo Otaku',
         titleAccent: 'Viña 2026',
         lead: 'La convención otaku más grande de la región.',
-        image: '/uploads/hero-2.jpg',
+        image: 'https://2w45nhh8p6jdklcj.public.blob.vercel-storage.com/seed/hero-2.webp',
         date: new Date('2026-10-12'),
         place: 'Centro de Convenciones, Viña del Mar',
         link: 'https://example.cl/expo-otaku-vina',
@@ -471,8 +471,9 @@ async function main() {
   });
 
   // ── Eventos (con componentes) ──
-  // Imágenes alojadas en la API: apps/api/uploads/poster-N.jpg y banner-N.jpg,
-  // servidas en /uploads/. El campo del evento guarda la ruta relativa.
+  // Imágenes curadas reales (subset) alojadas en Vercel Blob bajo /seed/.
+  // Las imágenes que suban los usuarios van al mismo store — ver UploadsService.
+  const BLOB = 'https://2w45nhh8p6jdklcj.public.blob.vercel-storage.com/seed';
   const catId: Record<string, number> = {
     musica: musica.id,
     teatro: teatro.id,
@@ -694,9 +695,9 @@ async function main() {
         address: ev.address,
         addressNumber: ev.addressNumber,
         ticketUrl: ev.ticketUrl,
-        banner: `/uploads/banner-${ev.img}.jpg`,
-        poster: `/uploads/poster-${ev.img}.jpg`,
-        gallery: [`/uploads/poster-${ev.img}.jpg`, `/uploads/banner-${ev.img}.jpg`],
+        banner: `${BLOB}/banner-${ev.img}.webp`,
+        poster: `${BLOB}/poster-${ev.img}.webp`,
+        gallery: [`${BLOB}/poster-${ev.img}.webp`, `${BLOB}/banner-${ev.img}.webp`],
         status: ev.approved ? 'APPROVED' : 'PENDING_MODERATION',
         userId: organizer.id,
         approvedById: ev.approved ? admin.id : null,

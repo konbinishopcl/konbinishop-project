@@ -307,6 +307,11 @@ async function main() {
     const sanitize = (s: string | null) =>
       s ? s.replace(/\\x[0-9a-fA-F]{0,1}(?![0-9a-fA-F])/g, '').replace(/\x00/g, '') : s;
 
+    // Imágenes de artículos exportadas de WP vienen como rutas locales `/uploads/...`.
+    // En serverless no hay disco; las imágenes viven en Vercel Blob (mismo path).
+    const BLOB_BASE = 'https://2w45nhh8p6jdklcj.public.blob.vercel-storage.com';
+    const toBlob = (u: string | null) => (u && u.startsWith('/uploads/') ? `${BLOB_BASE}${u}` : u);
+
     const dbCategories = await prisma.articleCategory.findMany({ select: { id: true, slug: true } });
     const catBySlug: Record<string, number> = {};
     for (const c of dbCategories) catBySlug[c.slug] = c.id;
@@ -341,14 +346,14 @@ async function main() {
               title: art.title,
               excerpt: sanitize(art.excerpt),
               content: sanitize(art.content)!,
-              image: art.image,
+              image: toBlob(art.image),
               youtubeUrl: art.youtubeUrl,
               articleCategories: { set: knownSlugs.map(slug => ({ slug })) },
               status: 'APPROVED',
               articleTags: tagIds.length ? { set: tagIds.map(id => ({ id })) } : undefined,
               articleImages: {
                 deleteMany: {},
-                create: art.gallery.map((url, i) => ({ url, order: i })),
+                create: art.gallery.map((url, i) => ({ url: toBlob(url)!, order: i })),
               },
             },
             create: {
@@ -356,7 +361,7 @@ async function main() {
               slug: art.slug,
               excerpt: sanitize(art.excerpt),
               content: sanitize(art.content)!,
-              image: art.image,
+              image: toBlob(art.image),
               youtubeUrl: art.youtubeUrl,
               articleCategories: knownSlugs.length ? { connect: knownSlugs.map(slug => ({ slug })) } : undefined,
               status: 'APPROVED',
@@ -364,7 +369,7 @@ async function main() {
               updatedAt: new Date(art.updatedAt),
               articleTags: tagIds.length ? { connect: tagIds.map(id => ({ id })) } : undefined,
               articleImages: {
-                create: art.gallery.map((url, i) => ({ url, order: i })),
+                create: art.gallery.map((url, i) => ({ url: toBlob(url)!, order: i })),
               },
             },
           });

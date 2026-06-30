@@ -8,7 +8,11 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 
-async function bootstrap() {
+/**
+ * Crea e inicializa la app Nest (sin escuchar un puerto). Compartido entre el
+ * arranque local (bootstrap) y el handler serverless de Vercel (api/index.ts).
+ */
+export async function createApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
 
@@ -37,7 +41,11 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/api/uploads' });
+  // Imágenes legacy servidas desde disco: solo local. En Vercel (serverless, sin
+  // disco persistente) las imágenes viven en Vercel Blob — ver UploadsService.
+  if (!process.env.VERCEL) {
+    app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/api/uploads' });
+  }
 
   // Swagger solo en desarrollo local.
   if (process.env.NODE_ENV !== 'production') {
@@ -50,10 +58,21 @@ async function bootstrap() {
     SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swaggerConfig));
   }
 
-  const port = config.get<number>('PORT', 3333);
+  await app.init();
+  return app;
+}
 
+/** Arranque local con servidor HTTP (PM2 / dev). En Vercel se usa api/index.ts. */
+async function bootstrap() {
+  const app = await createApp();
+  const config = app.get(ConfigService);
+  const port = config.get<number>('PORT', 3333);
   await app.listen(port);
   console.log(`🚀 API running on http://localhost:${port}/api`);
 }
 
-void bootstrap();
+// Solo levanta el servidor cuando se ejecuta directamente (node dist/src/main),
+// no cuando el handler serverless importa createApp().
+if (require.main === module) {
+  void bootstrap();
+}
